@@ -1,0 +1,31 @@
+{
+  "name": "@dailyco/daily-js",
+  "version": "0.1.1",
+  "engines": {
+    "node": ">=10.0.0"
+  },\
+  "homepage": "https://www.daily.co/",
+  "main": "dist/daily-iframe.js",
+  "module": "dist/daily-iframe-esm.js",
+  "scripts": {
+    "build": "npm run build-main && npm run build-module",
+    "build-dev": "NODE_ENV=development npm run build",
+    "build-main": "webpack",
+    "build-module": "rollup -c",
+    "prepublishOnly": "npm run build",
+  },
+  "devDependencies": {
+    "@babel/core": "^7.4.3",
+    "@babel/plugin-transform-modules-commonjs": "^7.4.3",
+    "@babel/preset-env": "^7.4.3",
+    "babel-loader": "^8.0.5",
+    "rollup": "^1.10.1",
+    "rollup-plugin-cjs-es": "^0.7.0",
+    "rollup-plugin-commonjs": "^9.3.4",
+    "rollup-plugin-node-resolve": "^4.2.3",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.3.0",
+    "babel-cli": "^6.26.0",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2"
+  }
+}
