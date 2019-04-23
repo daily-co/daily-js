@@ -59,3 +59,12 @@ typings/
 
 # next.js build output
 .next
+
+# emacs
+*~
+
+# mac
+.DS_Store
+
+# don't check in built libs
+dist/

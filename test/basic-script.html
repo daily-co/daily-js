@@ -1,0 +1,16 @@
+<html>
+  <head>
+    <title>basic require test</title>
+  </head>
+  <body>
+    text following should say hello ... <b><span id="rplx"></span></b>
+
+    <script>
+      function run() {
+        let daily = new window.DailyIframe();
+        document.getElementById('rplx').innerText = daily.sayHello();
+      }
+    </script>
+    <script src="../dist/daily-iframe.js" onload="run()"></script>
+  </body>
+</html>

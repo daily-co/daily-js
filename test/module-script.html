@@ -1,0 +1,14 @@
+<html>
+  <head>
+    <title>module import test</title>
+  </head>
+  <body>
+    text following should say hello ... <b><span id="rplx"></span></b>
+
+    <script type="module">
+      import DailyIframe from '../dist/daily-iframe-esm.js';
+      let daily = new DailyIframe();
+      document.getElementById('rplx').innerText = daily.sayHello();
+    </script>
+  </body>
+</html>
