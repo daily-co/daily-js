@@ -67,9 +67,14 @@ export default class DailyIframe extends EventEmitter {
   }
 
   leave() {
-    // todo: should send an event into iframe and call internal js function
-    // so that beacon is sent, etc
-    this.iframe.src = '';
+    return new Promise((resolve, reject) => {
+      let k = () => {
+        this.iframe.src = '';
+        this.emit('leave');
+        resolve();
+      };
+      this.sendMessage({ action: 'leave-mtg' }, k);
+    });
   }
 
   participants() {
@@ -109,7 +114,7 @@ export default class DailyIframe extends EventEmitter {
 
   handleMessage(msg) {
     if (msg.callbackStamp && this.messageCallbacks[msg.callbackStamp]) {
-      this.messageCallbacks[msg.callbackStamp](msg);
+      this.messageCallbacks[msg.callbackStamp].call(this, msg);
     }
   }
 
