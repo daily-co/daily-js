@@ -1,6 +1,6 @@
 import EventEmitter from 'events';
 
-const IFRAME_MESSAGE_MARKER = 'iframe-call-message';
+import { IFRAME_MESSAGE_MARKER } from './CommonIncludes.js';
 
 const FRAME_PROPS = {
   url: {
