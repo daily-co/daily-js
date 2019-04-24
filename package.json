@@ -3,7 +3,7 @@
   "version": "0.1.1",
   "engines": {
     "node": ">=10.0.0"
-  },\
+  },
   "homepage": "https://www.daily.co/",
   "main": "dist/daily-iframe.js",
   "module": "dist/daily-iframe-esm.js",
@@ -12,7 +12,7 @@
     "build-dev": "NODE_ENV=development npm run build",
     "build-main": "webpack",
     "build-module": "rollup -c",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@babel/core": "^7.4.3",
@@ -27,5 +27,8 @@
     "webpack-cli": "^3.3.0",
     "babel-cli": "^6.26.0",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2"
+  },
+  "dependencies": {
+    "events": "^3.0.0"
   }
 }
