@@ -1,0 +1,33 @@
+<html>
+  <head>
+    <title>call events demo</title>
+  </head>
+  <body>
+    <span onclick="callFrame.participants().then((d)=>console.log('HEY', d))">
+      [ get participants ]
+    </span>
+
+    <iframe
+      id="call-frame"
+      width="350"
+      height="425"
+      allow="camera; microphone; autoplay"
+      style="position: absolute; right: 1em; bottom: 3em;"
+    ></iframe>
+
+    <script>
+      function run() {
+        window.callFrame = window.DailyIframe.wrap(
+          document.getElementById('call-frame')
+        );
+        callFrame.on('joining', (e) => {
+          console.log('CONNECTING', this, e);
+        });
+        callFrame.join({ url: 'http://localhost:8000/hello?cdmn=kwindla' });
+        // setTimeout(()=>callFrame.leave(), 5000);
+        console.log(callFrame);
+      }
+    </script>
+    <script src="../dist/daily-iframe.js" onload="run()"></script>
+  </body>
+</html>
