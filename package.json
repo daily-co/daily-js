@@ -17,18 +17,21 @@
   "devDependencies": {
     "@babel/core": "^7.4.3",
     "@babel/plugin-transform-modules-commonjs": "^7.4.3",
+    "@babel/plugin-transform-runtime": "^7.4.3",
     "@babel/preset-env": "^7.4.3",
+    "babel-cli": "^6.26.0",
     "babel-loader": "^8.0.5",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
     "rollup": "^1.10.1",
     "rollup-plugin-cjs-es": "^0.7.0",
     "rollup-plugin-commonjs": "^9.3.4",
     "rollup-plugin-node-resolve": "^4.2.3",
     "webpack": "^4.29.6",
-    "webpack-cli": "^3.3.0",
-    "babel-cli": "^6.26.0",
-    "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2"
+    "webpack-cli": "^3.3.0"
   },
   "dependencies": {
-    "events": "^3.0.0"
+    "@babel/runtime": "^7.4.3",
+    "events": "^3.0.0",
+    "fast-equals": "^1.6.2"
   }
 }
