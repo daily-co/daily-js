@@ -3,13 +3,51 @@
     <title>call events demo</title>
   </head>
   <body>
-    <span onclick="callFrame.participants().then((d)=>console.log('HEY', d))">
+    <div
+      onclick="callFrame.join({ url: 'http://localhost:8000/hello?cdmn=kwindla' }).then((ps)=>console.log('joined and have participants', ps));"
+    >
+      [ join mtg ]
+    </div>
+    <div onclick="console.log('PARTICIPANTS', callFrame.participants())">
       [ get participants ]
-    </span>
-
-    <span onclick="callFrame.leave()">
+    </div>
+    <div
+      onclick="callFrame.leave().then(()=>console.log('LEAVE PROMISE RESOLVED'))"
+    >
       [ leave mtg ]
-    </span>
+    </div>
+    <div onclick="callFrame.setLocalVideo(!callFrame.localVideo())">
+      [ toggle local cam state ]
+    </div>
+    <div onclick="callFrame.setLocalAudio(!callFrame.localAudio())">
+      [ toggle local mic state ]
+    </div>
+
+    <div>&nbsp;</div>
+
+    <div
+      onclick="callFrame.updateParticipant(firstNonlocalId(),{setVideo:false})"
+    >
+      [ mute remote cam ]
+    </div>
+    <div
+      onclick="callFrame.updateParticipant(firstNonlocalId(),{setVideo:true})"
+    >
+      [ unmute remote cam ]
+    </div>
+    <div
+      onclick="callFrame.updateParticipant(firstNonlocalId(),{setAudio:false})"
+    >
+      [ mute remote mic ]
+    </div>
+    <div
+      onclick="callFrame.updateParticipant(firstNonlocalId(),{setAudio:true})"
+    >
+      [ unmute remote mic ]
+    </div>
+    <div onclick="callFrame.updateParticipant(firstNonlocalId(),{eject:true})">
+      [ eject remote participant ]
+    </div>
 
     <iframe
       id="call-frame"
@@ -20,15 +58,28 @@
     ></iframe>
 
     <script>
+      function firstNonlocalId() {
+        for (var p in callFrame.participants()) {
+          if (p !== 'local') return p;
+        }
+      }
+
+      function showEvent(e) {
+        console.log('EVENT -->', e);
+      }
+
       function run() {
         window.callFrame = window.DailyIframe.wrap(
           document.getElementById('call-frame')
         );
-        callFrame.on('joining', (e) => {
-          console.log('CONNECTING', this, e);
-        });
-        callFrame.join({ url: 'http://localhost:8000/hello?cdmn=kwindla' });
-        // setTimeout(()=>callFrame.leave(), 5000);
+        callFrame
+          .on('joining-meeting', showEvent)
+          .on('joined-meeting', showEvent)
+          .on('left-meeting', showEvent)
+          .on('participant-joined', showEvent)
+          .on('participant-updated', showEvent)
+          .on('participant-left', showEvent);
+
         console.log(callFrame);
       }
     </script>
