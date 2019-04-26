@@ -15,6 +15,7 @@ import {
   DAILY_EVENT_PARTICIPANT_JOINED,
   DAILY_EVENT_PARTICIPANT_UPDATED,
   DAILY_EVENT_PARTICIPANT_LEFT,
+  DAILY_EVENT_ERROR,
 
   // internals
   //
@@ -218,8 +219,8 @@ export default class DailyIframe extends EventEmitter {
           this._joinedCallback(msg.participants);
           this._joinedCallback = null;
         }
-        this.emit(msg.action, msg);
         this._meetingState = DAILY_STATE_JOINED;
+        this.emit(msg.action, msg);
         break;
       case DAILY_EVENT_PARTICIPANT_JOINED:
       case DAILY_EVENT_PARTICIPANT_UPDATED:
@@ -236,6 +237,16 @@ export default class DailyIframe extends EventEmitter {
           delete this._participants[msg.participant.id];
           this.emit(msg.action, msg);
         }
+        break;
+      case DAILY_EVENT_ERROR:
+        this._meetingState = DAILY_STATE_ERROR;
+        this.emit(msg.action, msg);
+        break;
+      case DAILY_EVENT_LEFT_MEETING:
+        if (this._meetingState !== DAILY_STATE_ERROR) {
+          this._meetingState = DAILY_STATE_LEFT;
+        }
+        this.emit(msg.action, msg);
         break;
       default: // no op
     }
