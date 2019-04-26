@@ -3,8 +3,11 @@
 <title>call events demo</title>
 </head>
 <body>
+<script>
+let url = 'http://localhost:8000/hello?cdmn=kwindla';
+</script>
 
-<div onclick="callFrame.join({ url: 'http://localhost:8000/hello?cdmn=kwindla' }).then((ps)=>console.log('joined and have participants', ps));">
+<div onclick="callFrame.join({ url }).then((ps)=>console.log('joined and have participants', ps));">
 [ join mtg ]
 </div>
 <div onclick="console.log('PARTICIPANTS', callFrame.participants())">
@@ -53,7 +56,7 @@ function firstNonlocalId() {
 }
 
 function showEvent(e) {
-  console.log('EVENT -->', e);
+  console.log('PARENT FRAME GOT EVENT -->', e);
 }
 
 function run() {
@@ -64,7 +67,8 @@ function run() {
            .on('left-meeting', showEvent)
            .on('participant-joined', showEvent)
            .on('participant-updated', showEvent)
-           .on('participant-left', showEvent);
+           .on('participant-left', showEvent)
+           .on('error', showEvent);
 
 
   console.log(callFrame);
