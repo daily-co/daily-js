@@ -25,6 +25,8 @@ import {
   DAILY_METHOD_UPDATE_PARTICIPANT,
   DAILY_METHOD_LOCAL_AUDIO,
   DAILY_METHOD_LOCAL_VIDEO,
+  DAILY_METHOD_START_SCREENSHARE,
+  DAILY_METHOD_STOP_SCREENSHARE,
 } from './CommonIncludes.js';
 
 
@@ -163,6 +165,14 @@ export default class DailyIframe extends EventEmitter {
       }
       this.sendMessage({ action: DAILY_METHOD_LEAVE }, k);
     });
+  }
+
+  startScreenShare() {
+    this.sendMessage({ action: DAILY_METHOD_START_SCREENSHARE });
+  }
+
+  stopScreenShare() {
+    this.sendMessage({ action: DAILY_METHOD_STOP_SCREENSHARE });
   }
 
   //
