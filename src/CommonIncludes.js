@@ -28,3 +28,5 @@ export const DAILY_METHOD_LEAVE = 'leave-meeting';
 export const DAILY_METHOD_UPDATE_PARTICIPANT = 'update-participant';
 export const DAILY_METHOD_LOCAL_AUDIO = 'local-audio';
 export const DAILY_METHOD_LOCAL_VIDEO = 'local-video';
+export const DAILY_METHOD_START_SCREENSHARE = 'local-screen-start';
+export const DAILY_METHOD_STOP_SCREENSHARE = 'local-screen-stop';
