@@ -46,13 +46,45 @@ const FRAME_PROPS = {
   },
   token: {
     validate: (token) => typeof token === 'string',
-    help: 'token should be a string'
+    help: 'token should be a string',
+    queryString: 't'
+  },
+  layout: {
+    validate: (layout) => layout === 'custom-v1' || layout === 'browser',
+    help: 'layout may only be set to "custom-v1"',
+    queryString: 'layout'
   }
 };
 
 // todo: more validation?
 const PARTICIPANT_PROPS = {
-  style: true, setAudio: true, setVideo: true, eject: true
+  styles: {
+    validate: (styles) => {
+      for (var k in styles) {
+        if (k !== 'cam' && k !== 'screen') {
+          return false;
+        }
+      }
+      if (styles.cam) {
+        for (var k in styles.cam) {
+          if (k !== 'div' && k !== 'video') {
+            return false;
+          }
+        }    
+      }
+      if (styles.screen) {
+        for (var k in styles.screen) {
+          if (k !== 'div' && k !== 'video') {
+            return false;
+          }
+        }    
+      }
+      return true;
+    },
+    help: 'styles format should be a subset of: ' +
+          '{ cam: {div: {}, video: {}}, screen: {div: {}, video: {}} }'
+  },
+  setAudio: true, setVideo: true, eject: true
 };
 
 //
@@ -60,6 +92,34 @@ const PARTICIPANT_PROPS = {
 //
 
 export default class DailyIframe extends EventEmitter {
+
+  static wrap(iframeish, properties={}) {
+    if (!iframeish || !iframeish.contentWindow ||
+        ('string' !== typeof iframeish.src)) {
+      throw new Error('DailyIframe::Wrap needs an iframe-like first argument');
+    }
+    return new DailyIframe(iframeish, properties);
+  }
+
+  static createTransparentFrame(properties={}) {
+    let iframeEl = document.createElement('iframe');
+    iframeEl.allow = 'microphone; camera; autoplay';
+    iframeEl.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      pointer-events: none;
+    `;
+    document.body.appendChild(iframeEl);
+    if (!properties.layout) {
+      properties.layout = 'custom-v1';
+    }
+    return DailyIframe.wrap(iframeEl, properties);
+  }
+
   constructor(iframeish, properties={}) {
     super();
     this.validateProperties(properties);
@@ -90,17 +150,17 @@ export default class DailyIframe extends EventEmitter {
     return this._participants;
   }
 
-  // properties
-  //   style ?
-  //   setAudio
-  //   setVideo
-  //   eject
   updateParticipant(id, properties) {
     if (id && properties && this._participants[id]) {
       for (var prop in properties) {
         if (!PARTICIPANT_PROPS[prop]) {
           throw new Error
             (`unrecognized updateParticipant property ${prop}`);
+        }
+        if (PARTICIPANT_PROPS[prop].validate) {
+          if (!PARTICIPANT_PROPS[prop].validate(properties[prop])) {
+            throw new Error(PARTICIPANT_PROPS[prop].help);
+          }
         }
       }
       this.sendMessage({ action: DAILY_METHOD_UPDATE_PARTICIPANT,
@@ -144,7 +204,7 @@ export default class DailyIframe extends EventEmitter {
     this._meetingState = DAILY_STATE_JOINING;
     this.emit(DAILY_EVENT_JOINING_MEETING,
               { action: DAILY_EVENT_JOINING_MEETING });
-    this._iframe.src = this.properties.url;
+    this._iframe.src = this.assembleMeetingUrl();
     return new Promise((resolve, reject) => {
       this._joinedCallback = (participants) => {
         if (participants) {
@@ -185,9 +245,26 @@ export default class DailyIframe extends EventEmitter {
         throw new Error(`unrecognized property '${k}'`);
       }
       if (!FRAME_PROPS[k].validate(properties[k])) {
-        throw new Error(`unrecognized property '${k}'`);
+        throw new Error(`property '${k}': ${FRAME_PROPS[k].help}`);
       }
     }
+  }
+
+  assembleMeetingUrl() {
+    // handle case of url with query string and without
+    let props = this.properties,
+        firstSep = (props.url.match(/\?/)) ? '&' : '?',
+        url = props.url,
+        urlProps = Object.keys(FRAME_PROPS).filter((p) =>
+          FRAME_PROPS[p].queryString && (props[p] !== undefined)
+        );
+    if (!urlProps.length) {
+      return url;
+    }
+    let newQueryString = urlProps
+          .map((p) => `${FRAME_PROPS[p].queryString}=${props[p]}`)
+          .join('&');
+    return url + firstSep + newQueryString;
   }
 
   sendMessage(message, callback) {
@@ -256,13 +333,5 @@ export default class DailyIframe extends EventEmitter {
     const str = 'hello, world.';
     console.log(str);
     return str;
-  }
-
-  static wrap(iframeish, properties={}) {
-    if (!iframeish || !iframeish.contentWindow ||
-        ('string' !== typeof iframeish.src)) {
-      throw new Error('DailyIframe::Wrap needs an iframe-like first argument');
-    }
-    return new DailyIframe(iframeish, properties);
   }
 };
