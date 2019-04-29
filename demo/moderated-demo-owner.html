@@ -1,0 +1,36 @@
+<html>
+<head>
+<title>meeting owner demo</title>
+<script src="../dist/daily-iframe.js"></script>
+<script src="./moderated-demo.js"></script>
+</head>
+<body onload="main_Owner()">
+
+<div onclick="joinMtg_Owner()">
+[ join mtg ]
+</div>
+<div onclick="leaveMtg()">
+[ leave mtg ]
+</div>
+
+<div onclick="window.callFrame.setLocalVideo(!callFrame.localVideo())">
+[ toggle local cam ]
+</div>
+<div onclick="window.callFrame.setLocalAudio(!callFrame.localAudio())">
+[ toggle local mic ]
+</div>
+
+<hr />
+
+<div id="local-info">
+</div>
+<div id="local-vid-positioning-div">
+</div>
+
+<hr />
+
+<div id="remote-participants-list">
+</div>
+
+</body>
+</html>
