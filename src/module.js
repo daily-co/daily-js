@@ -163,8 +163,8 @@ export default class DailyIframe extends EventEmitter {
     return this._participants;
   }
 
-  updateParticipant(id, properties) {
-    if (id && properties && this._participants[id]) {
+  updateParticipant(sessionId, properties) {
+    if (sessionId && properties && this._participants[sessionId]) {
       for (var prop in properties) {
         if (!PARTICIPANT_PROPS[prop]) {
           throw new Error(`unrecognized updateParticipant property ${prop}`);
@@ -177,9 +177,16 @@ export default class DailyIframe extends EventEmitter {
       }
       this.sendMessage({
         action: DAILY_METHOD_UPDATE_PARTICIPANT,
-        id,
+        id: sessionId,
         properties,
       });
+    }
+    return this;
+  }
+
+  updateParticipants(properties) {
+    for (var sessionId in properties) {
+      this.updateParticipant(sessionId, properties[sessionId]);
     }
     return this;
   }
@@ -224,6 +231,9 @@ export default class DailyIframe extends EventEmitter {
     return new Promise((resolve, reject) => {
       this._joinedCallback = (participants) => {
         if (participants) {
+          for (var id in participants) {
+            this.fixupParticipant(participants[id]);
+          }
           this._participants = participants;
         }
         resolve(participants);
@@ -314,8 +324,9 @@ export default class DailyIframe extends EventEmitter {
         break;
       case DAILY_EVENT_PARTICIPANT_JOINED:
       case DAILY_EVENT_PARTICIPANT_UPDATED:
-        if (msg.participant && msg.participant.id) {
-          let id = msg.participant.local ? 'local' : msg.participant.id;
+        this.fixupParticipant(msg);
+        if (msg.participant && msg.participant.session_id) {
+          let id = msg.participant.local ? 'local' : msg.participant.session_id;
           if (!deepEqual(msg.participant, this._participants[id])) {
             this._participants[id] = msg.participant;
             this.emit(msg.action, msg);
@@ -323,8 +334,9 @@ export default class DailyIframe extends EventEmitter {
         }
         break;
       case DAILY_EVENT_PARTICIPANT_LEFT:
-        if (msg.participant && msg.participant.id) {
-          delete this._participants[msg.participant.id];
+        if (msg.participant && msg.participant.session_id) {
+          this.fixupParticipant(msg);
+          delete this._participants[msg.participant.session_id];
           this.emit(msg.action, msg);
         }
         break;
@@ -340,6 +352,18 @@ export default class DailyIframe extends EventEmitter {
         break;
       default: // no op
     }
+  }
+
+  // fix this later to be a no-op
+  fixupParticipant(msgOrP) {
+    let p = msgOrP.participant ? msgOrP.participant : msgOrP;
+    if (!p.id) {
+      return;
+    }
+    p.session_id = p.id;
+    p.user_name = p.name;
+    delete p.id;
+    delete p.name;
   }
 
   sayHello() {

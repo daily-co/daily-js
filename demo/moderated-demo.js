@@ -152,7 +152,7 @@ function updateUI(e) {
       continue;
     }
     remoteText += `
-${participant.name || participant.id}:
+${participant.user_name || participant.user_id || participant.session_id}:
   user_id: ${participant.user_id}
   mic:     ${participant.audio ? 'on' : 'off'} ${micToggleButton(participant)}
     `;
@@ -173,7 +173,7 @@ function micToggleButton(participant) {
     return '';
   }
   return `<span onclick="updateRemoteMicState(this,'${
-    participant.id
+    participant.session_id
   }',{setAudio:${!participant.audio}})">[ toggle ]</span>`;
 }
 
@@ -221,6 +221,8 @@ function positionVideo_Owner() {
 function main_Member() {
   callFrame = window.DailyIframe.createTransparentFrame();
   callFrame
+    .on('joining-meeting', handleJoining)
+    .on('joined-meeting', showEvent)
     .on('participant-joined', updateMember)
     .on('participant-updated', updateMember)
     .on('participant-left', updateMember)
@@ -236,6 +238,10 @@ async function joinMtg_Member() {
     token: MEETING_MEMBER_TOKEN,
   });
   updateMember();
+}
+
+function handleJoining() {
+  localInfoDiv.innerHTML = '( joining meeting )';
 }
 
 function updateMember() {
