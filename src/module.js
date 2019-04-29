@@ -334,8 +334,8 @@ export default class DailyIframe extends EventEmitter {
         }
         break;
       case DAILY_EVENT_PARTICIPANT_LEFT:
+        this.fixupParticipant(msg);
         if (msg.participant && msg.participant.session_id) {
-          this.fixupParticipant(msg);
           delete this._participants[msg.participant.session_id];
           this.emit(msg.action, msg);
         }
@@ -360,6 +360,7 @@ export default class DailyIframe extends EventEmitter {
     if (!p.id) {
       return;
     }
+    p.owner = !!p.owner;
     p.session_id = p.id;
     p.user_name = p.name;
     delete p.id;
