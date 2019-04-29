@@ -116,14 +116,6 @@ async function joinMtg_Owner() {
 }
 
 //
-// callback for left-meeting event
-//
-function cleanupAfterLeaving(e) {
-  showEvent(e);
-  localInfoDiv.innerHTML = NOT_IN_MEETING_HTML;
-}
-
-//
 // callback for all participant events. also called manually from
 // joinMtg_Owner as an example of awaiting on the join() method
 //
@@ -220,6 +212,7 @@ function main_Member() {
   callFrame = window.DailyIframe.createTransparentFrame();
   callFrame.on('joining-meeting', handleJoining)
            .on('joined-meeting', showEvent)
+           .on('left-meeting', cleanupAfterLeaving)
            .on('participant-joined', updateMember)
            .on('participant-updated', updateMember)
            .on('participant-left', updateMember)
@@ -279,6 +272,14 @@ function showEvent(e) {
 
 function leaveMtg() {
   callFrame.leave();
+}
+
+//
+// callback for left-meeting event
+//
+function cleanupAfterLeaving(e) {
+  showEvent(e);
+  localInfoDiv.innerHTML = NOT_IN_MEETING_HTML;
 }
 
 function updateLocalInfo(local) {
