@@ -151,7 +151,7 @@ function updateUI(e) {
       continue;
     }
     remoteText += `
-${participant.name || participant.id}:
+${participant.user_name || participant.user_id || participant.session_id}:
   user_id: ${participant.user_id}
   mic:     ${participant.audio ? 'on' : 'off'} ${micToggleButton(participant)}
     `;
@@ -171,7 +171,7 @@ function micToggleButton(participant) {
     // can't control audio remotely for phone dial-in, yet
     return '';
   }
-  return `<span onclick="updateRemoteMicState(this,'${participant.id}',{setAudio:${!participant.audio}})">[ toggle ]</span>`;
+  return `<span onclick="updateRemoteMicState(this,'${participant.session_id}',{setAudio:${!participant.audio}})">[ toggle ]</span>`;
 }
 
 //
@@ -218,7 +218,9 @@ function positionVideo_Owner() {
 
 function main_Member() {
   callFrame = window.DailyIframe.createTransparentFrame();
-  callFrame.on('participant-joined', updateMember)
+  callFrame.on('joining-meeting', handleJoining)
+           .on('joined-meeting', showEvent)
+           .on('participant-joined', updateMember)
            .on('participant-updated', updateMember)
            .on('participant-left', updateMember)
            .on('error', showEvent);
@@ -235,6 +237,9 @@ async function joinMtg_Member() {
   updateMember();
 }
 
+function handleJoining() {
+  localInfoDiv.innerHTML = '( joining meeting )';
+}
 
 function updateMember() {
   let ps = window.callFrame.participants();
