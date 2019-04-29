@@ -53,6 +53,10 @@ const FRAME_PROPS = {
     validate: (layout) => layout === 'custom-v1' || layout === 'browser',
     help: 'layout may only be set to "custom-v1"',
     queryString: 'layout'
+  },
+  // used internally
+  emb: {
+    queryString: 'emb'
   }
 };
 
@@ -252,15 +256,12 @@ export default class DailyIframe extends EventEmitter {
 
   assembleMeetingUrl() {
     // handle case of url with query string and without
-    let props = this.properties,
+    let props = { ...this.properties, emb: 't' },
         firstSep = (props.url.match(/\?/)) ? '&' : '?',
         url = props.url,
         urlProps = Object.keys(FRAME_PROPS).filter((p) =>
           FRAME_PROPS[p].queryString && (props[p] !== undefined)
         );
-    if (!urlProps.length) {
-      return url;
-    }
     let newQueryString = urlProps
           .map((p) => `${FRAME_PROPS[p].queryString}=${props[p]}`)
           .join('&');
