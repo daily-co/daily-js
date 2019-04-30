@@ -221,8 +221,8 @@ export default class DailyIframe extends EventEmitter {
         if (participants) {
           for (var id in participants) {
             this.fixupParticipant(participants[id]);
+            this._participants[id] = { ...participants[id] };
           }
-          this._participants = participants;
         }
         resolve(participants);
       }
@@ -316,7 +316,7 @@ export default class DailyIframe extends EventEmitter {
         if (msg.participant && msg.participant.session_id) {
           let id = msg.participant.local ? 'local' : msg.participant.session_id;
           if (!deepEqual(msg.participant, this._participants[id])) {
-            this._participants[id] = msg.participant;
+            this._participants[id] = { ...msg.participant };
             this.emit(msg.action, msg);
           }
         }
