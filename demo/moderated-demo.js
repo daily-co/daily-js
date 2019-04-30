@@ -6,7 +6,8 @@
 //
 // meeting url to join
 //
-const MEETING_URL = 'https://api-demo.daily.co/moderated-demo';
+//const MEETING_URL = 'https://api-demo.daily.co/hq-moderated-demo';
+const MEETING_URL = 'http://localhost:8000/hq-moderated-demo?cdmn=api-demo';
 
 //
 // example meeting owner token, should be created with is_owner=true
