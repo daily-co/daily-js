@@ -289,7 +289,7 @@ Actions:
 
 `setAudio`, `setVideo`, and `eject` on remote participants require
 meeting owner permission. If an action is not possible (or if there is
-no current meeting) the action will not be attempted.
+no current meeting) the action will be silently ignored.
 
 **Please note that remotely controlling a user's microphone and
 camera is a potential privacy issue. This functionality is important
@@ -333,29 +333,29 @@ The `styles.cam.div` style css properties are applied to the container div for t
 Here are the default styles for the container and video element classes.
 
 ```
-      .daily-video-toplevel-div {
-         position: fixed;
-         top: 0;
-         left: 0;
-         width: 100%;
-         height: 100%;
-      }
-      .daily-video-div {
-        position: fixed;
-        visibility: hidden;
-      }
-      .daily-video-element {
-        position: relative;
-        width: 100%;
-        overflow: hidden;
-        height: 100%
-      }
-      .daily-video-element.local {
-        transform: scale(-1,1);
-      }
+.daily-video-toplevel-div {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+.daily-video-div {
+  position: fixed;
+  visibility: hidden;
+}
+.daily-video-element {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  height: 100%
+}
+.daily-video-element.local {
+  transform: scale(-1,1);
+}
 ```
 
-To make the video feed for the local participant visible, and position it, you only need to set a few css properties of the local participant's `styles.cam.div`. Here's how you might "shadow" the position and size of a placeholder div you've created:
+For example, to position the local camera feed and make it visible, you only need to set a few css properties of the local participant's `styles.cam.div`. Here's how you might "shadow" the position and size of a placeholder div you've created:
 
 ```
 let bounds = localVidPositioningDiv.getBoundingClientRect();
@@ -376,7 +376,7 @@ callFrame.updateParticipant('local', {
 
 #### `updateParticipants(propertiesObject)`
 
-Syntactic sugar for updating multiple participants with a single call. The `propertiesObject`'s keys are participant session ids and values are the `properties` objects described above. Internally, loops over the keys and calls `updateParticipant()` multiple times.
+Syntactic sugar for updating multiple participants with a single call. The `propertiesObject`'s keys are participant session ids and values are the `properties` objects described above. Internally, this method just loops over the keys and calls `updateParticipant()` multiple times.
 
 Returns `this`.
 
@@ -550,11 +550,10 @@ Emitted when an unrecoverable call error is encountered. The event's
 If a call is in progress when the error is thrown, a `left-meeting`
 event should be emitted immediately after the `error` event.
 
+```
 // example event object
 {
-action: 'error',
-
-```
+  action: 'error',
   errorMsg: 'network unreachable'
 }
 ```
