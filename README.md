@@ -273,6 +273,10 @@ Participant properties are as follows:
 Modify a participant, either by sending a message to change its state,
 or by changing the local view.
 
+
+Returns `this`.
+
+
 The first argument is the participant's `session_id`, or `'local'` for
 the local participant.
 
@@ -289,19 +293,121 @@ Actions:
 meeting owner permission. If an action is not possible (or if there is
 no current meeting) the action will not be attempted.
 
-** Please note that remotely controlling a user's microphone and
+**Please note that remotely controlling a user's microphone and
 camera is a potential privacy issue. This functionality is important
 for some use cases, but should not be a general feature of video call
 user interfaces. Think carefully before you enable remote control of
 cameras and microphones. And be aware that browsers will require that
 a user explicitly allow mic/camera device access at least once. Chrome
 will prompt the first time a user joins a call on a specific
-subdomain. Safari will prompt once each meeting session. **
+subdomain. Safari will prompt once each meeting session.**
+
+The `styles` action is only used if you are implementing your own custom in-call video layout. The format of the `styles` property is
 
 
+```
+styles: {
+  cam: {
+    div: { ...css properties }
+    video: { ...css properties }
+  },
+  screen: {
+    div: { ...css properties }
+    video: { ...css properties }
+  }
+}
+```
+
+Each available video stream in the video call iframe is wrapped in a div, so that you can style both a container and the video element itself.
+
+```
+<div class="daily-video-toplevel-div>
+
+  <div class="daily-video-div cam">
+    <video class="daily-video-element cam"></video>
+  </div>
+
+  ... additional video elements
+</div>
+```
+
+The `styles.cam.div` style css properties are applied to the container div for the participant's camera stream. The `styles.cam.video` css properties are applied to the video element for the participant's camera stream. The `styles.screen.div` and `styles.screen.video` are applied to the container and video element for the participant's screen share feed.
+
+Here are the default styles for the container and video element classes.
+
+```
+      .daily-video-toplevel-div {
+         position: fixed;
+         top: 0;
+         left: 0;
+         width: 100%;
+         height: 100%;
+      }
+      .daily-video-div {
+        position: fixed;
+        visibility: hidden;
+      }
+      .daily-video-element {
+        position: relative;
+        width: 100%;
+        overflow: hidden;
+        height: 100%
+      }
+      .daily-video-element.local {
+        transform: scale(-1,1);
+      }
+```
+
+
+To make the video feed for the local participant visible, and position it, you only need to set a few css properties of the local participant's `styles.cam.div`. Here's how you might "shadow" the position and size of a placeholder div you've created:
+
+
+```
+let bounds = localVidPositioningDiv.getBoundingClientRect();
+callFrame.updateParticipant('local', {
+  styles: {
+    cam: {
+      div: {
+        visibility: 'visible',
+        top: bounds.top,
+        left: bounds.left,
+        width: bounds.width,
+        height: bounds.height
+      }
+    }
+  }
+});  
+```
+
+#### `updateParticipants(propertiesObject)`
+
+Syntactic sugar for updating multiple participants with a single call. The `propertiesObject`'s keys are participant session ids and values are the `properties` objects described above. Internally, loops over the keys and calls `updateParticipant()` multiple times.
 
 Returns `this`.
 
+#### `localAudio()`
+
+Returns the local mic state or null if not in a call. Syntactic sugar for `this.participants.local.audio`.
+
+#### `localVideo()`
+
+Returns the local camera state or null if not in a call. Syntactic sugar for `this.participants.local.video`.
+
+#### `setLocalAudio(bool)`
+
+Updates the local mic state. Does nothing if not in a call. Syntactic sugar for `this.updateParticipant('local', { audio: bool })`.
+
+Returns `this`.
+
+#### `setLocalVideo(bool)`
+
+Updates the local camera state. Does nothing if not in a call. Syntactic sugar for `this.updateParticipant('local', { video: bool })`.
+
+Returns `this`.
+
+#### `on(eventName, callback)  once(eventName, callback)  off(eventName, callback)`
+
+Adds and removes event callbacks. See documentation for [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter).
 
 
 ## Events
@@ -453,8 +559,8 @@ event should be emitted immediately after the `error` event.
 // example event object
 {
   action: 'error',
+```
   errorMsg: 'network unreachable'
 }
 ```
-
 
