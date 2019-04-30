@@ -1,8 +1,8 @@
 # daily-js
 
-The official front-end library for the Daily.co video call API.
+The official front-end library for the Daily.co video calling API.
 
-- Manage the call lifecycle and participant state
+- Manage call lifecycle and participant state
 - Respond to in-call events
 - Customize call layout and UI
 
@@ -82,7 +82,7 @@ layout and styling.
 
 ## Methods
 
-- static methods
+- factory methods
   - `wrap(iframe, properties`)
   - `createTransparentFrame(properties)`
 - instance methods
@@ -99,12 +99,214 @@ layout and styling.
   - `localVideo()`
   - `setLocalAudio()`
   - `setLocalVideo()`
+  - `on(eventName, callback)`
+  - `once(eventName, callback)`
+  - `off(eventName, callback)`
+
+### Factory methods and top-level configuration
+
+You don't ever need to call the `DailyIframe` constructor
+directly. Instead, use one of the factory methods, `wrap()` or
+`createTransparentFrame()`.
+
+Both factory methods accept a `properties` object. (You can also set
+these properties when you call the `join()` method.)
+
+```
+// top-level configuration properties. can be passed to the factory
+// method that creates the DailyIframe object, or to the join()
+// method.
+{
+  url: <required: url of the meeting to join>
+  token: <optional: meeting join token>
+}
+```
+
+#### `wrap(iframe, properties)`
+
+Use this factory method to wrap an `iframe` DOM element that you've
+already defined.
+
+The first argument is the iframe you want to wrap. The second argument
+is the properties object defined above. A properties argument is
+optional. You can also set these properties when you call the `join()`
+method.
+
+#### `createTransparentFrame(properties)`
+
+Use this factory method when you want to implement the call user
+interface yourself. This method creates a full-width, full-height,
+transparent iframe that ignores all pointer events. The iframe is
+appended to the `document.body`.
+
+### Instance methods reference
+
+#### `join(properties)`
+
+Joins a meeting.
+
+Takes the same `properties` object that the factory methods take. The
+properties argument is optional, but the meeting `url` must be set
+either here or previously.
+
+Returns a promise, which resolves when the join completes. The promise
+resolves with a participants object. This is the same participants
+object that is passed to the `joined-meeting` event. You will often
+want to do some call setup or UI updating as soon as a meeting is
+joined. You can do that when the `join()` promise resolves, or by
+installing a `joined-meeting` event listener. The two approaches are
+pretty much equivalent.
+
+```
+async function joinExample() {
+  let participants;
+  try {
+    participants await callFrame.join();
+  } catch (e) {
+    console.error('ERROR while joining meeting', e);
+    return;
+  }
+  console.log('local mic is', participants.local.audio ? 'on': 'off');
+}
+```
+
+#### `leave`()
+
+Leaves the meeting. If there is no meeting, this method does
+nothing. Returns `null`;
+
+#### `startScreenShare()`
+
+Starts a screen share from the local participant. If there is no
+meeting, or this is not a browser that supports screen sharing, this
+method does nothing.
+
+There's no way to know if the user ignores or cancels the browser's
+screen share confirmation dialog.
+
+To confirm that screen sharing started, listen for
+`update-participant` events and check the local user's `screen`
+property.
+
+You can call `startScreenShare()` even if the `enable_screenshare`
+property is set to `false` for the current
+[room](https://docs.daily.co/reference#rooms) or [meeting
+token](https://docs.daily.co/reference#meeting-tokens). `enable_screenshare`
+only configures whether the default Daily.co in-call UI allows screen
+sharing.
+
+Returns `null`.
+
+#### `stopScreenShare()`
+
+Stops a current screen share, if there is one.
+
+Returns `null`.
+
+#### `iframe()`
+
+Returns the `iframe` DOM element that this object wraps.
+
+#### `meetingState()`
+
+Returns the current meeting state.
+
+- new
+- joining-meeting
+- joined-meeting
+- left-meeting
+- error
+
+If an error is thrown, the meeting state will transition to 'error',
+not 'left-meeting', even though the meeting connection will also be
+terminated by the error.
+
+#### `participants()`
+
+Returns the current meeting participants. The participants information
+is an object that looks like this:
+
+```
+{
+  "local": {
+    "user_id": "user_123",
+    "audio": true,
+    "video": true,
+    "screen": false,
+    "joinedAt": Date(2019-04-30T00:06:16.011Z),
+    "local": true,
+    "owner": true,
+    "session_id": "3c9ba1ea-baab-4876-d501-21a1d49c0902",
+    "user_name": "A. User Name"
+  },
+  "e20b7ead-54c3-459e-800a-ca4f21882f2f": {
+    "user_id": "e20b7ead-54c3-459e-800a-ca4f21882f2f",
+    "audio": true,
+    "video": true,
+    "screen": false,
+    "joinedAt": Date(2019-04-30T00:06:32.485Z),
+    "local": false,
+    "owner": "",
+    "session_id": "e20b7ead-54c3-459e-800a-ca4f21882f2f",
+    "user_name": ""
+  }
+}
+```
+
+The object keys are 'local' for the local participant and the
+participant's `session_id` for remote participants.
+
+Participant properties are as follows:
+
+- `session_id` - a unique id generated each time a participant joins a meeting
+- `user_id` - the user's id if set by a meeting token, otherwise the session_id
+- `user_name` - the user's name if set by a meeting token or set from the account if the user is logged into a Daily.co account
+- `local` - `true` for the local user
+- `owner` - `true` if set by a meeting token or the user is logged into a Daily.co account and is a member of the room's team
+- `joined_at` - js Date object, the time that the user joined the room
+- `audio` - `true` if the user's mic is active
+- `video` - `true` if the user's camera is active
+- `screen` - `true` if the user is screen sharing
+
+#### `updateParticipant(sessionId, config)`
+
+Modify a participant, either by sending a message to change its state,
+or by changing the local view.
+
+The first argument is the participant's `session_id`, or `'local'` for
+the local participant.
+
+The second argument is a set of actions to take.
+
+Actions:
+
+- `setAudio`: `true` | `false`,
+- `setVideo`: `true` | `false`,
+- `eject`: `true`
+- `styles`: custom layout (see below)
+
+`setAudio`, `setVideo`, and `eject` on remote participants require
+meeting owner permission. If an action is not possible (or if there is
+no current meeting) the action will not be attempted.
+
+** Please note that remotely controlling a user's microphone and
+camera is a potential privacy issue. This functionality is important
+for some use cases, but should not be a general feature of video call
+user interfaces. Think carefully before you enable remote control of
+cameras and microphones. And be aware that browsers will require that
+a user explicitly allow mic/camera device access at least once. Chrome
+will prompt the first time a user joins a call on a specific
+subdomain. Safari will prompt once each meeting session. **
+
+
+
+Returns `this`.
+
+
 
 ## Events
 
-`DailyIframe` implements the
-`[EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)`
-interface.
+`DailyIframe` implements the [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter) interface.
 
 You can install callbacks for the following events:
 
@@ -137,7 +339,9 @@ The event object passed to the callbacks always includes an `action`
 property with the event's name, so that your callback functions can
 handle multiple event types.
 
-### `joining-meeting`
+### events reference
+
+#### `joining-meeting`
 
 Emitted when the `join()` method is called, while the call is loading
 and connecting.
@@ -147,10 +351,11 @@ and connecting.
 { action: 'joining-meeting' }
 ```
 
-### `joined-meeting`
+#### `joined-meeting`
 
 Emitted when the call has connected. The `participants` property lists
-the current participants in the call.
+the current participants in the call. See the `participants()` method
+above for a description of the participant object.
 
 ```
 // example event object
@@ -172,7 +377,7 @@ the current participants in the call.
 }
 ```
 
-### `left-meeting`
+#### `left-meeting`
 
 Emitted when the call disconnects.
 
@@ -181,7 +386,7 @@ Emitted when the call disconnects.
 { action: 'left-meeting' }
 ```
 
-### `participant-joined`
+#### `participant-joined`
 
 Emitted when a new participant joins the call. The event's
 `participant` property contains all available information about the participant.
@@ -209,7 +414,7 @@ available before audio and video streams are ready.
 }
 ```
 
-### `participant-updated`
+#### `participant-updated`
 
 Emitted when participant state changes. This event is fired for both
 local and remote participant state changes. The event's `participant`
@@ -223,7 +428,7 @@ property contains all available information about the participant.
 }
 ```
 
-### `participant-left`
+#### `participant-left`
 
 Emitted when a remote participant state leaves the call. The event's
 `participant` property contains all of the available information about
@@ -237,7 +442,7 @@ the participant just before the participant disconnected.
 }
 ```
 
-### `error`
+#### `error`
 
 Emitted when an unrecoverable call error is encountered. The event's
 `errorMsg` property will contain a string with additional information.
