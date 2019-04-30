@@ -363,8 +363,10 @@ export default class DailyIframe extends EventEmitter {
     p.owner = !!p.owner;
     p.session_id = p.id;
     p.user_name = p.name;
+    p.joined_at = p.joinedAt;
     delete p.id;
     delete p.name;
+    delete p.joinedAt;
   }
 
   sayHello() {
