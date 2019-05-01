@@ -32,6 +32,8 @@
   "dependencies": {
     "@babel/runtime": "^7.4.3",
     "events": "^3.0.0",
-    "fast-equals": "^1.6.2"
+    "fast-equals": "^1.6.2",
+    "rollup-plugin-json": "^4.0.0",
+    "rollup-plugin-terser": "^4.0.4"
   }
 }

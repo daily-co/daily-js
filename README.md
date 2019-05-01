@@ -178,8 +178,9 @@ nothing. Returns `null`;
 #### `startScreenShare()`
 
 Starts a screen share from the local participant. If there is no
-meeting, or this is not a browser that supports screen sharing, this
-method does nothing.
+meeting, or this is not a browser that supports screen sharing, or
+`enable_screenshare` is set to false for either the room or the
+meeting token, this method does nothing.
 
 There's no way to know if the user ignores or cancels the browser's
 screen share confirmation dialog.
@@ -187,13 +188,6 @@ screen share confirmation dialog.
 To confirm that screen sharing started, listen for
 `update-participant` events and check the local user's `screen`
 property.
-
-You can call `startScreenShare()` even if the `enable_screenshare`
-property is set to `false` for the current
-[room](https://docs.daily.co/reference#rooms) or [meeting
-token](https://docs.daily.co/reference#meeting-tokens). `enable_screenshare`
-only configures whether the default Daily.co in-call UI allows screen
-sharing.
 
 Returns `null`.
 
