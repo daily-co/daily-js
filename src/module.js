@@ -26,6 +26,7 @@ import {
   DAILY_METHOD_LOCAL_VIDEO,
   DAILY_METHOD_START_SCREENSHARE,
   DAILY_METHOD_STOP_SCREENSHARE,
+  DAILY_METHOD_LOAD_CSS,
 } from './CommonIncludes.js';
 
 export {
@@ -58,6 +59,8 @@ const FRAME_PROPS = {
     help: 'layout may only be set to "custom-v1"',
     queryString: 'layout',
   },
+  cssFile: true,
+  cssText: true,
   // used internally
   emb: {
     queryString: 'emb',
@@ -151,6 +154,10 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
+  loadCss({ cssFile, cssText }) {
+    this.sendMessage({ action: DAILY_METHOD_LOAD_CSS, cssFile, cssText });
+  }
+
   iframe() {
     return this._iframe;
   }
@@ -236,6 +243,9 @@ export default class DailyIframe extends EventEmitter {
             this._participants[id] = { ...participants[id] };
           }
         }
+        if (this.properties.cssFile || this.properties.cssText) {
+          this.loadCss(this.properties);
+        }
         resolve(participants);
       };
     });
@@ -270,7 +280,7 @@ export default class DailyIframe extends EventEmitter {
       if (!FRAME_PROPS[k]) {
         throw new Error(`unrecognized property '${k}'`);
       }
-      if (!FRAME_PROPS[k].validate(properties[k])) {
+      if (FRAME_PROPS[k].validate && !FRAME_PROPS[k].validate(properties[k])) {
         throw new Error(`property '${k}': ${FRAME_PROPS[k].help}`);
       }
     }
