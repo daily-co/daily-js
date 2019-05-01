@@ -32,3 +32,4 @@ export const DAILY_METHOD_LOCAL_AUDIO = 'local-audio';
 export const DAILY_METHOD_LOCAL_VIDEO = 'local-video';
 export const DAILY_METHOD_START_SCREENSHARE = 'local-screen-start';
 export const DAILY_METHOD_STOP_SCREENSHARE = 'local-screen-stop';
+export const DAILY_METHOD_LOAD_CSS = 'load-css';
