@@ -236,11 +236,17 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
-  // experimental -- probably need camera resolution control to go
-  // with this, but that opens up potential cross-platform gotchas
+  // experimental -- should re-apply the track constraints if the
+  // local camera changes, and applyContraints may not be supported
+  // well enough for this to be used in production. also, think harder
+  // about this API design!
   //
-  setBandwidth(kBits) {
-    this.sendMessage({ action: DAILY_METHOD_SET_BANDWIDTH, kBits });
+  setBandwidth({ kbs, trackConstraints }) {
+    this.sendMessage({
+      action: DAILY_METHOD_SET_BANDWIDTH,
+      kbs,
+      trackConstraints,
+    });
     return this;
   }
 
