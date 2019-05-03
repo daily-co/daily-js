@@ -4,21 +4,21 @@
 //
 
 //
-// meeting url to join
+// from demo/.env, get a meeting url, on owner token, and a member token
 //
-const MEETING_URL = 'https://api-demo.daily.co/hq-moderated-demo';
-// const MEETING_URL = 'http://localhost:8000/hq-moderated-demo?cdmn=api-demo';
+let MEETING_URL,
+    MEETING_OWNER_TOKEN,
+    MEETING_MEMBER_TOKEN;
 
-//
-// example meeting owner token, should be created with is_owner=true
-//
-const MEETING_OWNER_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvIjp0cnVlLCJhbyI6ZmFsc2UsInZvIjpmYWxzZSwiZCI6ImVjMzNmYzdkLThiZjAtNDg4Ny05MDg1LTljNjNkNWNjNDY3OSIsImlhdCI6MTU1NjUwOTM2Nn0.I2bhpbXorbTaFyumF4-Viz_vu8U1YK996qDWePzmrL0'
+async function fetchConfig() {
+  let res = await fetch('/env');
+  let config = await res.json();
+  console.log('CONFIG', config);
+  MEETING_URL = config.MODERATED_DEMO_MEETING_URL;
+  MEETING_OWNER_TOKEN = config.MODERATED_DEMO_MEETING_OWNER_TOKEN,
+  MEETING_MEMBER_TOKEN = config.MODERATED_DEMO_MEETING_MEMBER_TOKEN;
+}
 
-//
-// example meeting member token, should be created with a user_id, a user_name,
-// and start_video_off=true
-//
-const MEETING_MEMBER_TOKEN = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1ZCI6MTIzLCJ1IjoiQS4gQi4gTmFtZSIsImQiOiJlYzMzZmM3ZC04YmYwLTQ4ODctOTA4NS05YzYzZDVjYzQ2NzkiLCJpYXQiOjE1NTY1MDkzOTB9.lJAzfLkUouyZoyp2To0e--RTSLimvRC-YCNy616gIeU`;
 
 //
 // text to display when we're not in a meeting
@@ -46,7 +46,9 @@ let callFrame,
 // called on body load. sets up the iframe for our call, then sets up
 // the html elements we'll use for displaying/managing the call
 // 
-function main_Owner() {
+async function main_Owner() {
+  await fetchConfig();
+
   // call the createTransparentFrame() factory function to create a
   // full-width, full-height, transparent iframe and a wrapper class
   // that allows us to control the call and respond to call events
@@ -167,7 +169,9 @@ function updateRemoteMicState(button, participantId, newMicState) {
 //
 
 
-function main_Member() {
+async function main_Member() {
+  await fetchConfig();
+
   callFrame = window.DailyIframe.createTransparentFrame();
   callFrame.on('joining-meeting', handleJoining)
            .on('joined-meeting', showEvent)
