@@ -34,6 +34,7 @@ import {
   DAILY_METHOD_START_RECORDING,
   DAILY_METHOD_STOP_RECORDING,
   DAILY_METHOD_LOAD_CSS,
+  DAILY_METHOD_SET_BANDWIDTH,
 } from './CommonIncludes.js';
 
 export {
@@ -232,6 +233,14 @@ export default class DailyIframe extends EventEmitter {
 
   setLocalVideo(bool) {
     this.sendMessage({ action: DAILY_METHOD_LOCAL_VIDEO, state: bool });
+    return this;
+  }
+
+  // experimental -- probably need camera resolution control to go
+  // with this, but that opens up potential cross-platform gotchas
+  //
+  setBandwidth(kBits) {
+    this.sendMessage({ action: DAILY_METHOD_SET_BANDWIDTH, kBits });
     return this;
   }
 
