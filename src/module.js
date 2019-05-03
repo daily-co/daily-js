@@ -15,6 +15,11 @@ import {
   DAILY_EVENT_PARTICIPANT_JOINED,
   DAILY_EVENT_PARTICIPANT_UPDATED,
   DAILY_EVENT_PARTICIPANT_LEFT,
+  DAILY_EVENT_RECORDING_STARTED,
+  DAILY_EVENT_RECORDING_STOPPED,
+  DAILY_EVENT_RECORDING_STATS,
+  DAILY_EVENT_RECORDING_ERROR,
+  DAILY_EVENT_RECORDING_UPLOAD_COMPLETED,
   DAILY_EVENT_ERROR,
 
   // internals
@@ -26,6 +31,8 @@ import {
   DAILY_METHOD_LOCAL_VIDEO,
   DAILY_METHOD_START_SCREENSHARE,
   DAILY_METHOD_STOP_SCREENSHARE,
+  DAILY_METHOD_START_RECORDING,
+  DAILY_METHOD_STOP_RECORDING,
   DAILY_METHOD_LOAD_CSS,
 } from './CommonIncludes.js';
 
@@ -61,6 +68,7 @@ const FRAME_PROPS = {
   },
   cssFile: true,
   cssText: true,
+  bodyClass: true,
   // used internally
   emb: {
     queryString: 'emb',
@@ -154,8 +162,13 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  loadCss({ cssFile, cssText }) {
-    this.sendMessage({ action: DAILY_METHOD_LOAD_CSS, cssFile, cssText });
+  loadCss({ bodyClass, cssFile, cssText }) {
+    this.sendMessage({
+      action: DAILY_METHOD_LOAD_CSS,
+      bodyClass,
+      cssFile,
+      cssText,
+    });
   }
 
   iframe() {
@@ -271,6 +284,14 @@ export default class DailyIframe extends EventEmitter {
     this.sendMessage({ action: DAILY_METHOD_STOP_SCREENSHARE });
   }
 
+  startRecording() {
+    this.sendMessage({ action: DAILY_METHOD_START_RECORDING });
+  }
+
+  stopRecording() {
+    this.sendMessage({ action: DAILY_METHOD_STOP_RECORDING });
+  }
+
   //
   // internal methods
   //
@@ -360,6 +381,14 @@ export default class DailyIframe extends EventEmitter {
         }
         this.emit(msg.action, msg);
         break;
+      case DAILY_EVENT_RECORDING_STARTED:
+      case DAILY_EVENT_RECORDING_STOPPED:
+      case DAILY_EVENT_RECORDING_STATS:
+      case DAILY_EVENT_RECORDING_ERROR:
+      case DAILY_EVENT_RECORDING_UPLOAD_COMPLETED:
+        this.emit(msg.action, msg);
+        break;
+
       default: // no op
     }
   }
