@@ -154,7 +154,8 @@ export default class DailyIframe extends EventEmitter {
 
   loadCss({ bodyClass, cssFile, cssText }) {
     this.sendMessage({ action: DAILY_METHOD_LOAD_CSS,
-                       bodyClass, cssFile, cssText });
+                       cssFile: this.absoluteUrl(cssFile),
+                       bodyClass, cssText });
   }
 
   iframe() {
@@ -401,6 +402,15 @@ export default class DailyIframe extends EventEmitter {
     delete p.id;
     delete p.name;
     delete p.joinedAt;
+  }
+
+  absoluteUrl(url) {
+    if ('undefined' === typeof url) {
+      return undefined;
+    }
+    let a = document.createElement('a');
+		a.href = url;
+		return a.href;
   }
 
   sayHello() {

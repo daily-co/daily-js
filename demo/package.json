@@ -1,0 +1,11 @@
+{
+  "main": "index.js",
+  "scripts": {
+    "dev": "micro-dev"
+  },
+  "devDependencies": {
+    "micro": "^9.3.4",
+    "micro-dev": "^3.0.0",
+    "serve-handler": "^6.0.0"
+  }
+}
