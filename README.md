@@ -119,6 +119,9 @@ these properties when you call the `join()` method.)
 {
   url: <required: url of the meeting to join>
   token: <optional: meeting join token>
+  cssFile: <optional: an external css stylesheet to load>
+  cssText: <optional: inline css style text to load>
+  bodyClass: <optional: class attributes to apply to the iframe body element>
 }
 ```
 
@@ -294,83 +297,251 @@ a user explicitly allow mic/camera device access at least once. Chrome
 will prompt the first time a user joins a call on a specific
 subdomain. Safari will prompt once each meeting session.**
 
-The `styles` action is only used if you are implementing your own custom in-call video layout. The format of the `styles` property is
+The `styles` action is only used if you are implementing your own
+custom in-call video layout. The format of the `styles` property is:
 
 ```
 styles: {
   cam: {
     div: { ...css properties }
+    overlay: { ...css properties }
     video: { ...css properties }
   },
   screen: {
     div: { ...css properties }
+    overlay: { ...css properties }
     video: { ...css properties }
   }
 }
+
+
+The `styles.cam.div` style css properties are applied to the container
+div for the participant's camera stream. The `style.cam.overlay` style
+css properties are applied to the overlay element for the
+participant's camera stream. The `styles.cam.video` css properties are
+applied to the video element for the participant's camera stream. The
+`styles.screen.div` and `styles.screen.video` are applied to the
+container and video element for the participant's screen share feed.
+
+For example, to position the local camera feed and make it visible,
+you only need to set a few css properties of the local participant's
+`styles.cam.div`. Here's how you might "shadow" the position and size
+of a placeholder div you've created:
+
+
 ```
 
-Each available video stream in the video call iframe is wrapped in a div, so that you can style both a container and the video element itself.
+let bounds = localVidPositioningEl.getBoundingClientRect();
+callFrame.updateParticipant('local', {
+styles: {
+cam: {
+div: {
+visibility: 'visible',
+top: bounds.top,
+left: bounds.left,
+width: bounds.width,
+height: bounds.height
+}
+}
+}
+});
 
 ```
-<div class="daily-video-toplevel-div>
 
-  <div class="daily-video-div cam">
-    <video class="daily-video-element cam"></video>
+See the next section, about the `loadCss()` method, for more
+information about implementing custom layouts.
+
+#### `loadCss({ bodyClass, cssFile, cssText })`
+
+You can call this function any time to (re-)set the body classes and
+CSS that you've passed into the iframe.
+
+These three styling properties are used to implement completely custom
+layouts. They are ignored unless you have constructed the DailyIframe
+object using the `createTransparentFrame()` factory function.
+
+The three styling properties can be passed to the factory function, to
+the `join()` method, or to this `loadCss()` method.
+
+See the `demo/layout-css.html` and `demo/layout-css.css` files for an
+example of a custom layout with several dynamic options, implemented
+entirely in css.
+
+The `bodyClass` property is a string. The `class` attribute of the
+`body` element inside the call iframe will be set to this string. You
+can include multiple class names in the string. (Just separate the
+class names with spaces.)
+
+
+```
+
+callFrame.loadCss({ bodyClass: 'theme-bubbles minimized-view' });
+
+```
+
+The `cssFile` property is the url of a stylesheet to fetch
+externally. The url can be an absolute url, or a relative url. If it's
+relative, the url will be resolved relative to the parent iframe.
+
+Each call to `loadCss()` will replace the previous `cssFile`
+stylesheet, if a `cssFile` property is passed to the method. (It can
+sometimes be useful to switch stylesheets in the middle of a call.) To
+remove the previous stylesheet, pass an empty string (`''`) as the
+`cssFile` property.
+
+
+```
+
+allFrame.loadCss({ cssFile: '/static/call-theme-bubbles.css' });
+
+```
+
+The `cssText` property is a string of css to load into the iframe
+inside a `<style>` element.
+
+Each call to `loadCss()` will replace the previous `cssText`
+style element, if a `cssText` property is passed to the method.
+
+
+```
+
+// a very simple custom layout:
+// this css will display every participant's
+// video streams in a column down the right side
+// of the window
+//
+callFrame.loadCss({ cssText: `.daily-video-div { position: relative; visibility: visible; width: 320; height: 180; margin: 1em; margin-left: auto; }`});
+
+```
+
+#### CSS for custom layouts
+
+Each available video stream in the video call iframe is wrapped in a
+div, and has a sibling element that is a div you can use as an
+overlay. You can style the video container, the overlay, and the video
+element. You can also style a separate top level div, a div that
+wraps all of the video elements, and an info div.
+
+Here is the DOM structure of the elements in a call that you can
+style.
+
+
+```
+
+<body class=" (bodyClass classes...) ">
+  <div class="daily-video-toplevel-div (toplevel classes...)">
+
+    <div class="daily-videos-wapper (call-state classes)">
+
+      <div class="daily-video-div (video classes...)"
+           data-user-name=" (user_name) ">
+        <div class="daily-video-overlay (video classes...)"
+             data-user-name=" (user_name) "></div>
+        <video class="daily-video-element (video classes...)">
+               data-user-name=" (user_name) "></video>
+      </div>
+      ... additional video elements
+
+    </div>
+
+    <div class="info-div"></div>
+
   </div>
-
-  ... additional video elements
-</div>
+</body>
 ```
-
-The `styles.cam.div` style css properties are applied to the container div for the participant's camera stream. The `styles.cam.video` css properties are applied to the video element for the participant's camera stream. The `styles.screen.div` and `styles.screen.video` are applied to the container and video element for the participant's screen share feed.
 
 Here are the default styles for the container and video element classes.
 
 ```
 .daily-video-toplevel-div {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+   position: fixed;
+   top: 0;
+   left: 0;
+   width: 100%;
+   height: 100%;
+}
+.daily-videos-wrapper {
+   position: fixed;
+   top: 0;
+   left: 0;
+   width: 100%;
+   height: 100%;
 }
 .daily-video-div {
   position: fixed;
   visibility: hidden;
 }
+.daily-video-overlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
 .daily-video-element {
-  position: relative;
+  position: absolute;
   width: 100%;
   overflow: hidden;
   height: 100%
 }
-.daily-video-element.local {
+.daily-video-element.local.cam {
   transform: scale(-1,1);
 }
 ```
 
-For example, to position the local camera feed and make it visible, you only need to set a few css properties of the local participant's `styles.cam.div`. Here's how you might "shadow" the position and size of a placeholder div you've created:
+As you can see above, the `visibility` of the `.daily-video-div`
+container elements is set to `hidden` initially. This means that until
+you override the default styles, no video streams are displayed.
 
-```
-let bounds = localVidPositioningDiv.getBoundingClientRect();
-callFrame.updateParticipant('local', {
-  styles: {
-    cam: {
-      div: {
-        visibility: 'visible',
-        top: bounds.top,
-        left: bounds.left,
-        width: bounds.width,
-        height: bounds.height
-      }
-    }
-  }
-});
-```
+Note that all available audio is always played. Even when a
+participant's video stream is hidden, that participant's audio is
+audible.
+
+Lists of classes that depend on call and participant state are
+attached to the various elements listed above.
+
+Additional classes of `.daily-video-toplevel-div`:
+
+- `recording`: the call is being recorded
+- `recording-uploading`: the recording is being done locally and saved to the cloud, and uploading to the cloud is in progress. This should _always_ be true during a local cloud recording, and will stay true until the upload completes, even after the recording is stopped.
+
+Additional classes of `.daily-videos-wrapper`:
+
+- `local-cam-on`: the local camera is turned on
+- `local-cam-muted`: the local camera is unavailable, blocked, or muted
+- `local-screen`: a local screen share is in progress
+- `remote-cams-N`: there are N remote video participants in the
+  call. This counts all video participants, even those that have no
+  camera or have muted their camera. It does not count dial-in
+  participants. If N is 0, this class is not present.
+- `remote-cams-on-N`: there are N remote cameras turned on. If N is 0,
+  this class is not present.
+- `remote-cams-muted-N`: there are N remote cameras unavailable or
+  muted. If N is 0, this class is not present.
+- `remote-screens-N`: there are N remote screen shares in progress. If
+  N is 0, this class is not present.
+
+Additional classes of `.daily-video-div`, `.daily-video-overlay`, and
+`.daily-video-element` (the same set of additional classes is set for
+each "bundle" of these elements):
+
+- `local`: this is video from the local participant
+- `remote`: this is video from a remote participant
+- `cam`: this is camera video
+- `screen': this is screen sharing video
+- `cam-on`: the camera for this participant is turned on and streaming
+- `cam-muted`: the camera for this participant is unavailable, blocked, or muted
+- `mic-on`: the mic for this participant is turned on and streaming
+- `mic-muted`: the mic for this participant is unavailable, blocked, or muted
+
+For example CSS-driven layouts, see the `/demo` directory.
 
 #### `updateParticipants(propertiesObject)`
 
-Syntactic sugar for updating multiple participants with a single call. The `propertiesObject`'s keys are participant session ids and values are the `properties` objects described above. Internally, this method just loops over the keys and calls `updateParticipant()` multiple times.
+Syntactic sugar for updating multiple participants with a single
+call. The `propertiesObject`'s keys are participant session ids and
+values are the `properties` objects described above. Internally, this
+method just loops over the keys and calls `updateParticipant()`
+multiple times.
 
 Returns `this`.
 
