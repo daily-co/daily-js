@@ -347,7 +347,7 @@ callFrame.updateParticipant('local', {
       }
     }
   }
-});  
+});
 ```
 
 See the next section, about the `loadCss()` method, for more
@@ -392,7 +392,7 @@ remove the previous stylesheet, pass an empty string (`''`) as the
 
 
 ```
- allFrame.loadCss({ cssFile: '/static/call-theme-bubbles.css' });
+ callFrame.loadCss({ cssFile: '/static/call-theme-bubbles.css' });
 ```
 
 The `cssText` property is a string of css to load into the iframe
