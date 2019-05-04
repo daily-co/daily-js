@@ -317,7 +317,7 @@ styles: {
     video: { ...css properties }
   }
 }
-
+```
 
 The `styles.cam.div` style css properties are applied to the container
 div for the participant's camera stream. The `style.cam.overlay` style
