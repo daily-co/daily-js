@@ -393,7 +393,7 @@ remove the previous stylesheet, pass an empty string (`''`) as the
 
 ```
 
-allFrame.loadCss({ cssFile: '/static/call-theme-bubbles.css' });
+callFrame.loadCss({ cssFile: '/static/call-theme-bubbles.css' });
 
 ```
 
