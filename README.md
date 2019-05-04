@@ -93,6 +93,7 @@ layout and styling.
   - `iframe()`
   - `meetingState()`
   - `participants()`
+  - `loadCss({ bodyClass, cssText, cssFile })`
   - `updateParticipant(sessionId, properties)`
   - `updateParticipants(propertiesObject)`
   - `localAudio()`
