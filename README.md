@@ -314,7 +314,7 @@ styles: {
     video: { ...css properties }
   }
 }
-
+```
 
 The `styles.cam.div` style css properties are applied to the container
 div for the participant's camera stream. The `style.cam.overlay` style
@@ -329,24 +329,21 @@ you only need to set a few css properties of the local participant's
 `styles.cam.div`. Here's how you might "shadow" the position and size
 of a placeholder div you've created:
 
-
 ```
-
 let bounds = localVidPositioningEl.getBoundingClientRect();
 callFrame.updateParticipant('local', {
-styles: {
-cam: {
-div: {
-visibility: 'visible',
-top: bounds.top,
-left: bounds.left,
-width: bounds.width,
-height: bounds.height
-}
-}
-}
+  styles: {
+    cam: {
+      div: {
+        visibility: 'visible',
+        top: bounds.top,
+        left: bounds.left,
+        width: bounds.width,
+        height: bounds.height
+      }
+    }
+  }
 });
-
 ```
 
 See the next section, about the `loadCss()` method, for more
@@ -373,9 +370,7 @@ The `bodyClass` property is a string. The `class` attribute of the
 can include multiple class names in the string. (Just separate the
 class names with spaces.)
 
-
 ```
-
 callFrame.loadCss({ bodyClass: 'theme-bubbles minimized-view' });
 
 ```
@@ -390,11 +385,8 @@ sometimes be useful to switch stylesheets in the middle of a call.) To
 remove the previous stylesheet, pass an empty string (`''`) as the
 `cssFile` property.
 
-
 ```
-
-callFrame.loadCss({ cssFile: '/static/call-theme-bubbles.css' });
-
+ callFrame.loadCss({ cssFile: '/static/call-theme-bubbles.css' });
 ```
 
 The `cssText` property is a string of css to load into the iframe
@@ -403,16 +395,22 @@ inside a `<style>` element.
 Each call to `loadCss()` will replace the previous `cssText`
 style element, if a `cssText` property is passed to the method.
 
-
 ```
-
 // a very simple custom layout:
 // this css will display every participant's
 // video streams in a column down the right side
 // of the window
 //
-callFrame.loadCss({ cssText: `.daily-video-div { position: relative; visibility: visible; width: 320; height: 180; margin: 1em; margin-left: auto; }`});
-
+callFrame.loadCss({ cssText: `
+  .daily-video-div {
+    position: relative;
+    visibility: visible;
+    width: 320;
+    height: 180;
+    margin: 1em;
+    margin-left: auto;
+  }
+`});
 ```
 
 #### CSS for custom layouts
@@ -426,9 +424,7 @@ wraps all of the video elements, and an info div.
 Here is the DOM structure of the elements in a call that you can
 style.
 
-
 ```
-
 <body class=" (bodyClass classes...) ">
   <div class="daily-video-toplevel-div (toplevel classes...)">
 
@@ -446,7 +442,6 @@ style.
     </div>
 
     <div class="info-div"></div>
-
   </div>
 </body>
 ```
