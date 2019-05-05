@@ -1,12 +1,12 @@
 {
-  "name": "@dailyco/daily-js",
+  "name": "@daily-co/daily-js",
   "version": "0.1.1",
   "engines": {
     "node": ">=10.0.0"
   },
   "homepage": "https://www.daily.co/",
-  "main": "dist/daily-iframe.js",
-  "module": "dist/daily-iframe-esm.js",
+  "main": "src/main.js",
+  "module": "src/main.js",
   "scripts": {
     "build": "npm run build-main && npm run build-module",
     "build-dev": "NODE_ENV=development npm run build",
@@ -34,7 +34,6 @@
     "@babel/runtime": "^7.4.3",
     "events": "^3.0.0",
     "fast-equals": "^1.6.2",
-    "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-terser": "^4.0.4"
   }
 }
