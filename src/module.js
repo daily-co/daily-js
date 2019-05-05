@@ -170,6 +170,7 @@ export default class DailyIframe extends EventEmitter {
       bodyClass,
       cssText,
     });
+    return this;
   }
 
   iframe() {
