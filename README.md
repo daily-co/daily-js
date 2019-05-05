@@ -55,26 +55,32 @@ function run() {
 </html>
 ```
 
-## The DailyIframe class
+To use with a bundler like webpack or rollup, you can install this
+module into your `package.json` and `node_modules` like so:
 
-This main entry point for this library's functionality is the
-`DailyIframe` class.
+```
+npm install --save daily-co/daily-js
 
-Loading the module with a `<script>` tag exposes the class as
-`window.DailyIframe`. You can also use a bundler like Webpack or
-Rollup and `require` or `import` like this:
+```
+
+Then in your javascript:
 
 ```
 // webpack/node-style require
 //
-const DailyIframe = require('daily-js');
+const DailyIframe = require('@daily-co/daily-js');
 let callFrame = DailyIframe().wrap(MY_IFRAME);
 
-// cutting-edge, super-whizzy import
+// or, cutting-edge, super-whizzy import
 //
-import DailyIframe from 'daily-js';
+import DailyIframe from '@daily-co/daily-js';
 let callFrame = DailyIframe().wrap(MY_IFRAME);
 ```
+
+## The DailyIframe class
+
+This main entry point for this library's functionality is the
+`DailyIframe` class.
 
 The class exposes methods and events for managing the call lifecycle,
 managing participant state, and customizing video element
