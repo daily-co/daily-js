@@ -227,27 +227,38 @@ is an object that looks like this:
 
 ```
 {
-  "local": {
-    "user_id": "user_123",
-    "audio": true,
-    "video": true,
-    "screen": false,
-    "joinedAt": Date(2019-04-30T00:06:16.011Z),
-    "local": true,
-    "owner": true,
-    "session_id": "3c9ba1ea-baab-4876-d501-21a1d49c0902",
-    "user_name": "A. User Name"
+  local: {
+    user_id: "user_123",
+    audio: true,
+    cam_info: {
+      height: 180,
+      left: 286,
+      top: 16,
+      video_height: 720,
+      video_width: 1280,
+      width: 320,
+    },
+    video: true,
+    screen: false,
+    screen_info: {},
+    joinedAt: Date(2019-04-30T00:06:16.011Z),
+    local: true,
+    owner: true,
+    session_id: "3c9ba1ea-baab-4876-d501-21a1d49c0902",
+    user_name: "A. User Name"
   },
   "e20b7ead-54c3-459e-800a-ca4f21882f2f": {
-    "user_id": "e20b7ead-54c3-459e-800a-ca4f21882f2f",
-    "audio": true,
-    "video": true,
-    "screen": false,
-    "joinedAt": Date(2019-04-30T00:06:32.485Z),
-    "local": false,
-    "owner": "",
-    "session_id": "e20b7ead-54c3-459e-800a-ca4f21882f2f",
-    "user_name": ""
+    user_id: "e20b7ead-54c3-459e-800a-ca4f21882f2f",
+    audio: true,
+    cam_info: {}
+    video: false,
+    screen: false,
+    screen_info: {}.
+    joinedAt: Date(2019-04-30T00:06:32.485Z),
+    local: false,
+    owner: false,
+    session_id: "e20b7ead-54c3-459e-800a-ca4f21882f2f",
+    user_name: ""
   }
 }
 ```
@@ -266,6 +277,8 @@ Participant properties are as follows:
 - `audio` - `true` if the user's mic is active
 - `video` - `true` if the user's camera is active
 - `screen` - `true` if the user is screen sharing
+- `cam_info` - properties of the participant's `video` element. `top`, `left`, `width` and `height` are the video element's global position as returned by the `getBoundingClientRect()` DOM method. `video_width` and `video_height` are the current width and height of the live video stream. `video_width` and `video_height` can change as network conditions change. If there is no current camera stream, this will be an empty object.
+- `screen_info` - properties of the participant's `screen` video element. This has the same properties as `cam_info`.
 
 #### `updateParticipant(sessionId, config)`
 
@@ -664,17 +677,26 @@ above for a description of the participant object.
 ```
 // example event object
 {
-  action: 'joined-meeting'
+  action: 'joined-meeting',
   participants: {
     local: {
-      audio: true
-      joinedAt: Date(Mon Apr 29 2019 15:18:20 GMT-0700)
-      local: true
-      owner: true
-      screen: false
-      session_id: '42fb115a-6d42-4155-ae4f-c96629f5217d'
-      user_id: 'f26added-7821-49fc-9cb1-f9e22924b2c4'
-      user_name: "kwindla-desktop"
+      audio: true,
+      cam_info: {
+        height: 180,
+        left: 286,
+        top: 16,
+        video_height: 720,
+        video_width: 1280,
+        width: 320,
+      },
+      joinedAt: Date(Mon Apr 29 2019 15:18:20 GMT-0700),
+      local: true,
+      owner: true,
+      screen: false,
+      screen_info: {},
+      session_id: '42fb115a-6d42-4155-ae4f-c96629f5217d',
+      user_id: 'f26added-7821-49fc-9cb1-f9e22924b2c4',
+      user_name: "kwindla-desktop",
       video: true
     }
   }
@@ -703,17 +725,19 @@ available before audio and video streams are ready.
 ```
 // example event object
 {
-  action: 'participant-joined'
+  action: 'participant-joined',
   participant: {
-    audio: false
-    joinedAt: Date(Mon Apr 29 2019 15:29:20 GMT-0700)
-    local: false
-    owner: false
-    screen: false
-    session_id: '049ebba2-523b-4e6c-9a9f-1f8bb956670d'
-    user_id: '049ebba2-523b-4e6c-9a9f-1f8bb956670d'
-    user_name: ''
-    video: false
+    audio: false,
+    cam_info: {},
+    joinedAt: Date(Mon Apr 29 2019 15:29:20 GMT-0700),
+    local: false,
+    owner: false,
+    screen: false,
+    screen_info: {},
+    session_id: '049ebba2-523b-4e6c-9a9f-1f8bb956670d',
+    user_id: '049ebba2-523b-4e6c-9a9f-1f8bb956670d',
+    user_name: '',
+    video: false,
   }
 }
 ```
