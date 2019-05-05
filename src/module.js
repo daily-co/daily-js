@@ -156,6 +156,7 @@ export default class DailyIframe extends EventEmitter {
     this.sendMessage({ action: DAILY_METHOD_LOAD_CSS,
                        cssFile: this.absoluteUrl(cssFile),
                        bodyClass, cssText });
+    return this;
   }
 
   iframe() {

@@ -93,13 +93,14 @@ layout and styling.
   - `iframe()`
   - `meetingState()`
   - `participants()`
-  - `loadCss({ bodyClass, cssText, cssFile })`
   - `updateParticipant(sessionId, properties)`
+  - `loadCss({ bodyClass, cssText, cssFile })`
   - `updateParticipants(propertiesObject)`
   - `localAudio()`
   - `localVideo()`
   - `setLocalAudio()`
   - `setLocalVideo()`
+  - `setBandwidth({ kbs, trackConstraints })`
   - `on(eventName, callback)`
   - `once(eventName, callback)`
   - `off(eventName, callback)`
@@ -420,6 +421,8 @@ callFrame.loadCss({ cssText: `
 `});
 ```
 
+The `loadCss()` method returns `this`.
+
 #### CSS for custom layouts
 
 Each available video stream in the video call iframe is wrapped in a
@@ -531,7 +534,7 @@ each "bundle" of these elements):
 - `local`: this is video from the local participant
 - `remote`: this is video from a remote participant
 - `cam`: this is camera video
-- `screen': this is screen sharing video
+- `screen`: this is screen sharing video
 - `cam-on`: the camera for this participant is turned on and streaming
 - `cam-muted`: the camera for this participant is unavailable, blocked, or muted
 - `mic-on`: the mic for this participant is turned on and streaming
@@ -566,6 +569,46 @@ Returns `this`.
 #### `setLocalVideo(bool)`
 
 Updates the local camera state. Does nothing if not in a call. Syntactic sugar for `this.updateParticipant('local', { video: bool })`.
+
+Returns `this`.
+
+#### `setBandwidth({ kbs, trackConstraints })`
+
+**Experimental method**: Sets a cap on the upstream video bandwidth
+used for each WebRTC peer connection. This API may change in the future.
+
+In general we try to hide all the complexity of WebRTC so that you can
+focus on your own application rather than the details of audio and
+video network streams! We do bandwidth management, for example, that
+is "the right thing" for most use cases (based on lots of empirical
+call data, plus experience working around cross-platform quirks).
+
+But sometimes you might need to reach down through the abstraction
+boundary to do specialized things. We want to make that possible,
+too. This method is an experiment in that direction. Please let us
+know if you're using it, and whether it helps you, and what other
+functionality you need for your applications.
+
+The `kbs` property is a soft cap on the upstream video bandwidth used
+for each peer connection. Currently this is implemented by setting
+[b=AS](https://tools.ietf.org/html/rfc4566#section-5.8) for each local
+participant SDP `m=video` section. This mechanic may change in the
+future, though, as browsers evolve.
+
+Note that the `kbs` cap does not take into account audio bandwidth. We
+don't currently support customizing audio bandwidth settings.
+
+The `trackConstraints` property is a [MediaTrackConstraints](https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackConstraints) dictionary that will be applied to the local video track, if possible. Browser support for the [MediaStreamTrack.applyConstraints()](https://developer.mozilla.org/en-US/docs/Web/API/MediaStreamTrack/applyConstraints) is still a work in progress. But support is improving rapidly.
+
+Here's an example of using `setBandwidth()` to transmit 64x64 images
+at a target video bandwidth cap of 32 kilobits per second.
+
+```
+callFrame.setBandwidth({
+  kbs: 32,
+  trackConstraints: { width: 64, height: 64 }
+});
+```
 
 Returns `this`.
 
