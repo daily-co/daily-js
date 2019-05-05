@@ -67,12 +67,12 @@ Rollup and `require` or `import` like this:
 ```
 // webpack/node-style require
 //
-const DailyIframe = require('daily-iframe');
+const DailyIframe = require('daily-js');
 let callFrame = DailyIframe().wrap(MY_IFRAME);
 
 // cutting-edge, super-whizzy import
 //
-import DailyIframe from 'daily-iframe';
+import DailyIframe from 'daily-js';
 let callFrame = DailyIframe().wrap(MY_IFRAME);
 ```
 
