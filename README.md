@@ -9,11 +9,20 @@ The official front-end library for the Daily.co video calling API.
 ## Getting started
 
 You can use this library from a `<script>` tag, as a CommonJS-style
-module with `require`, or as in ES6-style module with `import`
+module with `require`, or as an ES6-style module with `import`
 (including within a `<script type="module">` context).
 
-The easiest way to get started is loading `dist/daily-iframe.js` in a
-script tag, then calling the `window.DailyIframe.wrap()` factory method.
+The easiest way to get started is to clone and build this repo, use
+`dist/daily-iframe.js` in a script tag, then in your application code
+call the `window.DailyIframe.wrap()` factory method.
+
+```
+git clone https://github.com/daily-co/daily-js.git
+cd daily-js
+npm run build
+```
+
+Sample html/js:
 
 ```
 <html>
@@ -55,15 +64,15 @@ function run() {
 </html>
 ```
 
-To use with a bundler like webpack or rollup, you can install this
-module into your `package.json` and `node_modules` like so:
+Of course, you can also use a bundler like webpack or rollup.  Install
+this github repo into your `package.json` and `node_modules`.
 
 ```
 npm install --save daily-co/daily-js
 
 ```
 
-Then in your javascript:
+Then in your application code:
 
 ```
 // webpack/node-style require
