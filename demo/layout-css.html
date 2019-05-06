@@ -70,9 +70,7 @@
 
 
 <script>
-let url = 'http://localhost:8000/hello?cdmn=kwindla';
-// let url = 'https://kwindla.daily.co/hello';
-
+let url, token;
 
 let origSize = null,
     showNames = false,
@@ -97,8 +95,8 @@ async function run() {
   let res = await fetch('/env');
   config = await res.json();
   console.log('CONFIG', config);
-  let url = config.DEMO_MEETING_URL,
-      token = config.DEMO_MEETING_TOKEN;
+  url = config.DEMO_MEETING_URL;
+  token = config.DEMO_MEETING_TOKEN;
 
   window.callFrame = window.DailyIframe
                         .createTransparentFrame();
