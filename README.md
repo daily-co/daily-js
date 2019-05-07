@@ -539,13 +539,11 @@ Additional classes of `.daily-videos-wrapper`:
 - `remote-cams-N`: there are N remote video participants in the
   call. This counts all video participants, even those that have no
   camera or have muted their camera. It does not count dial-in
-  participants. If N is 0, this class is not present.
-- `remote-cams-on-N`: there are N remote cameras turned on. If N is 0,
-  this class is not present.
+  participants.
+- `remote-cams-on-N`: there are N remote cameras turned on
 - `remote-cams-muted-N`: there are N remote cameras unavailable or
-  muted. If N is 0, this class is not present.
-- `remote-screens-N`: there are N remote screen shares in progress. If
-  N is 0, this class is not present.
+  muted
+- `remote-screens-N`: there are N remote screen shares in progress
 
 Additional classes of `.daily-video-div`, `.daily-video-overlay`, and
 `.daily-video-element` (the same set of additional classes is set for
