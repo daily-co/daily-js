@@ -79,7 +79,7 @@
 	background-color: rgba(255, 59, 48, 0.9);
 }
 
-.daily-video-overlay.cam-muted::before {
+.daily-video-overlay.cam-muted::after {
 	content: "";
 	position: absolute;
 	background-image: url(/demo/muted-camera.svg);
@@ -87,10 +87,10 @@
 	background-repeat: no-repeat;
 	width: 28px;
 	height: 100%;
-	margin-left: 10px;
+	margin-left: 50px;
 }
 
-.daily-video-overlay.mic-muted::after {
+.daily-video-overlay.mic-muted::before {
 	content: "";
 	position: absolute;
 	background-image: url(/demo/muted-microphone.svg);
@@ -98,7 +98,7 @@
 	background-repeat: no-repeat;
 	width: 28px;
 	height: 100%;
-	margin-left: 50px;
+	margin-left: 10px;
 }
 
 .show-names .daily-video-overlay::after {
