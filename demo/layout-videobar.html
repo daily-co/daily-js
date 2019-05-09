@@ -1,0 +1,154 @@
+<html>
+	<head>
+		<title>call events demo</title>
+		<style>
+			#call-container {
+				width: 320px;
+    		overflow: scroll;
+			}
+			#horizontal-scrolling-container {
+				width: 1600px;
+    		height: 380px;
+    		position: relative;
+			}
+
+			#call-frame {
+				position: relative;
+				width: 100%;
+				height: 100%;
+				border: 0;
+			}
+		</style>
+	</head>
+<body>
+
+<div onclick="callFrame.join({ url }).then((ps)=>console.log('joined and have participants', ps));">
+[ join mtg ]
+</div>
+<div onclick="console.log('PARTICIPANTS', callFrame.participants())">
+[ get participants ]
+</div>
+<div onclick="callFrame.leave().then(()=>console.log('LEAVE PROMISE RESOLVED'))">
+[ leave mtg ]
+</div>
+<div onclick="callFrame.setLocalVideo(!callFrame.localVideo())">
+[ toggle local cam state ]
+</div>
+<div onclick="callFrame.setLocalAudio(!callFrame.localAudio())">
+[ toggle local mic state ]
+</div>
+
+<!--
+<div>&nbsp;</div>
+
+<div onclick="callFrame.startRecording()">
+[ start recording ]
+</div>
+<div onclick="callFrame.stopRecording()">
+[ stop recording ]
+</div>
+-->
+
+<div>&nbsp;</div>
+
+<div onclick="callFrame.startScreenShare()">
+[ start screen share ]
+</div>
+<div onclick="callFrame.stopScreenShare()">
+[ stop screen share ]
+</div>
+
+<div>&nbsp;</div>
+
+<div onclick="showNames = !showNames;
+              callFrame.loadCss({ bodyClass: bodyClasses() });">
+[ toggle names ]
+</div>
+
+<div onclick="videoCircles = !videoCircles;
+              callFrame.loadCss({ bodyClass: bodyClasses() });">
+[ toggle circles view ]
+</div>
+
+<div onclick="lowBandwidth = !lowBandwidth;
+              if (!origSize) {
+                origSize = {
+                  width: callFrame.participants().local.cam_info.video_width,
+                  height: callFrame.participants().local.cam_info.video_height,
+                }
+              }
+              callFrame.setBandwidth({
+                kbs: lowBandwidth ? 32 : null,
+                trackConstraints: lowBandwidth ?
+                          { width: 64, height: 64 } :
+                          { width: origSize.width, height: origSize.height},
+              }).loadCss({ bodyClass: bodyClasses() });">
+[ toggle (very) low bandwidth ]
+</div>
+
+<script>
+let url, token;
+
+let origSize = null,
+    showNames = false,
+    videoCircles = false;
+    lowBandwidth = false;
+
+function showEvent(e) {
+  console.log('PARENT FRAME GOT EVENT -->', e);
+}
+
+function bodyClasses() {
+  let str = '';
+  if (showNames) { str += 'show-names' };
+  if (videoCircles) { str += ' video-circles' };
+  if (lowBandwidth) { str += ' low-bandwidth' };
+  return str;
+}
+
+async function run() {
+  // from demo/.env, get a Daily.co meeting url and a meeting token
+  // that allows screen sharing and recording
+  let res = await fetch('/env');
+  config = await res.json();
+  console.log('CONFIG', config);
+  url = config.DEMO_MEETING_URL;
+  token = config.DEMO_MEETING_TOKEN;
+
+	window.callFrame = window.DailyIframe
+	  .wrap(
+	    document.getElementById('call-frame'),
+	    { layout: 'custom-v1' }
+	  );
+  callFrame.on('joining-meeting', showEvent)
+           .on('joined-meeting', showEvent)
+           .on('left-meeting', showEvent)
+           .on('participant-joined', showEvent)
+           .on('participant-updated', showEvent)
+           .on('participant-left', showEvent)
+           .on('recording-started', showEvent)
+           .on('recording-stopped', showEvent)
+           .on('recording-stats', showEvent)
+           .on('recording-error', showEvent)
+           .on('recording-upload-completed', showEvent)
+           .on('error', showEvent);
+
+
+  callFrame.join({
+    url,
+    token,
+    cssFile: 'layout-videobar.css'
+  });
+}
+</script>
+
+<div id="call-container">
+	<div id="horizontal-scrolling-container">
+		<iframe id="call-frame" allow="camera; microphone; autoplay"></iframe>
+	</div>
+</div>
+
+<script src="../dist/daily-iframe.js" onload="run()"></script>
+
+</body>
+</html>
