@@ -4,8 +4,8 @@
 	position: fixed;
 	top: 0;
 	left: 0;
-	width: 100%;
-	height: 100%;
+	width: auto;
+	height: auto;
 	display: grid;
 	grid-auto-flow: column;
 }
@@ -14,8 +14,13 @@
 	position: relative;
 	visibility: visible;
 	overflow: hidden;
-	width: 800px;
-  height: 100%;
+	width: 128;
+	height: 128px;
+	border-radius: 50%;
+}
+
+.daily-video-div.remote {
+	margin-left: 10px;
 }
 
 .daily-video-element {
@@ -26,17 +31,6 @@
 	height: 100%;
 	top: 0;
 	left: 0;
-}
-
-.daily-video-overlay.cam-muted::after {
-	content: "";
-	position: absolute;
-	background-image: url(/demo/muted-camera.svg);
-	background-position: center;
-	background-repeat: no-repeat;
-	width: 28px;
-	height: 100%;
-	margin-left: 50px;
 }
 
 .daily-video-div.cam-muted::before {
@@ -53,12 +47,13 @@
 .daily-video-overlay.mic-muted::before {
 	content: "";
 	position: absolute;
-	background-image: url(/demo/muted-microphone.svg);
+	background-image: url(/demo/muted-microphone-white.svg);
 	background-position: center;
 	background-repeat: no-repeat;
-	width: 28px;
+	background-size: 28px 28px;
+	width: 100%;
 	height: 100%;
-	margin-left: 10px;
+	background-color: rgba(0, 0, 0, 0.5);
 }
 
 .show-names .daily-video-div::before {
