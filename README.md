@@ -19,8 +19,12 @@ call the `window.DailyIframe.wrap()` factory method.
 ```
 git clone https://github.com/daily-co/daily-js.git
 cd daily-js
+npm install
 npm run build
 ```
+
+To explore the capabilities of this front-end API, see see [demo/](demo/)
+and [demo/README.md](demo/README.md) for running a local demo.
 
 Sample html/js:
 
