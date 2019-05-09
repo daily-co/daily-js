@@ -9,7 +9,11 @@ npm run build-dev
 npm run demo
 ```
 
-You'll also need a `.env` file in this directory.
+You'll also need a `.env` file in this directory (`demo/`).
+
+You'll need to log into your Daily.co dashboard, generate an API key, and use
+that key with the (create-meeting-token)[create-meeting-token] API method to
+generate some meeting tokens.
 
 Make a new file, called `.env` and set several environment variables:
 
