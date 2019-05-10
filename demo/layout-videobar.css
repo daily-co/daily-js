@@ -19,18 +19,16 @@
 	border-radius: 50%;
 }
 
+.daily-video-div.local {
+	grid-area: 1 / 1 / 2 / 2;
+}
+
 .daily-video-div.remote {
 	margin-left: 10px;
 }
 
 .daily-video-element {
 	object-fit: cover;
-}
-
-.daily-video-overlay {
-	height: 100%;
-	top: 0;
-	left: 0;
 }
 
 .daily-video-div.cam-muted::before {
@@ -50,7 +48,7 @@
 	background-image: url(/demo/muted-microphone-white.svg);
 	background-position: center;
 	background-repeat: no-repeat;
-	background-size: 28px 28px;
+	background-size: 24px 24px;
 	width: 100%;
 	height: 100%;
 	background-color: rgba(0, 0, 0, 0.5);
