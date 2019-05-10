@@ -1,0 +1,149 @@
+@import url('https://fonts.googleapis.com/css?family=Lato');
+
+.daily-videos-wrapper {
+	display: grid;
+	grid-template-columns: 320px 320px;
+	grid-template-rows: 180px 180px;
+	grid-template-areas:
+		"top-left top-right"
+		"bottom-left bottom-right";
+}
+
+.daily-video-div {
+	position: relative;
+	visibility: visible;
+	width: 100%;
+	height: 100%;
+	visibility: visible;
+	overflow: hidden;
+	background-color: black;
+}
+
+.daily-video-div.local {
+	grid-area: bottom-left;
+  position: absolute;
+  width: 100px;
+  z-index: 1;
+  bottom: 0;
+  left: 0;
+  height: 56px;
+}
+
+.daily-video-div.remote {
+	grid-area: auto;
+}
+
+.daily-video-overlay {
+	height: 100%;
+	width: 100%;
+}
+
+.daily-video-element {
+	height: auto;
+}
+
+.daily-video-div.cam-muted::before {
+	content: '';
+	background: rgba(255, 255, 255, 0.3) !important;
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	left: 0;
+	top: 0;
+	z-index: 1;
+}
+
+.daily-video-overlay.mic-muted::before {
+	content: "";
+	position: absolute;
+	background-image: url(/demo/muted-microphone.svg);
+	background-position: center;
+	background-repeat: no-repeat;
+	width: 28px;
+	height: 100%;
+	margin-left: 10px;
+	filter: invert(100%);
+}
+
+.show-names .daily-video-div.cam-on::before, .show-names .daily-video-div.cam-muted::before{
+	font-family: 'Lato', sans-serif;
+	content: attr(data-user-name);
+	position: absolute;
+	padding: 0.65em;
+	color: white;
+	z-index: 1;
+}
+
+.info-div {
+	position: fixed;
+	width: 100%;
+	bottom: 0;
+	height: 1.5em;
+	text-align: center;
+	font-family: 'Lato', sans-serif;
+	font-weight: bold;
+	color: white;
+	padding: 0.25em;
+}
+
+.low-bandwidth .info-div {
+	background-color: grey;
+}
+.low-bandwidth .info-div::after {
+	content: "32kb/s upstream video bandwidth cap";
+}
+
+.recording .info-div {
+	background-color: red;
+}
+.recording .info-div::after {
+	content: "recording";
+}
+
+.recording .info-div {
+	background-color: red;
+}
+.recording .info-div::after {
+	content: "recording ...";
+}
+
+.recording-uploading:not(.recording) .info-div {
+	background-color: green;
+}
+.recording-uploading:not(.recording) .info-div::after {
+	content: "uploading ...";
+}
+
+@media (max-width: 768px) {
+	.daily-videos-wrapper {
+		grid-template-columns: 1fr;
+		grid-template-rows: auto;
+	}
+
+	/** 2-person call **/
+	.daily-videos-wrapper.remote-cams-1 > .daily-video-div.remote {
+		grid-area: 2;
+	}
+
+	/** 3-person call**/
+	.daily-videos-wrapper.remote-cams-2 > .daily-video-div.remote:nth-child(2) {
+		grid-area: 2;
+	}
+
+	.daily-videos-wrapper.remote-cams-2 > .daily-video-div.remote:nth-child(3) {
+		grid-area: 3;
+	}
+
+	/** 4-person call**/
+	.daily-videos-wrapper.remote-cams-3 > .daily-video-div.remote:nth-child(2) {
+		grid-area: 2;
+	}
+
+	.daily-videos-wrapper.remote-cams-3 > .daily-video-div.remote:nth-child(3) {
+		grid-area: 3;
+	}
+
+	.daily-videos-wrapper.remote-cams-3 > .daily-video-div.remote:nth-child(4) {
+		grid-area: 4;
+	}
+}
