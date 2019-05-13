@@ -1,0 +1,69 @@
+<html>
+<head>
+<title>avatars horizontal scroll</title>
+<style>
+#call-frame {
+  width: 100%;
+  height: 510px;
+  border: 0;
+}
+</style>
+</head>
+<body>
+
+<iframe id="call-frame" allow="camera; microphone; autoplay">
+</iframe>
+
+<div onclick="callFrame.join({ url }).then((ps)=>console.log('joined and have participants', ps));">
+[ join mtg ]
+</div>
+<div onclick="callFrame.leave().then(()=>console.log('LEAVE PROMISE RESOLVED'))">
+[ leave mtg ]
+</div>
+
+<script>
+let url, token;
+
+function showEvent(e) {
+  console.log('PARENT FRAME GOT EVENT -->', e);
+}
+
+async function run() {
+  // from demo/.env, get a Daily.co meeting url and a meeting token
+  // that allows screen sharing and recording
+  let res = await fetch('/env');
+  config = await res.json();
+  console.log('CONFIG', config);
+  url = config.DEMO_MEETING_URL;
+  token = config.DEMO_MEETING_TOKEN;
+
+  window.callFrame = window.DailyIframe.wrap(
+    document.getElementById('call-frame'),
+    { layout: 'custom-v1' }
+  );
+
+  callFrame.on('joining-meeting', showEvent)
+           .on('joined-meeting', showEvent)
+           .on('left-meeting', showEvent)
+           .on('participant-joined', showEvent)
+           .on('participant-updated', showEvent)
+           .on('participant-left', showEvent)
+           .on('recording-started', showEvent)
+           .on('recording-stopped', showEvent)
+           .on('recording-stats', showEvent)
+           .on('recording-error', showEvent)
+           .on('recording-upload-completed', showEvent)
+           .on('error', showEvent);
+
+
+  callFrame.join({
+    url,
+    token,
+    cssFile: 'layout-top-avatars-horizontal-scroll.css'
+  });
+}
+</script>
+<script src="../dist/daily-iframe.js" onload="run()"></script>
+
+</body>
+</html>

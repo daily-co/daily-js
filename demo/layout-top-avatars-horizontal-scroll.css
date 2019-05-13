@@ -1,0 +1,29 @@
+.daily-video-toplevel-div {
+  position: relative;
+}
+
+.daily-videos-wrapper {
+  position: relative;
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -ms-overflow-style: -ms-autohiding-scrollbar;
+}
+
+.scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.daily-video-div {
+  position: relative;
+  visibility: visible;
+  width: 500;
+  height: 500;
+  margin: 5px;
+  flex: 0 0 auto;
+}
+
+.daily-video-element.cam {
+  border-radius: 50%;
+  object-fit: cover;
+}
