@@ -1,0 +1,98 @@
+<html>
+	<head>
+		<title>call events demo</title>
+			<style>
+				#call-frame {
+				  width: 100%;
+				  height: 100%;
+				  border: 0;
+					position: fixed;
+					top: 0;
+					left: 0;
+				}
+			</style>
+	</head>
+<body>
+
+		<div onclick="callFrame.join({ url }).then((ps)=>console.log('joined and have participants', ps));">
+		[ join mtg ]
+		</div>
+		<div onclick="console.log('PARTICIPANTS', callFrame.participants())">
+		[ get participants ]
+		</div>
+		<div onclick="callFrame.leave().then(()=>console.log('LEAVE PROMISE RESOLVED'))">
+		[ leave mtg ]
+		</div>
+		<div onclick="callFrame.setLocalVideo(!callFrame.localVideo())">
+		[ toggle local cam state ]
+		</div>
+		<div onclick="callFrame.setLocalAudio(!callFrame.localAudio())">
+		[ toggle local mic state ]
+		</div>
+
+		<!--
+		<div>&nbsp;</div>
+		<div onclick="callFrame.startRecording()">
+		[ start recording ]
+		</div>
+		<div onclick="callFrame.stopRecording()">
+		[ stop recording ]
+		</div>
+		-->
+
+		<div onclick="callFrame.startScreenShare()">
+		[ start screen share ]
+		</div>
+		<div onclick="callFrame.stopScreenShare()">
+		[ stop screen share ]
+		</div>
+
+
+		<div onclick="showNames = !showNames;
+		              callFrame.loadCss({ bodyClass: bodyClasses() });">
+		[ toggle names ]
+		</div>
+
+		<iframe id="call-frame" allow="camera; microphone; autoplay"></iframe>
+
+		<script>
+			let url, token;
+			function showEvent(e) {
+			  console.log('PARENT FRAME GOT EVENT -->', e);
+			}
+			async function run() {
+			  // from demo/.env, get a Daily.co meeting url and a meeting token
+			  // that allows screen sharing and recording
+			  let res = await fetch('/env');
+			  config = await res.json();
+			  console.log('CONFIG', config);
+			  url = config.DEMO_MEETING_URL;
+			  token = config.DEMO_MEETING_TOKEN;
+			  window.callFrame = window.DailyIframe.wrap(
+			    document.getElementById('call-frame'),
+			    { layout: 'custom-v1' }
+			  );
+			  callFrame.on('joining-meeting', showEvent)
+			           .on('joined-meeting', showEvent)
+			           .on('left-meeting', showEvent)
+			           .on('participant-joined', showEvent)
+			           .on('participant-updated', showEvent)
+			           .on('participant-left', showEvent)
+			           .on('recording-started', showEvent)
+			           .on('recording-stopped', showEvent)
+			           .on('recording-stats', showEvent)
+			           .on('recording-error', showEvent)
+			           .on('recording-upload-completed', showEvent)
+			           .on('error', showEvent);
+			  callFrame.join({
+			    url,
+			    token,
+			    cssFile: 'demo-css-grid.css'
+			  });
+			}
+		</script>
+
+		<script src="../dist/daily-iframe.js" onload="run()"></script>
+
+	</body>
+</html>
