@@ -2,7 +2,13 @@
 	<head>
 		<title>call events demo</title>
 			<style>
-				#call-frame {
+				body {
+					font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+					font-size: 1em;
+					font-weight: 800;
+					color: #ffffff;
+				}
+				#call-frame, #ui-container {
 				  width: 100%;
 				  height: 100%;
 				  border: 0;
@@ -10,26 +16,45 @@
 					top: 0;
 					left: 0;
 				}
+				#ui-container {
+					display: grid;
+					grid-template-rows: 1fr 1fr;
+					grid-template-columns: 0.5fr 0.5fr 1fr;
+				}
+				#ui-controller {
+					background-color: #383838;
+					grid-area: 2 / 1;
+					padding: 40px;
+				}
+				#ui-controller hr {
+					border: 0.5px solid #4f4f4f;
+					margin-bottom: 1.25em; /** 20/16px **/
+				}
+				.ui-controller-control {
+					cursor: pointer;
+					display: flex;
+					justify-content: space-between;
+					margin-bottom: 1.25em; /** 20/16px **/
+				}
+				.ui-controller-control p {
+					margin: 0;
+				}
+				.ui-controller-control img {
+					width: 24px;
+					height: 24px;
+				}
+				.ui-controller-control:hover {
+					opacity: 0.4;
+				}
 			</style>
 	</head>
-<body>
-
+	<body>
 		<div onclick="callFrame.join({ url }).then((ps)=>console.log('joined and have participants', ps));">
 		[ join mtg ]
 		</div>
 		<div onclick="console.log('PARTICIPANTS', callFrame.participants())">
 		[ get participants ]
 		</div>
-		<div onclick="callFrame.leave().then(()=>console.log('LEAVE PROMISE RESOLVED'))">
-		[ leave mtg ]
-		</div>
-		<div onclick="callFrame.setLocalVideo(!callFrame.localVideo())">
-		[ toggle local cam state ]
-		</div>
-		<div onclick="callFrame.setLocalAudio(!callFrame.localAudio())">
-		[ toggle local mic state ]
-		</div>
-
 		<!--
 		<div>&nbsp;</div>
 		<div onclick="callFrame.startRecording()">
@@ -40,20 +65,37 @@
 		</div>
 		-->
 
-		<div onclick="callFrame.startScreenShare()">
-		[ start screen share ]
-		</div>
 		<div onclick="callFrame.stopScreenShare()">
 		[ stop screen share ]
 		</div>
-
-
 		<div onclick="showNames = !showNames;
 		              callFrame.loadCss({ bodyClass: bodyClasses() });">
 		[ toggle names ]
 		</div>
 
 		<iframe id="call-frame" allow="camera; microphone; autoplay"></iframe>
+
+		<div id="ui-container">
+			<div id="ui-controller">
+				<div onclick="callFrame.setLocalVideo(!callFrame.localVideo())" class="ui-controller-control">
+					<p>Toggle your camera</p>
+					<img src="icon-camera.svg" alt="Toggle Camera On/Off">
+				</div>
+				<div onclick="callFrame.setLocalAudio(!callFrame.localAudio())" class="ui-controller-control">
+					<p>Toggle your microphone</p>
+					<img src="icon-microphone.svg" alt="Toggle Microphone On/Off">
+				</div>
+				<div onclick="callFrame.startScreenShare()" class="ui-controller-control">
+					<p>Start a screen share</p>
+					<img src="icon-screenshare.svg" alt="Screen share">
+				</div>
+				<hr>
+				<div onclick="callFrame.leave().then(()=>console.log('LEAVE PROMISE RESOLVED'))" class="ui-controller-control">
+					<p style="color:#ff3b30">Leave call</p>
+					<img src="icon-leave.svg" alt="Leave the call">
+				</div>
+			</div>
+		</div>
 
 		<script>
 			let url, token;
@@ -91,7 +133,6 @@
 			  });
 			}
 		</script>
-
 		<script src="../dist/daily-iframe.js" onload="run()"></script>
 
 	</body>

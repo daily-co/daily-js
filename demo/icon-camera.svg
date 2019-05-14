@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 54.1 (76490) - https://sketchapp.com -->
+    <title>icon-24px-camera</title>
+    <desc>Created with Sketch.</desc>
+    <g id="Grid-Design" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Grid-Design-1-Participants" transform="translate(-656.000000, -666.000000)" fill="#FFFFFF">
+            <g id="Meeting-Controls" transform="translate(0.000000, 582.000000)">
+                <g id="Camera" transform="translate(40.000000, 84.000000)">
+                    <path d="M618,8.0085302 C618,6.8992496 618.89706,6 620.005859,6 L629.994141,6 C631.101946,6 632,6.90195036 632,8.0085302 L632,15.9914698 C632,17.1007504 631.10294,18 629.994141,18 L620.005859,18 C618.898054,18 618,17.0980496 618,15.9914698 L618,8.0085302 Z M633.443717,9.27817999 L637.1061,7.44699844 C637.607658,7.19622075 638,7.44570148 638,7.99543917 L638,16.0045681 C638,16.5442962 637.599787,16.7998546 637.1061,16.5530166 L633.443717,14.7218671 C633.202199,14.6011109 633,14.2771876 633,14.0023174 L633,9.99773355 C633,9.71487983 633.198659,9.40070828 633.443717,9.27817999 Z" id="Combined-Shape"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

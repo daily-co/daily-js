@@ -8,7 +8,7 @@
   display: none;
 }
 
-.daily-video-element.cam {
+.daily-video-element {
   object-fit: cover;
 }
 
@@ -87,17 +87,6 @@
 	background-color: rgba(255, 59, 48, 0.9);
 }
 
-.daily-video-overlay.cam-muted::after {
-	content: "";
-	position: absolute;
-	background-image: url(/demo/muted-camera.svg);
-	background-position: center;
-	background-repeat: no-repeat;
-	width: 28px;
-	height: 100%;
-	margin-left: 50px;
-}
-
 .daily-video-div.cam-muted::before {
 	content: '';
 	background: rgba(255, 255, 255, 0.3) !important;
@@ -112,10 +101,10 @@
 .daily-video-overlay.mic-muted::before {
 	content: "";
 	position: absolute;
-	background-image: url(/demo/muted-microphone.svg);
+	background-image: url(/demo/icon-microphone-off.svg);
 	background-position: center;
 	background-repeat: no-repeat;
-	width: 28px;
+	width: 24px;
 	height: 100%;
 	margin-left: 10px;
 }
