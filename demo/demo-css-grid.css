@@ -158,7 +158,7 @@
 	content: "uploading ...";
 }
 
-@media (max-width: 768px) {
+@media (max-width: 800px) {
 	.daily-videos-wrapper {
 		grid-template-columns: 1fr;
 		grid-template-rows: auto;
