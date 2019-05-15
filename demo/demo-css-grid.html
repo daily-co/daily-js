@@ -77,13 +77,13 @@
 				}
 				@media (max-width: 800px) {
 					#call-frame {
+						z-index: 100;
 						top: 257px;
 						height: calc(100vh - 257px);
 					}
 					#ui-container {
 						grid-template-columns: 1fr;
     				grid-template-rows: 257px;
-						pointer-events: none;
 					}
 					#ui-controller {
 						grid-area: 1 / 1;
@@ -157,7 +157,7 @@
 			async function updateEvent() {
 				let ps = callFrame.participants();
 				if (Object.keys(ps).length < 2) {
-					document.getElementById('ui-local').style.display = "block";
+					document.getElementById('ui-local').style.display = "none";
 					document.getElementById('ui-alone').style.display = "block";
 				}	else {
 					document.getElementById('ui-local').style.display = "none";
