@@ -41,3 +41,4 @@ export const DAILY_METHOD_START_RECORDING = 'local-recording-start';
 export const DAILY_METHOD_STOP_RECORDING = 'local-recording-stop';
 export const DAILY_METHOD_LOAD_CSS = 'load-css';
 export const DAILY_METHOD_SET_BANDWIDTH = 'set-bandwidth';
+export const DAILY_METHOD_GET_CALC_STATS = 'get-calc-stats';

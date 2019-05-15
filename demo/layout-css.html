@@ -3,64 +3,63 @@
     <title>call events demo</title>
   </head>
   <body>
-    <div
-      onclick="callFrame.join({ url }).then((ps)=>console.log('joined and have participants', ps));"
-    >
-      [ join mtg ]
-    </div>
-    <div onclick="console.log('PARTICIPANTS', callFrame.participants())">
-      [ get participants ]
-    </div>
-    <div
-      onclick="callFrame.leave().then(()=>console.log('LEAVE PROMISE RESOLVED'))"
-    >
-      [ leave mtg ]
-    </div>
-    <div onclick="callFrame.setLocalVideo(!callFrame.localVideo())">
-      [ toggle local cam state ]
-    </div>
-    <div onclick="callFrame.setLocalAudio(!callFrame.localAudio())">
-      [ toggle local mic state ]
-    </div>
+    <div style="width: 50%;">
+      <div
+        onclick="callFrame.join({ url }).then((ps)=>console.log('joined and have participants', ps));"
+      >
+        [ join mtg ]
+      </div>
+      <div onclick="console.log('PARTICIPANTS', callFrame.participants())">
+        [ get participants ]
+      </div>
+      <div
+        onclick="callFrame.leave().then(()=>console.log('LEAVE PROMISE RESOLVED'))"
+      >
+        [ leave mtg ]
+      </div>
+      <div onclick="callFrame.setLocalVideo(!callFrame.localVideo())">
+        [ toggle local cam state ]
+      </div>
+      <div onclick="callFrame.setLocalAudio(!callFrame.localAudio())">
+        [ toggle local mic state ]
+      </div>
 
-    <!--
-<div>&nbsp;</div>
+      <div>&nbsp;</div>
 
-<div onclick="callFrame.startRecording()">
-[ start recording ]
-</div>
-<div onclick="callFrame.stopRecording()">
-[ stop recording ]
-</div>
--->
+      <div onclick="callFrame.startRecording()">
+        [ start recording ]
+      </div>
+      <div onclick="callFrame.stopRecording()">
+        [ stop recording ]
+      </div>
 
-    <div>&nbsp;</div>
+      <div>&nbsp;</div>
 
-    <div onclick="callFrame.startScreenShare()">
-      [ start screen share ]
-    </div>
-    <div onclick="callFrame.stopScreenShare()">
-      [ stop screen share ]
-    </div>
+      <div onclick="callFrame.startScreenShare()">
+        [ start screen share ]
+      </div>
+      <div onclick="callFrame.stopScreenShare()">
+        [ stop screen share ]
+      </div>
 
-    <div>&nbsp;</div>
+      <div>&nbsp;</div>
 
-    <div
-      onclick="showNames = !showNames;
+      <div
+        onclick="showNames = !showNames;
               callFrame.loadCss({ bodyClass: bodyClasses() });"
-    >
-      [ toggle names ]
-    </div>
+      >
+        [ toggle names ]
+      </div>
 
-    <div
-      onclick="videoCircles = !videoCircles;
+      <div
+        onclick="videoCircles = !videoCircles;
               callFrame.loadCss({ bodyClass: bodyClasses() });"
-    >
-      [ toggle circles view ]
-    </div>
+      >
+        [ toggle circles view ]
+      </div>
 
-    <div
-      onclick="lowBandwidth = !lowBandwidth;
+      <div
+        onclick="lowBandwidth = !lowBandwidth;
               if (!origSize) {
                 origSize = {
                   width: callFrame.participants().local.cam_info.video_width,
@@ -73,8 +72,15 @@
                           { width: 64, height: 64 } :
                           { width: origSize.width, height: origSize.height},
               }).loadCss({ bodyClass: bodyClasses() });"
-    >
-      [ toggle (very) low bandwidth ]
+      >
+        [ toggle (very) low bandwidth ]
+      </div>
+
+      <div>&nbsp;</div>
+
+      <div onclick="callFrame.getNetworkStats().then((s)=>console.log(s));">
+        [ get stats ]
+      </div>
     </div>
 
     <script>
@@ -130,7 +136,7 @@
         callFrame.join({
           url,
           token,
-          cssFile: 'layout-css.css',
+          cssFile: 'layout-css.css?',
         });
       }
     </script>
