@@ -59,24 +59,24 @@
   content: "32kb/s upstream video bandwidth cap";
 }
 
-.recording .info-div {
+.recording-local .info-div {
   background-color: red; 
 }
-.recording .info-div::after {
+.recording-local .info-div::after {
   content: "recording";
 }
 
-.recording .info-div {
-  background-color: red; 
+.recording-peer .info-div {
+  background-color: orange; 
 }
-.recording .info-div::after {
-  content: "recording ...";
+.recording-peer .info-div::after {
+  content: "someone is recording";
 }
 
-.recording-uploading:not(.recording) .info-div {
+.recording-uploading:not(.recording-local) .info-div {
   background-color: green; 
 }
-.recording-uploading:not(.recording) .info-div::after {
+.recording-uploading:not(.recording-local) .info-div::after {
   content: "uploading ...";
 }
 

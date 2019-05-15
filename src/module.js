@@ -36,6 +36,7 @@ import {
   DAILY_METHOD_STOP_RECORDING,
   DAILY_METHOD_LOAD_CSS,
   DAILY_METHOD_SET_BANDWIDTH,
+  DAILY_METHOD_GET_CALC_STATS,
 } from './CommonIncludes.js';
 
 
@@ -288,6 +289,15 @@ export default class DailyIframe extends EventEmitter {
     this.sendMessage({ action: DAILY_METHOD_STOP_RECORDING });
   }
 
+  getNetworkStats() {
+    return new Promise((resolve, reject) => {
+      let k = (msg) => {
+        resolve({ stats: msg.stats });
+      }
+      this.sendMessage({ action: DAILY_METHOD_GET_CALC_STATS }, k);
+    });
+  }
+
   //
   // internal methods
   //
@@ -384,8 +394,7 @@ export default class DailyIframe extends EventEmitter {
       case  DAILY_EVENT_RECORDING_ERROR:
       case  DAILY_EVENT_RECORDING_UPLOAD_COMPLETED:
         this.emit(msg.action, msg);
-        break;
-
+        break;        
       default: // no op
     }
   }

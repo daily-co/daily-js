@@ -4,6 +4,8 @@
 </head>
 <body>
 
+<div style="width: 50%">
+
 <div onclick="callFrame.join({ url }).then((ps)=>console.log('joined and have participants', ps));">
 [ join mtg ]
 </div>
@@ -20,7 +22,6 @@
 [ toggle local mic state ]
 </div>
 
-<!--
 <div>&nbsp;</div>
 
 <div onclick="callFrame.startRecording()">
@@ -29,7 +30,6 @@
 <div onclick="callFrame.stopRecording()">
 [ stop recording ]
 </div>
--->
 
 <div>&nbsp;</div>
 
@@ -67,6 +67,15 @@
               }).loadCss({ bodyClass: bodyClasses() });">
 [ toggle (very) low bandwidth ]
 </div>
+
+<div>&nbsp;</div>
+
+<div onclick="callFrame.getNetworkStats().then((s)=>console.log(s));">
+[ get stats ]
+</div>
+
+</div>
+
 
 
 <script>
@@ -117,7 +126,7 @@ async function run() {
   callFrame.join({
     url,
     token,
-    cssFile: 'layout-css.css'
+    cssFile: 'layout-css.css?'
   });
 }
 </script>
