@@ -2,9 +2,29 @@
   <head>
     <title>call events demo</title>
     <style>
+      .mobile-wrapper {
+        position: relative;
+        width: 375px;
+        height: 812px;
+        background-color: #444;
+      }
+      .mobile-statusbar {
+        background-image: url('image-mobile-statusbar@2x.png');
+        background-size: contain;
+        width: 375px;
+        height: 90px;
+      }
+      .mobile-navbar {
+        background-image: url('image-mobile-navbar@2x.png');
+        background-size: contain;
+        position: absolute;
+        bottom: 0;
+        width: 375px;
+        height: 83px;
+      }
       #call-container {
         background-color: #f0f0f0;
-        width: 320px;
+        width: 375px;
         padding: 20px 0;
       }
       h4 {
@@ -19,6 +39,10 @@
       #header,
       #controller {
         padding: 0 20px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
       }
       #controller ul {
         margin: 0;
@@ -26,6 +50,14 @@
       }
       #controller ul li img {
         filter: invert(100%);
+      }
+      #controller #leave p {
+        color: #ff3b30;
+        text-align: right;
+        font-family: 'Helvetica', Arial, sans-serif;
+        font-size: 12px;
+        font-weight: 800;
+        cursor: pointer;
       }
       .controller-item {
         list-style-type: none;
@@ -39,64 +71,36 @@
       .controller-item:nth-child(n + 2) {
         margin-left: 10px;
       }
+      #message-incall {
+        display: none;
+      }
+      #message-joining {
+        display: block;
+      }
+      #message-exit {
+        display: none;
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
-    <div
-      onclick="callFrame.join({ url }).then((ps)=>console.log('joined and have participants', ps));"
-    >
-      [ join mtg ]
-    </div>
-    <div onclick="console.log('PARTICIPANTS', callFrame.participants())">
-      [ get participants ]
-    </div>
-    <!--
-		<div>&nbsp;</div>
-		<div onclick="callFrame.startRecording()">
-		[ start recording ]
-		</div>
-		<div onclick="callFrame.stopRecording()">
-		[ stop recording ]
-		</div>
-		-->
-
-    <div onclick="callFrame.stopScreenShare()">
-      [ stop screen share ]
-    </div>
-    <div
-      onclick="showNames = !showNames;
-		              callFrame.loadCss({ bodyClass: bodyClasses() });"
-    >
-      [ toggle names ]
-    </div>
-
     <script>
       let url, token;
       function showEvent(e) {
         console.log('PARENT FRAME GOT EVENT -->', e);
       }
+      function exitCall() {
+        document.getElementById('message-exit').style.display = 'block';
+        document.getElementById('message-incall').style.display = 'none';
+      }
       async function updateEvent() {
         let ps = callFrame.participants();
         if (Object.keys(ps).length < 2) {
-          document.getElementById('ui-local').style.display = 'none';
-          document.getElementById('ui-alone').style.display = 'block';
+          document.getElementById('message-incall').style.display = 'block';
+          document.getElementById('message-joining').style.display = 'none';
+          document.getElementById('message-exit').style.display = 'none';
         } else {
-          document.getElementById('ui-local').style.display = 'none';
-          document.getElementById('ui-alone').style.display = 'none';
-          let wrapper = document.getElementById('ui-participant');
-          wrapper.innerHTML = '';
-          Object.keys(ps).forEach((p) => {
-            if (p === 'local') {
-              return;
-            }
-            let participant = ps[p];
-            wrapper.innerHTML += `
-						<div class="ui-participant-guest">
-						<p>${participant.user_name || 'Guest'}</p>
-							<img src="icon-eject.svg" alt="Kick user out of meeting"
-										onclick="callFrame.updateParticipant('${p}',{eject:true})" />
-						</div>`;
-          });
+          document.getElementById('message-joining').style.display = 'none';
         }
       }
       async function run() {
@@ -131,10 +135,18 @@
         });
       }
     </script>
-    <div id="call-container">
-      <div id="mobile-ui">
+    <div class="mobile-wrapper">
+      <div class="mobile-statusbar"></div>
+      <div id="call-container">
         <div id="header">
-          <h4>You're in a call</h4>
+          <h4 id="message-incall">You're in the call</h4>
+          <h4 id="message-joining">Joining call…</h4>
+          <h4
+            id="message-exit"
+            onclick="callFrame.join({ url }).then((ps)=>console.log('joined and have participants', ps));"
+          >
+            You exited, click to rejoin
+          </h4>
         </div>
         <iframe id="call-frame" allow="camera; microphone; autoplay"></iframe>
         <div id="controller">
@@ -152,8 +164,15 @@
               <img src="/demo/icon-camera.svg" />
             </li>
           </ul>
+          <div
+            onclick="callFrame.leave().then(()=>console.log('LEAVE PROMISE RESOLVED'));exitCall()"
+            id="leave"
+          >
+            <p>Leave call</p>
+          </div>
         </div>
       </div>
+      <div class="mobile-navbar"></div>
     </div>
     <script src="../dist/daily-iframe.js" onload="run()"></script>
   </body>
