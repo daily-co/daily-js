@@ -1,21 +1,23 @@
 @import url('https://fonts.googleapis.com/css?family=Lato');
 
-.scroll::-webkit-scrollbar {
+::-webkit-scrollbar {
   display: none;
 }
 
-.daily-video-element {
-  object-fit: cover;
+.daily-video-toplevel-div {
+	display: grid;
+	grid-template-columns: 20px 1fr 20px;
+	grid-template-rows: 1fr;
+	position: relative;
+  overflow: scroll;
+	-ms-overflow-style: -ms-autohiding-scrollbar;
 }
 
 .daily-videos-wrapper {
+	grid-area: 1 / 2;
 	position: relative;
-	display: grid;
-	grid-template-columns: repeat(1000, 1fr);
-	grid-template-rows: 128px;
-	grid-column-gap: 10px;
-	overflow-x: auto;
-	-ms-overflow-style: -ms-autohiding-scrollbar;
+	display: flex;
+	padding: 0 20px 0 0;
 }
 
 .daily-video-div {
@@ -25,6 +27,11 @@
 	border-radius: 50%;
 	height: 128px;
 	width: 128px;
+	margin-right: 10px;
+}
+
+.daily-video-div:last-child {
+	margin-right: 0;
 }
 
 .daily-video-element {
@@ -33,32 +40,16 @@
 
 .daily-video-div.local {
 	grid-area: 1 / 1 / 2 / 2;
-  margin-left: 20px;
 }
 
 /* .daily-video-div.remote {
 	margin-left: 20px;
 } */
 
-.daily-video-div.remote:last-child {
-	margin-right: 20px;
-}
-
-.daily-video-div.cam-muted::before {
-	content: '';
-	background: rgba(255, 255, 255, 0.3) !important;
-	width: 100%;
-	height: 100%;
-	position: absolute;
-	left: 0;
-	top: 0;
-	z-index: 1;
-}
-
 .daily-video-overlay.mic-muted::before {
 	content: "";
 	position: absolute;
-	background-image: url(/demo/muted-microphone-white.svg);
+	background-image: url(/demo/icon-microphone-off-white.svg);
 	background-position: center;
 	background-repeat: no-repeat;
 	background-size: 24px 24px;
