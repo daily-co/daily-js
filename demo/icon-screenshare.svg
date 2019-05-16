@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 54.1 (76490) - https://sketchapp.com -->
+    <title>icon-24px-screenshare</title>
+    <desc>Created with Sketch.</desc>
+    <g id="Grid-Design" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Grid-Design-1-Participants" transform="translate(-656.000000, -783.000000)" fill="#FFFFFF">
+            <g id="Meeting-Controls" transform="translate(0.000000, 582.000000)">
+                <g id="Screen-share" transform="translate(40.000000, 201.000000)">
+                    <path d="M618,5.00585866 C618,3.89805351 618.898212,3 619.990795,3 L636.009205,3 C637.108691,3 638,3.89706013 638,5.00585866 L638,14.9941413 C638,16.1019465 637.101788,17 636.009205,17 L619.990795,17 C618.891309,17 618,16.1029399 618,14.9941413 L618,5.00585866 Z M620,5.99539757 L620,14.0046024 C620,14.5443356 620.448106,15 621.000872,15 L634.999128,15 C635.555369,15 636,14.5543453 636,14.0046024 L636,5.99539757 C636,5.4556644 635.551894,5 634.999128,5 L621.000872,5 C620.444631,5 620,5.44565467 620,5.99539757 Z M623,20 C623,19.4477153 623.455664,19 623.995398,19 L632.004602,19 C632.554345,19 633,19.4438648 633,20 C633,20.5522847 632.544336,21 632.004602,21 L623.995398,21 C623.445655,21 623,20.5561352 623,20 Z" id="Combined-Shape"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,160 @@
+<html>
+  <head>
+    <title>call events demo</title>
+    <style>
+      #call-container {
+        background-color: #f0f0f0;
+        width: 320px;
+        padding: 20px 0;
+      }
+      h4 {
+        margin: 0;
+      }
+      #call-frame {
+        width: 100%;
+        height: 128px;
+        border: 0;
+        padding: 20px 0;
+      }
+      #header,
+      #controller {
+        padding: 0 20px;
+      }
+      #controller ul {
+        margin: 0;
+        padding: 0;
+      }
+      #controller ul li img {
+        filter: invert(100%);
+      }
+      .controller-item {
+        list-style-type: none;
+        display: inline-block;
+        cursor: pointer;
+      }
+      .controller-item img {
+        width: 24px;
+        height: 24px;
+      }
+      .controller-item:nth-child(n + 2) {
+        margin-left: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      onclick="callFrame.join({ url }).then((ps)=>console.log('joined and have participants', ps));"
+    >
+      [ join mtg ]
+    </div>
+    <div onclick="console.log('PARTICIPANTS', callFrame.participants())">
+      [ get participants ]
+    </div>
+    <!--
+		<div>&nbsp;</div>
+		<div onclick="callFrame.startRecording()">
+		[ start recording ]
+		</div>
+		<div onclick="callFrame.stopRecording()">
+		[ stop recording ]
+		</div>
+		-->
+
+    <div onclick="callFrame.stopScreenShare()">
+      [ stop screen share ]
+    </div>
+    <div
+      onclick="showNames = !showNames;
+		              callFrame.loadCss({ bodyClass: bodyClasses() });"
+    >
+      [ toggle names ]
+    </div>
+
+    <script>
+      let url, token;
+      function showEvent(e) {
+        console.log('PARENT FRAME GOT EVENT -->', e);
+      }
+      async function updateEvent() {
+        let ps = callFrame.participants();
+        if (Object.keys(ps).length < 2) {
+          document.getElementById('ui-local').style.display = 'none';
+          document.getElementById('ui-alone').style.display = 'block';
+        } else {
+          document.getElementById('ui-local').style.display = 'none';
+          document.getElementById('ui-alone').style.display = 'none';
+          let wrapper = document.getElementById('ui-participant');
+          wrapper.innerHTML = '';
+          Object.keys(ps).forEach((p) => {
+            if (p === 'local') {
+              return;
+            }
+            let participant = ps[p];
+            wrapper.innerHTML += `
+						<div class="ui-participant-guest">
+						<p>${participant.user_name || 'Guest'}</p>
+							<img src="icon-eject.svg" alt="Kick user out of meeting"
+										onclick="callFrame.updateParticipant('${p}',{eject:true})" />
+						</div>`;
+          });
+        }
+      }
+      async function run() {
+        // from demo/.env, get a Daily.co meeting url and a meeting token
+        // that allows screen sharing and recording
+        let res = await fetch('/env');
+        config = await res.json();
+        console.log('CONFIG', config);
+        url = config.DEMO_MEETING_URL;
+        token = config.DEMO_MEETING_TOKEN;
+        window.callFrame = window.DailyIframe.wrap(
+          document.getElementById('call-frame'),
+          { layout: 'custom-v1' }
+        );
+        callFrame
+          .on('joining-meeting', showEvent)
+          .on('joined-meeting', showEvent)
+          .on('left-meeting', updateEvent)
+          .on('participant-joined', updateEvent)
+          .on('participant-updated', updateEvent)
+          .on('participant-left', updateEvent)
+          .on('recording-started', showEvent)
+          .on('recording-stopped', showEvent)
+          .on('recording-stats', showEvent)
+          .on('recording-error', showEvent)
+          .on('recording-upload-completed', showEvent)
+          .on('error', showEvent);
+        callFrame.join({
+          url,
+          token,
+          cssFile: 'demo-topbar-horizontal-scroll.css',
+        });
+      }
+    </script>
+    <div id="call-container">
+      <div id="mobile-ui">
+        <div id="header">
+          <h4>You're in a call</h4>
+        </div>
+        <iframe id="call-frame" allow="camera; microphone; autoplay"></iframe>
+        <div id="controller">
+          <ul>
+            <li
+              class="controller-item"
+              onclick="callFrame.setLocalAudio(!callFrame.localAudio())"
+            >
+              <img src="/demo/icon-microphone.svg" />
+            </li>
+            <li
+              class="controller-item"
+              onclick="callFrame.setLocalVideo(!callFrame.localVideo())"
+            >
+              <img src="/demo/icon-camera.svg" />
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <script src="../dist/daily-iframe.js" onload="run()"></script>
+  </body>
+</html>
