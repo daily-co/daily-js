@@ -61,17 +61,10 @@
 </div>
 
 <div onclick="lowBandwidth = !lowBandwidth;
-              if (!origSize) {
-                origSize = {
-                  width: callFrame.participants().local.cam_info.video_width,
-                  height: callFrame.participants().local.cam_info.video_height,
-                }
-              }
               callFrame.setBandwidth({
                 kbs: lowBandwidth ? 32 : null,
-                trackConstraints: lowBandwidth ? 
-                          { width: 64, height: 64 } :
-                          { width: origSize.width, height: origSize.height},
+                trackConstraints: lowBandwidth ?
+                                    { width: 64, height: 64 } : null
               }).loadCss({ bodyClass: bodyClasses() });">
 [ toggle (very) low bandwidth ]
 </div>
@@ -89,8 +82,7 @@
 <script>
 let url, token;
 
-let origSize = null,
-    showNames = false,
+let showNames = false,
     videoCircles = false;
     lowBandwidth = false;
 
