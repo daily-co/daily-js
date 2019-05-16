@@ -5,10 +5,16 @@ import {
   // re-export
   //
   DAILY_STATE_NEW,
+  DAILY_STATE_LOADING,
+  DAILY_STATE_LOADED,
   DAILY_STATE_JOINING,
   DAILY_STATE_JOINED,
   DAILY_STATE_LEFT,
   DAILY_STATE_ERROR,
+  DAILY_EVENT_LOADING,
+  DAILY_EVENT_LOADED,
+  DAILY_EVENT_STARTED_CAMERA,
+  DAILY_EVENT_CAMERA_ERROR,
   DAILY_EVENT_JOINING_MEETING,
   DAILY_EVENT_JOINED_MEETING,
   DAILY_EVENT_LEFT_MEETING,
@@ -25,6 +31,11 @@ import {
   // internals
   //
   IFRAME_MESSAGE_MARKER,
+  DAILY_METHOD_START_CAMERA,
+  DAILY_METHOD_SET_INPUT_DEVICES,
+  DAILY_METHOD_SET_OUTPUT_DEVICE,
+  DAILY_METHOD_GET_INPUT_DEVICES,
+  DAILY_METHOD_JOIN,
   DAILY_METHOD_LEAVE,
   DAILY_METHOD_UPDATE_PARTICIPANT,
   DAILY_METHOD_LOCAL_AUDIO,
@@ -36,6 +47,9 @@ import {
   DAILY_METHOD_LOAD_CSS,
   DAILY_METHOD_SET_BANDWIDTH,
   DAILY_METHOD_GET_CALC_STATS,
+  DAILY_METHOD_ENUMERATE_DEVICES,
+  DAILY_METHOD_CYCLE_CAMERA,
+  DAILY_METHOD_CYCLE_MIC,
 } from './CommonIncludes.js';
 
 export {
@@ -152,6 +166,7 @@ export default class DailyIframe extends EventEmitter {
     this.properties = { ...properties };
 
     this._iframe = iframeish;
+    this._loaded = false;
     this._meetingState = DAILY_STATE_NEW;
     this._participants = {};
 
@@ -252,28 +267,109 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
-  async join(properties) {
+  startCamera() {
+    return new Promise((resolve, reject) => {
+      let k = (msg) => {
+        delete msg.action;
+        delete msg.callbackStamp;
+        resolve(msg);
+      };
+      this.sendMessage({ action: DAILY_METHOD_START_CAMERA }, k);
+    });
+    return this;
+  }
+
+  cycleCamera() {
+    return new Promise((resolve, reject) => {
+      let k = (msg) => {
+        resolve({ device: msg.device });
+      };
+      this.sendMessage({ action: DAILY_METHOD_CYCLE_CAMERA }, k);
+    });
+  }
+
+  cycleMic() {
+    return new Promise((resolve, reject) => {
+      let k = (msg) => {
+        resolve({ device: msg.device });
+      };
+      this.sendMessage({ action: DAILY_METHOD_CYCLE_MIC }, k);
+    });
+  }
+
+  setInputDevices({ audioDeviceId, videoDeviceId }) {
+    this.sendMessage({
+      action: DAILY_METHOD_SET_INPUT_DEVICES,
+      audioDeviceId,
+      videoDeviceId,
+    });
+    return this;
+  }
+
+  setOutputDevice({ outputDeviceId }) {
+    this.sendMessage({
+      action: DAILY_METHOD_SET_OUTPUT_DEVICE,
+      outputDeviceId,
+    });
+    return this;
+  }
+
+  getInputDevices() {
+    return new Promise((resolve, reject) => {
+      let k = (msg) => {
+        delete msg.action;
+        delete msg.callbackStamp;
+        resolve(msg);
+      };
+      this.sendMessage({ action: DAILY_METHOD_GET_INPUT_DEVICES }, k);
+    });
+  }
+
+  async load(properties) {
     if (properties) {
       this.validateProperties(properties);
       this.properties = { ...this.properties, ...properties };
     }
     if (!this.properties.url) {
-      throw new Error("can't join meeting because url property isn't set");
+      throw new Error("can't load meeting because url property isn't set");
+    }
+    this._meetingState = DAILY_STATE_LOADING;
+    this.emit(DAILY_EVENT_LOADING, { action: DAILY_EVENT_LOADING });
+    this._iframe.src = this.assembleMeetingUrl();
+    return new Promise((resolve, reject) => {
+      this._loadedCallback = () => {
+        this._loaded = true;
+        this._meetingState = DAILY_STATE_LOADED;
+        if (this.properties.cssFile || this.properties.cssText) {
+          this.loadCss(this.properties);
+        }
+        resolve();
+      };
+    });
+  }
+
+  async join(properties) {
+    let newCss = false;
+    if (!this._loaded) {
+      await this.load(properties);
+    } else {
+      newCss = !!(this.properties.cssFile || this.properties.cssText);
     }
     this._meetingState = DAILY_STATE_JOINING;
     this.emit(DAILY_EVENT_JOINING_MEETING, {
       action: DAILY_EVENT_JOINING_MEETING,
     });
-    this._iframe.src = this.assembleMeetingUrl();
+    this.sendMessage({ action: DAILY_METHOD_JOIN });
     return new Promise((resolve, reject) => {
       this._joinedCallback = (participants) => {
+        this._meetingState = DAILY_STATE_JOINED;
         if (participants) {
           for (var id in participants) {
             this.fixupParticipant(participants[id]);
             this._participants[id] = { ...participants[id] };
           }
         }
-        if (this.properties.cssFile || this.properties.cssText) {
+        if (newCss) {
           this.loadCss(this.properties);
         }
         resolve(participants);
@@ -285,6 +381,7 @@ export default class DailyIframe extends EventEmitter {
     return new Promise((resolve, reject) => {
       let k = () => {
         this._iframe.src = '';
+        this._loaded = false;
         this._meetingState = DAILY_STATE_LEFT;
         this.emit(DAILY_STATE_LEFT, { action: DAILY_STATE_LEFT });
         resolve();
@@ -315,6 +412,15 @@ export default class DailyIframe extends EventEmitter {
         resolve({ stats: msg.stats });
       };
       this.sendMessage({ action: DAILY_METHOD_GET_CALC_STATS }, k);
+    });
+  }
+
+  enumerateDevices(kind) {
+    return new Promise((resolve, reject) => {
+      let k = (msg) => {
+        resolve({ devices: msg.devices });
+      };
+      this.sendMessage({ action: DAILY_METHOD_ENUMERATE_DEVICES, kind }, k);
     });
   }
 
@@ -371,12 +477,18 @@ export default class DailyIframe extends EventEmitter {
     delete msg.what;
     delete msg.callbackStamp;
     switch (msg.action) {
+      case DAILY_EVENT_LOADED:
+        if (this._loadedCallback) {
+          this._loadedCallback();
+          this._loadedCallback = null;
+        }
+        this.emit(msg.action, msg);
+        break;
       case DAILY_EVENT_JOINED_MEETING:
         if (this._joinedCallback) {
           this._joinedCallback(msg.participants);
           this._joinedCallback = null;
         }
-        this._meetingState = DAILY_STATE_JOINED;
         this.emit(msg.action, msg);
         break;
       case DAILY_EVENT_PARTICIPANT_JOINED:
@@ -412,6 +524,8 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_RECORDING_STATS:
       case DAILY_EVENT_RECORDING_ERROR:
       case DAILY_EVENT_RECORDING_UPLOAD_COMPLETED:
+      case DAILY_EVENT_STARTED_CAMERA:
+      case DAILY_EVENT_CAMERA_ERROR:
         this.emit(msg.action, msg);
         break;
       default: // no op
