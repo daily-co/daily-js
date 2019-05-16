@@ -23,7 +23,7 @@
 				}
 				#ui-container {
 					display: grid;
-					grid-template-rows: 1fr 1fr;
+					grid-template-rows: 1fr 0.5fr 0.5fr;
 					grid-template-columns: 0.5fr 0.5fr 1fr;
 				}
 				#ui-local {
@@ -37,13 +37,13 @@
 				}
 				#ui-alone {
 					background-color: #cecece;
-					grid-area: 1 / 3;
-					grid-row-end: 3;
+					grid-area: 1 / 3 / 4 / 3;
 				}
 				#ui-controller {
 					background-color: #383838;
-					grid-area: 2 / 1;
-					padding: 40px;
+					grid-area: 2 / 1 / 4 / 2;
+					padding: 30px;
+					overflow-y: scroll;
 				}
 				#ui-controller hr, #ui-participant hr {
 					border: 0.5px solid #4f4f4f;
@@ -72,18 +72,30 @@
 				}
 				#ui-participant {
 					background-color: #242424;
-					grid-area: 2 / 2;
-					padding: 40px;
+					grid-area: 2 / 2 / 4 / 2;
+					padding: 30px;
+					overflow-y: scroll;
+				}
+				@media (max-width: 1000px) {
+					#ui-controller {
+						grid-area: 2 / 1 / 2 / 3;
+					}
+					#ui-participant {
+						grid-area: 3 / 1 / 3 / 3;
+					}
+					.ui-controller-control, .ui-participant-guest, #ui-controller hr, #ui-participant hr {
+						margin-bottom: 0.625em;
+					}
 				}
 				@media (max-width: 800px) {
 					#call-frame {
 						z-index: 100;
-						top: 257px;
-						height: calc(100vh - 257px);
+						top: 197px;
+						height: calc(100vh - 197px);
 					}
 					#ui-container {
 						grid-template-columns: 1fr;
-    				grid-template-rows: 257px;
+    				grid-template-rows: 197px;
 					}
 					#ui-controller {
 						grid-area: 1 / 1;
@@ -129,11 +141,11 @@
 			</div>
 			<div id="ui-controller">
 				<div onclick="callFrame.setLocalVideo(!callFrame.localVideo())" class="ui-controller-control">
-					<p>Toggle your camera</p>
+					<p>Toggle camera</p>
 					<img src="icon-camera.svg" alt="Toggle Camera On/Off">
 				</div>
 				<div onclick="callFrame.setLocalAudio(!callFrame.localAudio())" class="ui-controller-control">
-					<p>Toggle your microphone</p>
+					<p>Toggle microphone</p>
 					<img src="icon-microphone.svg" alt="Toggle Microphone On/Off">
 				</div>
 				<div onclick="callFrame.startScreenShare()" class="ui-controller-control">
