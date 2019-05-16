@@ -4,7 +4,7 @@
   position: relative;
   visibility: visible;
   width: 320;
-  height: 180;
+  height: calc(320px / var(--aspect-ratio));
   margin: 1em;
   margin-left: auto;
 }
