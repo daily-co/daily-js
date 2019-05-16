@@ -127,8 +127,10 @@
 	font-family: 'Lato', sans-serif;
 	font-weight: bold;
 	color: white;
-	padding: 0.25em;
+	padding: 0.625em;
 }
+
+.info-div .screen
 
 .low-bandwidth .info-div {
 	background-color: grey;
@@ -143,14 +145,12 @@
 .recording .info-div::after {
 	content: "recording";
 }
-
 .recording .info-div {
 	background-color: red;
 }
 .recording .info-div::after {
 	content: "recording ...";
 }
-
 .recording-uploading:not(.recording) .info-div {
 	background-color: green;
 }
