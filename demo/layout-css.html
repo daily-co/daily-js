@@ -6,14 +6,22 @@
 
 <div style="width: 50%">
 
-<div onclick="callFrame.join({ url }).then((ps)=>console.log('joined and have participants', ps));">
+<div onclick="loadMtg()">
+[ load mtg ]
+</div>
+
+<div onclick="joinMtg()">
 [ join mtg ]
 </div>
+
+<div onclick="leaveMtg()">
+[ leave mtg ]
+</div>
+
+<div>&nbsp;</div>
+
 <div onclick="console.log('PARTICIPANTS', callFrame.participants())">
 [ get participants ]
-</div>
-<div onclick="callFrame.leave().then(()=>console.log('LEAVE PROMISE RESOLVED'))">
-[ leave mtg ]
 </div>
 <div onclick="callFrame.setLocalVideo(!callFrame.localVideo())">
 [ toggle local cam state ]
@@ -86,6 +94,25 @@ let origSize = null,
     videoCircles = false;
     lowBandwidth = false;
 
+async function loadMtg() {
+  await callFrame.load({
+    url, token, cssFile: 'layout-css.css?'
+  });
+  console.log('LOADED');
+}
+
+async function joinMtg() {
+  let res = await callFrame.join({
+    url, token, cssFile: 'layout-css.css?'
+  });
+  console.log('JOINED: ', res);
+}
+
+async function leaveMtg() {
+  let res = await callFrame.leave();
+  console.log('LEFT: ', res);
+}
+
 function showEvent(e) {
   console.log('PARENT FRAME GOT EVENT -->', e);
 }
@@ -109,7 +136,11 @@ async function run() {
 
   window.callFrame = window.DailyIframe
                         .createTransparentFrame();
-  callFrame.on('joining-meeting', showEvent)
+  callFrame.on('loading', showEvent)
+           .on('loaded', showEvent)
+           .on('camera-error', showEvent)
+           .on('started-camera', showEvent)
+           .on('joining-meeting', showEvent)
            .on('joined-meeting', showEvent)
            .on('left-meeting', showEvent)
            .on('participant-joined', showEvent)
@@ -123,11 +154,11 @@ async function run() {
            .on('error', showEvent);
 
 
-  callFrame.join({
-    url,
-    token,
-    cssFile: 'layout-css.css?'
-  });
+  // callFrame.join({
+  //   url,
+  //   token,
+  //   cssFile: 'layout-css.css?'
+  // });
 }
 </script>
 <script src="../dist/daily-iframe.js" onload="run()"></script>
