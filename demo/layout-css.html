@@ -88,14 +88,14 @@ let showNames = false,
 
 async function loadMtg() {
   await callFrame.load({
-    url, token, cssFile: 'layout-css.css?'
+    url, token, cssFile: 'layout-css.css?no-cache'
   });
   console.log('LOADED');
 }
 
 async function joinMtg() {
   let res = await callFrame.join({
-    url, token, cssFile: 'layout-css.css?'
+    url, token, cssFile: 'layout-css.css?no-cache'
   });
   console.log('JOINED: ', res);
 }
@@ -149,7 +149,7 @@ async function run() {
   // callFrame.join({
   //   url,
   //   token,
-  //   cssFile: 'layout-css.css?'
+  //   cssFile: 'layout-css.css?no-cache'
   // });
 }
 </script>
