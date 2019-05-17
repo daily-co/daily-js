@@ -1,0 +1,146 @@
+<html>
+<head>
+<title>call methods and events demo</title>
+</head>
+<body>
+
+<div style="width: 50%">
+
+<div onclick="loadMtg()">
+[ load mtg ]
+</div>
+
+<div onclick="joinMtg()">
+[ join mtg ]
+</div>
+
+<div onclick="leaveMtg()">
+[ leave mtg ]
+</div>
+
+<div>&nbsp;</div>
+
+<div onclick="console.log('PARTICIPANTS', callFrame.participants())">
+[ get participants ]
+</div>
+<div onclick="callFrame.setLocalVideo(!callFrame.localVideo())">
+[ toggle local cam state ]
+</div>
+<div onclick="callFrame.setLocalAudio(!callFrame.localAudio())">
+[ toggle local mic state ]
+</div>
+
+<div>&nbsp;</div>
+
+<div onclick="callFrame.startRecording()">
+[ start recording ]
+</div>
+<div onclick="callFrame.stopRecording()">
+[ stop recording ]
+</div>
+
+<div>&nbsp;</div>
+
+<div onclick="callFrame.startScreenShare()">
+[ start screen share ]
+</div>
+<div onclick="callFrame.stopScreenShare()">
+[ stop screen share ]
+</div>
+
+<div>&nbsp;</div>
+
+<div onclick="callFrame.getNetworkStats().then((s)=>console.log(s));">
+[ get stats ]
+</div>
+
+</div>
+
+<iframe id="call-frame"
+        allow="camera,microphone,autoplay"
+        width="375" height="450"
+        style="position: absolute;
+               background-color: white;
+               border: 1px dotted black;
+               right: 1em;
+               bottom: 3em;" ></iframe>
+
+<script>
+let url, token;
+
+let showNames = false,
+    videoCircles = false;
+    lowBandwidth = false;
+
+async function loadMtg() {
+  await callFrame.load({
+    url, token, cssFile: 'layout-css.css?no-cache'
+  });
+  console.log('LOADED');
+}
+
+async function joinMtg() {
+  let res = await callFrame.join({
+    url, token, cssFile: 'layout-css.css?no-cache'
+  });
+  console.log('JOINED: ', res);
+}
+
+async function leaveMtg() {
+  let res = await callFrame.leave();
+  console.log('LEFT: ', res);
+}
+
+function showEvent(e) {
+  console.log('PARENT FRAME GOT EVENT -->', e);
+}
+
+function bodyClasses() {
+  let str = '';
+  if (showNames) { str += 'show-names' };
+  if (videoCircles) { str += ' video-circles' };
+  if (lowBandwidth) { str += ' low-bandwidth' };
+  return str;
+}
+
+async function run() {
+  // from demo/.env, get a Daily.co meeting url and a meeting token
+  // that allows screen sharing and recording
+  let res = await fetch('/env');
+  config = await res.json();
+  console.log('CONFIG', config);
+  url = config.DEMO_MEETING_URL;
+  token = config.DEMO_MEETING_TOKEN;
+
+  window.callFrame = window.DailyIframe
+                       .wrap(document.getElementById('call-frame'));
+  callFrame.on('loading', showEvent)
+           .on('loaded', showEvent)
+           .on('camera-error', showEvent)
+           .on('started-camera', showEvent)
+           .on('joining-meeting', showEvent)
+           .on('joined-meeting', showEvent)
+           .on('left-meeting', showEvent)
+           .on('participant-joined', showEvent)
+           .on('participant-updated', showEvent)
+           .on('participant-left', showEvent)
+           .on('recording-started', showEvent)
+           .on('recording-stopped', showEvent)
+           .on('recording-stats', showEvent)
+           .on('recording-error', showEvent)
+           .on('recording-upload-completed', showEvent)
+           .on('message', showEvent)
+           .on('error', showEvent);
+
+
+  // callFrame.join({
+  //   url,
+  //   token,
+  //   cssFile: 'layout-css.css?no-cache'
+  // });
+}
+</script>
+<script src="../dist/daily-iframe.js" onload="run()"></script>
+
+</body>
+</html>
