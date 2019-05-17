@@ -1,12 +1,13 @@
 {
   "name": "@daily-co/daily-js",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "engines": {
     "node": ">=10.0.0"
   },
   "homepage": "https://github.com/daily-co/daily-js/",
   "main": "src/main.js",
   "module": "src/module.js",
+  "files": "dist",
   "scripts": {
     "build": "npm run build-main && npm run build-module",
     "build-dev": "NODE_ENV=development npm run build",

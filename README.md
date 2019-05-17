@@ -11,6 +11,10 @@ recordings, and other resources are here:
 
 https://docs.daily.co/reference
 
+See a demo here:
+
+https://www.daily.co/api/demo
+
 ## Getting started
 
 You can use this library from a `<script>` tag, as a CommonJS-style
