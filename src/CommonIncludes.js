@@ -28,12 +28,15 @@ export const DAILY_EVENT_RECORDING_STATS = 'recording-stats';
 export const DAILY_EVENT_RECORDING_ERROR = 'recording-error';
 export const DAILY_EVENT_RECORDING_UPLOAD_COMPLETED =
   'recording-upload-completed';
+export const DAILY_EVENT_APP_MSG = 'message';
 
 export const DAILY_EVENT_ERROR = 'error';
 
 //
 // internal
 //
+
+export const MAX_APP_MSG_SIZE = 1024 * 4;
 
 export const IFRAME_MESSAGE_MARKER = 'iframe-call-message';
 
@@ -56,3 +59,4 @@ export const DAILY_METHOD_GET_CALC_STATS = 'get-calc-stats';
 export const DAILY_METHOD_ENUMERATE_DEVICES = 'enumerate-devices';
 export const DAILY_METHOD_CYCLE_CAMERA = 'cycle-camera';
 export const DAILY_METHOD_CYCLE_MIC = 'cycle-mic';
+export const DAILY_METHOD_APP_MSG = 'app-msg';
