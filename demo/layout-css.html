@@ -143,6 +143,7 @@ async function run() {
            .on('recording-stats', showEvent)
            .on('recording-error', showEvent)
            .on('recording-upload-completed', showEvent)
+           .on('message', showEvent)
            .on('error', showEvent);
 
 
