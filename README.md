@@ -58,12 +58,22 @@ function showEvent(e) {
 function run() {
   window.callFrame = window.DailyIframe
                         .wrap(document.getElementById('call-frame'));
-  callFrame.on('joining-meeting', showEvent)
+  callFrame.on('loading', showEvent)
+           .on('loaded', showEvent)
+           .on('camera-error', showEvent)
+           .on('started-camera', showEvent)
+           .on('joining-meeting', showEvent)
            .on('joined-meeting', showEvent)
            .on('left-meeting', showEvent)
            .on('participant-joined', showEvent)
            .on('participant-updated', showEvent)
            .on('participant-left', showEvent)
+           .on('recording-started', showEvent)
+           .on('recording-stopped', showEvent)
+           .on('recording-stats', showEvent)
+           .on('recording-error', showEvent)
+           .on('recording-upload-completed', showEvent)
+           .on('message', showEvent)
            .on('error', showEvent);
 
   console.log('VIDEO CALL WRAPPER -->', callFrame);
@@ -71,7 +81,7 @@ function run() {
   callFrame.join({ url: YOUR_DAILY_CO_MEETING_URL });
 }
 </script>
-<script src="../dist/daily-iframe.js" onload="run()"></script>
+<script crossorigin src="https://unpkg.com/@daily-co/daily-js@0.2.3" onload="run()"></script>
 
 </body>
 </html>
