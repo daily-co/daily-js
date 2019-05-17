@@ -6,6 +6,11 @@ The official front-end library for the Daily.co video calling API.
 - Respond to in-call events
 - Customize call layout and UI
 
+API docs for creating and managing rooms, permission tokens,
+recordings, and other resources are here:
+
+https://docs.daily.co/reference
+
 ## Getting started
 
 You can use this library from a `<script>` tag, as a CommonJS-style
@@ -68,11 +73,10 @@ function run() {
 </html>
 ```
 
-Of course, you can also use a bundler like webpack or rollup. Install
-this github repo into your `package.json` and `node_modules`.
+Of course, you can also use a bundler like webpack or rollup.
 
 ```
-npm install --save daily-co/daily-js
+npm install @daily-co/daily-js
 
 ```
 
