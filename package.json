@@ -1,10 +1,10 @@
 {
   "name": "@daily-co/daily-js",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "engines": {
     "node": ">=10.0.0"
   },
-  "homepage": "https://www.daily.co/",
+  "homepage": "https://github.com/daily-co/daily-js/",
   "main": "src/main.js",
   "module": "src/module.js",
   "scripts": {
