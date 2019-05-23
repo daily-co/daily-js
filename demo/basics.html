@@ -97,7 +97,7 @@ async function createFrame() {
   let customLayout = !!document
                          .querySelector('input[name="customLayout"]:checked')
                          .value,
-      cssFile = customLayout ? 'minimal-call-grid.css' : null;
+      cssFile = customLayout ? 'basics.css' : null;
   callFrame = window.DailyIframe.createFrame(
     document.getElementById('call-frame-container'),
     { customLayout, cssFile }
