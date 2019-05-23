@@ -80,15 +80,19 @@ const FRAME_PROPS = {
     help: 'token should be a string',
     queryString: 't',
   },
+  // style to apply to iframe in createFrame factory method
+  iframeStyle: true,
+  // styles passed through to video calls inside the iframe
+  customLayout: true,
+  cssFile: true,
+  cssText: true,
+  bodyClass: true,
+  // used internally
   layout: {
     validate: (layout) => layout === 'custom-v1' || layout === 'browser',
     help: 'layout may only be set to "custom-v1"',
     queryString: 'layout',
   },
-  cssFile: true,
-  cssText: true,
-  bodyClass: true,
-  // used internally
   emb: {
     queryString: 'emb',
   },
@@ -142,6 +146,56 @@ export default class DailyIframe extends EventEmitter {
       throw new Error('DailyIframe::Wrap needs an iframe-like first argument');
     }
     return new DailyIframe(iframeish, properties);
+  }
+
+  static createFrame(arg1, arg2) {
+    let parentEl, properties;
+    if (arg1 && arg2) {
+      parentEl = arg1;
+      properties = arg2;
+    } else if (arg1.append) {
+      parentEl = arg1;
+      properties = {};
+    } else {
+      parentEl = document.body;
+      properties = arg1 || {};
+    }
+    let iframeStyle = properties.iframeStyle;
+    if (!iframeStyle) {
+      if (parentEl === document.body) {
+        iframeStyle = {
+          position: 'fixed',
+          border: '1px solid black',
+          backgroundColor: 'white',
+          width: 375,
+          height: 450,
+          right: '1em',
+          bottom: '1em',
+        };
+      } else {
+        iframeStyle = {
+          border: 0,
+          width: '100%',
+          height: '100%',
+        };
+      }
+    }
+    let iframeEl = document.createElement('iframe');
+    iframeEl.allow = 'microphone; camera; autoplay';
+    iframeEl.style.visibility = 'hidden';
+    parentEl.appendChild(iframeEl);
+    iframeEl.style.visibility = null;
+    Object.keys(iframeStyle).forEach(
+      (k) => (iframeEl.style[k] = iframeStyle[k])
+    );
+    if (!properties.layout) {
+      if (properties.customLayout) {
+        properties.layout = 'custom-v1';
+      } else {
+        properties.layout = 'browser';
+      }
+    }
+    return new DailyIframe(iframeEl, properties);
   }
 
   static createTransparentFrame(properties = {}) {

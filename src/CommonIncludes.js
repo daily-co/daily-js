@@ -28,7 +28,7 @@ export const DAILY_EVENT_RECORDING_STATS = 'recording-stats';
 export const DAILY_EVENT_RECORDING_ERROR = 'recording-error';
 export const DAILY_EVENT_RECORDING_UPLOAD_COMPLETED =
   'recording-upload-completed';
-export const DAILY_EVENT_APP_MSG = 'message';
+export const DAILY_EVENT_APP_MSG = 'app-message';
 
 export const DAILY_EVENT_ERROR = 'error';
 
