@@ -1,0 +1,140 @@
+@import url('https://fonts.googleapis.com/css?family=Lato');
+
+/*
+
+top-level definitions. set positions of containers to relative so that
+children will be able to expand to 100% width and height. position the
+local video in the bottom left corner of the grids that we will define
+below.
+
+*/
+
+body {
+  border: 1px dashed black;
+}
+
+.daily-video-toplevel-div {
+  position: relative;
+}
+
+.daily-video-div {
+  visibility: visible;
+  position: relative;
+}
+
+.daily-video-div.local {
+  grid-area: mid / left / bottom / local-right;
+  margin: 0.25em;
+  z-index: 10;
+}
+
+.daily-video-element.local {
+  object-position: right bottom; /* flipped, so align "right" */
+}
+
+/* svg mic muted symbol, for mic muted participant state */
+
+.daily-video-overlay.mic-muted {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: url(/demo/muted-microphone.svg);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 20%;
+  filter: invert(100%);
+}
+
+.daily-video-overlay.mic-muted.local {
+  background-position: bottom 1em left 1em;
+  background-size: 15%;
+}
+
+/*
+
+grid geometry and video positioning when there is no screen share
+
+*/
+
+.daily-videos-wrapper.remote-screens-0 {
+  display: grid;
+  position: relative;
+  grid-template-rows: [top] 75% [mid] 25% [bottom];
+  grid-template-columns: [left] 25% [local-right] 8.33% [one-third] 
+                         16.67% [one-half] 16.67% [two-thirds] 1fr [right];
+}
+
+.daily-video-div.remote.cam {
+  grid-area: top / left / bottom / right;
+}
+
+.remote-cams-2 .daily-video-div:nth-child(2) {
+  grid-area: top / left / mid / one-half;
+  margin-right: 0.1em;
+}
+.remote-cams-2 .daily-video-div:nth-child(3) {
+  grid-area: top / one-half / mid / right;
+  margin-left: 0.1em;
+}
+
+.remote-cams-3 .daily-video-div:nth-child(2) {
+  grid-area: top / left / mid / one-third;
+  margin-right: 0.1em;
+}
+.remote-cams-3 .daily-video-div:nth-child(3) {
+  grid-area: top / one-third / mid / two-thirds;
+  margin-left: 0.1em;
+  margin-right: 0.1em;
+}
+.remote-cams-3 .daily-video-div:nth-child(4) {
+  grid-area: top / two-thirds / mid / right;
+  margin-left: 0.1em;
+}
+
+/* position local screen bottom right */
+
+.daily-video-div.local.screen {
+  grid-area: mid / -2 / bottom / -1;
+  margin: 0.25em;
+  z-index: 10;
+}
+.daily-video-element.local.screen {
+  object-position: right bottom;
+}
+
+
+/*
+
+grid geometry and video positioning when there is a single remote
+screen share. this demo layout doesn't support dual screen shares.
+
+*/
+
+.daily-videos-wrapper.remote-screens-1 {
+  display: grid;
+  position: relative;
+  grid-template-rows: [top] 75% [mid] 25% [bottom];
+  grid-template-columns: [left] 1fr [local-right] 1fr 1fr 1fr;
+}
+
+.daily-video-div.remote.screen {
+  grid-area: top / left / bottom / right;
+}
+
+.remote-screens-1 .daily-video-div {
+  margin: 0.2em;
+}
+.remote-screens-1 video.cam {
+  object-position: right bottom;
+}
+
+.remote-screens-1>.remote.cam {
+  grid-area: mid / 4 / bottom / 5;
+}
+.remote-screens-1>.remote.cam ~ .remote.cam {
+  grid-area: mid / 3 / bottom / 4;
+}
+.remote-screens-1>.remote.cam ~ .remote.cam ~ .remote.cam{
+  grid-area: mid / 2 / bottom / 3;
+}
