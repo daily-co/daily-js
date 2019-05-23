@@ -29,6 +29,7 @@ export const DAILY_EVENT_RECORDING_ERROR = 'recording-error';
 export const DAILY_EVENT_RECORDING_UPLOAD_COMPLETED =
   'recording-upload-completed';
 export const DAILY_EVENT_APP_MSG = 'app-message';
+export const DAILY_EVENT_INPUT_EVENT = 'input-event';
 
 export const DAILY_EVENT_ERROR = 'error';
 
@@ -60,3 +61,4 @@ export const DAILY_METHOD_ENUMERATE_DEVICES = 'enumerate-devices';
 export const DAILY_METHOD_CYCLE_CAMERA = 'cycle-camera';
 export const DAILY_METHOD_CYCLE_MIC = 'cycle-mic';
 export const DAILY_METHOD_APP_MSG = 'app-msg';
+export const DAILY_METHOD_ADD_FAKE_PARTICIPANT = 'add-fake-participant';

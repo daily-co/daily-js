@@ -14,11 +14,26 @@ button {
   display: flex;
   flex-direction: column;
 }
-#page-blocks>div {
-  margin-top: 1em;
+#page-blocks>div { margin-top: 1em; }
+#create-a-room { 
+  flex: none;
 }
 #create-a-room>div {
   margin-top: 0.25em;
+}
+#meeting-info-row {
+  flex: none; 
+  display: flex;
+}
+#meeting-info-row>div {
+  flex: auto;
+}
+#buttons-row { 
+  flex: none;
+  display: flex;
+}
+#buttons-row>div {
+  flex: auto;
 }
 #call-frame-container {
   flex-grow: 1;
@@ -43,7 +58,6 @@ button {
   flex-basis: auto;
 }
 .flex-bin {
-  flex: 1;
   flex-basis: auto;
 }
 .disabled {
@@ -115,6 +129,7 @@ async function createFrame() {
            .on('recording-stats', showEvent)
            .on('recording-error', showEvent)
            .on('app-message', showEvent)
+           .on('input-event', showEvent)
            .on('error', showEvent);
 
   callFrame.on('joined-meeting', (e) => {
@@ -160,7 +175,9 @@ function updateRoomInfoDisplay() {
     <div><b>room info</b></div>
     <div>
       send to invite or click to join
-      <div><a href="${room.url}" target="_blank">${room.url}</a></div>
+      <div><a href="${room.url}" target="_blank">
+        ${room.url.replace('.co/', '.co/&#8203;')}
+      </a></div>
       <div id='expires-countdown'></div>
     </div>
   `;
@@ -261,7 +278,7 @@ function buttonDisable(...args) {
 </script>
 
 <div id="page-blocks">
-  <div id="create-a-room" class="flex-bin">
+  <div id="create-a-room">
     <button onclick="createFrameAndRoom()">create a room</button>
     <div>
       <input type="radio" name="customLayout" value="" checked>
@@ -275,20 +292,20 @@ function buttonDisable(...args) {
     </div>
   </div>
   
-  <div id="meeting-info-row" class="flex-bin flex-bins">
-    <div id="meeting-room-info" class="info flex-bin">
+  <div id="meeting-info-row">
+    <div id="meeting-room-info" class="info">
       room info
     </div>
-    <div id="meeting-participants-info" class="info flex-bin">
+    <div id="meeting-participants-info" class="info">
       meeting participants
     </div>
-    <div id="network-info" class="info flex-bin">
+    <div id="network-info" class="info">
       network stats
     </div>  
   </div>
   
-  <div id="buttons-container" class="flex-bin flex-bins">
-    <div class="flex-bin">
+  <div id="buttons-row">
+    <div>
       <button id="join-meeting" onclick="callFrame.join({ url: ownerLink })">
         join meeting (as owner)
       </button>
@@ -296,7 +313,7 @@ function buttonDisable(...args) {
         leave meeting
       </button>
     </div>
-    <div class="flex-bin">
+    <div>
       <button id="toggle-local-cam" onclick="toggleCam()">
         toggle local cam
       </button>
@@ -304,7 +321,7 @@ function buttonDisable(...args) {
         toggle local mic
       </button>
     </div>
-    <div class="flex-bin">
+    <div>
       <button id="start-recording"
               onclick="buttonDisable('start-recording');
                        callFrame.startRecording()">
@@ -314,7 +331,7 @@ function buttonDisable(...args) {
         stop recording
       </button>
     </div>
-    <div class="flex-bin">
+    <div>
       <button id="start-screenshare" onclick="callFrame.startScreenShare()">
         start screenshare
       </button>
@@ -324,7 +341,7 @@ function buttonDisable(...args) {
     </div>
   </div>
   
-  <div id="call-frame-container" class="flex-bin">
+  <div id="call-frame-container">
   </div>
 </div>
 

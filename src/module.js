@@ -28,6 +28,7 @@ import {
   DAILY_EVENT_RECORDING_UPLOAD_COMPLETED,
   DAILY_EVENT_ERROR,
   DAILY_EVENT_APP_MSG,
+  DAILY_EVENT_INPUT_EVENT,
 
   // internals
   //
@@ -52,6 +53,7 @@ import {
   DAILY_METHOD_CYCLE_CAMERA,
   DAILY_METHOD_CYCLE_MIC,
   DAILY_METHOD_APP_MSG,
+  DAILY_METHOD_ADD_FAKE_PARTICIPANT,
   MAX_APP_MSG_SIZE,
 } from './CommonIncludes.js';
 
@@ -490,6 +492,10 @@ export default class DailyIframe extends EventEmitter {
     this._sendIframeMsg({ action: DAILY_METHOD_APP_MSG, data, to });
   }
 
+  addFakeParticipant(args) {
+    this._sendIframeMsg({ action: DAILY_METHOD_ADD_FAKE_PARTICIPANT, ...args });
+  }
+
   //
   // internal methods
   //
@@ -584,6 +590,21 @@ export default class DailyIframe extends EventEmitter {
           this._meetingState = DAILY_STATE_LEFT;
         }
         this.emit(msg.action, msg);
+        break;
+      case DAILY_EVENT_INPUT_EVENT:
+        let p = this._participants[msg.session_id];
+        if (!p) {
+          if (msg.session_id === this._participants.local.session_id) {
+            p = this._participants.local;
+          } else {
+            p = {};
+          }
+        }
+        this.emit(msg.action, {
+          action: msg.action,
+          event: msg.event,
+          participant: { ...p },
+        });
         break;
       case DAILY_EVENT_RECORDING_STARTED:
       case DAILY_EVENT_RECORDING_STOPPED:
