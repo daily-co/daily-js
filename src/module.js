@@ -54,6 +54,7 @@ import {
   DAILY_METHOD_CYCLE_MIC,
   DAILY_METHOD_APP_MSG,
   DAILY_METHOD_ADD_FAKE_PARTICIPANT,
+  DAILY_METHOD_SET_SHOW_NAMES,
   MAX_APP_MSG_SIZE,
 } from './CommonIncludes.js';
 
@@ -402,12 +403,16 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  async join(properties) {
+  async join(properties = {}) {
     let newCss = false;
     if (!this._loaded) {
       await this.load(properties);
     } else {
       newCss = !!(this.properties.cssFile || this.properties.cssText);
+      if (properties.url && properties.url !== this.properties.url) {
+        console.error("error: can't change the daily.co call url after load()");
+        return;
+      }
     }
     this._meetingState = DAILY_STATE_JOINING;
     this.emit(DAILY_EVENT_JOINING_MEETING, {
@@ -489,6 +494,16 @@ export default class DailyIframe extends EventEmitter {
 
   addFakeParticipant(args) {
     this._sendIframeMsg({ action: DAILY_METHOD_ADD_FAKE_PARTICIPANT, ...args });
+  }
+
+  setShowNamesMode(mode) {
+    if (mode && !(mode === 'always' || mode === 'never')) {
+      console.error(
+        'setShowNamesMode argument should be "always", "never", or false'
+      );
+      return;
+    }
+    this._sendIframeMsg({ action: DAILY_METHOD_SET_SHOW_NAMES, mode: mode });
   }
 
   //
