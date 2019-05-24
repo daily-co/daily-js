@@ -294,11 +294,6 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
-  // experimental -- should re-apply the track constraints if the
-  // local camera changes, and applyContraints may not be supported
-  // well enough for this to be used in production. also, think harder
-  // about this API design!
-  //
   setBandwidth({ kbs, trackConstraints }) {
     this._sendIframeMsg({ action: DAILY_METHOD_SET_BANDWIDTH,
                           kbs, trackConstraints });
@@ -456,7 +451,7 @@ export default class DailyIframe extends EventEmitter {
     });    
   }
 
-  sendMessage(data, to='*') {
+  sendAppMessage(data, to='*') {
     if (JSON.stringify(data).length > MAX_APP_MSG_SIZE) {
       throw new Error('Message data too large. Max size is ' +
                       MAX_APP_MSG_SIZE);
