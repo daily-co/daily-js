@@ -156,7 +156,7 @@ export default class DailyIframe extends EventEmitter {
     if (arg1 && arg2) {
       parentEl = arg1;
       properties = arg2;
-    } else if (arg1.append) {
+    } else if (arg1 && arg1.append) {
       parentEl = arg1;
       properties = {};
     } else {
