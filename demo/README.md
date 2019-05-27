@@ -5,7 +5,9 @@ to a live version you can run without checking out this repo locally.
 
 When running the live demos, it's useful to have your js console open.
 
-## Super-simple sample
+## Live demos
+
+### Super-simple sample
 
 Code
 
@@ -15,7 +17,7 @@ Live
 
 https://daily-co.github.io/daily-js/demo/simple.html
 
-## Switch between the standard in-call user interface and a custom UI
+### Switch between the standard in-call user interface and a custom UI
 
 Code
 
@@ -25,7 +27,7 @@ Live
 
 https://daily-co.github.io/daily-js/demo/basics.html
 
-## A fancy, colorful, css-grid in-call user interface
+### A fancy, colorful, css-grid in-call user interface
 
 Code
 
@@ -36,9 +38,7 @@ Live
 
 https://daily-co.github.io/daily-js/demo/demo-css-grid.html
 
-## Remote monitoring use case. One-way video, and managing bandwidth
-
-use dynamically
+### Remote monitoring use case. One-way video, and managing bandwidth use dynamically
 
 Code
 
