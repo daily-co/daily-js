@@ -1,6 +1,9 @@
 <html>
   <head>
     <title>call events demo</title>
+    <script crossorigin src="https://unpkg.com/@daily-co/daily-js@0.3"></script>
+    <script src="create-demo-room.js"></script>
+
     <style>
       body {
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -44,7 +47,6 @@
         background-color: #383838;
         grid-area: 2 / 1 / 4 / 2;
         padding: 30px;
-        overflow-y: scroll;
       }
       #ui-controller hr,
       #ui-participant hr {
@@ -78,7 +80,6 @@
         background-color: #242424;
         grid-area: 2 / 2 / 4 / 2;
         padding: 30px;
-        overflow-y: scroll;
       }
       @media (max-width: 1000px) {
         #ui-controller {
@@ -113,7 +114,7 @@
       }
     </style>
   </head>
-  <body>
+  <body onload="run()">
     <div
       onclick="callFrame.join({ url }).then((ps)=>console.log('joined and have participants', ps));"
     >
@@ -123,21 +124,21 @@
       [ get participants ]
     </div>
     <!--
-		<div>&nbsp;</div>
-		<div onclick="callFrame.startRecording()">
-		[ start recording ]
-		</div>
-		<div onclick="callFrame.stopRecording()">
-		[ stop recording ]
-		</div>
-		-->
+    <div>&nbsp;</div>
+    <div onclick="callFrame.startRecording()">
+    [ start recording ]
+    </div>
+    <div onclick="callFrame.stopRecording()">
+    [ stop recording ]
+    </div>
+    -->
 
     <div onclick="callFrame.stopScreenShare()">
       [ stop screen share ]
     </div>
     <div
       onclick="showNames = !showNames;
-		              callFrame.loadCss({ bodyClass: bodyClasses() });"
+                  callFrame.loadCss({ bodyClass: bodyClasses() });"
     >
       [ toggle names ]
     </div>
@@ -164,31 +165,42 @@
           <p>Toggle microphone</p>
           <img src="icon-microphone.svg" alt="Toggle Microphone On/Off" />
         </div>
-        <div
-          onclick="callFrame.startScreenShare()"
-          class="ui-controller-control"
-        >
-          <p>Start a screen share</p>
+        <div onclick="toggleScreenShare()" class="ui-controller-control">
+          <p id="screenshare-label">Start a screen share</p>
           <img src="icon-screenshare.svg" alt="Screen share" />
         </div>
         <hr />
-        <div
-          onclick="callFrame.leave().then(()=>console.log('LEAVE PROMISE RESOLVED'))"
-          class="ui-controller-control"
-        >
-          <p style="color: #ff3b30;">Leave call</p>
-          <img src="icon-leave.svg" alt="Leave the call" />
+        <div id="leave-call-div" class="ui-controller-control">
+          <p id="leave-call-label" style="color: #ff3b30;"></p>
+          <img src="icon-leave.svg" alt="Leave call" />
         </div>
       </div>
       <div id="ui-participant"></div>
     </div>
 
     <script>
-      let url, token;
+      let url, token, isCurrentlyScreenSharing;
+
       function showEvent(e) {
-        console.log('PARENT FRAME GOT EVENT -->', e);
+        console.log('video call event -->', e);
       }
-      async function updateEvent() {
+
+      async function joinedCall(e) {
+        showEvent(e);
+        document.getElementById('leave-call-label').innerHTML = 'Leave call';
+        document.getElementById('leave-call-div').onclick = () =>
+          callFrame.leave();
+      }
+
+      async function leftCall(e) {
+        showEvent(e);
+        document.getElementById('leave-call-label').innerHTML = 'Join call';
+        document.getElementById('leave-call-div').onclick = () =>
+          callFrame.join();
+      }
+
+      async function updateEvent(e) {
+        showEvent(e);
         let ps = callFrame.participants();
         if (Object.keys(ps).length < 2) {
           document.getElementById('ui-local').style.display = 'none';
@@ -204,30 +216,50 @@
             }
             let participant = ps[p];
             wrapper.innerHTML += `
-						<div class="ui-participant-guest">
-						<p>${participant.user_name || 'Guest'}</p>
-							<img src="icon-eject.svg" alt="Kick user out of meeting"
-										onclick="callFrame.updateParticipant('${p}',{eject:true})" />
-						</div>`;
+            <div class="ui-participant-guest">
+            <p>${participant.user_name || 'Guest'}</p>
+              <img src="icon-eject.svg" alt="Kick user out of meeting"
+                    onclick="callFrame.updateParticipant('${p}',{eject:true})" />
+            </div>`;
           });
         }
+        // update controller ui for joining/leaving the meeting and
+        // for local screenshare start/stop
+        if (ps.local) {
+          if (ps.local.screen && !isCurrentlyScreenSharing) {
+            isCurrentlyScreenSharing = true;
+            document.getElementById('screenshare-label').innerHTML =
+              'Stop sharing your screen';
+          } else if (!ps.local.screen && isCurrentlyScreenSharing) {
+            isCurrentlyScreenSharing = false;
+            document.getElementById('screenshare-label').innerHTML =
+              'Start a screen share';
+          }
+        }
       }
+
       async function run() {
-        // from demo/.env, get a Daily.co meeting url and a meeting token
-        // that allows screen sharing and recording
-        let res = await fetch('/env');
-        config = await res.json();
-        console.log('CONFIG', config);
-        url = config.DEMO_MEETING_URL;
-        token = config.DEMO_MEETING_TOKEN;
-        window.callFrame = window.DailyIframe.wrap(
+        // create a short-lived demo room and a join token with
+        // is_owner set to true. if you just want to
+        // hard-code a meeting link for testing you could do
+        // something like this:
+        //
+        //   room = { url: 'https://your-domain.daily.co/hello' }
+        //   ownerLink = room.url;
+        //
+        room = await createMtgRoom();
+        ownerLink = await createMtgLinkWithToken(room, {
+          is_owner: true,
+        });
+
+        callFrame = window.DailyIframe.wrap(
           document.getElementById('call-frame'),
-          { layout: 'custom-v1' }
+          { customLayout: true }
         );
         callFrame
           .on('joining-meeting', showEvent)
-          .on('joined-meeting', showEvent)
-          .on('left-meeting', updateEvent)
+          .on('joined-meeting', joinedCall)
+          .on('left-meeting', leftCall)
           .on('participant-joined', updateEvent)
           .on('participant-updated', updateEvent)
           .on('participant-left', updateEvent)
@@ -237,13 +269,30 @@
           .on('recording-error', showEvent)
           .on('recording-upload-completed', showEvent)
           .on('error', showEvent);
-        callFrame.join({
-          url,
-          token,
+        await callFrame.join({
+          url: ownerLink,
           cssFile: 'demo-css-grid.css',
         });
+
+        console.log(
+          ' You are connected to',
+          room.url,
+          '\n',
+          'Join from another tab or machine, or use the',
+          '\n',
+          '`callFrame.addFakeParticipant()` method to test',
+          '\n',
+          'this layout.'
+        );
+      }
+
+      async function toggleScreenShare() {
+        if (!isCurrentlyScreenSharing) {
+          callFrame.startScreenShare();
+        } else {
+          callFrame.stopScreenShare();
+        }
       }
     </script>
-    <script src="../dist/daily-iframe.js" onload="run()"></script>
   </body>
 </html>

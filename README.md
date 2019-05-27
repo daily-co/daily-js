@@ -21,71 +21,24 @@ You can use this library from a `<script>` tag, as a CommonJS-style
 module with `require`, or as an ES6-style module with `import`
 (including within a `<script type="module">` context).
 
-The easiest way to get started is to clone and build this repo, use
-`dist/daily-iframe.js` in a script tag, then in your application code
-call the `window.DailyIframe.wrap()` factory method.
+The easiest way to get started is to load this library from unpkg,
+and add a couple of lines of code to your web page or app.
 
 ```
-git clone https://github.com/daily-co/daily-js.git
-cd daily-js
-npm install
-npm run build
-```
-
-To explore the capabilities of this front-end API, see see [demo/](demo/)
-and [demo/README.md](demo/README.md) for running a local demo.
-
-Sample html/js:
-
-```
-<html>
-<head><title>basic video call events demo</title>
-</head>
-<body>
-
-<iframe id="call-frame"
-        width=350 height=425
-        allow="camera; microphone; autoplay"
-        style="position: absolute;
-               right: 1em;
-               bottom: 3em;"></iframe>
-
+<script crossorigin src="https://unpkg.com/@daily-co/daily-js"></script>
 <script>
-function showEvent(e) {
-  console.log('VIDEO CALL EVENT -->', e);
-}
-
-function run() {
-  window.callFrame = window.DailyIframe
-                        .wrap(document.getElementById('call-frame'));
-  callFrame.on('loading', showEvent)
-           .on('loaded', showEvent)
-           .on('camera-error', showEvent)
-           .on('started-camera', showEvent)
-           .on('joining-meeting', showEvent)
-           .on('joined-meeting', showEvent)
-           .on('left-meeting', showEvent)
-           .on('participant-joined', showEvent)
-           .on('participant-updated', showEvent)
-           .on('participant-left', showEvent)
-           .on('recording-started', showEvent)
-           .on('recording-stopped', showEvent)
-           .on('recording-stats', showEvent)
-           .on('recording-error', showEvent)
-           .on('recording-upload-completed', showEvent)
-           .on('message', showEvent)
-           .on('error', showEvent);
-
-  console.log('VIDEO CALL WRAPPER -->', callFrame);
-
-  callFrame.join({ url: YOUR_DAILY_CO_MEETING_URL });
+function createFrameAndJoinRoom() {
+  window.callFrame = window.DailyIframe.createFrame();
+  callFrame.join({ url: A_DAILY_CO_ROOM_URL });
 }
 </script>
-<script crossorigin src="https://unpkg.com/@daily-co/daily-js@0.2.3" onload="run()"></script>
-
-</body>
-</html>
 ```
+
+Here's a very simple working demo/template:
+
+https://github.com/daily-co/daily-js/blob/master/demo/basics.html
+
+More demos are available in the [demo/](demo/) directory.
 
 Of course, you can also use a bundler like webpack or rollup.
 
@@ -120,6 +73,7 @@ layout and styling.
 ## Methods
 
 - factory methods
+  - `createFrame(parentEl, properties)`
   - `wrap(iframe, properties`)
   - `createTransparentFrame(properties)`
 - instance methods
@@ -137,7 +91,17 @@ layout and styling.
   - `localVideo()`
   - `setLocalAudio()`
   - `setLocalVideo()`
+  - `sendAppMessage()`
   - `setBandwidth({ kbs, trackConstraints })`
+  - `getNetworkStats()`
+  - `setShowNamesMode(mode)`
+  - `startRecording()`
+  - `stopRecording()`
+  - `cycleCamera()`
+  - `getInputDevices()`
+  - `setInputDevices()`
+  - `setOutputDevice()`
+  - `addFakeParticipant({ aspectRatio })`
   - `on(eventName, callback)`
   - `once(eventName, callback)`
   - `off(eventName, callback)`
@@ -145,11 +109,11 @@ layout and styling.
 ### Factory methods and top-level configuration
 
 You don't ever need to call the `DailyIframe` constructor
-directly. Instead, use one of the factory methods, `wrap()` or
-`createTransparentFrame()`.
+directly. Instead, use one of the factory methods, `createFrame()`,
+`wrap()` or `createTransparentFrame()`.
 
-Both factory methods accept a `properties` object. (You can also set
-these properties when you call the `join()` method.)
+The factory methods accept a `properties` object. (You can also set
+these properties when you call the `load` or `join()` methods.)
 
 ```
 // top-level configuration properties. can be passed to the factory
@@ -158,11 +122,50 @@ these properties when you call the `join()` method.)
 {
   url: <required: url of the meeting to join>
   token: <optional: meeting join token>
-  cssFile: <optional: an external css stylesheet to load>
-  cssText: <optional: inline css style text to load>
-  bodyClass: <optional: class attributes to apply to the iframe body element>
+  iframeStyle: <optional: used only by `createFrame()`>
+  customLayout: <optional: use a custom in-call UI>
+  cssFile: <optional: for a custom UI, an external css stylesheet to load>
+  cssText: <optional: for a custom UI, an inline css style text to load>
+  bodyClass: <optional: for a custom UI, class attributes to apply to the iframe body element>
 }
 ```
+
+#### `createFrame(parentEl, properties)`
+
+Use this method to create a call `iframe` element and insert it into
+the DOM.
+
+Both arguments are optional. If you provide a `parentEl`, the new
+`iframe` will be appended as a child of that element. Otherwise, the
+new `iframe` will be appended as a child of `document.body`.
+
+The second argument is the properties object defined above. If you
+don't set at least the `url` property here, you'll need to set it
+later when you call the `join()` or `load()` method.
+
+You can set the css properties of the new `iframe` by passing a
+javascript-style css properties hash in the `iframeStyle`
+property. For example:
+
+```
+// for a full-page video call with the standard Daily.co UI
+//
+callFrame = window.DailyIframe.createFrame({
+  iframeStyle = {
+    position: 'fixed',
+    width: 100%,
+    height: 100%
+  }
+});
+```
+
+The default `iframeStyle` (styles applied to the `iframe` if you don't
+supply any) depend on whether the new `iframe` is a child of
+`document.body` or not. If the new `iframe` is a child of
+`document.body`, the defaults position the `iframe` as a floating
+window in the bottom right of the page. If, on the other hand, you
+specify a `parentEl` deeper in the DOM tree, the defaults are to fill
+the width and height of the parent element.
 
 #### `wrap(iframe, properties)`
 
@@ -171,15 +174,15 @@ already defined.
 
 The first argument is the iframe you want to wrap. The second argument
 is the properties object defined above. A properties argument is
-optional. You can also set these properties when you call the `join()`
-method.
+optional.
+
+You will need to set `allow="microphone; camera; autoplay"` on your
+`iframe` to be able to turn on the camera and microphone.
 
 #### `createTransparentFrame(properties)`
 
-Use this factory method when you want to implement the call user
-interface yourself. This method creates a full-width, full-height,
-transparent iframe that ignores all pointer events. The iframe is
-appended to the `document.body`.
+A convenience method that creates a full-page overlay, transparent iframe
+that ignores all pointer events.
 
 ### Instance methods reference
 
@@ -479,16 +482,23 @@ style.
 
 ```
 <body class=" (bodyClass classes...) ">
-  <div class="daily-video-toplevel-div (toplevel classes...)">
+  <div class="daily-video-toplevel-div (toplevel classes...)
+       style=" (toplevel style variables...) ">
 
-    <div class="daily-videos-wapper (call-state classes)">
+    <div class="daily-videos-wrapper (call-state classes)">
 
       <div class="daily-video-div (video classes...)"
-           data-user-name=" (user_name) ">
+           style=" --aspect-ratio:(aspect ratio) (participant div styles...) "
+           data-user-name=" (user_name) "
+           data-user-id=" (user_id) ">
         <div class="daily-video-overlay (video classes...)"
-             data-user-name=" (user_name) "></div>
+             style=" --aspect-ratio:(aspect ratio) (participant overlay styles...) "
+             data-user-name=" (user_name) "
+             data-user-id=" (user_id) ">
         <video class="daily-video-element (video classes...)">
-               data-user-name=" (user_name) "></video>
+               style=" --aspect-ratio:(aspect ratio) (participant video styles...) "
+               data-user-name=" (user_name) "
+               data-user-id=" (user_id) ">
       </div>
       ... additional video elements
 
@@ -525,12 +535,13 @@ Here are the default styles for the container and video element classes.
   width: 100%;
   height: 100%;
   z-index: 1;
+  pointer-events: none;
 }
 .daily-video-element {
   position: absolute;
   width: 100%;
+  height: 100%;
   overflow: hidden;
-  height: 100%
 }
 .daily-video-element.local.cam {
   transform: scale(-1,1);
@@ -545,15 +556,18 @@ Note that all available audio is always played. Even when a
 participant's video stream is hidden, that participant's audio is
 audible.
 
+The local video element (the user's own camera view) is flipped
+horizontally. This is the norm in video conferencing user interfaces.
+
 Lists of classes that depend on call and participant state are
 attached to the various elements listed above.
 
-Additional classes of `.daily-video-toplevel-div`:
+##### Additional classes of `.daily-video-toplevel-div`:
 
 - `recording`: the call is being recorded
 - `recording-uploading`: the recording is being done locally and saved to the cloud, and uploading to the cloud is in progress. This should _always_ be true during a local cloud recording, and will stay true until the upload completes, even after the recording is stopped.
 
-Additional classes of `.daily-videos-wrapper`:
+##### Additional classes of `.daily-videos-wrapper`:
 
 - `local-cam-on`: the local camera is turned on
 - `local-cam-muted`: the local camera is unavailable, blocked, or muted
@@ -567,9 +581,12 @@ Additional classes of `.daily-videos-wrapper`:
   muted
 - `remote-screens-N`: there are N remote screen shares in progress
 
-Additional classes of `.daily-video-div`, `.daily-video-overlay`, and
-`.daily-video-element` (the same set of additional classes is set for
-each "bundle" of these elements):
+##### Additional classes and styles of `.daily-video-div`,
+
+`.daily-video-overlay`, and `.daily-video-element`
+
+The same set of additional classes is set for each "bundle" of these
+DOM elements.
 
 - `local`: this is video from the local participant
 - `remote`: this is video from a remote participant
@@ -579,6 +596,39 @@ each "bundle" of these elements):
 - `cam-muted`: the camera for this participant is unavailable, blocked, or muted
 - `mic-on`: the mic for this participant is turned on and streaming
 - `mic-muted`: the mic for this participant is unavailable, blocked, or muted
+
+Per-participant styles set with the `updateParticipant()` method are
+applied to each element.
+
+The participant `user_name` and `user_id` supplied in HTML
+`data-user-name` and `data-user-id` attributes. This allows the
+display of usernames in pure css layouts. For example.
+
+```
+.show-names .daily-video-overlay::after {
+  font-family: 'Lato', sans-serif;
+  font-weight: bold;
+  content: attr(data-user-name);
+  position: absolute;
+  padding: 0.65em;
+  bottom: 0.25em;
+  left: 0.25em;
+}
+```
+
+The video stream aspect ratio is supplied as a css variable. This can
+be helpful in dynamic/responsive sizing, as it's difficult with
+css-only approaches to preserve video aspect ratio while also
+precisely sizing container and overlay elements. For example, here is
+css for sizing all video streams to 320 pixels wide, with height
+flexible depending on each video's aspect ratio.
+
+```
+.daily-video-div {
+  width: 320;
+  height: calc(320px / var(--aspect-ratio));
+}
+```
 
 For example CSS-driven layouts, see the `/demo` directory.
 
@@ -606,6 +656,27 @@ Updates the local mic state. Does nothing if not in a call. Syntactic sugar for 
 
 Returns `this`.
 
+#### `sendAppMessage(data, to)`
+
+Sends a message to other participants in the call. `data` should be a
+javascript object that can be serialized into JSON. `to` should be
+either a participant `session_id`, or `"*"`. The `"*"` value is the
+default, and means that the message is a "broadcast" message intended
+for all participants.
+
+You can listen for these messages by installing a handler for the
+`app-message` event.
+
+Messages are delivered to participants currently in the call. They are
+not stored. If a recipient is not in the call when the message is
+sent, the recipient will never receive the message.
+
+Note that the `to` address is the `session_id`, not the `user_id`.
+
+Broadcast messages are not delivered to the sender of the message.
+
+Returns `this`.
+
 #### `setLocalVideo(bool)`
 
 Updates the local camera state. Does nothing if not in a call. Syntactic sugar for `this.updateParticipant('local', { video: bool })`.
@@ -614,8 +685,9 @@ Returns `this`.
 
 #### `setBandwidth({ kbs, trackConstraints })`
 
-**Experimental method**: Sets a cap on the upstream video bandwidth
-used for each WebRTC peer connection. This API may change in the future.
+**Experimental method**: Sets a cap on the combined upstream video
+bandwidth used for WebRTC peer connections. This API may change in the
+future.
 
 In general we try to hide all the complexity of WebRTC so that you can
 focus on your own application rather than the details of audio and
@@ -650,9 +722,104 @@ callFrame.setBandwidth({
 });
 ```
 
+This method will be extended to support simulcast soon.
+
 Returns `this`.
 
-#### `on(eventName, callback) once(eventName, callback) off(eventName, callback)`
+#### `getNetworkStats()`
+
+Returns a Promise that resolves with an array of network
+statistics.
+
+```
+{
+  stats: {
+    latest: {
+      timestamp: 1558918282005
+      videoRecvBitsPerSecond: 648973
+      videoRecvPacketLoss: 0
+      videoRecvStreamCount: 1
+      videoSendBitsPerSecond: 656493
+      videoSendPacketLoss: 0
+      videoSendStreamCount: 1
+    }
+    worstVideoRecvPacketLoss: 0
+    worstVideoSendPacketLoss: 0
+  }
+}
+```
+
+#### `setShowNamesMode(mode)`
+
+Determines whether user names are shown overlaying the video elements
+in the standard Daily.co call user interface. Has no effect on custom UIs.
+
+The `mode` argument must be one of `"always"`, `"never"`, or
+`null`. `null` is the default UI behavior: names are shown when a user
+is muted or the chat panel is open.
+
+Returns `this`.
+
+#### `startRecording()`
+
+Starts a recording if recording is enabled for the
+room/participant. Has no effect if recording is not enabled.
+
+#### `stopRecording()`
+
+Stops a recording if the participant is currently recording. Has no
+effect if there's no current recording.
+
+#### `cycleCamera()`
+
+Switches the local camera stream to use the next available camera
+device. Has no effect if there is only one camera.
+
+Returns a Promise that resolves with data about the camera
+device. (The data is copied from the camera's [MediaDeviceInfo](https://developer.mozilla.org/en-US/docs/Web/API/MediaDeviceInfo) struct.)
+
+#### `enumerateDevices()`
+
+This is a wrapper around [navigator.mediaDevices.enumerateDevices()](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/enumerateDevices).
+
+Returns a promise that resolves with a list of available video input
+devices, and audio input and output devices.
+
+#### `getInputDevices()`
+
+Returns a Promise that resolves to return data about the camera and
+mic devices that are currently being used. The data is copied from the
+[MediaDeviceInfo](https://developer.mozilla.org/en-US/docs/Web/API/MediaDeviceInfo)
+struct for each device.
+
+#### `setInputDevices({ audioDeviceId, videoDeviceId })`
+
+Switch to using a specific local audio device, video device, or
+both. Takes device id arguments that match ids returned by
+`enumerateDevices()`.
+
+#### `setOutputDevice({ outputDeviceId })`
+
+Sets the output output device. Takes a device id argument that matches
+ids returned by `enumerateDevices()`.
+
+Browser support for this API varies. Safari does not support setting
+an audio output device, for example. (Apple users need to set audio
+output at the OS level.)
+
+#### `addFakeParticipant({ aspectRatio })`
+
+Add a fake video stream to the call, to help with implementing custom
+layouts. Has no effect unless you are using a custom layout.
+
+The `aspectRatio` argument defaults to `16/9`. Other supported aspect
+ratios are `3/4` and `4/3`.
+
+Returns `this`.
+
+#### `on(eventName, callback) once(eventName, callback)
+
+off(eventName, callback)`
 
 Adds and removes event callbacks. See documentation for [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter).
 
@@ -662,12 +829,23 @@ Adds and removes event callbacks. See documentation for [EventEmitter](https://n
 
 You can install callbacks for the following events:
 
+- loading
+- loaded
+- started-camera
+- camera-error
 - joining-meeting
 - joined-meeting
 - left-meeting
 - participant-joined
 - participant-updated
 - participant-left
+- recording-started
+- recording-stopped
+- recording-stats
+- recording-error
+- recording-upload-completed
+- app-message
+- input-event
 - error
 
 The `on()`, `once()`, and `off()` methods add and remove

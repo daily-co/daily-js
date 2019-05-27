@@ -148,6 +148,13 @@ export default class DailyIframe extends EventEmitter {
     ) {
       throw new Error('DailyIframe::Wrap needs an iframe-like first argument');
     }
+    if (!properties.layout) {
+      if (properties.customLayout) {
+        properties.layout = 'custom-v1';
+      } else {
+        properties.layout = 'browser';
+      }
+    }
     return new DailyIframe(iframeish, properties);
   }
 
@@ -490,10 +497,12 @@ export default class DailyIframe extends EventEmitter {
       );
     }
     this._sendIframeMsg({ action: DAILY_METHOD_APP_MSG, data, to });
+    return this;
   }
 
   addFakeParticipant(args) {
     this._sendIframeMsg({ action: DAILY_METHOD_ADD_FAKE_PARTICIPANT, ...args });
+    return this;
   }
 
   setShowNamesMode(mode) {
@@ -501,9 +510,10 @@ export default class DailyIframe extends EventEmitter {
       console.error(
         'setShowNamesMode argument should be "always", "never", or false'
       );
-      return;
+      return this;
     }
     this._sendIframeMsg({ action: DAILY_METHOD_SET_SHOW_NAMES, mode: mode });
+    return this;
   }
 
   //
