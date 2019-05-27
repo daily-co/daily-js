@@ -191,16 +191,18 @@
         if (Object.keys(ps).length < 2) {
           document.getElementById('ui-local').style.display = "none";
           document.getElementById('ui-alone').style.display = "block";
+          let wrapper = document.getElementById('ui-participant')
+          wrapper.innerHTML = ''
         }  else {
           document.getElementById('ui-local').style.display = "none";
           document.getElementById('ui-alone').style.display = "none";
           let wrapper = document.getElementById('ui-participant')
           wrapper.innerHTML = ''
-          Object.keys(ps).forEach((p)=>{
-            if (p === 'local'){
-              return
+          Object.keys(ps).forEach((p) => {
+            if (p === 'local') {
+              return;
             }
-            let participant = ps[p]
+            let participant = ps[p];
             wrapper.innerHTML += `
             <div class="ui-participant-guest">
             <p>${participant.user_name||'Guest'}</p>
