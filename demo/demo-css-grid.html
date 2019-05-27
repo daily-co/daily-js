@@ -208,6 +208,8 @@
         if (Object.keys(ps).length < 2) {
           document.getElementById('ui-local').style.display = 'none';
           document.getElementById('ui-alone').style.display = 'block';
+          let wrapper = document.getElementById('ui-participant');
+          wrapper.innerHTML = '';
         } else {
           document.getElementById('ui-local').style.display = 'none';
           document.getElementById('ui-alone').style.display = 'none';
