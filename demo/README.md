@@ -9,32 +9,32 @@ When running the live demos, it's useful to have your js console open.
 
 Code
 
-https://github.com/daily-co/daily-js/blob/master/demo/simple.html
+    https://github.com/daily-co/daily-js/blob/master/demo/simple.html
 
 Live
 
-https://daily-co.github.io/daily-js/demo/simple.html
+    https://daily-co.github.io/daily-js/demo/simple.html
 
 ## Switch between the standard in-call user interface and a custom UI
 
 Code
 
-https://github.com/daily-co/daily-js/blob/master/demo/basics.html
+    https://github.com/daily-co/daily-js/blob/master/demo/basics.html
 
 Live
 
-https://daily-co.github.io/daily-js/demo/basics.html
+    https://daily-co.github.io/daily-js/demo/basics.html
 
 ## A fancy, colorful, css-grid in-call user interface
 
 Code
 
-https://github.com/daily-co/daily-js/blob/master/demo/demo-css-grid.html
-https://github.com/daily-co/daily-js/blob/master/demo/demo-css-grid.css
+    https://github.com/daily-co/daily-js/blob/master/demo/demo-css-grid.html
+    https://github.com/daily-co/daily-js/blob/master/demo/demo-css-grid.css
 
 Live
 
-https://daily-co.github.io/daily-js/demo/demo-css-grid.html
+    https://daily-co.github.io/daily-js/demo/demo-css-grid.html
 
 ## Remote monitoring use case. One-way video, and managing bandwidth
 
@@ -42,12 +42,12 @@ use dynamically
 
 Code
 
-https://github.com/daily-co/daily-js/blob/master/demo/remote-monitoring-human.html
-https://github.com/daily-co/daily-js/blob/master/demo/remote-monitoring-device.html
+    https://github.com/daily-co/daily-js/blob/master/demo/remote-monitoring-human.html
+    https://github.com/daily-co/daily-js/blob/master/demo/remote-monitoring-device.html
 
 Live
 
-https://daily-co.github.io/daily-js/demo/remote-monitoring-human.html
+    https://daily-co.github.io/daily-js/demo/remote-monitoring-human.html
 
 ## For developers ...
 
