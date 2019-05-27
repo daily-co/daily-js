@@ -6,16 +6,21 @@ The official front-end library for the Daily.co video calling API.
 - Respond to in-call events
 - Customize call layout and UI
 
-API docs for creating and managing rooms, permission tokens,
-recordings, and other resources are here:
+More information about the Daily.co API for video calls here:
+
+  https://www.daily.co/api
+
+API "getting started" info and reference docs for creating and
+managing rooms, permission tokens, recordings, and other resources are
+here:
 
   https://docs.daily.co/reference
 
-See a demo here:
+Demos and sample code for this library are here:
 
-  https://www.daily.co/api/demo
+  https://github.com/daily-co/daily-js/tree/master/demo
 
-## Getting started
+## Using this library
 
 You can use this library from a `<script>` tag, as a CommonJS-style
 module with `require`, or as an ES6-style module with `import`
