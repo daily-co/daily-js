@@ -9,6 +9,8 @@ When running the live demos, it's useful to have your js console open.
 
 ### Super-simple sample
 
+![Demo example](https://raw.githubusercontent.com/daily-co/daily-js/demo-readme-images/demo/image-demo-simple.png)
+
 Code
 
   https://github.com/daily-co/daily-js/blob/master/demo/simple.html
@@ -19,6 +21,8 @@ Live
 
 ### Switch between the standard in-call user interface and a custom UI
 
+![Demo example](https://raw.githubusercontent.com/daily-co/daily-js/demo-readme-images/demo/image-demo-basics.png)
+
 Code
 
   https://github.com/daily-co/daily-js/blob/master/demo/basics.html
@@ -28,6 +32,8 @@ Live
   https://daily-co.github.io/daily-js/demo/basics.html
 
 ### A fancy, colorful, css-grid in-call user interface
+
+![Demo example](https://raw.githubusercontent.com/daily-co/daily-js/demo-readme-images/demo/image-demo-css-grid.png)
 
 Code
 
