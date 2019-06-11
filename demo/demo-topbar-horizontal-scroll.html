@@ -1,6 +1,7 @@
 <html>
   <head>
     <title>call events demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       .mobile-wrapper {
         position: relative;
@@ -25,7 +26,6 @@
       #call-container {
         background-color: #f0f0f0;
         width: 375px;
-        padding: 20px 0;
       }
       h4 {
         margin: 0;
@@ -38,11 +38,12 @@
       }
       #header,
       #controller {
-        padding: 0 20px;
+        padding: 14px 20px;
         display: flex;
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
+        background-color: #f0f0f0;
       }
       #controller ul {
         margin: 0;
@@ -80,6 +81,22 @@
       #message-exit {
         display: none;
         cursor: pointer;
+      }
+      /* smartphones, touchscreens */
+      @media (hover: none) and (pointer: coarse) {
+        .mobile-wrapper {
+          width: 100%;
+          height: 100%;
+        }
+        .mobile-statusbar,
+        .mobile-navbar {
+          display: none;
+        }
+        #call-container {
+          width: 100%;
+          overflow-x: scroll;
+          -webkit-overflow-scrolling: touch;
+        }
       }
     </style>
   </head>
@@ -137,39 +154,39 @@
     </script>
     <div class="mobile-wrapper">
       <div class="mobile-statusbar"></div>
+      <div id="header">
+        <h4 id="message-incall">You're in the call</h4>
+        <h4 id="message-joining">Joining call…</h4>
+        <h4
+          id="message-exit"
+          onclick="callFrame.join({ url }).then((ps)=>console.log('joined and have participants', ps));"
+        >
+          You exited, click to rejoin
+        </h4>
+      </div>
       <div id="call-container">
-        <div id="header">
-          <h4 id="message-incall">You're in the call</h4>
-          <h4 id="message-joining">Joining call…</h4>
-          <h4
-            id="message-exit"
-            onclick="callFrame.join({ url }).then((ps)=>console.log('joined and have participants', ps));"
-          >
-            You exited, click to rejoin
-          </h4>
-        </div>
         <iframe id="call-frame" allow="camera; microphone; autoplay"></iframe>
-        <div id="controller">
-          <ul>
-            <li
-              class="controller-item"
-              onclick="callFrame.setLocalAudio(!callFrame.localAudio())"
-            >
-              <img src="/demo/icon-microphone.svg" />
-            </li>
-            <li
-              class="controller-item"
-              onclick="callFrame.setLocalVideo(!callFrame.localVideo())"
-            >
-              <img src="/demo/icon-camera.svg" />
-            </li>
-          </ul>
-          <div
-            onclick="callFrame.leave().then(()=>console.log('LEAVE PROMISE RESOLVED'));exitCall()"
-            id="leave"
+      </div>
+      <div id="controller">
+        <ul>
+          <li
+            class="controller-item"
+            onclick="callFrame.setLocalAudio(!callFrame.localAudio())"
           >
-            <p>Leave call</p>
-          </div>
+            <img src="/demo/icon-microphone.svg" />
+          </li>
+          <li
+            class="controller-item"
+            onclick="callFrame.setLocalVideo(!callFrame.localVideo())"
+          >
+            <img src="/demo/icon-camera.svg" />
+          </li>
+        </ul>
+        <div
+          onclick="callFrame.leave().then(()=>console.log('LEAVE PROMISE RESOLVED'));exitCall()"
+          id="leave"
+        >
+          <p>Leave call</p>
         </div>
       </div>
       <div class="mobile-navbar"></div>
