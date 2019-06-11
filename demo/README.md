@@ -13,16 +13,19 @@ Jump to a demo:
 
 ---
 
-### 1. Super-simple Demo
+## 1. Super-simple Demo
 
 ![Demo example](https://raw.githubusercontent.com/daily-co/daily-js/demo-readme-images/demo/image-demo-simple.png)
 
-<a href="https://github.com/daily-co/daily-js/blob/master/demo/simple.html">View code</a>
+This demo showcases is very simple. A video call is created in an iframe and rendered in our default UI. All embedded API video calls come with our default interface and UX controls.
 
-<a href="https://daily-co.github.io/daily-js/demo/simple.html">Open demo</a>
+<div>
+	<button onclick="https://github.com/daily-co/daily-js/blob/master/demo/simple.html">View code</button>
+	<button onclick="https://daily-co.github.io/daily-js/demo/simple.html">Open demo</button>
+</div>
 
 
-### Switch between the standard in-call user interface and a custom UI
+## 2. Switch between the standard in-call user interface and a custom UI
 
 ![Demo example](https://raw.githubusercontent.com/daily-co/daily-js/demo-readme-images/demo/image-demo-basics.png)
 
@@ -34,7 +37,7 @@ Live
 
   https://daily-co.github.io/daily-js/demo/basics.html
 
-### A fancy, colorful, css-grid in-call user interface
+## 3. A fancy, colorful, css-grid in-call user interface
 
 ![Demo example](https://raw.githubusercontent.com/daily-co/daily-js/demo-readme-images/demo/image-demo-css-grid.png)
 
