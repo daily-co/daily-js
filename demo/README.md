@@ -19,10 +19,7 @@ Jump to a demo:
 
 This demo showcases is very simple. A video call is created in an iframe and rendered in our default UI. All embedded API video calls come with our default interface and UX controls.
 
-<div class="buttons">
-  <a href="https://github.com/daily-co/daily-js/blob/master/demo/simple.html" class="buttonCode">View Code</a>
-  <a href="https://daily-co.github.io/daily-js/demo/simple.html" class="buttonDemo">Open Demo</a>
-</div>
+[View Code](https://github.com/daily-co/daily-js/blob/master/demo/simple.html) | [Open Demo](https://daily-co.github.io/daily-js/demo/simple.html)
 
 ## 2. Standard/Custom UI Demo
 
@@ -30,11 +27,7 @@ This demo showcases is very simple. A video call is created in an iframe and ren
 
 Our Standard-Custom demo highlights the UI elements that you have control over. Try joining the meeting and toggling your camera or starting a screen share using the buttons above the demo. You can add your own custom controls to better integrate the video call into your product.
 
-<div class="buttons">
-  <a href="https://github.com/daily-co/daily-js/blob/master/demo/basics.html" class="buttonCode">View Code</a>
-  <a href="https://daily-co.github.io/daily-js/demo/basics.html" class="buttonDemo">Open Demo</a>
-</div>
-
+[View Code](https://github.com/daily-co/daily-js/blob/master/demo/basics.html) | [Open Demo](https://daily-co.github.io/daily-js/demo/basics.html)
 
 ## 3. Custom CSS Grid Demo
 
@@ -65,4 +58,4 @@ npm run demo
 
 Unless there is a port conflict, the demo web server will start on port 3000.
 
-http://localhost:3000/demo/
+  http://localhost:3000/demo/
