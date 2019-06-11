@@ -1,23 +1,25 @@
 # daily-js demos
 
-Demos and sample code. Links below to both the code for each demo and
-to a live version you can run without checking out this repo locally.
+Demos and sample code. Links below to both the code for each demo and to a live version you can run without checking out this repo locally.
 
-When running the live demos, it's useful to have your js console open.
+When running the live demos, it’s useful to have your js console open.
 
-## Live demos
+Jump to a demo:
 
-### Super-simple sample
+1. Super-simple Demo: a simple iframe demo
+2. Standard/Custom UI Demo: toggle between our default UI and custom UI
+3. Custom CSS Grid Demo: a customized, colorful demo that uses CSS grid
+4. Remote monitoring use case: One-way video, and managing bandwidth use dynamically
+
+---
+
+### 1. Super-simple Demo
 
 ![Demo example](https://raw.githubusercontent.com/daily-co/daily-js/demo-readme-images/demo/image-demo-simple.png)
 
-Code
+<a href="https://github.com/daily-co/daily-js/blob/master/demo/simple.html">View code</a>
 
-https://github.com/daily-co/daily-js/blob/master/demo/simple.html
-
-Live
-
-https://daily-co.github.io/daily-js/demo/simple.html
+<a href="https://daily-co.github.io/daily-js/demo/simple.html">Open demo</a>
 
 ### Switch between the standard in-call user interface and a custom UI
 
