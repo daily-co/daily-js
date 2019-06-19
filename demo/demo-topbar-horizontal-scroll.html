@@ -1,40 +1,42 @@
 <html>
   <head>
-    <title>call events demo</title>
+    <title>mobile layout demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script crossorigin src="https://unpkg.com/@daily-co/daily-js"></script>
+    <script src="create-demo-room.js"></script>
     <style>
       .mobile-wrapper {
-        position: relative;
-        width: 375px;
-        height: 812px;
+        display: flex;
+        flex-direction: column;
+        width: 375;
+        height: 812;
         background-color: #444;
+        position: relative;
       }
       .mobile-statusbar {
         background-image: url('image-mobile-statusbar@2x.png');
         background-size: contain;
         width: 375px;
         height: 90px;
+        flex: none;
       }
       .mobile-navbar {
         background-image: url('image-mobile-navbar@2x.png');
         background-size: contain;
-        position: absolute;
-        bottom: 0;
         width: 375px;
         height: 83px;
+        flex: none;
       }
       #call-container {
         background-color: #f0f0f0;
         width: 375px;
+        flex-grow: 1;
+        position: relative;
+        height: 100%;
+        min-height: 300px;
       }
       h4 {
         margin: 0;
-      }
-      #call-frame {
-        width: 100%;
-        height: 128px;
-        border: 0;
-        padding: 20px 0;
       }
       #header,
       #controller {
@@ -52,13 +54,19 @@
       #controller ul li img {
         filter: invert(100%);
       }
-      #controller #leave p {
+      .red-button p {
         color: #ff3b30;
         text-align: right;
         font-family: 'Helvetica', Arial, sans-serif;
         font-size: 12px;
         font-weight: 800;
         cursor: pointer;
+      }
+      #create-room-button {
+        display: block;
+      }
+      #leave-button {
+        display: none;
       }
       .controller-item {
         list-style-type: none;
@@ -72,11 +80,18 @@
       .controller-item:nth-child(n + 2) {
         margin-left: 10px;
       }
-      #message-incall {
+
+      #message-quiescent {
+        display: block;
+      }
+      #message-creating {
         display: none;
       }
       #message-joining {
-        display: block;
+        display: none;
+      }
+      #message-incall {
+        display: none;
       }
       #message-exit {
         display: none;
@@ -100,73 +115,146 @@
       }
     </style>
   </head>
-  <body>
+  <body onload="maybeJoinMeetingFromUrl()">
     <script>
-      let url, token;
+      let fullScreenParticipantId = null;
+
       function showEvent(e) {
-        console.log('PARENT FRAME GOT EVENT -->', e);
+        console.log('callFrame event', e);
       }
-      function exitCall() {
-        document.getElementById('message-exit').style.display = 'block';
-        document.getElementById('message-incall').style.display = 'none';
-      }
-      async function updateEvent() {
-        let ps = callFrame.participants();
-        if (Object.keys(ps).length < 2) {
-          document.getElementById('message-incall').style.display = 'block';
-          document.getElementById('message-joining').style.display = 'none';
-          document.getElementById('message-exit').style.display = 'none';
-        } else {
-          document.getElementById('message-joining').style.display = 'none';
+
+      async function maybeJoinMeetingFromUrl() {
+        let params = new URL(document.location).searchParams;
+        // if our url includes a room `url` parameter, join that room
+        if (params.get('url')) {
+          document.getElementById('message-quiescent').style.display = 'none';
+          document.getElementById('create-room-button').style.display = 'none';
+          window.room = { url: decodeURIComponent(params.get('url')) };
+          run();
         }
       }
-      async function run() {
-        // from demo/.env, get a Daily.co meeting url and a meeting token
-        // that allows screen sharing and recording
-        let res = await fetch('/env');
-        config = await res.json();
-        console.log('CONFIG', config);
-        url = config.DEMO_MEETING_URL;
-        token = config.DEMO_MEETING_TOKEN;
-        window.callFrame = window.DailyIframe.wrap(
-          document.getElementById('call-frame'),
-          { layout: 'custom-v1' }
+
+      async function createRoomAndJoin() {
+        document.getElementById('create-room-button').style.display = 'none';
+        document.getElementById('message-quiescent').style.display = 'none';
+        document.getElementById('message-creating').style.display = 'block';
+        window.room = await createMtgRoom();
+        history.pushState(null, '', '?url=' + encodeURIComponent(room.url));
+        run();
+      }
+
+      function joiningMeeting() {
+        document.getElementById('message-creating').style.display = 'none';
+        document.getElementById('message-joining').style.display = 'block';
+      }
+
+      function joinedMeeting() {
+        document.getElementById('message-joining').style.display = 'none';
+        document.getElementById('message-incall').style.display = 'block';
+        document.getElementById('leave-button').style.display = 'block';
+      }
+
+      function leftMeeting() {
+        document.getElementById('message-incall').style.display = 'none';
+        document.getElementById('message-quiescent').style.display = 'block';
+        document.getElementById('leave-button').style.display = 'none';
+        document.getElementById('create-room-button').style.display = 'block';
+      }
+
+      function fullScreenClick(e) {
+        showEvent(e);
+        if (
+          //!(e.event.type === 'click') ||
+          !(e.event.type === 'click' || e.event.type === 'touchstart') ||
+          !e.participant
+        ) {
+          return;
+        }
+        fullScreen(e.participant.session_id);
+      }
+
+      function unFullScreen() {
+        if (!fullScreenParticipantId) {
+          return;
+        }
+        callFrame.updateParticipant(fullScreenParticipantId, {
+          styles: { cam: { div: {} } },
+        });
+        fullScreenParticipantId = null;
+      }
+
+      function fullScreen(sessionId) {
+        if (fullScreenParticipantId === sessionId) {
+          unFullScreen();
+          return;
+        }
+        unFullScreen();
+        fullScreenParticipantId = sessionId;
+        callFrame.updateParticipant(fullScreenParticipantId, {
+          styles: {
+            cam: {
+              div: {
+                position: 'absolute',
+                zIndex: 98,
+                borderRadius: 0, // does not work on Safari 12.1
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+              },
+            },
+          },
+        });
+      }
+
+      async function createCallFrame() {
+        window.callFrame = window.DailyIframe.createFrame(
+          document.getElementById('call-container'),
+          {
+            customLayout: true,
+            cssFile: 'demo-topbar-horizontal-scroll.css',
+          }
         );
         callFrame
-          .on('joining-meeting', showEvent)
-          .on('joined-meeting', showEvent)
-          .on('left-meeting', updateEvent)
-          .on('participant-joined', updateEvent)
-          .on('participant-updated', updateEvent)
-          .on('participant-left', updateEvent)
+          .on('joining-meeting', joiningMeeting)
+          .on('joined-meeting', joinedMeeting)
+          .on('left-meeting', leftMeeting)
+          .on('input-event', fullScreenClick)
+          .on('participant-joined', showEvent)
+          .on('participant-updated', showEvent)
+          .on('participant-left', showEvent)
           .on('recording-started', showEvent)
           .on('recording-stopped', showEvent)
           .on('recording-stats', showEvent)
           .on('recording-error', showEvent)
           .on('recording-upload-completed', showEvent)
           .on('error', showEvent);
-        callFrame.join({
-          url,
-          token,
-          cssFile: 'demo-topbar-horizontal-scroll.css',
-        });
+      }
+
+      async function run() {
+        if (!window.callFrame) {
+          await createCallFrame();
+        }
+        callFrame.join({ url: room.url });
       }
     </script>
+
     <div class="mobile-wrapper">
       <div class="mobile-statusbar"></div>
       <div id="header">
-        <h4 id="message-incall">You're in a call</h4>
+        <h4 id="message-quiescent">
+          Click the red button to create a new room, then copy the url to join
+          from another tab or device
+        </h4>
+        <h4 id="message-creating">Creating room…</h4>
         <h4 id="message-joining">Joining call…</h4>
-        <h4
-          id="message-exit"
-          onclick="callFrame.join({ url }).then((ps)=>console.log('joined and have participants', ps));"
-        >
+        <h4 id="message-incall">You're in the call</h4>
+        <h4 id="message-exit" onclick="callFrame.join()">
           You've exited, click to rejoin
         </h4>
       </div>
-      <div id="call-container">
-        <iframe id="call-frame" allow="camera; microphone; autoplay"></iframe>
-      </div>
+
+      <div id="call-container"></div>
       <div id="controller">
         <ul>
           <li
@@ -183,14 +271,17 @@
           </li>
         </ul>
         <div
-          onclick="callFrame.leave().then(()=>console.log('LEAVE PROMISE RESOLVED'));exitCall()"
-          id="leave"
+          onclick="createRoomAndJoin()"
+          class="red-button"
+          id="create-room-button"
         >
+          <p>Create room</p>
+        </div>
+        <div onclick="callFrame.leave()" class="red-button" id="leave-button">
           <p>Leave call</p>
         </div>
       </div>
       <div class="mobile-navbar"></div>
     </div>
-    <script src="../dist/daily-iframe.js" onload="run()"></script>
   </body>
 </html>

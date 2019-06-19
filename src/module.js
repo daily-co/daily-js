@@ -269,6 +269,12 @@ export default class DailyIframe extends EventEmitter {
   }
 
   updateParticipant(sessionId, properties) {
+    if (
+      this._participants.local &&
+      this._participants.local.session_id === sessionId
+    ) {
+      sessionId = 'local';
+    }
     if (sessionId && properties && this._participants[sessionId]) {
       for (var prop in properties) {
         if (!PARTICIPANT_PROPS[prop]) {
@@ -602,6 +608,8 @@ export default class DailyIframe extends EventEmitter {
         }
         break;
       case DAILY_EVENT_ERROR:
+        this._iframe.src = '';
+        this._loaded = false;
         this._meetingState = DAILY_STATE_ERROR;
         this.emit(msg.action, msg);
         break;
