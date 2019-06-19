@@ -23,11 +23,13 @@
 .daily-video-div {
 	position: relative;
 	visibility: visible;
+  z-index: 99;
 	overflow: hidden;
-	border-radius: 50%;
-	height: 128px;
-	width: 128px;
+	height: 64px;
+	width: 64px;
 	margin-right: 10px;
+  border-radius: 10px;
+  transition: 'width 0.1s, height 0.1s, top 0.1s, left 0.1s'
 }
 
 .daily-video-div:last-child {
@@ -36,7 +38,6 @@
 
 .daily-video-element {
 	object-fit: cover;
-	border-radius: 50%;
 }
 
 .daily-video-div.local {
@@ -56,7 +57,7 @@
 	background-size: 24px 24px;
 	width: 100%;
 	height: 100%;
-	border-radius: 50%;
+
 	background-color: rgba(0, 0, 0, 0.5);
 }
 

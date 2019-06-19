@@ -156,10 +156,10 @@ property. For example:
 // for a full-page video call with the standard Daily.co UI
 //
 callFrame = window.DailyIframe.createFrame({
-  iframeStyle = {
+  iframeStyle: {
     position: 'fixed',
-    width: 100%,
-    height: 100%
+    width: '100%',
+    height: '100%'
   }
 });
 ```
