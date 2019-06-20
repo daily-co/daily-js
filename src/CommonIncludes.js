@@ -64,3 +64,4 @@ export const DAILY_METHOD_CYCLE_MIC = 'cycle-mic';
 export const DAILY_METHOD_APP_MSG = 'app-msg';
 export const DAILY_METHOD_ADD_FAKE_PARTICIPANT = 'add-fake-participant';
 export const DAILY_METHOD_SET_SHOW_NAMES = 'set-show-names';
+export const DAILY_METHOD_REGISTER_INPUT_HANDLER = 'register-input-handler';

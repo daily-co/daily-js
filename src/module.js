@@ -57,6 +57,7 @@ import {
   DAILY_METHOD_ADD_FAKE_PARTICIPANT,
   DAILY_METHOD_SET_SHOW_NAMES,
   MAX_APP_MSG_SIZE,
+  DAILY_METHOD_REGISTER_INPUT_HANDLER,
 } from './CommonIncludes.js';
 
 
@@ -223,6 +224,7 @@ export default class DailyIframe extends EventEmitter {
     this._loaded = false;
     this._meetingState = DAILY_STATE_NEW;
     this._participants = {};
+    this._inputEventsOn = {}; // need to cache these until loaded
 
     this._messageCallbacks = {};
 
@@ -382,6 +384,10 @@ export default class DailyIframe extends EventEmitter {
         this._meetingState = DAILY_STATE_LOADED;
         if (this.properties.cssFile || this.properties.cssText) {
           this.loadCss(this.properties);
+        }
+        for (let eventName in this._inputEventsOn) {
+          this._sendIframeMsg({ action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
+                                on: eventName });
         }
         resolve();
       }
@@ -600,9 +606,9 @@ export default class DailyIframe extends EventEmitter {
             p = {};
           }
         }
-        this.emit(msg.action, { action: msg.action,
-                                event: msg.event,
-                                participant: {...p} });
+        this.emit(msg.event.type, { action: msg.event.type,
+                                    event: msg.event,
+                                    participant: {...p} });
         break;
       case DAILY_EVENT_RECORDING_STARTED:
       case DAILY_EVENT_RECORDING_STOPPED:
@@ -640,6 +646,31 @@ export default class DailyIframe extends EventEmitter {
     let a = document.createElement('a');
 		a.href = url;
 		return a.href;
+  }
+
+  on(eventName, k) {
+    this._inputEventsOn[eventName] = {};
+    this._sendIframeMsg({ action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
+                          on: eventName });
+    return EventEmitter.prototype.on.call(this, eventName, k);
+  }
+
+  // todo: once is almost certainly implemented incorrectly. read the
+  // EventEmitter source to figure out how to do this properly. since
+  // overriding on/off/once are optimizations, anyway, we won't worry
+  // about it right now.
+  once(eventName, k) {
+    this._inputEventsOn[eventName] = {};
+    this._sendIframeMsg({ action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
+                          on: eventName });
+    return EventEmitter.prototype.once.call(this, eventName, k);
+  }
+
+  off(eventName, k) {
+    delete this._inputEventsOn[eventName];
+    this._sendIframeMsg({ action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
+                          off: eventName });
+    return EventEmitter.prototype.off.call(this, eventName, k);
   }
 
   sayHello() {
