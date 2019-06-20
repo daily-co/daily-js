@@ -29,7 +29,16 @@ Our Standard-Custom demo highlights the UI elements that you have control over. 
 
 [View Code](https://github.com/daily-co/daily-js/blob/master/demo/basics.html) | [Open Demo](https://daily-co.github.io/daily-js/demo/basics.html)
 
-## 3. Custom CSS Grid Demo
+## 3. Mobile-sized screen demo
+
+A demo of laying out small call "bubbles" for a mobile device UI. Also
+shows responding to click/touch events. Load the page, click "Create
+room" then copy the URL and load the page in another tab or on another
+device.
+
+[View HTML Code](https://github.com/daily-co/daily-js/blob/master/demo/mobile-touches.html) | [View CSS Code](https://github.com/daily-co/daily-js/blob/master/demo/mobile-touches.css) | [Open Demo](https://daily-co.github.io/daily-js/demo/mobile-touches.html)
+
+## 4. Custom CSS Grid Demo
 
 ![Demo example](https://raw.githubusercontent.com/daily-co/daily-js/demo-readme-images/demo/image-demo-css-grid.png)
 
@@ -37,7 +46,7 @@ A fully customized UI that uses CSS grid to layout the video call. You can style
 
 [View HTML Code](https://github.com/daily-co/daily-js/blob/master/demo/demo-css-grid.html) | [View CSS Code](https://github.com/daily-co/daily-js/blob/master/demo/demo-css-grid.css) | [Open Demo](https://daily-co.github.io/daily-js/demo/demo-css-grid.html)
 
-## 4. Remote Monitoring Demo
+## 5. Remote Monitoring Demo
 
 Remote monitoring use case. One-way video, and managing bandwidth use dynamically.
 
