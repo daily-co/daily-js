@@ -857,7 +857,14 @@ You can install callbacks for the following events:
 - recording-error
 - recording-upload-completed
 - app-message
-- input-event
+- click
+- mousedown
+- mouseup
+- mouseover
+- mousemove
+- touchstart
+- touchmove
+- touchend
 - error
 
 The `on()`, `once()`, and `off()` methods add and remove
@@ -992,6 +999,34 @@ the participant just before the participant disconnected.
 {
   action: 'participant-left'
   participant: { ... }
+}
+```
+
+#### `click`, `mousedown`, `mouseup`, `mouseover`, `mousemove`, `touchstart`, `touchmove`, `touchend`
+
+Emitted when corresponding input event fires for a participant video.
+
+```
+// example event object
+{
+  action: 'click',
+  event: {
+    type: 'click'
+    altKey: false
+    button: 0
+    ctrlKey: false
+    metaKey: false
+    offsetX: 40
+    offsetY: 46
+    pageX: 134
+    pageY: 46
+    screenX: 2706
+    screenY: 298
+    shiftKey: false
+    x: 134
+    y: 46
+  },
+  participant: <participant object>
 }
 ```
 
