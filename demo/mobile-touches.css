@@ -28,7 +28,7 @@
 	height: 64px;
 	width: 64px;
 	margin-right: 10px;
-  border-radius: 10px;
+  border-radius: 5px;
   transition: width 0.1s, height 0.1s, top 0.1s, left 0.1s
 }
 

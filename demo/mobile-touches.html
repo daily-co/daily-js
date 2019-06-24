@@ -34,17 +34,28 @@
   position: relative;
   height: 100%;
   min-height: 300px;
+	padding-top: 20px;
 }
 h4 {
   margin: 0;
 }
-#header, #controller {
+#header {
+  padding: 20px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f0f0f0;
+	border-bottom: 1px solid #c7c7c7;
+}
+#controller {
   padding: 14px 20px;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
   background-color: #f0f0f0;
+	border-bottom: 1px solid #c7c7c7;
 }
 #controller ul {
   margin: 0;
@@ -217,8 +228,6 @@ async function createCallFrame() {
            .on('error', showEvent)
            .on('click', fullScreenClick)
            .on('touchstart', fullScreenClick);
-
-
 }
 
 async function run() {
@@ -228,7 +237,6 @@ async function run() {
   callFrame.join({ url: room.url });
 }
 </script>
-
 
 <div class="mobile-wrapper">
   <div class="mobile-statusbar"></div>
@@ -241,27 +249,23 @@ async function run() {
         You've exited, click to rejoin
       </h4>
     </div>
-
-    <div id="call-container"></div>
-    <div id="controller">
-      <ul>
-        <li class="controller-item"
-            onclick="callFrame.setLocalAudio(!callFrame.localAudio())">
-          <img src="/demo/icon-microphone.svg" />
-			  </li>
-        <li class="controller-item"
-            onclick="callFrame.setLocalVideo(!callFrame.localVideo())">
-          <img src="/demo/icon-camera.svg" />
-        </li>
-      </ul>
-      <div onclick="createRoomAndJoin()" class="red-button" 
-                                         id="create-room-button">
-        <p>Create room</p>
-      </div>
+		<div id="controller">
+			<ul>
+				<li class="controller-item" onclick="callFrame.setLocalAudio(!callFrame.localAudio())">
+					<img src="/demo/icon-microphone.svg" />
+				</li>
+				<li class="controller-item" onclick="callFrame.setLocalVideo(!callFrame.localVideo())">
+					<img src="/demo/icon-camera.svg" />
+				</li>
+			</ul>
+			<div onclick="createRoomAndJoin()" class="red-button" id="create-room-button">
+				<p>Create room</p>
+			</div>
 			<div onclick="callFrame.leave()" class="red-button" id="leave-button">
-        <p>Leave call</p>
-      </div>
-    </div>
+				<p>Leave call</p>
+			</div>
+		</div>
+    <div id="call-container"></div>
   <div class="mobile-navbar"></div>
 </div>
 </body>
