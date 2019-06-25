@@ -9,8 +9,6 @@
 	grid-template-columns: 20px 1fr 20px;
 	grid-template-rows: 1fr;
 	position: relative;
-  overflow: scroll;
-	-ms-overflow-style: -ms-autohiding-scrollbar;
 }
 
 .daily-videos-wrapper {
@@ -108,11 +106,4 @@
 }
 .recording-uploading:not(.recording) .info-div::after {
 	content: "uploading ...";
-}
-/* smartphones, touchscreens */
-@media (hover: none) and (pointer: coarse) {
-	.daily-video-toplevel-div {
-		overflow: scroll;
-		-webkit-overflow-scrolling: touch;
-	}
 }
