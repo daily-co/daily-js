@@ -178,8 +178,8 @@ export default class DailyIframe extends EventEmitter {
           position: 'fixed',
           border: '1px solid black',
           backgroundColor: 'white',
-          width: 375,
-          height: 450,
+          width: '375px',
+          height: '450px',
           right: '1em',
           bottom: '1em',
         };
