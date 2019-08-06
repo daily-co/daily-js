@@ -9,6 +9,10 @@
   "module": "src/module.js",
   "files": "dist",
   "unpkg": "dist/daily-iframe.js",
+  "browserslist": [
+    "defaults",
+    "chrome 61"
+  ],
   "scripts": {
     "build": "npm run build-main && npm run build-module",
     "build-dev": "NODE_ENV=development npm run build",

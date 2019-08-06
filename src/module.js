@@ -192,7 +192,12 @@ export default class DailyIframe extends EventEmitter {
       }
     }
     let iframeEl = document.createElement('iframe');
-    iframeEl.allow = 'microphone; camera; autoplay';
+    // special-case for old Electron for Figma
+    if (window.navigator && window.navigator.userAgent.match(/Chrome\/61\./)) {
+      iframeEl.allow = 'microphone, camera';
+    } else {
+      iframeEl.allow = 'microphone; camera; autoplay';
+    }
     iframeEl.style.visibility = 'hidden';
     parentEl.appendChild(iframeEl);
     iframeEl.style.visibility = null;
