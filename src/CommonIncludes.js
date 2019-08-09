@@ -31,6 +31,10 @@ export const DAILY_EVENT_RECORDING_UPLOAD_COMPLETED =
                'recording-upload-completed';
 export const DAILY_EVENT_APP_MSG = 'app-message';
 export const DAILY_EVENT_INPUT_EVENT = 'input-event';
+export const DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED =
+  'local-screen-share-started';
+export const DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED =
+  'local-screen-share-stopped';
 
 export const DAILY_EVENT_ERROR = 'error';
 

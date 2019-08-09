@@ -58,12 +58,12 @@ Then in your application code:
 // webpack/node-style require
 //
 const DailyIframe = require('@daily-co/daily-js');
-let callFrame = DailyIframe().wrap(MY_IFRAME);
+let callFrame = DailyIframe.wrap(MY_IFRAME);
 
 // or, cutting-edge, super-whizzy import
 //
 import DailyIframe from '@daily-co/daily-js';
-let callFrame = DailyIframe().wrap(MY_IFRAME);
+let callFrame = DailyIframe.wrap(MY_IFRAME);
 ```
 
 ## The DailyIframe class

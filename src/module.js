@@ -30,6 +30,8 @@ import {
   DAILY_EVENT_ERROR,
   DAILY_EVENT_APP_MSG,
   DAILY_EVENT_INPUT_EVENT,
+  DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED,
+  DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED,
 
   // internals
   //
@@ -233,12 +235,30 @@ export default class DailyIframe extends EventEmitter {
     this._inputEventsOn = {}; // need to cache these until loaded
 
     this._messageCallbacks = {};
+    this._callFrameId = Date.now() + Math.random().toString();
 
-    window.addEventListener('message', (evt) => {
-      if (evt.data && evt.data.what === 'iframe-call-message') {
+    this._messageListener = (evt) => {
+      if (evt.data && evt.data.what === 'iframe-call-message' &&
+          // make callFrameId addressing backwards-compatible with
+          // old versions of the library, which didn't have it
+          (evt.data.callFrameId ?
+           evt.data.callFrameId === this._callFrameId : true)) {
         this.handleMessage(evt.data);
       }
-    });
+    }
+
+    window.addEventListener('message', this._messageListener);
+  }
+
+  destroy() {
+    let iframe = this.iframe();
+    if (iframe) {
+      let parent = iframe.parentElement;
+      if (parent) {
+        parent.removeChild(iframe);
+      }
+    }
+    window.removeEventListener('message', this._messageListener);
   }
 
   loadCss({ bodyClass, cssFile, cssText }) {
@@ -446,8 +466,9 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  startScreenShare() {
-    this._sendIframeMsg({ action: DAILY_METHOD_START_SCREENSHARE });
+  startScreenShare(captureOptions) {
+    this._sendIframeMsg({ action: DAILY_METHOD_START_SCREENSHARE,
+                          captureOptions });
   }
 
   stopScreenShare() {
@@ -523,7 +544,7 @@ export default class DailyIframe extends EventEmitter {
 
   assembleMeetingUrl() {
     // handle case of url with query string and without
-    let props = { ...this.properties, emb: 't' },
+    let props = { ...this.properties, emb: this._callFrameId },
         firstSep = (props.url.match(/\?/)) ? '&' : '?',
         url = props.url,
         urlProps = Object.keys(FRAME_PROPS).filter((p) =>
@@ -538,6 +559,7 @@ export default class DailyIframe extends EventEmitter {
   _sendIframeMsg(message, callback) {
     let msg = { ...message };
     msg.what = IFRAME_MESSAGE_MARKER;
+    msg.callFrameId = this._callFrameId;
     if (callback) {
       let ts = Date.now();
       this._messageCallbacks[ts] = callback;
@@ -624,6 +646,8 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_STARTED_CAMERA:
       case DAILY_EVENT_CAMERA_ERROR:
       case DAILY_EVENT_APP_MSG:
+      case DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED:
+      case DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED:
         this.emit(msg.action, msg);
         break;        
       default: // no op
