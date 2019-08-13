@@ -14,6 +14,9 @@ export default [
       }),
       commonJS({
         include: 'node_modules/**',
+        namedExports: {
+          'node_modules/lodash/lodash.js': ['orderBy', 'filter'],
+        },
       }),
       production && terser(), // minify in production
     ],

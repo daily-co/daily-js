@@ -22,24 +22,25 @@
     "demo": "npm run build-dev && cd demo && npm i && npm run dev"
   },
   "devDependencies": {
-    "@babel/core": "^7.4.3",
-    "@babel/plugin-transform-modules-commonjs": "^7.4.3",
-    "@babel/plugin-transform-runtime": "^7.4.3",
-    "@babel/preset-env": "^7.4.3",
+    "@babel/core": "^7.5.5",
+    "@babel/plugin-transform-modules-commonjs": "^7.5.0",
+    "@babel/plugin-transform-runtime": "^7.5.5",
+    "@babel/preset-env": "^7.5.5",
     "babel-cli": "^6.26.0",
-    "babel-loader": "^8.0.5",
+    "babel-loader": "^8.0.6",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
-    "rollup": "^1.10.1",
+    "rollup": "^1.19.4",
     "rollup-plugin-cjs-es": "^0.7.0",
     "rollup-plugin-commonjs": "^9.3.4",
-    "rollup-plugin-node-resolve": "^4.2.3",
-    "webpack": "^4.29.6",
-    "webpack-cli": "^3.3.0"
+    "rollup-plugin-node-resolve": "^4.2.4",
+    "webpack": "^4.39.1",
+    "webpack-cli": "^3.3.6"
   },
   "dependencies": {
-    "@babel/runtime": "^7.4.3",
+    "@babel/runtime": "^7.5.5",
     "events": "^3.0.0",
-    "fast-equals": "^1.6.2",
+    "fast-equals": "^1.6.3",
+    "lodash": "^4.17.15",
     "rollup-plugin-terser": "^4.0.4"
   }
 }
