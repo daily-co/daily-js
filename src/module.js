@@ -1,5 +1,9 @@
 import EventEmitter from 'events';
 import { deepEqual } from 'fast-equals';
+import {
+  filter,
+  orderBy,
+} from 'lodash';
 
 import {
   // re-export
@@ -89,7 +93,8 @@ const FRAME_PROPS = {
   cssFile: true, cssText: true, bodyClass: true,
   // used internally
   layout: {
-    validate: (layout) => layout === 'custom-v1' || layout === 'browser',
+    validate: (layout) => layout === 'custom-v1' || layout === 'browser' ||
+                          layout === 'none',
     help: 'layout may only be set to "custom-v1"',
     queryString: 'layout'
   },
@@ -134,6 +139,11 @@ const PARTICIPANT_PROPS = {
 //
 
 export default class DailyIframe extends EventEmitter {
+
+  static createCallObject(properties={}) {
+    properties.layout = 'none';
+    return new DailyIframe(null, properties);
+  }
 
   static wrap(iframeish, properties={}) {
     if (!iframeish || !iframeish.contentWindow ||
@@ -237,12 +247,19 @@ export default class DailyIframe extends EventEmitter {
     this._messageCallbacks = {};
     this._callFrameId = Date.now() + Math.random().toString();
 
+    if (properties.layout === 'none' && !this._iframe) {
+      this._callObjectMode = true;
+    }
+
     this._messageListener = (evt) => {
       if (evt.data && evt.data.what === 'iframe-call-message' &&
           // make callFrameId addressing backwards-compatible with
           // old versions of the library, which didn't have it
           (evt.data.callFrameId ?
-           evt.data.callFrameId === this._callFrameId : true)) {
+           evt.data.callFrameId === this._callFrameId : true) &&
+          (evt.data.from ? evt.data.from !== 'module' : true)) {
+        // console.log('handling module message', evt.data);
+        delete evt.data.from;
         this.handleMessage(evt.data);
       }
     }
@@ -403,23 +420,46 @@ export default class DailyIframe extends EventEmitter {
     }
     this._meetingState = DAILY_STATE_LOADING;
     this.emit(DAILY_EVENT_LOADING, { action: DAILY_EVENT_LOADING });
-    this._iframe.src = this.assembleMeetingUrl();
-    return new Promise((resolve, reject) => {
-      this._loadedCallback = () => {
-        this._loaded = true;
-        this._meetingState = DAILY_STATE_LOADED;
-        if (this.properties.cssFile || this.properties.cssText) {
-          this.loadCss(this.properties);
-        }
-        for (let eventName in this._inputEventsOn) {
-          this._sendIframeMsg({ action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
-                                on: eventName });
-        }
-        resolve();
-      }
-    });
-  }
 
+    // non-iframe, callObjectMode ... load call-machine using script tag
+    if (this._callObjectMode) {
+      return new Promise((resolve, reject) => {
+        if (!document) {
+          console.error('need to create call object in a DOM/web context');
+          return;
+        }
+        const head = document.getElementsByTagName('head')[0],
+              script = document.createElement('script');
+        script.onload = async () => {
+          this._loaded = true;
+          this._meetingState = DAILY_STATE_LOADED;
+          resolve();
+        }
+        let url = new URL(this.properties.url);
+        script.src = `${url.origin}/static/call-machine-object-bundle.js`;
+        head.appendChild(script);
+      });
+
+    // iframe ... load call in iframe
+    } else {
+      this._iframe.src = this.assembleMeetingUrl();
+      return new Promise((resolve, reject) => {
+        this._loadedCallback = () => {
+          this._loaded = true;
+          this._meetingState = DAILY_STATE_LOADED;
+          if (this.properties.cssFile || this.properties.cssText) {
+            this.loadCss(this.properties);
+          }
+          for (let eventName in this._inputEventsOn) {
+            this._sendIframeMsg({ action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
+                                  on: eventName });
+          }
+          resolve();
+        }
+      });
+    }
+  }
+    
   async join(properties={}) {
     let newCss = false;
     if (!this._loaded) {
@@ -429,13 +469,16 @@ export default class DailyIframe extends EventEmitter {
       if (properties.url &&
           properties.url !== this.properties.url) {
         console.error("error: can't change the daily.co call url after load()");
-        return;
+        return Promise.reject();
       }
     }
     this._meetingState = DAILY_STATE_JOINING;
     this.emit(DAILY_EVENT_JOINING_MEETING,
               { action: DAILY_EVENT_JOINING_MEETING });
-    this._sendIframeMsg({ action: DAILY_METHOD_JOIN });
+    this._sendIframeMsg({
+      action: DAILY_METHOD_JOIN,
+      properties: this.properties
+    });
     return new Promise((resolve, reject) => {
       this._joinedCallback = (participants) => {
         this._meetingState = DAILY_STATE_JOINED;
@@ -456,7 +499,9 @@ export default class DailyIframe extends EventEmitter {
   async leave() {
     return new Promise((resolve, reject) => {
       let k = () => {
-        this._iframe.src = '';
+        if (this._iframe) {
+          this._iframe.src = '';
+        }
         this._loaded = false;
         this._meetingState = DAILY_STATE_LEFT;
         this.emit(DAILY_STATE_LEFT, { action: DAILY_STATE_LEFT });
@@ -559,13 +604,16 @@ export default class DailyIframe extends EventEmitter {
   _sendIframeMsg(message, callback) {
     let msg = { ...message };
     msg.what = IFRAME_MESSAGE_MARKER;
+    msg.from = 'module';
     msg.callFrameId = this._callFrameId;
     if (callback) {
       let ts = Date.now();
       this._messageCallbacks[ts] = callback;
       msg.callbackStamp = ts;
     }
-    this._iframe.contentWindow.postMessage(msg, '*');
+    const w = this._iframe ? this._iframe.contentWindow : window;
+    // console.log('sending', msg);
+    w.postMessage(msg, '*');
   }
 
   handleMessage(msg) {
@@ -600,6 +648,7 @@ export default class DailyIframe extends EventEmitter {
         this.fixupParticipant(msg);
         if (msg.participant && msg.participant.session_id) {
           let id = msg.participant.local ? 'local' : msg.participant.session_id;
+          this.matchParticipantTracks(id, msg.participant);
           if (!deepEqual(msg.participant, this._participants[id])) {
             this._participants[id] = { ...msg.participant };
             this.emit(msg.action, msg);
@@ -667,6 +716,70 @@ export default class DailyIframe extends EventEmitter {
     delete p.id;
     delete p.name;
     delete p.joinedAt;
+  }
+
+  matchParticipantTracks(id, p) {
+    if (!this._callObjectMode) {
+      return;
+    }
+
+    if (id === 'local') {
+      if (p.audio) {
+        try {
+          p.audioTrack = store.getState().local.streams.cam.stream.
+            getAudioTracks()[0];
+        } catch (e) {}
+      }
+      if (p.video) {
+        try {
+          p.videoTrack = store.getState().local.streams.cam.stream.
+            getVideoTracks()[0];
+        } catch (e) {}
+      }
+      if (p.screen) {
+        try {
+          p.screenVideoTrack = store.getState().local.streams.screen.stream.
+            getVideoTracks()[0];
+        } catch (e) {}
+      }
+      return;
+    }
+
+    const allStreams = store.getState().streams;
+    // find audio track
+    if (p.audio) {
+      let audioTracks = orderBy(filter(allStreams, (s) => (
+        s.participantId === p.session_id &&
+          s.type === 'cam' &&
+          s.pendingTrack && s.pendingTrack.kind === 'audio'
+      )), 'starttime', 'desc');
+      if (audioTracks && audioTracks[0] && audioTracks[0].pendingTrack) {
+        p.audioTrack = audioTracks[0].pendingTrack;
+      }
+    }
+    // find video track
+    if (p.video) {
+      let videoTracks = orderBy(filter(allStreams, (s) => (
+        s.participantId === p.session_id &&
+          s.type === 'cam' &&
+          s.pendingTrack && s.pendingTrack.kind === 'video'
+      )), 'starttime', 'desc');
+      if (videoTracks && videoTracks[0] && videoTracks[0].pendingTrack) {
+        p.videoTrack = videoTracks[0].pendingTrack;
+      }
+    }
+    if (p.screen) {
+      // find screen-share video track
+      let screenVideoTracks = orderBy(filter(allStreams, (s) => (
+        s.participantId === p.session_id &&
+          s.type === 'screen' &&
+          s.pendingTrack && s.pendingTrack.kind === 'video'
+      )), 'starttime', 'desc');
+      if (screenVideoTracks && screenVideoTracks[0] &&
+          screenVideoTracks[0].pendingTrack) {
+        p.screenVideoTrack = screenVideoTracks[0].pendingTrack;
+      }
+    }
   }
 
   absoluteUrl(url) {
