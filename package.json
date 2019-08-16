@@ -1,6 +1,6 @@
 {
   "name": "@daily-co/daily-js",
-  "version": "0.9.3-beta.1",
+  "version": "0.9.3-beta.2",
   "engines": {
     "node": ">=10.0.0"
   },
@@ -11,7 +11,8 @@
   "unpkg": "dist/daily-iframe.js",
   "browserslist": [
     "defaults",
-    "chrome 61"
+    "chrome 61",
+    "ie >= 11"
   ],
   "scripts": {
     "build": "npm run build-main && npm run build-module",
