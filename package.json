@@ -5,8 +5,8 @@
     "node": ">=10.0.0"
   },
   "homepage": "https://github.com/daily-co/daily-js/",
-  "main": "src/main.js",
-  "module": "src/module.js",
+  "main": "dist/main.js",
+  "module": "dist/module.js",
   "files": "dist",
   "unpkg": "dist/daily-iframe.js",
   "browserslist": [
