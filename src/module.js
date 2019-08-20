@@ -86,6 +86,9 @@ const FRAME_PROPS = {
     help: 'token should be a string',
     queryString: 't'
   },
+  dailyConfig: {
+    // only for call object mode, for now
+  },
   // style to apply to iframe in createFrame factory method
   iframeStyle: true,
   // styles passed through to video calls inside the iframe
