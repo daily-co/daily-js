@@ -684,7 +684,12 @@ export default class DailyIframe extends EventEmitter {
         if (msg.participant && msg.participant.session_id) {
           let id = msg.participant.local ? 'local' : msg.participant.session_id;
           this.matchParticipantTracks(id, msg.participant);
-          if (!deepEqual(msg.participant, this._participants[id])) {
+          if (
+            !this.compareEqualForParticipantUpdateEvent(
+              msg.participant,
+              this._participants[id]
+            )
+          ) {
             this._participants[id] = { ...msg.participant };
             this.emit(msg.action, msg);
           }
@@ -844,6 +849,19 @@ export default class DailyIframe extends EventEmitter {
         p.screenVideoTrack = screenVideoTracks[0].pendingTrack;
       }
     }
+  }
+
+  compareEqualForParticipantUpdateEvent(a, b) {
+    if (!deepEqual(a, b)) {
+      return false;
+    }
+    if (a.videoTrack && b.videoTrack && a.videoTrack.id !== b.videoTrack.id) {
+      return false;
+    }
+    if (a.audioTrack && b.audioTrack && a.audioTrack.id !== b.audioTrack.id) {
+      return false;
+    }
+    return true;
   }
 
   absoluteUrl(url) {
