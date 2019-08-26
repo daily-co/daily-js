@@ -1,12 +1,12 @@
 {
   "name": "@daily-co/daily-js",
-  "version": "0.9.3-beta.4",
+  "version": "0.9.3-beta.6",
   "engines": {
     "node": ">=10.0.0"
   },
   "homepage": "https://github.com/daily-co/daily-js/",
-  "main": "dist/main.js",
-  "module": "dist/module.js",
+  "main": "dist/daily-iframe.js",
+  "module": "dist/daily-iframe-esm.js",
   "files": "dist",
   "unpkg": "dist/daily-iframe.js",
   "browserslist": [
