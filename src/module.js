@@ -792,11 +792,15 @@ export default class DailyIframe extends EventEmitter {
       return false;
     }
     if (a.videoTrack && b.videoTrack &&
-        a.videoTrack.id !== b.videoTrack.id) {
+        (a.videoTrack.id !== b.videoTrack.id ||
+         a.videoTrack.muted !== b.videoTrack.muted ||
+         a.videoTrack.enabled !== b.videoTrack.enabled)) {
       return false;
     }
     if (a.audioTrack && b.audioTrack &&
-        a.audioTrack.id !== b.audioTrack.id) {
+        (a.audioTrack.id !== b.audioTrack.id ||
+         a.audioTrack.muted !== b.audioTrack.muted ||
+         a.audioTrack.enabled !== b.audioTrack.enabled)) {
       return false;
     }
     return true;
