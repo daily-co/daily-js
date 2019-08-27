@@ -89,6 +89,15 @@ const FRAME_PROPS = {
   },
   dailyConfig: {
     // only for call object mode, for now
+    validate: (config) => {
+      if (!window._dailyConfig) {
+        window._dailyConfig = {};
+      }
+      window._dailyConfig.experimentalGetUserMediaConstraintsModify =
+        config.experimentalGetUserMediaConstraintsModify;
+      delete config.experimentalGetUserMediaConstraintsModify;
+      return true;
+    },
   },
   // style to apply to iframe in createFrame factory method
   iframeStyle: true,
