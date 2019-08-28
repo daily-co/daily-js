@@ -546,6 +546,7 @@ export default class DailyIframe extends EventEmitter {
         }
         this._loaded = false;
         this._meetingState = DAILY_STATE_LEFT;
+        this._participants = {};
         this.emit(DAILY_STATE_LEFT, { action: DAILY_STATE_LEFT });
         resolve();
       };
