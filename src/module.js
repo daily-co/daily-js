@@ -497,6 +497,9 @@ export default class DailyIframe extends EventEmitter {
         if (participants) {
           for (var id in participants) {
             this.fixupParticipant(participants[id]);
+            let lid = participants[id].local ? 'local' : 
+                                               participants[id].session_id;
+            this.matchParticipantTracks(lid, participants[id]);
             this._participants[id] = { ...participants[id] };
           }
         }
@@ -743,18 +746,21 @@ export default class DailyIframe extends EventEmitter {
         try {
           p.audioTrack = store.getState().local.streams.cam.stream.
             getAudioTracks()[0];
+          if (!p.audioTrack) { p.audio = false };
         } catch (e) {}
       }
       if (p.video) {
         try {
           p.videoTrack = store.getState().local.streams.cam.stream.
             getVideoTracks()[0];
+          if (!p.videoTrack) { p.video = false };
         } catch (e) {}
       }
       if (p.screen) {
         try {
           p.screenVideoTrack = store.getState().local.streams.screen.stream.
             getVideoTracks()[0];
+          if (!p.screenVideoTrack) { p.screen = false };
         } catch (e) {}
       }
       return;
@@ -771,6 +777,7 @@ export default class DailyIframe extends EventEmitter {
       if (audioTracks && audioTracks[0] && audioTracks[0].pendingTrack) {
         p.audioTrack = audioTracks[0].pendingTrack;
       }
+      if (!p.audioTrack) { p.audio = false };
     }
     // find video track
     if (p.video) {
@@ -782,6 +789,7 @@ export default class DailyIframe extends EventEmitter {
       if (videoTracks && videoTracks[0] && videoTracks[0].pendingTrack) {
         p.videoTrack = videoTracks[0].pendingTrack;
       }
+      if (!p.videoTrack) { p.video = false };
     }
     if (p.screen) {
       // find screen-share video track
@@ -794,6 +802,7 @@ export default class DailyIframe extends EventEmitter {
           screenVideoTracks[0].pendingTrack) {
         p.screenVideoTrack = screenVideoTracks[0].pendingTrack;
       }
+      if (!p.screenVideoTrack) { p.screen = false };
     }
   }
 
