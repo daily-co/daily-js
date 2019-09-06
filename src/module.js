@@ -36,6 +36,8 @@ import {
   DAILY_EVENT_INPUT_EVENT,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED,
+  DAILY_EVENT_NETWORK_QUALITY_CHANGE,
+  DAILY_EVENT_ACTIVE_SPEAKER_CHANGE,
 
   // internals
   //
@@ -255,7 +257,8 @@ export default class DailyIframe extends EventEmitter {
     this._meetingState = DAILY_STATE_NEW;
     this._participants = {};
     this._inputEventsOn = {}; // need to cache these until loaded
-
+    this._network = { threshold: 'good', quality: 100 };
+    this._activeSpeaker = {};
     this._messageCallbacks = {};
     this._callFrameId = Date.now() + Math.random().toString();
 
@@ -431,7 +434,11 @@ export default class DailyIframe extends EventEmitter {
       throw new Error("can't load meeting because url property isn't set");
     }
     this._meetingState = DAILY_STATE_LOADING;
-    this.emit(DAILY_EVENT_LOADING, { action: DAILY_EVENT_LOADING });
+    try {
+      this.emit(DAILY_EVENT_LOADING, { action: DAILY_EVENT_LOADING });
+    } catch (e) {
+      console.log("could not emit 'loading'");
+    }
 
     // non-iframe, callObjectMode ... load call-machine using script tag
     if (this._callObjectMode) {
@@ -485,8 +492,12 @@ export default class DailyIframe extends EventEmitter {
       }
     }
     this._meetingState = DAILY_STATE_JOINING;
-    this.emit(DAILY_EVENT_JOINING_MEETING,
-              { action: DAILY_EVENT_JOINING_MEETING });
+    try {
+      this.emit(DAILY_EVENT_JOINING_MEETING,
+                { action: DAILY_EVENT_JOINING_MEETING });
+    } catch (e) {
+      console.log("could not emit 'joining-meeting'");
+    }
     this._sendIframeMsg({
       action: DAILY_METHOD_JOIN,
       properties: this.properties
@@ -520,7 +531,11 @@ export default class DailyIframe extends EventEmitter {
         this._loaded = false;
         this._meetingState = DAILY_STATE_LEFT;
         this._participants = {};
-        this.emit(DAILY_STATE_LEFT, { action: DAILY_STATE_LEFT });
+        try {
+          this.emit(DAILY_STATE_LEFT, { action: DAILY_STATE_LEFT });
+        } catch (e) {
+          console.log("could not emit 'left-meeting'");
+        }
         resolve();
       }
       this._sendIframeMsg({ action: DAILY_METHOD_LEAVE }, k);
@@ -547,10 +562,14 @@ export default class DailyIframe extends EventEmitter {
   getNetworkStats() {
     return new Promise((resolve, reject) => {
       let k = (msg) => {
-        resolve({ stats: msg.stats });
+        resolve({ stats: msg.stats, ...this._network });
       }
       this._sendIframeMsg({ action: DAILY_METHOD_GET_CALC_STATS }, k);
     });
+  }
+
+  getActiveSpeaker() {
+    return this._activeSpeaker;
   }
 
   enumerateDevices(kind) {
@@ -650,14 +669,22 @@ export default class DailyIframe extends EventEmitter {
           this._loadedCallback();
           this._loadedCallback = null;
         }
-        this.emit(msg.action, msg);
+        try {
+          this.emit(msg.action, msg);
+        } catch (e) {
+          console.log('could not emit', msg);
+        }
         break;
       case DAILY_EVENT_JOINED_MEETING:
         if (this._joinedCallback) {
           this._joinedCallback(msg.participants);
           this._joinedCallback = null;
         }
-        this.emit(msg.action, msg);
+        try {
+          this.emit(msg.action, msg);
+        } catch (e) {
+          console.log('could not emit', msg);
+        }
         break;
       case DAILY_EVENT_PARTICIPANT_JOINED:
       case DAILY_EVENT_PARTICIPANT_UPDATED:
@@ -669,7 +696,11 @@ export default class DailyIframe extends EventEmitter {
                 msg.participant, this._participants[id])
              ) {
             this._participants[id] = { ...msg.participant };
-            this.emit(msg.action, msg);
+            try {
+              this.emit(msg.action, msg);
+            } catch (e) {
+              console.log('could not emit', msg);
+            }
           }
         }
         break;
@@ -677,20 +708,32 @@ export default class DailyIframe extends EventEmitter {
         this.fixupParticipant(msg);
         if (msg.participant && msg.participant.session_id) {
           delete this._participants[msg.participant.session_id];
-          this.emit(msg.action, msg);
+          try {
+            this.emit(msg.action, msg);
+          } catch (e) {
+            console.log('could not emit', msg);
+          }
         }
         break;
       case DAILY_EVENT_ERROR:
         this._iframe.src = '';
         this._loaded = false;
         this._meetingState = DAILY_STATE_ERROR;
-        this.emit(msg.action, msg);
+        try {
+          this.emit(msg.action, msg);
+        } catch (e) {
+          console.log('could not emit', msg);
+        }
         break;
       case DAILY_EVENT_LEFT_MEETING:
         if (this._meetingState !== DAILY_STATE_ERROR) {
           this._meetingState = DAILY_STATE_LEFT;
         }
-        this.emit(msg.action, msg);
+        try {
+          this.emit(msg.action, msg);
+        } catch (e) {
+          console.log('could not emit', msg);
+        }
         break;
       case DAILY_EVENT_INPUT_EVENT:
         let p = this._participants[msg.session_id];
@@ -701,9 +744,38 @@ export default class DailyIframe extends EventEmitter {
             p = {};
           }
         }
-        this.emit(msg.event.type, { action: msg.event.type,
-                                    event: msg.event,
-                                    participant: {...p} });
+        try {
+          this.emit(msg.event.type, { action: msg.event.type,
+                                      event: msg.event,
+                                      participant: {...p} });
+        } catch (e) {
+          console.log('could not emit', msg);
+        }
+        break;
+      case DAILY_EVENT_NETWORK_QUALITY_CHANGE:
+        let { threshold, quality } = msg;
+        if (threshold !== this._network.threshold ||
+            quality !== this._network.quality) {
+          this._network.quality = quality;
+          this._network.threshold = threshold;
+          try {
+            this.emit(msg.action, msg);
+          } catch (e) {
+            console.log('could not emit', msg);
+          }
+        }
+        break;
+      case DAILY_EVENT_ACTIVE_SPEAKER_CHANGE:
+        let { activeSpeaker } = msg;
+        if (this._activeSpeaker.peerId !== activeSpeaker.peerId) {
+          this._activeSpeaker.peerId = activeSpeaker.peerId;
+          try {
+            this.emit(msg.action, { action: msg.action,
+                                    activeSpeaker: this._activeSpeaker });
+          } catch (e) {
+            console.log('could not emit', msg);
+          }
+        }
         break;
       case DAILY_EVENT_RECORDING_STARTED:
       case DAILY_EVENT_RECORDING_STOPPED:
@@ -715,7 +787,11 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_APP_MSG:
       case DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED:
       case DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED:
-        this.emit(msg.action, msg);
+        try {
+          this.emit(msg.action, msg);
+        } catch (e) {
+          console.log('could not emit', msg);
+        }
         break;        
       default: // no op
     }
