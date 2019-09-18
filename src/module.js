@@ -100,7 +100,7 @@ const FRAME_PROPS = {
       return true;
     }
   },
-  userName: true, // ignored if there's a token
+  user_name: true, // ignored if there's a token
   // style to apply to iframe in createFrame factory method
   iframeStyle: true,
   // styles passed through to video calls inside the iframe
