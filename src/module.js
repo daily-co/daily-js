@@ -100,7 +100,8 @@ const FRAME_PROPS = {
       return true;
     }
   },
-  user_name: true, // ignored if there's a token
+  userName: true, // ignored if there's a token
+  showLeaveButton: true,
   // style to apply to iframe in createFrame factory method
   iframeStyle: true,
   // styles passed through to video calls inside the iframe
@@ -261,6 +262,7 @@ export default class DailyIframe extends EventEmitter {
     this._network = { threshold: 'good', quality: 100 };
     this._activeSpeaker = {};
     this._messageCallbacks = {};
+    this._preloadCache = initializePreloadCache();
     this._callFrameId = Date.now() + Math.random().toString();
 
     if (properties.layout === 'none' && !this._iframe) {
@@ -404,18 +406,49 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setInputDevices({ audioDeviceId, videoDeviceId }) {
+    // cache these for use in subsequent calls
+    if (audioDeviceId) {
+      this._preloadCache.audioDeviceId = audioDeviceId;
+    }
+    if (videoDeviceId) {
+      this._preloadCache.videoDeviceId = videoDeviceId;
+    }
+
+    // if we're in callObject mode and not joined yet, don't do anything
+    if (this._callObjectMode && this._meetingState !== DAILY_STATE_JOINED) {
+      return this;
+    }
+
     this._sendIframeMsg({ action: DAILY_METHOD_SET_INPUT_DEVICES,
                           audioDeviceId, videoDeviceId });
     return this;
   }
 
   setOutputDevice({ outputDeviceId }) {
+    // cache this for use later
+    if (outputDeviceId) {
+      this._preloadCache.outputDeviceId = outputDeviceId;
+    }
+
+    // if we're in callObject mode and not joined yet, don't do anything
+    if (this._callObjectMode && this._meetingState !== DAILY_STATE_JOINED) {
+      return this;
+    }
+
     this._sendIframeMsg({ action: DAILY_METHOD_SET_OUTPUT_DEVICE,
                           outputDeviceId });
     return this;    
   }
 
   getInputDevices() {
+    if (this._callObjectMode && this._meetingState !== DAILY_STATE_JOINED) {
+      return {
+        camera: { deviceId: this._preloadCache.videoDeviceId },
+        mic: { deviceId: this._preloadCache.audioDeviceId },
+        speaker: { deviceId: this._preloadCache.outputDeviceId }
+      }
+    }
+
     return new Promise((resolve, reject) => {
       let k = (msg) => {
         delete msg.action;
@@ -501,7 +534,8 @@ export default class DailyIframe extends EventEmitter {
     }
     this._sendIframeMsg({
       action: DAILY_METHOD_JOIN,
-      properties: this.properties
+      properties: this.properties,
+      preloadCache: this._preloadCache,
     });
     return new Promise((resolve, reject) => {
       this._joinedCallback = (participants) => {
@@ -532,6 +566,7 @@ export default class DailyIframe extends EventEmitter {
         this._loaded = false;
         this._meetingState = DAILY_STATE_LEFT;
         this._participants = {};
+        resetPreloadCache(this._preloadCache);
         try {
           this.emit(DAILY_STATE_LEFT, { action: DAILY_STATE_LEFT });
         } catch (e) {
@@ -573,7 +608,12 @@ export default class DailyIframe extends EventEmitter {
     return this._activeSpeaker;
   }
 
-  enumerateDevices(kind) {
+  async enumerateDevices(kind) {
+    if (this._callObjectMode && this.meetingState !== DAILY_STATE_JOINED) {
+      let raw = await navigator.mediaDevices.enumerateDevices();
+      return { devices: raw.map((d) => JSON.parse(JSON.stringify(d))) };
+    }
+
     return new Promise((resolve, reject) => {
       let k = (msg) => {
         resolve({ devices: msg.devices });
@@ -942,3 +982,16 @@ export default class DailyIframe extends EventEmitter {
     return str;
   }
 };
+
+function initializePreloadCache() {
+  return {
+    audioDeviceId: null,
+    videoDeviceId: null,
+    outputDeviceId: null,
+  };
+}
+
+function resetPreloadCache(c) {
+  // don't need to do anything, until we add stuff to the preload
+  // cache that should not persist
+}
