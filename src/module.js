@@ -256,6 +256,7 @@ export default class DailyIframe extends EventEmitter {
 
     this._iframe = iframeish;
     this._loaded = false;
+    this._callObjectScriptLoaded = false;
     this._meetingState = DAILY_STATE_NEW;
     this._participants = {};
     this._inputEventsOn = {}; // need to cache these until loaded
@@ -481,16 +482,25 @@ export default class DailyIframe extends EventEmitter {
           console.error('need to create call object in a DOM/web context');
           return;
         }
-        const head = document.getElementsByTagName('head')[0],
-              script = document.createElement('script');
-        script.onload = async () => {
+        if (this._callObjectScriptLoaded) {
+          window._dailyCallObjectSetup();
           this._loaded = true;
           this._meetingState = DAILY_STATE_LOADED;
+          this.emit(DAILY_EVENT_LOADED, { action: DAILY_EVENT_LOADED });
           resolve();
+        } else {
+          const head = document.getElementsByTagName('head')[0],
+                script = document.createElement('script');
+          script.onload = async () => {
+            this._callObjectScriptLoaded = true;
+            this._loaded = true;
+            this._meetingState = DAILY_STATE_LOADED;
+            resolve();
+          }
+          let url = new URL(this.properties.url);
+          script.src = `${url.origin}/static/call-machine-object-bundle.js`;
+          head.appendChild(script);
         }
-        let url = new URL(this.properties.url);
-        script.src = `${url.origin}/static/call-machine-object-bundle.js`;
-        head.appendChild(script);
       });
 
     // iframe ... load call in iframe
