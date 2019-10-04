@@ -60,6 +60,7 @@ import {
   DAILY_METHOD_APP_MSG,
   DAILY_METHOD_ADD_FAKE_PARTICIPANT,
   DAILY_METHOD_SET_SHOW_NAMES,
+  DAILY_METHOD_SET_LANG,
   MAX_APP_MSG_SIZE,
   DAILY_METHOD_REGISTER_INPUT_HANDLER,
 } from './CommonIncludes.js';
@@ -99,6 +100,11 @@ const FRAME_PROPS = {
         config.experimentalGetUserMediaConstraintsModify;
       delete config.experimentalGetUserMediaConstraintsModify;
       return true;
+    },
+  },
+  lang: {
+    validate: (lang) => {
+      return lang === 'en-us' || lang === 'en' || lang === 'fr';
     },
   },
   userName: true, // ignored if there's a token
@@ -397,6 +403,10 @@ export default class DailyIframe extends EventEmitter {
       trackConstraints,
     });
     return this;
+  }
+
+  setDailyLang(lang) {
+    this._sendIframeMsg({ action: DAILY_METHOD_SET_LANG, lang });
   }
 
   startCamera() {
