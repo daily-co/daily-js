@@ -777,7 +777,9 @@ export default class DailyIframe extends EventEmitter {
         }
         break;
       case DAILY_EVENT_ERROR:
-        this._iframe.src = '';
+        if (this._iframe) {
+          this._iframe.src = '';
+        }
         this._loaded = false;
         this._meetingState = DAILY_STATE_ERROR;
         try {
