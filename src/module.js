@@ -1116,6 +1116,10 @@ function makeSafeForPostMessage(props) {
   const safe = {};
   for (let p in props) {
     if (props[p] instanceof MediaStreamTrack) {
+      // note: could store the track in a global variable for accessing
+      // on the other side of the postMessage, here, instead of as we
+      // currently do in the validate-properties routines, which definitely
+      // is a spooky-action-at-a-distance code anti-pattern
       safe[p] = DAILY_CUSTOM_TRACK;
     } else {
       safe[p] = props[p];
