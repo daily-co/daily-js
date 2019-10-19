@@ -22,6 +22,8 @@ import {
   DAILY_EVENT_PARTICIPANT_JOINED,
   DAILY_EVENT_PARTICIPANT_UPDATED,
   DAILY_EVENT_PARTICIPANT_LEFT,
+  DAILY_EVENT_TRACK_STARTED,
+  DAILY_EVENT_TRACK_STOPPED,
   DAILY_EVENT_RECORDING_STARTED,
   DAILY_EVENT_RECORDING_STOPPED,
   DAILY_EVENT_RECORDING_STATS,
@@ -63,6 +65,7 @@ import {
   DAILY_METHOD_SET_LANG,
   MAX_APP_MSG_SIZE,
   DAILY_METHOD_REGISTER_INPUT_HANDLER,
+  DAILY_CUSTOM_TRACK,
 } from './CommonIncludes.js';
 
 export {
@@ -116,6 +119,18 @@ const FRAME_PROPS = {
   cssFile: true,
   cssText: true,
   bodyClass: true,
+  videoSource: {
+    validate: (s, callObject) => {
+      callObject._preloadCache.videoDeviceId = s;
+      return true;
+    },
+  },
+  audioSource: {
+    validate: (s, callObject) => {
+      callObject._preloadCache.audioDeviceId = s;
+      return true;
+    },
+  },
   // used internally
   layout: {
     validate: (layout) =>
@@ -266,10 +281,15 @@ export default class DailyIframe extends EventEmitter {
 
   constructor(iframeish, properties = {}) {
     super();
+    this._iframe = iframeish;
+    this._callObjectMode = properties.layout === 'none' && !this._iframe;
+    this._preloadCache = initializePreloadCache();
+    if (this._callObjectMode) {
+      window._dailyPreloadCache = this._preloadCache;
+    }
+
     this.validateProperties(properties);
     this.properties = { ...properties };
-
-    this._iframe = iframeish;
     this._loaded = false;
     this._callObjectScriptLoaded = false;
     this._meetingState = DAILY_STATE_NEW;
@@ -278,12 +298,7 @@ export default class DailyIframe extends EventEmitter {
     this._network = { threshold: 'good', quality: 100 };
     this._activeSpeaker = {};
     this._messageCallbacks = {};
-    this._preloadCache = initializePreloadCache();
     this._callFrameId = Date.now() + Math.random().toString();
-
-    if (properties.layout === 'none' && !this._iframe) {
-      this._callObjectMode = true;
-    }
 
     this._messageListener = (evt) => {
       if (
@@ -439,7 +454,15 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  setInputDevices({ audioDeviceId, videoDeviceId }) {
+  setInputDevices({ audioDeviceId, videoDeviceId, audioSource, videoSource }) {
+    // use audioDeviceId and videoDeviceId internally
+    if (audioSource !== undefined) {
+      audioDeviceId = audioSource;
+    }
+    if (videoSource !== undefined) {
+      videoDeviceId = videoSource;
+    }
+
     // cache these for use in subsequent calls
     if (audioDeviceId) {
       this._preloadCache.audioDeviceId = audioDeviceId;
@@ -451,6 +474,13 @@ export default class DailyIframe extends EventEmitter {
     // if we're in callObject mode and not joined yet, don't do anything
     if (this._callObjectMode && this._meetingState !== DAILY_STATE_JOINED) {
       return this;
+    }
+
+    if (audioDeviceId instanceof MediaStreamTrack) {
+      audioDeviceId = DAILY_CUSTOM_TRACK;
+    }
+    if (videoDeviceId instanceof MediaStreamTrack) {
+      videoDeviceId = DAILY_CUSTOM_TRACK;
     }
 
     this._sendIframeMsg({
@@ -574,6 +604,13 @@ export default class DailyIframe extends EventEmitter {
         return Promise.reject();
       }
     }
+    if (
+      this._meetingState === DAILY_STATE_JOINED ||
+      this._meetingState === DAILY_STATE_JOINING
+    ) {
+      console.warn('already joined meeting, call leave() before joining again');
+      return;
+    }
     this._meetingState = DAILY_STATE_JOINING;
     try {
       this.emit(DAILY_EVENT_JOINING_MEETING, {
@@ -584,8 +621,8 @@ export default class DailyIframe extends EventEmitter {
     }
     this._sendIframeMsg({
       action: DAILY_METHOD_JOIN,
-      properties: this.properties,
-      preloadCache: this._preloadCache,
+      properties: makeSafeForPostMessage(this.properties),
+      preloadCache: makeSafeForPostMessage(this._preloadCache),
     });
     return new Promise((resolve, reject) => {
       this._joinedCallback = (participants) => {
@@ -710,7 +747,10 @@ export default class DailyIframe extends EventEmitter {
       if (!FRAME_PROPS[k]) {
         throw new Error(`unrecognized property '${k}'`);
       }
-      if (FRAME_PROPS[k].validate && !FRAME_PROPS[k].validate(properties[k])) {
+      if (
+        FRAME_PROPS[k].validate &&
+        !FRAME_PROPS[k].validate(properties[k], this)
+      ) {
         throw new Error(`property '${k}': ${FRAME_PROPS[k].help}`);
       }
     }
@@ -786,6 +826,42 @@ export default class DailyIframe extends EventEmitter {
         if (msg.participant && msg.participant.session_id) {
           let id = msg.participant.local ? 'local' : msg.participant.session_id;
           this.matchParticipantTracks(id, msg.participant);
+          // track events
+          try {
+            this.maybeEventTrackStopped(
+              this._participants[id],
+              msg.participant,
+              'audioTrack'
+            );
+            this.maybeEventTrackStopped(
+              this._participants[id],
+              msg.participant,
+              'videoTrack'
+            );
+            this.maybeEventTrackStopped(
+              this._participants[id],
+              msg.participant,
+              'screenVideoTrack'
+            );
+            this.maybeEventTrackStarted(
+              this._participants[id],
+              msg.participant,
+              'audioTrack'
+            );
+            this.maybeEventTrackStarted(
+              this._participants[id],
+              msg.participant,
+              'videoTrack'
+            );
+            this.maybeEventTrackStarted(
+              this._participants[id],
+              msg.participant,
+              'screenVideoTrack'
+            );
+          } catch (e) {
+            console.error('track events error', e);
+          }
+          // participant joined/updated events
           if (
             !this.compareEqualForParticipantUpdateEvent(
               msg.participant,
@@ -804,6 +880,14 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_PARTICIPANT_LEFT:
         this.fixupParticipant(msg);
         if (msg.participant && msg.participant.session_id) {
+          // track events
+          let prevP = this._participants[msg.participant.session_id];
+          if (prevP) {
+            this.maybeEventTrackStopped(prevP, null, 'audioTrack');
+            this.maybeEventTrackStopped(prevP, null, 'videoTrack');
+            this.maybeEventTrackStopped(prevP, null, 'screenVideoTrack');
+          }
+          // delete from local cach
           delete this._participants[msg.participant.session_id];
           try {
             this.emit(msg.action, msg);
@@ -1026,6 +1110,45 @@ export default class DailyIframe extends EventEmitter {
     }
   }
 
+  maybeEventTrackStopped(prevP, thisP, key) {
+    if (!prevP) {
+      return;
+    }
+    if (
+      (prevP[key] && prevP[key].readyState === 'ended') ||
+      (prevP[key] && !(thisP && thisP[key])) ||
+      (prevP[key] && prevP[key].id !== thisP[key].id)
+    ) {
+      try {
+        this.emit(DAILY_EVENT_TRACK_STOPPED, {
+          action: DAILY_EVENT_TRACK_STOPPED,
+          track: prevP[key],
+          participant: thisP,
+        });
+      } catch (e) {
+        console.log('could not emit', e);
+      }
+    }
+  }
+
+  maybeEventTrackStarted(prevP, thisP, key) {
+    if (
+      (thisP[key] && !(prevP && prevP[key])) ||
+      (thisP[key] && prevP[key].readyState === 'ended') ||
+      (thisP[key] && thisP[key].id !== prevP[key].id)
+    ) {
+      try {
+        this.emit(DAILY_EVENT_TRACK_STARTED, {
+          action: DAILY_EVENT_TRACK_STARTED,
+          track: thisP[key],
+          participant: thisP,
+        });
+      } catch (e) {
+        console.log('could not emit', e);
+      }
+    }
+  }
+
   compareEqualForParticipantUpdateEvent(a, b) {
     if (!deepEqual(a, b)) {
       return false;
@@ -1098,7 +1221,7 @@ export default class DailyIframe extends EventEmitter {
   }
 }
 
-function initializePreloadCache() {
+function initializePreloadCache(callObject, properties) {
   return {
     audioDeviceId: null,
     videoDeviceId: null,
@@ -1109,4 +1232,16 @@ function initializePreloadCache() {
 function resetPreloadCache(c) {
   // don't need to do anything, until we add stuff to the preload
   // cache that should not persist
+}
+
+function makeSafeForPostMessage(props) {
+  const safe = {};
+  for (let p in props) {
+    if (props[p] instanceof MediaStreamTrack) {
+      safe[p] = DAILY_CUSTOM_TRACK;
+    } else {
+      safe[p] = props[p];
+    }
+  }
+  return safe;
 }
