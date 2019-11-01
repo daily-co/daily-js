@@ -22,6 +22,9 @@ export const DAILY_EVENT_PARTICIPANT_JOINED = 'participant-joined';
 export const DAILY_EVENT_PARTICIPANT_UPDATED = 'participant-updated';
 export const DAILY_EVENT_PARTICIPANT_LEFT = 'participant-left';
 
+export const DAILY_EVENT_TRACK_STARTED = 'track-started';
+export const DAILY_EVENT_TRACK_STOPPED = 'track-stopped';
+
 export const DAILY_EVENT_RECORDING_STARTED = 'recording-started';
 export const DAILY_EVENT_RECORDING_STOPPED = 'recording-stopped';
 export const DAILY_EVENT_RECORDING_STATS = 'recording-stats';
@@ -34,6 +37,8 @@ export const DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED =
   'local-screen-share-started';
 export const DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED =
   'local-screen-share-stopped';
+export const DAILY_EVENT_ACTIVE_SPEAKER_CHANGE = 'active-speaker-change';
+export const DAILY_EVENT_NETWORK_QUALITY_CHANGE = 'network-quality-change';
 
 export const DAILY_EVENT_ERROR = 'error';
 
@@ -68,3 +73,5 @@ export const DAILY_METHOD_APP_MSG = 'app-msg';
 export const DAILY_METHOD_ADD_FAKE_PARTICIPANT = 'add-fake-participant';
 export const DAILY_METHOD_SET_SHOW_NAMES = 'set-show-names';
 export const DAILY_METHOD_REGISTER_INPUT_HANDLER = 'register-input-handler';
+export const DAILY_METHOD_SET_LANG = 'set-daily-lang';
+export const DAILY_CUSTOM_TRACK = 'daily-custom-track';
