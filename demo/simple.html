@@ -2,7 +2,7 @@
 <head>
 <title>basic video call events/control demo</title>
 <!-- this library, bundled and minimized -->
-<script crossorigin src="https://unpkg.com/@daily-co/daily-js"></script>
+<script src="https://unpkg.com/@daily-co/daily-js"></script>
 <!-- helper script to create a demo room under the api-demo.daily.co
      domain. replace this in your production code with a function
      that creates rooms within your own domain. -->
@@ -30,6 +30,17 @@ async function run() {
   // defaults to floating window in the lower right-hand corner
   //
   window.callFrame = window.DailyIframe.createFrame();
+
+  // callFrame = window.DailyIframe.createFrame({
+  //   iframeStyle: {
+  //     position: 'fixed',
+  //     border: 0,
+  //     top: 0, left: 0,
+  //     width: '100%',
+  //     height: '100%'
+  //   }
+  // });
+  // callFrame.join({ url: 'https://your-team.daily.co/hello' });
 
   // install event handlers that just print out event information
   // to the console

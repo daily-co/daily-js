@@ -1,5 +1,9 @@
 import EventEmitter from 'events';
 import { deepEqual } from 'fast-equals';
+import {
+  filter,
+  orderBy,
+} from 'lodash';
 
 import {
   // re-export
@@ -22,6 +26,8 @@ import {
   DAILY_EVENT_PARTICIPANT_JOINED,
   DAILY_EVENT_PARTICIPANT_UPDATED,
   DAILY_EVENT_PARTICIPANT_LEFT,
+  DAILY_EVENT_TRACK_STARTED,
+  DAILY_EVENT_TRACK_STOPPED,
   DAILY_EVENT_RECORDING_STARTED,
   DAILY_EVENT_RECORDING_STOPPED,
   DAILY_EVENT_RECORDING_STATS,
@@ -32,6 +38,8 @@ import {
   DAILY_EVENT_INPUT_EVENT,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED,
+  DAILY_EVENT_NETWORK_QUALITY_CHANGE,
+  DAILY_EVENT_ACTIVE_SPEAKER_CHANGE,
 
   // internals
   //
@@ -58,8 +66,10 @@ import {
   DAILY_METHOD_APP_MSG,
   DAILY_METHOD_ADD_FAKE_PARTICIPANT,
   DAILY_METHOD_SET_SHOW_NAMES,
+  DAILY_METHOD_SET_LANG,
   MAX_APP_MSG_SIZE,
   DAILY_METHOD_REGISTER_INPUT_HANDLER,
+  DAILY_CUSTOM_TRACK,
 } from './CommonIncludes.js';
 
 
@@ -82,14 +92,46 @@ const FRAME_PROPS = {
     help: 'token should be a string',
     queryString: 't'
   },
+  dailyConfig: {
+    // only for call object mode, for now
+    validate: (config) => {
+      if (!window._dailyConfig) {
+        window._dailyConfig = {};
+      }
+      window._dailyConfig.experimentalGetUserMediaConstraintsModify =
+              config.experimentalGetUserMediaConstraintsModify;
+      delete config.experimentalGetUserMediaConstraintsModify
+      return true;
+    }
+  },
+  lang: { 
+    validate: (lang) => {
+      return lang === 'en-us' || lang === 'en' || lang === 'fr';
+    }
+  },
+  userName: true, // ignored if there's a token
+  showLeaveButton: true,
   // style to apply to iframe in createFrame factory method
   iframeStyle: true,
   // styles passed through to video calls inside the iframe
   customLayout: true,
   cssFile: true, cssText: true, bodyClass: true,
+  videoSource: {
+    validate: (s, callObject) => {
+      callObject._preloadCache.videoDeviceId = s;
+      return true;
+    }
+  },
+  audioSource: {
+    validate: (s, callObject) => {
+      callObject._preloadCache.audioDeviceId = s;
+      return true;
+    }
+  },
   // used internally
   layout: {
-    validate: (layout) => layout === 'custom-v1' || layout === 'browser',
+    validate: (layout) => layout === 'custom-v1' || layout === 'browser' ||
+                          layout === 'none',
     help: 'layout may only be set to "custom-v1"',
     queryString: 'layout'
   },
@@ -134,6 +176,11 @@ const PARTICIPANT_PROPS = {
 //
 
 export default class DailyIframe extends EventEmitter {
+
+  static createCallObject(properties={}) {
+    properties.layout = 'none';
+    return new DailyIframe(null, properties);
+  }
 
   static wrap(iframeish, properties={}) {
     if (!iframeish || !iframeish.contentWindow ||
@@ -225,15 +272,22 @@ export default class DailyIframe extends EventEmitter {
 
   constructor(iframeish, properties={}) {
     super();
+    this._iframe = iframeish;
+    this._callObjectMode = (properties.layout === 'none' && !this._iframe);
+    this._preloadCache = initializePreloadCache();
+    if (this._callObjectMode) {
+      window._dailyPreloadCache = this._preloadCache;
+    }
+
     this.validateProperties(properties);
     this.properties = { ...properties };
-
-    this._iframe = iframeish;
     this._loaded = false;
+    this._callObjectScriptLoaded = false;
     this._meetingState = DAILY_STATE_NEW;
     this._participants = {};
     this._inputEventsOn = {}; // need to cache these until loaded
-
+    this._network = { threshold: 'good', quality: 100 };
+    this._activeSpeaker = {};
     this._messageCallbacks = {};
     this._callFrameId = Date.now() + Math.random().toString();
 
@@ -242,7 +296,10 @@ export default class DailyIframe extends EventEmitter {
           // make callFrameId addressing backwards-compatible with
           // old versions of the library, which didn't have it
           (evt.data.callFrameId ?
-           evt.data.callFrameId === this._callFrameId : true)) {
+           evt.data.callFrameId === this._callFrameId : true) &&
+          (evt.data.from ? evt.data.from !== 'module' : true)) {
+        // console.log('handling module message', evt.data);
+        delete evt.data.from;
         this.handleMessage(evt.data);
       }
     }
@@ -340,6 +397,10 @@ export default class DailyIframe extends EventEmitter {
     return this;    
   }
 
+  setDailyLang(lang) {
+    this._sendIframeMsg({ action: DAILY_METHOD_SET_LANG, lang });
+  }
+
   startCamera() {
     return new Promise((resolve, reject) => {
       let k = (msg) => {
@@ -370,19 +431,65 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  setInputDevices({ audioDeviceId, videoDeviceId }) {
+  setInputDevices({ audioDeviceId, videoDeviceId, audioSource, videoSource }) {
+    // use audioDeviceId and videoDeviceId internally
+    if (audioSource !== undefined) {
+      audioDeviceId = audioSource;
+    }
+    if (videoSource !== undefined) {
+      videoDeviceId = videoSource;
+    }
+
+    // cache these for use in subsequent calls
+    if (audioDeviceId) {
+      this._preloadCache.audioDeviceId = audioDeviceId;
+    }
+    if (videoDeviceId) {
+      this._preloadCache.videoDeviceId = videoDeviceId;
+    }
+
+    // if we're in callObject mode and not joined yet, don't do anything
+    if (this._callObjectMode && this._meetingState !== DAILY_STATE_JOINED) {
+      return this;
+    }
+
+    if (audioDeviceId instanceof MediaStreamTrack) {
+      audioDeviceId = DAILY_CUSTOM_TRACK;
+    }
+    if (videoDeviceId instanceof MediaStreamTrack) {
+      videoDeviceId = DAILY_CUSTOM_TRACK;
+    }
+
     this._sendIframeMsg({ action: DAILY_METHOD_SET_INPUT_DEVICES,
                           audioDeviceId, videoDeviceId });
     return this;
   }
 
   setOutputDevice({ outputDeviceId }) {
+    // cache this for use later
+    if (outputDeviceId) {
+      this._preloadCache.outputDeviceId = outputDeviceId;
+    }
+
+    // if we're in callObject mode and not joined yet, don't do anything
+    if (this._callObjectMode && this._meetingState !== DAILY_STATE_JOINED) {
+      return this;
+    }
+
     this._sendIframeMsg({ action: DAILY_METHOD_SET_OUTPUT_DEVICE,
                           outputDeviceId });
     return this;    
   }
 
   getInputDevices() {
+    if (this._callObjectMode && this._meetingState !== DAILY_STATE_JOINED) {
+      return {
+        camera: { deviceId: this._preloadCache.videoDeviceId },
+        mic: { deviceId: this._preloadCache.audioDeviceId },
+        speaker: { deviceId: this._preloadCache.outputDeviceId }
+      }
+    }
+
     return new Promise((resolve, reject) => {
       let k = (msg) => {
         delete msg.action;
@@ -402,24 +509,60 @@ export default class DailyIframe extends EventEmitter {
       throw new Error("can't load meeting because url property isn't set");
     }
     this._meetingState = DAILY_STATE_LOADING;
-    this.emit(DAILY_EVENT_LOADING, { action: DAILY_EVENT_LOADING });
-    this._iframe.src = this.assembleMeetingUrl();
-    return new Promise((resolve, reject) => {
-      this._loadedCallback = () => {
-        this._loaded = true;
-        this._meetingState = DAILY_STATE_LOADED;
-        if (this.properties.cssFile || this.properties.cssText) {
-          this.loadCss(this.properties);
-        }
-        for (let eventName in this._inputEventsOn) {
-          this._sendIframeMsg({ action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
-                                on: eventName });
-        }
-        resolve();
-      }
-    });
-  }
+    try {
+      this.emit(DAILY_EVENT_LOADING, { action: DAILY_EVENT_LOADING });
+    } catch (e) {
+      console.log("could not emit 'loading'");
+    }
 
+    // non-iframe, callObjectMode ... load call-machine using script tag
+    if (this._callObjectMode) {
+      return new Promise((resolve, reject) => {
+        if (!document) {
+          console.error('need to create call object in a DOM/web context');
+          return;
+        }
+        if (this._callObjectScriptLoaded) {
+          window._dailyCallObjectSetup();
+          this._loaded = true;
+          this._meetingState = DAILY_STATE_LOADED;
+          this.emit(DAILY_EVENT_LOADED, { action: DAILY_EVENT_LOADED });
+          resolve();
+        } else {
+          const head = document.getElementsByTagName('head')[0],
+                script = document.createElement('script');
+          script.onload = async () => {
+            this._callObjectScriptLoaded = true;
+            this._loaded = true;
+            this._meetingState = DAILY_STATE_LOADED;
+            resolve();
+          }
+          let url = new URL(this.properties.url);
+          script.src = `${url.origin}/static/call-machine-object-bundle.js`;
+          head.appendChild(script);
+        }
+      });
+
+    // iframe ... load call in iframe
+    } else {
+      this._iframe.src = this.assembleMeetingUrl();
+      return new Promise((resolve, reject) => {
+        this._loadedCallback = () => {
+          this._loaded = true;
+          this._meetingState = DAILY_STATE_LOADED;
+          if (this.properties.cssFile || this.properties.cssText) {
+            this.loadCss(this.properties);
+          }
+          for (let eventName in this._inputEventsOn) {
+            this._sendIframeMsg({ action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
+                                  on: eventName });
+          }
+          resolve();
+        }
+      });
+    }
+  }
+    
   async join(properties={}) {
     let newCss = false;
     if (!this._loaded) {
@@ -429,19 +572,35 @@ export default class DailyIframe extends EventEmitter {
       if (properties.url &&
           properties.url !== this.properties.url) {
         console.error("error: can't change the daily.co call url after load()");
-        return;
+        return Promise.reject();
       }
     }
+    if (this._meetingState === DAILY_STATE_JOINED ||
+        this._meetingState === DAILY_STATE_JOINING) {
+      console.warn('already joined meeting, call leave() before joining again');
+      return;
+    }
     this._meetingState = DAILY_STATE_JOINING;
-    this.emit(DAILY_EVENT_JOINING_MEETING,
-              { action: DAILY_EVENT_JOINING_MEETING });
-    this._sendIframeMsg({ action: DAILY_METHOD_JOIN });
+    try {
+      this.emit(DAILY_EVENT_JOINING_MEETING,
+                { action: DAILY_EVENT_JOINING_MEETING });
+    } catch (e) {
+      console.log("could not emit 'joining-meeting'");
+    }
+    this._sendIframeMsg({
+      action: DAILY_METHOD_JOIN,
+      properties: makeSafeForPostMessage(this.properties),
+      preloadCache: makeSafeForPostMessage(this._preloadCache),
+    });
     return new Promise((resolve, reject) => {
       this._joinedCallback = (participants) => {
         this._meetingState = DAILY_STATE_JOINED;
         if (participants) {
           for (var id in participants) {
             this.fixupParticipant(participants[id]);
+            let lid = participants[id].local ? 'local' : 
+                                               participants[id].session_id;
+            this.matchParticipantTracks(lid, participants[id]);
             this._participants[id] = { ...participants[id] };
           }
         }
@@ -456,10 +615,18 @@ export default class DailyIframe extends EventEmitter {
   async leave() {
     return new Promise((resolve, reject) => {
       let k = () => {
-        this._iframe.src = '';
+        if (this._iframe) {
+          this._iframe.src = '';
+        }
         this._loaded = false;
         this._meetingState = DAILY_STATE_LEFT;
-        this.emit(DAILY_STATE_LEFT, { action: DAILY_STATE_LEFT });
+        this._participants = {};
+        resetPreloadCache(this._preloadCache);
+        try {
+          this.emit(DAILY_STATE_LEFT, { action: DAILY_STATE_LEFT });
+        } catch (e) {
+          console.log("could not emit 'left-meeting'");
+        }
         resolve();
       }
       this._sendIframeMsg({ action: DAILY_METHOD_LEAVE }, k);
@@ -486,13 +653,22 @@ export default class DailyIframe extends EventEmitter {
   getNetworkStats() {
     return new Promise((resolve, reject) => {
       let k = (msg) => {
-        resolve({ stats: msg.stats });
+        resolve({ stats: msg.stats, ...this._network });
       }
       this._sendIframeMsg({ action: DAILY_METHOD_GET_CALC_STATS }, k);
     });
   }
 
-  enumerateDevices(kind) {
+  getActiveSpeaker() {
+    return this._activeSpeaker;
+  }
+
+  async enumerateDevices(kind) {
+    if (this._callObjectMode && this.meetingState !== DAILY_STATE_JOINED) {
+      let raw = await navigator.mediaDevices.enumerateDevices();
+      return { devices: raw.map((d) => JSON.parse(JSON.stringify(d))) };
+    }
+
     return new Promise((resolve, reject) => {
       let k = (msg) => {
         resolve({ devices: msg.devices });
@@ -536,7 +712,7 @@ export default class DailyIframe extends EventEmitter {
         throw new Error(`unrecognized property '${k}'`);
       }
       if (FRAME_PROPS[k].validate &&
-          !FRAME_PROPS[k].validate(properties[k])) {
+          !FRAME_PROPS[k].validate(properties[k], this)) {
         throw new Error(`property '${k}': ${FRAME_PROPS[k].help}`);
       }
     }
@@ -559,13 +735,16 @@ export default class DailyIframe extends EventEmitter {
   _sendIframeMsg(message, callback) {
     let msg = { ...message };
     msg.what = IFRAME_MESSAGE_MARKER;
+    msg.from = 'module';
     msg.callFrameId = this._callFrameId;
     if (callback) {
       let ts = Date.now();
       this._messageCallbacks[ts] = callback;
       msg.callbackStamp = ts;
     }
-    this._iframe.contentWindow.postMessage(msg, '*');
+    const w = this._iframe ? this._iframe.contentWindow : window;
+    // console.log('sending', msg);
+    w.postMessage(msg, '*');
   }
 
   handleMessage(msg) {
@@ -586,44 +765,99 @@ export default class DailyIframe extends EventEmitter {
           this._loadedCallback();
           this._loadedCallback = null;
         }
-        this.emit(msg.action, msg);
+        try {
+          this.emit(msg.action, msg);
+        } catch (e) {
+          console.log('could not emit', msg);
+        }
         break;
       case DAILY_EVENT_JOINED_MEETING:
         if (this._joinedCallback) {
           this._joinedCallback(msg.participants);
           this._joinedCallback = null;
         }
-        this.emit(msg.action, msg);
+        try {
+          this.emit(msg.action, msg);
+        } catch (e) {
+          console.log('could not emit', msg);
+        }
         break;
       case DAILY_EVENT_PARTICIPANT_JOINED:
       case DAILY_EVENT_PARTICIPANT_UPDATED:
         this.fixupParticipant(msg);
         if (msg.participant && msg.participant.session_id) {
           let id = msg.participant.local ? 'local' : msg.participant.session_id;
-          if (!deepEqual(msg.participant, this._participants[id])) {
+          this.matchParticipantTracks(id, msg.participant);
+          // track events
+          try {
+            this.maybeEventTrackStopped(this._participants[id], msg.participant,
+                                        'audioTrack');
+            this.maybeEventTrackStopped(this._participants[id], msg.participant,
+                                        'videoTrack');
+            this.maybeEventTrackStopped(this._participants[id], msg.participant,
+                                        'screenVideoTrack');
+            this.maybeEventTrackStarted(this._participants[id], msg.participant,
+                                        'audioTrack');
+            this.maybeEventTrackStarted(this._participants[id], msg.participant,
+                                        'videoTrack');
+            this.maybeEventTrackStarted(this._participants[id], msg.participant,
+                                        'screenVideoTrack');
+          } catch (e) {
+            console.error('track events error', e);
+          }
+          // participant joined/updated events
+          if (!this.compareEqualForParticipantUpdateEvent(
+                msg.participant, this._participants[id])
+             ) {
             this._participants[id] = { ...msg.participant };
-            this.emit(msg.action, msg);
+            try {
+              this.emit(msg.action, msg);
+            } catch (e) {
+              console.log('could not emit', msg);
+            }
           }
         }
         break;
       case DAILY_EVENT_PARTICIPANT_LEFT:
         this.fixupParticipant(msg);
         if (msg.participant && msg.participant.session_id) {
+          // track events
+          let prevP = this._participants[msg.participant.session_id];
+          if (prevP) {
+            this.maybeEventTrackStopped(prevP, null, 'audioTrack');
+            this.maybeEventTrackStopped(prevP, null, 'videoTrack');
+            this.maybeEventTrackStopped(prevP, null, 'screenVideoTrack');
+          }
+          // delete from local cach
           delete this._participants[msg.participant.session_id];
-          this.emit(msg.action, msg);
+          try {
+            this.emit(msg.action, msg);
+          } catch (e) {
+            console.log('could not emit', msg);
+          }
         }
         break;
       case DAILY_EVENT_ERROR:
-        this._iframe.src = '';
+        if (this._iframe) {
+          this._iframe.src = '';
+        }
         this._loaded = false;
         this._meetingState = DAILY_STATE_ERROR;
-        this.emit(msg.action, msg);
+        try {
+          this.emit(msg.action, msg);
+        } catch (e) {
+          console.log('could not emit', msg);
+        }
         break;
       case DAILY_EVENT_LEFT_MEETING:
         if (this._meetingState !== DAILY_STATE_ERROR) {
           this._meetingState = DAILY_STATE_LEFT;
         }
-        this.emit(msg.action, msg);
+        try {
+          this.emit(msg.action, msg);
+        } catch (e) {
+          console.log('could not emit', msg);
+        }
         break;
       case DAILY_EVENT_INPUT_EVENT:
         let p = this._participants[msg.session_id];
@@ -634,9 +868,38 @@ export default class DailyIframe extends EventEmitter {
             p = {};
           }
         }
-        this.emit(msg.event.type, { action: msg.event.type,
-                                    event: msg.event,
-                                    participant: {...p} });
+        try {
+          this.emit(msg.event.type, { action: msg.event.type,
+                                      event: msg.event,
+                                      participant: {...p} });
+        } catch (e) {
+          console.log('could not emit', msg);
+        }
+        break;
+      case DAILY_EVENT_NETWORK_QUALITY_CHANGE:
+        let { threshold, quality } = msg;
+        if (threshold !== this._network.threshold ||
+            quality !== this._network.quality) {
+          this._network.quality = quality;
+          this._network.threshold = threshold;
+          try {
+            this.emit(msg.action, msg);
+          } catch (e) {
+            console.log('could not emit', msg);
+          }
+        }
+        break;
+      case DAILY_EVENT_ACTIVE_SPEAKER_CHANGE:
+        let { activeSpeaker } = msg;
+        if (this._activeSpeaker.peerId !== activeSpeaker.peerId) {
+          this._activeSpeaker.peerId = activeSpeaker.peerId;
+          try {
+            this.emit(msg.action, { action: msg.action,
+                                    activeSpeaker: this._activeSpeaker });
+          } catch (e) {
+            console.log('could not emit', msg);
+          }
+        }
         break;
       case DAILY_EVENT_RECORDING_STARTED:
       case DAILY_EVENT_RECORDING_STOPPED:
@@ -648,7 +911,11 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_APP_MSG:
       case DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED:
       case DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED:
-        this.emit(msg.action, msg);
+        try {
+          this.emit(msg.action, msg);
+        } catch (e) {
+          console.log('could not emit', msg);
+        }
         break;        
       default: // no op
     }
@@ -667,6 +934,128 @@ export default class DailyIframe extends EventEmitter {
     delete p.id;
     delete p.name;
     delete p.joinedAt;
+  }
+
+  matchParticipantTracks(id, p) {
+    if (!this._callObjectMode) {
+      return;
+    }
+
+    if (id === 'local') {
+      if (p.audio) {
+        try {
+          p.audioTrack = store.getState().local.streams.cam.stream.
+            getAudioTracks()[0];
+          if (!p.audioTrack) { p.audio = false };
+        } catch (e) {}
+      }
+      if (p.video) {
+        try {
+          p.videoTrack = store.getState().local.streams.cam.stream.
+            getVideoTracks()[0];
+          if (!p.videoTrack) { p.video = false };
+        } catch (e) {}
+      }
+      if (p.screen) {
+        try {
+          p.screenVideoTrack = store.getState().local.streams.screen.stream.
+            getVideoTracks()[0];
+          if (!p.screenVideoTrack) { p.screen = false };
+        } catch (e) {}
+      }
+      return;
+    }
+
+    const allStreams = store.getState().streams;
+    // find audio track
+    if (p.audio) {
+      let audioTracks = orderBy(filter(allStreams, (s) => (
+        s.participantId === p.session_id &&
+          s.type === 'cam' &&
+          s.pendingTrack && s.pendingTrack.kind === 'audio'
+      )), 'starttime', 'desc');
+      if (audioTracks && audioTracks[0] && audioTracks[0].pendingTrack) {
+        p.audioTrack = audioTracks[0].pendingTrack;
+      }
+      if (!p.audioTrack) { p.audio = false };
+    }
+    // find video track
+    if (p.video) {
+      let videoTracks = orderBy(filter(allStreams, (s) => (
+        s.participantId === p.session_id &&
+          s.type === 'cam' &&
+          s.pendingTrack && s.pendingTrack.kind === 'video'
+      )), 'starttime', 'desc');
+      if (videoTracks && videoTracks[0] && videoTracks[0].pendingTrack) {
+        p.videoTrack = videoTracks[0].pendingTrack;
+      }
+      if (!p.videoTrack) { p.video = false };
+    }
+    if (p.screen) {
+      // find screen-share video track
+      let screenVideoTracks = orderBy(filter(allStreams, (s) => (
+        s.participantId === p.session_id &&
+          s.type === 'screen' &&
+          s.pendingTrack && s.pendingTrack.kind === 'video'
+      )), 'starttime', 'desc');
+      if (screenVideoTracks && screenVideoTracks[0] &&
+          screenVideoTracks[0].pendingTrack) {
+        p.screenVideoTrack = screenVideoTracks[0].pendingTrack;
+      }
+      if (!p.screenVideoTrack) { p.screen = false };
+    }
+  }
+
+  maybeEventTrackStopped(prevP, thisP, key) {
+    if (!prevP) {
+      return;
+    }
+    if ((prevP[key] && (prevP[key].readyState === 'ended')) ||
+        (prevP[key] && !(thisP && thisP[key])) ||
+        (prevP[key] && (prevP[key].id !== thisP[key].id))) {
+      try {
+        this.emit(DAILY_EVENT_TRACK_STOPPED,
+                  { action: DAILY_EVENT_TRACK_STOPPED,
+                    track: prevP[key],
+                    participant: thisP });
+      } catch (e) {
+        console.log('could not emit', e);
+      }
+    }
+  }
+
+  maybeEventTrackStarted(prevP, thisP, key) {
+    if ((thisP[key] && !(prevP && prevP[key])) ||
+        (thisP[key] && (prevP[key].readyState === 'ended')) ||
+        (thisP[key] && (thisP[key].id !== prevP[key].id))) {
+      try {
+        this.emit(DAILY_EVENT_TRACK_STARTED,
+                  { action: DAILY_EVENT_TRACK_STARTED,
+                    track: thisP[key],
+                    participant: thisP });
+      } catch (e) {
+        console.log('could not emit', e);
+      }
+    }
+  }
+
+  compareEqualForParticipantUpdateEvent(a, b) {
+    if (!deepEqual(a, b)) {
+      return false;
+    }
+    if (a.videoTrack && b.videoTrack &&
+        (a.videoTrack.id !== b.videoTrack.id ||
+         a.videoTrack.muted !== b.videoTrack.muted ||
+         a.videoTrack.enabled !== b.videoTrack.enabled)) {
+      return false;
+    }
+    if (a.audioTrack && b.audioTrack &&
+        (a.audioTrack.id !== b.audioTrack.id ||
+         a.audioTrack.muted !== b.audioTrack.muted ||
+         a.audioTrack.enabled !== b.audioTrack.enabled)) {
+      return false;
+    }
+    return true;
   }
 
   absoluteUrl(url) {
@@ -709,3 +1098,32 @@ export default class DailyIframe extends EventEmitter {
     return str;
   }
 };
+
+function initializePreloadCache(callObject, properties) {
+  return {
+    audioDeviceId: null,
+    videoDeviceId: null,
+    outputDeviceId: null,
+  };
+}
+
+function resetPreloadCache(c) {
+  // don't need to do anything, until we add stuff to the preload
+  // cache that should not persist
+}
+
+function makeSafeForPostMessage(props) {
+  const safe = {};
+  for (let p in props) {
+    if (props[p] instanceof MediaStreamTrack) {
+      // note: could store the track in a global variable for accessing
+      // on the other side of the postMessage, here, instead of as we
+      // currently do in the validate-properties routines, which definitely
+      // is a spooky-action-at-a-distance code anti-pattern
+      safe[p] = DAILY_CUSTOM_TRACK;
+    } else {
+      safe[p] = props[p];
+    }
+  }
+  return safe;
+}
