@@ -74,4 +74,5 @@ export const DAILY_METHOD_ADD_FAKE_PARTICIPANT = 'add-fake-participant';
 export const DAILY_METHOD_SET_SHOW_NAMES = 'set-show-names';
 export const DAILY_METHOD_REGISTER_INPUT_HANDLER = 'register-input-handler';
 export const DAILY_METHOD_SET_LANG = 'set-daily-lang';
+export const DAILY_METHOD_DETECT_ALL_FACES = 'detect-all-faces';
 export const DAILY_CUSTOM_TRACK = 'daily-custom-track';
