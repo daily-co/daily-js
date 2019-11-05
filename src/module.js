@@ -69,6 +69,7 @@ import {
   DAILY_METHOD_SET_LANG,
   MAX_APP_MSG_SIZE,
   DAILY_METHOD_REGISTER_INPUT_HANDLER,
+  DAILY_METHOD_DETECT_ALL_FACES,
   DAILY_CUSTOM_TRACK,
 } from './CommonIncludes.js';
 
@@ -702,6 +703,17 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
+  detectAllFaces() {
+    return new Promise((resolve, reject) => {
+      let k = (msg) => {
+        delete msg.action;
+        delete msg.callbackStamp;
+        resolve(msg);
+      };
+      this._sendIframeMsg({ action: DAILY_METHOD_DETECT_ALL_FACES }, k);
+    });
+  }
+
   //
   // internal methods
   //
@@ -1127,3 +1139,4 @@ function makeSafeForPostMessage(props) {
   }
   return safe;
 }
+
