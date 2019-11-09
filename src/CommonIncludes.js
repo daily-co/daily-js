@@ -41,6 +41,9 @@ export const DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED =
 export const DAILY_EVENT_ACTIVE_SPEAKER_CHANGE = 'active-speaker-change';
 export const DAILY_EVENT_NETWORK_QUALITY_CHANGE = 'network-quality-change';
 
+export const DAILY_EVENT_FULLSCREEN = 'fullscreen';
+export const DAILY_EVENT_EXIT_FULLSCREEN = 'exited-fullscreen';
+
 export const DAILY_EVENT_ERROR = 'error';
 
 //
@@ -77,3 +80,5 @@ export const DAILY_METHOD_REGISTER_INPUT_HANDLER = 'register-input-handler';
 export const DAILY_METHOD_SET_LANG = 'set-daily-lang';
 export const DAILY_METHOD_DETECT_ALL_FACES = 'detect-all-faces';
 export const DAILY_CUSTOM_TRACK = 'daily-custom-track';
+export const DAILY_UI_REQUEST_FULLSCREEN = 'request-fullscreen';
+export const DAILY_UI_EXIT_FULLSCREEN = 'request-exit-fullscreen';
