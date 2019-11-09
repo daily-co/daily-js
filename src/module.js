@@ -36,6 +36,8 @@ import {
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED,
   DAILY_EVENT_NETWORK_QUALITY_CHANGE,
   DAILY_EVENT_ACTIVE_SPEAKER_CHANGE,
+  DAILY_EVENT_FULLSCREEN,
+  DAILY_EVENT_EXIT_FULLSCREEN,
 
   // internals
   //
@@ -67,6 +69,8 @@ import {
   DAILY_METHOD_REGISTER_INPUT_HANDLER,
   DAILY_METHOD_DETECT_ALL_FACES,
   DAILY_CUSTOM_TRACK,
+  DAILY_UI_REQUEST_FULLSCREEN,
+  DAILY_UI_EXIT_FULLSCREEN,
 } from './CommonIncludes.js';
 
 export {
@@ -113,6 +117,7 @@ const FRAME_PROPS = {
   },
   userName: true, // ignored if there's a token
   showLeaveButton: true,
+  showFullscreenButton: true,
   // style to apply to iframe in createFrame factory method
   iframeStyle: true,
   // styles passed through to video calls inside the iframe
@@ -317,6 +322,33 @@ export default class DailyIframe extends EventEmitter {
         this.handleMessage(evt.data);
       }
     };
+
+    // fullscreen event listener
+    if (this._iframe) {
+      if (this._iframe.requestFullscreen) {
+        // chrome (not safari)
+        this._iframe.addEventListener('fullscreenchange', (e) => {
+          if (document.fullscreenElement === this._iframe) {
+            this.emit(DAILY_EVENT_FULLSCREEN);
+            this._sendIframeMsg({ action: DAILY_EVENT_FULLSCREEN });
+          } else {
+            this.emit(DAILY_EVENT_EXIT_FULLSCREEN);
+            this._sendIframeMsg({ action: DAILY_EVENT_EXIT_FULLSCREEN });
+          }
+        });
+      } else if (this._iframe.webkitRequestFullscreen) {
+        // safari
+        this._iframe.addEventListener('webkitfullscreenchange', (e) => {
+          if (document.webkitFullscreenElement === this._iframe) {
+            this.emit(DAILY_EVENT_FULLSCREEN);
+            this._sendIframeMsg({ action: DAILY_EVENT_FULLSCREEN });
+          } else {
+            this.emit(DAILY_EVENT_EXIT_FULLSCREEN);
+            this._sendIframeMsg({ action: DAILY_EVENT_EXIT_FULLSCREEN });
+          }
+        });
+      }
+    }
 
     window.addEventListener('message', this._messageListener);
   }
@@ -750,6 +782,27 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
+  async requestFullscreen() {
+    if (!this._iframe || document.fullscreenElement) {
+      return;
+    }
+    try {
+      (await this._iframe.requestFullscreen)
+        ? this._iframe.requestFullscreen()
+        : this._iframe.webkitRequestFullscreen();
+    } catch (e) {
+      console.log('could not make video call fullscreen', e);
+    }
+  }
+
+  exitFullscreen() {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else if (document.webkitFullscreenElement) {
+      document.webkitExitFullscreen();
+    }
+  }
+
   //
   // internal methods
   //
@@ -993,6 +1046,12 @@ export default class DailyIframe extends EventEmitter {
         } catch (e) {
           console.log('could not emit', msg);
         }
+        break;
+      case DAILY_UI_REQUEST_FULLSCREEN:
+        this.requestFullscreen();
+        break;
+      case DAILY_UI_EXIT_FULLSCREEN:
+        this.exitFullscreen();
         break;
       default: // no op
     }
