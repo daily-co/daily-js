@@ -72,6 +72,7 @@ import {
   MAX_APP_MSG_SIZE,
   DAILY_METHOD_REGISTER_INPUT_HANDLER,
   DAILY_METHOD_DETECT_ALL_FACES,
+  DAILY_METHOD_ROOM,
   DAILY_CUSTOM_TRACK,
   DAILY_UI_REQUEST_FULLSCREEN,
   DAILY_UI_EXIT_FULLSCREEN,
@@ -765,6 +766,20 @@ export default class DailyIframe extends EventEmitter {
     } else if (document.webkitFullscreenElement) {
       document.webkitExitFullscreen();
     }
+  }
+
+  async room() {
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      return null;
+    }
+    return new Promise((resolve, reject) => {
+      let k = (msg) => {
+        delete msg.action;
+        delete msg.callbackStamp;
+        resolve(msg);
+      };
+      this._sendIframeMsg({ action: DAILY_METHOD_ROOM }, k);
+    });
   }
 
   //
