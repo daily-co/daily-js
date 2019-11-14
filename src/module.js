@@ -342,6 +342,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   destroy() {
+    try { this.leave(); } catch (e) {}
     let iframe = this.iframe();
     if (iframe) {
       let parent = iframe.parentElement;
@@ -435,14 +436,20 @@ export default class DailyIframe extends EventEmitter {
     this._sendIframeMsg({ action: DAILY_METHOD_SET_LANG, lang });
   }
 
-  startCamera() {
-    return new Promise((resolve, reject) => {
+  startCamera(properties={}) {
+    return new Promise(async (resolve, reject) => {
       let k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
         resolve(msg);
       };
-      this._sendIframeMsg({ action: DAILY_METHOD_START_CAMERA }, k);
+      if (!this._loaded) {
+        await this.load(properties);
+      }
+      this._sendIframeMsg({
+        action: DAILY_METHOD_START_CAMERA,
+        properties: makeSafeForPostMessage(this.properties),
+      }, k);
     });
     return this;
   }
