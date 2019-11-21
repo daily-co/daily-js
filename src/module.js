@@ -42,6 +42,7 @@ import {
   DAILY_EVENT_ACTIVE_SPEAKER_CHANGE,
   DAILY_EVENT_FULLSCREEN,
   DAILY_EVENT_EXIT_FULLSCREEN,
+  DAILY_EVENT_NETWORK_CONNECTION,
 
   // internals
   //
@@ -871,6 +872,9 @@ export default class DailyIframe extends EventEmitter {
         break;
       case DAILY_EVENT_PARTICIPANT_JOINED:
       case DAILY_EVENT_PARTICIPANT_UPDATED:
+        if (this._meetingState === 'left-meeting') {
+          return;
+        }
         this.fixupParticipant(msg);
         if (msg.participant && msg.participant.session_id) {
           let id = msg.participant.local ? 'local' : msg.participant.session_id;
@@ -998,6 +1002,7 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_APP_MSG:
       case DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED:
       case DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED:
+      case DAILY_EVENT_NETWORK_CONNECTION:
         try {
           this.emit(msg.action, msg);
         } catch (e) {
@@ -1033,25 +1038,26 @@ export default class DailyIframe extends EventEmitter {
     if (!this._callObjectMode) {
       return;
     }
+    let state = store.getState();
 
     if (id === 'local') {
       if (p.audio) {
         try {
-          p.audioTrack = store.getState().local.streams.cam.stream.
+          p.audioTrack = state.local.streams.cam.stream.
             getAudioTracks()[0];
           if (!p.audioTrack) { p.audio = false };
         } catch (e) {}
       }
       if (p.video) {
         try {
-          p.videoTrack = store.getState().local.streams.cam.stream.
+          p.videoTrack = state.local.streams.cam.stream.
             getVideoTracks()[0];
           if (!p.videoTrack) { p.video = false };
         } catch (e) {}
       }
       if (p.screen) {
         try {
-          p.screenVideoTrack = store.getState().local.streams.screen.stream.
+          p.screenVideoTrack = state.local.streams.screen.stream.
             getVideoTracks()[0];
           if (!p.screenVideoTrack) { p.screen = false };
         } catch (e) {}
@@ -1059,7 +1065,30 @@ export default class DailyIframe extends EventEmitter {
       return;
     }
 
-    const allStreams = store.getState().streams;
+    let connected = true; // default to true to minimize impact of new bugs
+                          // as of 11/20/2019 when this block of code was
+                          // first written
+    try {
+      let sp = state.participants[p.session_id];
+      if (sp && sp.public.rtcType.impl === 'peer-to-peer') {
+        if (sp.private && sp.private.peeringState !== 'connected') {
+          connected = false;
+        }
+      }
+    } catch (e) {
+      console.error(e)
+    }
+    if (!connected) {
+      p.audio = false;
+      p.audioTrack = false;
+      p.video = false;
+      p.videoTrack = false;
+      p.screen = false;
+      p.screenTrack = false;
+      return;
+    }
+
+    const allStreams = state.streams;
     // find audio track
     if (p.audio) {
       let audioTracks = orderBy(filter(allStreams, (s) => (
@@ -1067,7 +1096,8 @@ export default class DailyIframe extends EventEmitter {
           s.type === 'cam' &&
           s.pendingTrack && s.pendingTrack.kind === 'audio'
       )), 'starttime', 'desc');
-      if (audioTracks && audioTracks[0] && audioTracks[0].pendingTrack) {
+      if (audioTracks && audioTracks[0] && audioTracks[0].pendingTrack &&
+          !audioTracks[0].pendingTrack.muted) {
         p.audioTrack = audioTracks[0].pendingTrack;
       }
       if (!p.audioTrack) { p.audio = false };
@@ -1079,7 +1109,8 @@ export default class DailyIframe extends EventEmitter {
           s.type === 'cam' &&
           s.pendingTrack && s.pendingTrack.kind === 'video'
       )), 'starttime', 'desc');
-      if (videoTracks && videoTracks[0] && videoTracks[0].pendingTrack) {
+      if (videoTracks && videoTracks[0] && videoTracks[0].pendingTrack &&
+          !videoTracks[0].pendingTrack.muted) {
         p.videoTrack = videoTracks[0].pendingTrack;
       }
       if (!p.videoTrack) { p.video = false };
@@ -1092,7 +1123,8 @@ export default class DailyIframe extends EventEmitter {
           s.pendingTrack && s.pendingTrack.kind === 'video'
       )), 'starttime', 'desc');
       if (screenVideoTracks && screenVideoTracks[0] &&
-          screenVideoTracks[0].pendingTrack) {
+          screenVideoTracks[0].pendingTrack &&
+          !screenVideoTracks[0].pendingTrack.muted) {
         p.screenVideoTrack = screenVideoTracks[0].pendingTrack;
       }
       if (!p.screenVideoTrack) { p.screen = false };

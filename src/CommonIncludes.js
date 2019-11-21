@@ -40,6 +40,7 @@ export const DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED =
   'local-screen-share-stopped';
 export const DAILY_EVENT_ACTIVE_SPEAKER_CHANGE = 'active-speaker-change';
 export const DAILY_EVENT_NETWORK_QUALITY_CHANGE = 'network-quality-change';
+export const DAILY_EVENT_NETWORK_CONNECTION = 'network-connection';
 
 export const DAILY_EVENT_FULLSCREEN = 'fullscreen';
 export const DAILY_EVENT_EXIT_FULLSCREEN = 'exited-fullscreen';
