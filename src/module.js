@@ -1161,7 +1161,9 @@ export default class DailyIframe extends EventEmitter {
       return;
     }
 
-    const allStreams = state.streams;
+    const allStreams = state.streams,
+      prevP = this._participants[p.session_id];
+
     // find audio track
     if (p.audio) {
       let audioTracks = orderBy(
@@ -1176,13 +1178,20 @@ export default class DailyIframe extends EventEmitter {
         'starttime',
         'desc'
       );
-      if (
-        audioTracks &&
-        audioTracks[0] &&
-        audioTracks[0].pendingTrack &&
-        !audioTracks[0].pendingTrack.muted
-      ) {
-        p.audioTrack = audioTracks[0].pendingTrack;
+      if (audioTracks && audioTracks[0] && audioTracks[0].pendingTrack) {
+        if (
+          prevP.audioTrack &&
+          prevP.audioTrack.id === audioTracks[0].pendingTrack.id
+        ) {
+          // if we have an apparently identical audio track already in
+          // our participant struct leave it in place to avoid flicker
+          // during quick muted/unmuted PeerConnection cycles. we'll update
+          // audio/video muted at the app level via signaling
+          p.audioTrack = audioTracks[0].pendingTrack;
+        } else if (!audioTracks[0].pendingTrack.muted) {
+          // otherwise, add the found track if it's not muted
+          p.audioTrack = audioTracks[0].pendingTrack;
+        }
       }
       if (!p.audioTrack) {
         p.audio = false;
@@ -1202,20 +1211,23 @@ export default class DailyIframe extends EventEmitter {
         'starttime',
         'desc'
       );
-      if (
-        videoTracks &&
-        videoTracks[0] &&
-        videoTracks[0].pendingTrack &&
-        !videoTracks[0].pendingTrack.muted
-      ) {
-        p.videoTrack = videoTracks[0].pendingTrack;
+      if (videoTracks && videoTracks[0] && videoTracks[0].pendingTrack) {
+        if (
+          prevP.videoTrack &&
+          prevP.videoTrack.id === videoTracks[0].pendingTrack.id
+        ) {
+          p.videoTrack = videoTracks[0].pendingTrack;
+        } else if (!videoTracks[0].pendingTrack.muted) {
+          // otherwise, add the found track if it's not muted
+          p.videoTrack = videoTracks[0].pendingTrack;
+        }
       }
       if (!p.videoTrack) {
         p.video = false;
       }
     }
+    // find screen-share video track
     if (p.screen) {
-      // find screen-share video track
       let screenVideoTracks = orderBy(
         filter(
           allStreams,
@@ -1229,11 +1241,12 @@ export default class DailyIframe extends EventEmitter {
         'desc'
       );
       if (
-        screenVideoTracks &&
-        screenVideoTracks[0] &&
-        screenVideoTracks[0].pendingTrack &&
-        !screenVideoTracks[0].pendingTrack.muted
+        prevP.screenVideoTrack &&
+        prevP.screenVideoTrack.id === screenVideoTracks[0].pendingTrack.id
       ) {
+        p.screenVideoTrack = screenVideoTracks[0].pendingTrack;
+      } else if (!screenVideoTracks[0].pendingTrack.muted) {
+        // otherwise, add the found track if it's not muted
         p.screenVideoTrack = screenVideoTracks[0].pendingTrack;
       }
       if (!p.screenVideoTrack) {
