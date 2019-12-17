@@ -1180,6 +1180,7 @@ export default class DailyIframe extends EventEmitter {
       );
       if (audioTracks && audioTracks[0] && audioTracks[0].pendingTrack) {
         if (
+          prevP &&
           prevP.audioTrack &&
           prevP.audioTrack.id === audioTracks[0].pendingTrack.id
         ) {
@@ -1213,6 +1214,7 @@ export default class DailyIframe extends EventEmitter {
       );
       if (videoTracks && videoTracks[0] && videoTracks[0].pendingTrack) {
         if (
+          prevP &&
           prevP.videoTrack &&
           prevP.videoTrack.id === videoTracks[0].pendingTrack.id
         ) {
@@ -1241,6 +1243,7 @@ export default class DailyIframe extends EventEmitter {
         'desc'
       );
       if (
+        prevP &&
         prevP.screenVideoTrack &&
         prevP.screenVideoTrack.id === screenVideoTracks[0].pendingTrack.id
       ) {
