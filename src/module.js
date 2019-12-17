@@ -1099,7 +1099,7 @@ export default class DailyIframe extends EventEmitter {
           s.pendingTrack && s.pendingTrack.kind === 'audio'
       )), 'starttime', 'desc');
       if (audioTracks && audioTracks[0] && audioTracks[0].pendingTrack) {
-        if (prevP.audioTrack &&
+        if (prevP && prevP.audioTrack &&
             prevP.audioTrack.id === audioTracks[0].pendingTrack.id) {
           // if we have an apparently identical audio track already in
           // our participant struct leave it in place to avoid flicker
@@ -1121,7 +1121,7 @@ export default class DailyIframe extends EventEmitter {
           s.pendingTrack && s.pendingTrack.kind === 'video'
       )), 'starttime', 'desc');
       if (videoTracks && videoTracks[0] && videoTracks[0].pendingTrack) {
-        if (prevP.videoTrack &&
+        if (prevP && prevP.videoTrack &&
             prevP.videoTrack.id === videoTracks[0].pendingTrack.id) {
           p.videoTrack = videoTracks[0].pendingTrack;
         } else if (!videoTracks[0].pendingTrack.muted) {
@@ -1138,7 +1138,7 @@ export default class DailyIframe extends EventEmitter {
           s.type === 'screen' &&
           s.pendingTrack && s.pendingTrack.kind === 'video'
       )), 'starttime', 'desc');
-      if (prevP.screenVideoTrack &&
+      if (prevP && prevP.screenVideoTrack &&
           prevP.screenVideoTrack.id === screenVideoTracks[0].pendingTrack.id) {
         p.screenVideoTrack = screenVideoTracks[0].pendingTrack;
       } else if (!screenVideoTracks[0].pendingTrack.muted) {
