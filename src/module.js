@@ -1088,64 +1088,72 @@ export default class DailyIframe extends EventEmitter {
       return;
     }
 
-    const allStreams = state.streams,
-          prevP = this._participants[p.session_id];
+    try {
+      const allStreams = state.streams,
+            prevP = this._participants[p.session_id];
 
-    // find audio track
-    if (p.audio) {
-      let audioTracks = orderBy(filter(allStreams, (s) => (
-        s.participantId === p.session_id &&
-          s.type === 'cam' &&
-          s.pendingTrack && s.pendingTrack.kind === 'audio'
-      )), 'starttime', 'desc');
-      if (audioTracks && audioTracks[0] && audioTracks[0].pendingTrack) {
-        if (prevP && prevP.audioTrack &&
-            prevP.audioTrack.id === audioTracks[0].pendingTrack.id) {
-          // if we have an apparently identical audio track already in
-          // our participant struct leave it in place to avoid flicker
-          // during quick muted/unmuted PeerConnection cycles. we'll update
-          // audio/video muted at the app level via signaling
-          p.audioTrack = audioTracks[0].pendingTrack;
-        } else if (!audioTracks[0].pendingTrack.muted) {
-          // otherwise, add the found track if it's not muted
-          p.audioTrack = audioTracks[0].pendingTrack;
+      // find audio track
+      if (p.audio) {
+        let audioTracks = orderBy(filter(allStreams, (s) => (
+          s.participantId === p.session_id &&
+            s.type === 'cam' &&
+            s.pendingTrack && s.pendingTrack.kind === 'audio'
+        )), 'starttime', 'desc');
+        if (audioTracks && audioTracks[0] && audioTracks[0].pendingTrack) {
+          if (prevP && prevP.audioTrack &&
+              prevP.audioTrack.id === audioTracks[0].pendingTrack.id) {
+            // if we have an apparently identical audio track already in
+            // our participant struct leave it in place to avoid flicker
+            // during quick muted/unmuted PeerConnection cycles. we'll update
+            // audio/video muted at the app level via signaling
+            p.audioTrack = audioTracks[0].pendingTrack;
+          } else if (!audioTracks[0].pendingTrack.muted) {
+            // otherwise, add the found track if it's not muted
+            p.audioTrack = audioTracks[0].pendingTrack;
+          }
         }
+        if (!p.audioTrack) { p.audio = false };
       }
-      if (!p.audioTrack) { p.audio = false };
-    }
-    // find video track
-    if (p.video) {
-      let videoTracks = orderBy(filter(allStreams, (s) => (
-        s.participantId === p.session_id &&
-          s.type === 'cam' &&
-          s.pendingTrack && s.pendingTrack.kind === 'video'
-      )), 'starttime', 'desc');
-      if (videoTracks && videoTracks[0] && videoTracks[0].pendingTrack) {
-        if (prevP && prevP.videoTrack &&
-            prevP.videoTrack.id === videoTracks[0].pendingTrack.id) {
-          p.videoTrack = videoTracks[0].pendingTrack;
-        } else if (!videoTracks[0].pendingTrack.muted) {
-          // otherwise, add the found track if it's not muted
-          p.videoTrack = videoTracks[0].pendingTrack;
+      // find video track
+      if (p.video) {
+        let videoTracks = orderBy(filter(allStreams, (s) => (
+          s.participantId === p.session_id &&
+            s.type === 'cam' &&
+            s.pendingTrack && s.pendingTrack.kind === 'video'
+        )), 'starttime', 'desc');
+        if (videoTracks && videoTracks[0] && videoTracks[0].pendingTrack) {
+          if (prevP && prevP.videoTrack &&
+              prevP.videoTrack.id === videoTracks[0].pendingTrack.id) {
+            p.videoTrack = videoTracks[0].pendingTrack;
+          } else if (!videoTracks[0].pendingTrack.muted) {
+            // otherwise, add the found track if it's not muted
+            p.videoTrack = videoTracks[0].pendingTrack;
+          }
         }
+        if (!p.videoTrack) { p.video = false };
       }
-      if (!p.videoTrack) { p.video = false };
-    }
-    // find screen-share video track
-    if (p.screen) {
-      let screenVideoTracks = orderBy(filter(allStreams, (s) => (
-        s.participantId === p.session_id &&
-          s.type === 'screen' &&
-          s.pendingTrack && s.pendingTrack.kind === 'video'
-      )), 'starttime', 'desc');
-      if (prevP && prevP.screenVideoTrack &&
-          prevP.screenVideoTrack.id === screenVideoTracks[0].pendingTrack.id) {
-        p.screenVideoTrack = screenVideoTracks[0].pendingTrack;
-      } else if (!screenVideoTracks[0].pendingTrack.muted) {
-        // otherwise, add the found track if it's not muted
-        p.screenVideoTrack = screenVideoTracks[0].pendingTrack;
+      // find screen-share video track
+      if (p.screen) {
+        let screenVideoTracks = orderBy(filter(allStreams, (s) => (
+          s.participantId === p.session_id &&
+            s.type === 'screen' &&
+            s.pendingTrack && s.pendingTrack.kind === 'video'
+        )), 'starttime', 'desc');
+        if (screenVideoTracks && screenVideoTracks[0] &&
+            screenVideoTracks[0].pendingTrack) {
+          if (prevP && prevP.screenVideoTrack &&
+              prevP.screenVideoTrack.id ===
+                screenVideoTracks[0].pendingTrack.id) {
+            p.screenVideoTrack = screenVideoTracks[0].pendingTrack;
+          } else if (!screenVideoTracks[0].pendingTrack.muted) {
+            // otherwise, add the found track if it's not muted
+            p.screenVideoTrack = screenVideoTracks[0].pendingTrack;
+          }
+        }
+        if (!p.screenVideoTrack) { p.screen = false };
       }
-      if (!p.screenVideoTrack) { p.screen = false };
+    } catch (e) {
+      console.error('unexpected error matching up tracks', e);
     }
   }
 
