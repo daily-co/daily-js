@@ -1,4 +1,5 @@
 import EventEmitter from 'events';
+import Bowser from 'bowser';
 import { deepEqual } from 'fast-equals';
 import {
   filter,
@@ -185,6 +186,42 @@ const PARTICIPANT_PROPS = {
 
 export default class DailyIframe extends EventEmitter {
 
+  //
+  // browser support check
+  //
+
+  static supportedBrowser() {
+    const browser = Bowser.getParser(window.navigator.userAgent),
+          basic = browser.getBrowser(),
+          parsed = Bowser.parse(window.navigator.userAgent),
+          isValidBrowser = browser.satisfies({
+            electron: ">=6",
+            chromium: ">=61",
+            chrome: ">=61",
+            firefox: ">=63",
+            opera: ">=61",
+            safari: ">=12",
+            edge: ">=18",
+            iOS: {
+              chromium: "<0",
+              chrome: "<0",
+              firefox: "<0",
+              opera: "<0",
+              safari: ">=12",
+              edge: "<0",
+            }
+          });
+    return {
+      supported: isValidBrowser,
+      mobile: parsed.platform.type === 'mobile',
+      // basic, parsed
+    };
+  }
+
+  //
+  // constructors
+  //
+
   static createCallObject(properties={}) {
     properties.layout = 'none';
     return new DailyIframe(null, properties);
@@ -341,6 +378,10 @@ export default class DailyIframe extends EventEmitter {
 
     window.addEventListener('message', this._messageListener);
   }
+
+  //
+  // instance methods
+  //
 
   destroy() {
     try { this.leave(); } catch (e) {}
@@ -787,6 +828,20 @@ export default class DailyIframe extends EventEmitter {
         resolve(msg);
       };
       this._sendIframeMsg({ action: DAILY_METHOD_ROOM }, k);
+    });
+  }
+
+  async geo() {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let url = 'https://gs.daily.co/_ks_/x-swsl/:';
+        let res = await fetch(url);
+        let data = await res.json();
+        resolve( { current: data.geo } );
+      } catch (e) {
+        console.error('geo lookup failed', e);
+        resolve({ current: '' } );
+      }
     });
   }
 
@@ -1278,4 +1333,3 @@ function makeSafeForPostMessage(props) {
   }
   return safe;
 }
-
