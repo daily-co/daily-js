@@ -1,6 +1,6 @@
 {
   "name": "@daily-co/daily-js",
-  "version": "0.9.96-beta.2",
+  "version": "0.9.98",
   "engines": {
     "node": ">=10.0.0"
   },
@@ -23,23 +23,24 @@
     "demo": "npm run build-dev && cd demo && npm i && npm run dev"
   },
   "devDependencies": {
-    "@babel/core": "^7.5.5",
-    "@babel/plugin-transform-modules-commonjs": "^7.5.0",
-    "@babel/plugin-transform-runtime": "^7.5.5",
-    "@babel/preset-env": "^7.5.5",
+    "@babel/core": "^7.8.3",
+    "@babel/plugin-transform-modules-commonjs": "^7.8.3",
+    "@babel/plugin-transform-runtime": "^7.8.3",
+    "@babel/preset-env": "^7.8.3",
     "babel-cli": "^6.26.0",
     "babel-loader": "^8.0.6",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
-    "rollup": "^1.19.4",
+    "rollup": "^1.29.0",
     "rollup-plugin-cjs-es": "^0.7.0",
     "rollup-plugin-commonjs": "^9.3.4",
     "rollup-plugin-node-resolve": "^4.2.4",
-    "webpack": "^4.39.1",
-    "webpack-cli": "^3.3.6"
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10"
   },
   "dependencies": {
-    "@babel/runtime": "^7.5.5",
-    "events": "^3.0.0",
+    "@babel/runtime": "^7.8.3",
+    "bowser": "^2.8.1",
+    "events": "^3.1.0",
     "fast-equals": "^1.6.3",
     "lodash": "^4.17.15",
     "rollup-plugin-terser": "^4.0.4"
