@@ -1,6 +1,6 @@
 {
   "name": "@daily-co/daily-js",
-  "version": "0.9.98",
+  "version": "0.9.981",
   "engines": {
     "node": ">=10.0.0"
   },
