@@ -71,6 +71,7 @@ import {
   DAILY_METHOD_REGISTER_INPUT_HANDLER,
   DAILY_METHOD_DETECT_ALL_FACES,
   DAILY_METHOD_ROOM,
+  DAILY_METHOD_SET_NETWORK_TOPOLOGY,
   DAILY_CUSTOM_TRACK,
   DAILY_UI_REQUEST_FULLSCREEN,
   DAILY_UI_EXIT_FULLSCREEN,
@@ -883,6 +884,22 @@ export default class DailyIframe extends EventEmitter {
         console.error('geo lookup failed', e);
         resolve({ current: '' });
       }
+    });
+  }
+
+  async setNetworkTopology(opts) {
+    return new Promise(async (resolve, reject) => {
+      let k = (msg) => {
+        if (msg.error) {
+          reject({ error: msg.error });
+        } else {
+          resolve({ workerId: msg.workerId });
+        }
+      };
+      this._sendIframeMsg(
+        { action: DAILY_METHOD_SET_NETWORK_TOPOLOGY, opts },
+        k
+      );
     });
   }
 
