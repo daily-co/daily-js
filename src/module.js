@@ -220,6 +220,8 @@ export default class DailyIframe extends EventEmitter {
     return {
       supported: isValidBrowser,
       mobile: parsed.platform.type === 'mobile',
+      name: basic.name,
+      version: basic.version,
       // basic, parsed
     };
   }
