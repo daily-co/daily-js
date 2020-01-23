@@ -1,0 +1,407 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>video call test</title>
+<script crossorigin src="https://unpkg.com/@daily-co/daily-js"></script>
+<!-- <script crossorigin src="../dist/daily-iframe.js"></script> -->
+
+<script src="create-demo-room.js"></script>
+
+<style>
+  @font-face {
+  	font-family: GraphikMedium;
+  	src: url('https://assets.website-files.com/59c9811db5fc1c0001445dbd/59c981e01931040001331424_Graphik-Medium-Web.woff') format('woff');
+  	font-weight: 300;
+  	font-style: normal;
+    font-display: swap;
+	}
+
+  iframe {
+    position: fixed;
+    border: 1px solid black;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80%;
+    margin: 6px;
+    width: 90%;
+    width: -webkit-fill-available;
+    z-index: 10;
+  }
+
+  #loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 10%;
+  }
+
+  #loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0,0,0,.3);
+    border-radius: 50%;
+    border-top-color: #000;
+    animation: spin 1s ease-in-out infinite;
+    -webkit-animation: spin 1s ease-in-out infinite;
+  }
+
+  @keyframes spin {
+    to { -webkit-transform: rotate(360deg); }
+  }
+  @-webkit-keyframes spin {
+    to { -webkit-transform: rotate(360deg); }
+  }
+
+  #instructions-container {
+    z-index: 99;
+    font-family: GraphikMedium, sans-serif;
+    font-size: 12px;
+    margin: 10px;
+  }
+
+  .instructions-block {
+    display: none;
+  }
+</style>
+
+</head>
+<body>
+
+<div id="instructions-container">
+</div>
+
+<div id="unknown-error" class="instructions-block">
+<p> unexpected error </p>
+</div>
+
+<div id="join-spinner" class="instructions-block">
+  <p> <b>Connecting to a test call.</b> </p>
+  <div id="loading-container"><div id="loading"></div></div>
+</div>
+
+<div id="welcome-browser-ok" class="instructions-block">
+<p> Hi! Thanks for testing our video calls before your Startup School group session. </p>
+<p><b>Browser check: Chrome on a laptop or desktop.</b></p>
+<p>Great, you're all set. (We strongly recommend using Chrome on a laptop or desktop for group calls.)</p>
+<button onclick="tryJoin()">continue ... test your camera and mic</button> 
+</div>
+
+<div id="welcome-browser-mobile" class="instructions-block">
+<p> Hi! Thanks for testing our video calls before your Startup School group session. </p>
+<p> <b>Browser check: mobile device.</b> </p>
+<p> <b>We strongly recommend using Chrome on a laptop or desktop for group calls.</b> </p>
+<p> You can continue with the test call, but please try to come back and test Chrome, and use Chrome on your computer for the group call, if you possibly can. </p>
+<button onclick="tryJoin()">continue ... test your camera and mic</button> 
+</div>
+
+<div id="welcome-browser-not-chrome" class="instructions-block">
+<p> Hi! Thanks for testing our video calls before your Startup School group session. </p>
+<p> <b>Browser check: you are not using Chrome.</b> </p>
+<p> <b>We strongly recommend using Chrome on a laptop or desktop for group calls.</b> </p>
+
+<p>You can continue with the test call, but please try to come back and test Chrome, and use Chrome on your computer for the group call, if you possibly can.</p>
+<button onclick="tryJoin()">continue ... test your camera and mic</button> 
+</div>
+
+<div id="welcome-browser-not-ok" class="instructions-block">
+<p> Hi! Thanks for testing our video calls before your Startup School group session. </p>
+<p><b>Browser check: This is not a supported browser.</b> </p>
+<p> Please use Chrome on a laptop or desktop computer, if you can. If that's not possible, you can use Chrome on Android or Safari on iOS. </p>
+</div>
+
+<div id="camera-permission-error" class="instructions-block">
+<p> <b>We can't access your camera and mic.</b> </p>
+<p> This is probably your browser blocking camera and mic access. Please <a href="https://help.daily.co/en/articles/2528184-unblock-camera-mic-access" target="_blank">follow the steps in this article</a> to unblock. </p>
+</div>
+
+<div id="camera-permission-error" class="instructions-block">
+<p> <b>We can't access your camera and mic.</b> </p>
+<p> This is probably your browser blocking camera and mic access. Please <a href="https://help.daily.co/en/articles/2528184-unblock-camera-mic-access" target="_blank">follow the steps in this article</a> to unblock. </p>
+</div>
+
+<div id="camera-unknown-error" class="instructions-block">
+<p> <b>We can't access your camera and mic.</b> </p>
+<p> This is probably your browser blocking camera and mic access. Please try: </p>
+<ul>
+  <li>Using an Incognito Mode window to make sure a browser extension isn't blocking the camera and mic</li>
+  <li>Completely quitting your browser and restarting</li>
+  <li>Rebooting your computer</li>
+</ul>
+<p> Here are <a href="https://help.daily.co/en/articles/2303117-top-troubleshooting-5-tips-that-solve-99-of-issues" target="_blank">more tips for solving issues</a> with in-browser video calls. </p>
+</div>
+
+<div id="object-error" class="instructions-block">
+<p> <b>We're having trouble connecting you to the test call.</b> </p>
+<p> Please try <a href="https://help.daily.co/en/articles/2303117-top-troubleshooting-5-tips-that-solve-99-of-issues" target="_blank">these troubleshooting tips</a>. </p>
+</div>
+
+<div id="starting-bandwidth-test" class="instructions-block">
+<p> <b>Testing network bandwidth (this takes about 30 seconds).</b> </p>
+<div id="loading-container"><div id="loading"></div></div>
+</div>
+
+<div id="finished-ok" class="instructions-block">
+<p> <b>Everything looks good!</b> </p>
+<p> You had plenty of bandwidth (upstream bandwidth averaged <span id="kbs"></span> kbs and packet loss was <span id="pkt"></span> percent. </p>
+<p> If you want to do more testing, or host video calls, or use our video call APIs, you can <a href="https://daily.co">sign up for a free account at Daily.co</a> </p>
+</div>
+
+<div id="finished-not-ok" class="instructions-block">
+<p> <b>Your network connection is too slow for a high-quality group video call. </b> </p>
+<p> Your upstream bandwidth averaged <span id="kbs"></span> kbs and packet loss was <span id="pkt"></span> percent. </p>
+<p> If possible, please try to switch to a location with a better connection. If packet loss is high, try moving closer to your wifi router. 
+<p> You can also try another network test here: <a href="https://network.callstats.io/">network.callstats.io</a>. </p>
+</div>
+
+
+
+
+<script>
+const traceId = generateUUID(),
+      rootSpanId = generateUUID(),
+      serviceName = 'test-call';
+sendTrace({ root: true, name: 'page-load' });
+let cameraOk = false;
+    cameraError = false;
+    nextStepTimeout = null;
+
+const instructionsContainer = document.getElementById('instructions-container');
+function showEvent(e) { console.log('video call event -->', e); }
+
+//
+// test call state machine ---> :-)
+//
+
+let browserInfo = window.DailyIframe.supportedBrowser();
+console.log(browserInfo);
+if (!browserInfo.supported || browserInfo.name === 'Microsoft Edge') {
+  swapInContent('welcome-browser-not-ok');
+  sendTrace({ name: 'error', error: 'browser-not-ok' });
+} else if (browserInfo.mobile) {
+  swapInContent('welcome-browser-mobile');
+} else if (browserInfo.name !== 'Chrome') {
+  swapInContent('welcome-browser-not-chrome');
+} else {
+  swapInContent('welcome-browser-ok');
+}
+
+async function tryJoin() {
+  try {
+    swapInContent('join-spinner');
+
+    let room = await createMtgRoom();
+    window.callFrame = window.DailyIframe.createFrame({
+      iframeStyle: {},
+      url: room.url
+    });
+
+    callFrame.on('loading', showEvent)
+      .on('loaded', showEvent)
+      .on('started-camera', handleStartedCamera)
+      .on('camera-error', handleCameraError)
+      .on('joined-meeting', handleJoinedMeeting)
+      .on('error', handleObjectError);
+
+    // 30 second timeout for both mic/camera and meeting join    
+    nextStepTimeout = setTimeout(networkStepTimeout, 30*1000);
+    let startTs = Date.now();
+    await callFrame.join();
+    sendTrace({ name: 'joined', startTs });
+  } catch (e) {
+    console.error(e);
+    swapInContent('unknown-error');
+    sendTrace({ name: 'error', error: e.message || JSON.stringify(e) });
+  }
+}
+
+async function handleObjectError(e) {
+  clearTimeout(nextStepTimeout);
+  showEvent(e);
+  swapInContent('object-error');
+  sendTrace({ name: 'error', error: e.errorMsg || JSON.stringify(e) });
+  callFrame.destroy();
+}
+
+async function networkStepTimeout() {
+  swapInContent('object-error');
+  sendTrace({ name: 'error', error: 'test-step-timeout' });
+  callFrame.destroy();
+}
+
+async function handleStartedCamera(e) {
+  showEvent(e);
+  cameraOk = true;
+  // handle strange case on iOS where we get prompted twice. track this down ...
+  if (cameraError) {
+    cameraError = false;
+    handleJoinedMeeting({ empty: 'empty' });
+  } 
+}
+
+async function handleCameraError(e) {
+  showEvent(e);
+  if (e.errorMsg.errorMsg === 'not allowed') {
+    console.log('almost certainly permission error');
+  }
+  cameraError = true;
+  swapInContent('camera-permission-error');
+}
+
+async function handleJoinedMeeting(e) {
+  clearTimeout(nextStepTimeout);
+  showEvent(e);
+  if (cameraError) {
+    return;
+  }
+  if (!cameraOk) {
+    swapInContent('camera-unknown-error');
+    return;
+  }
+  testBandwidth();
+}
+
+async function testBandwidth() {
+  swapInContent('starting-bandwidth-test');
+
+  // 30 second timeout for sfu transition
+  nextStepTimeout = setTimeout(networkStepTimeout, 30*1000);
+  let startTs = Date.now();
+  await callFrame.setNetworkTopology({ topology: 'sfu' });
+  clearTimeout(nextStepTimeout);
+  sendTrace({ name: 'transitioned-to-sfu', startTs });
+
+  console.log('okay in sfu mode');
+
+  // 45 second timeout for bandwidth test
+  nextStepTimeout = setTimeout(networkStepTimeout, 30*1000);
+  // log 8 stats entries
+  let stats = [];
+  while (true) {
+    let sent = await sendNetworkStats();
+    if (sent) {
+      stats.push(sent);
+      if (stats.length >= 8) {
+        break;
+      }
+    }
+  }
+  let worstVideoSendPacketLoss = stats[7].worstVideoSendPacketLoss;
+  let avgVideoSendBitsPerSecond = stats.reduce(
+    (a,b) => (a + b.sendBitsPerSecond), 0
+  ) / stats.length;
+  clearTimeout(nextStepTimeout);
+  console.log('finished', avgVideoSendBitsPerSecond,
+              worstVideoSendPacketLoss, stats);
+
+  // // testing
+  // worstVideoSendPacketLoss = 0.16;
+  // avgVideoSendBitsPerSecond = 250000.0;
+  
+  if (worstVideoSendPacketLoss >= 0.1 ||
+      avgVideoSendBitsPerSecond < 300000) {
+    swapInContent('finished-not-ok');
+    sendTrace({ name: 'finished', bandwidthOk: false,
+                worstVideoSendPacketLoss,
+                avgVideoSendBitsPerSecond });
+  } else {
+    swapInContent('finished-ok');
+    sendTrace({ name: 'finished', bandwidthOk: true,
+                worstVideoSendPacketLoss,
+                avgVideoSendBitsPerSecond });
+  }
+
+  document.getElementById('kbs').innerHTML =
+    Math.round(avgVideoSendBitsPerSecond/1000);
+  document.getElementById('pkt').innerHTML =
+    Math.round(worstVideoSendPacketLoss*100);
+
+  callFrame.destroy();
+}
+
+function generateUUID (){
+    var d = new Date().getTime();
+    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.
+    replace(/[xy]/g, function(c) {
+        var r = (d + Math.random()*16)%16 | 0;
+        d = Math.floor(d/16);
+        return (c=='x' ? r : (r&0x7|0x8)).toString(16);
+    });'A'
+    return uuid;
+}
+
+async function sendNetworkStats() {
+  return new Promise(async (resolve, reject) => {
+    let info = await callFrame.getNetworkStats();
+    if (info.stats && info.stats.latest &&
+        (info.stats.latest.sendBitsPerSecond ||
+         info.stats.latest.videoSendBitsPerSecond)) {
+      data = {
+        name: 'client-network-stats',
+        sendBitsPerSecond: Math.round(info.stats.latest.sendBitsPerSecond ||
+                                      info.stats.latest.videoSendBitsPerSecond),
+        videoSendPacketLoss: info.stats.latest.videoSendPacketLoss,
+        quality: info.quality,
+        worstVideoSendPacketLoss: info.stats.worstVideoSendPacketLoss,
+      };
+      sendTrace(data);
+      setTimeout(() => resolve(data), 2000);
+    } else {
+      setTimeout(() => resolve(null), 2000);
+    }
+  });
+}
+
+// special arguments: root, start_ts
+//
+async function sendTrace(data) {
+  if (!data.name) {
+    console.error('trace needs a name, at least');
+  }
+
+  let event = Object.assign({}, data);
+  event['service_name'] = 'test-call';
+  event['trace.trace_id'] = traceId;
+
+  if (data.startTs) {
+    event['Timestamp'] = data.startTs;
+    event['duration_ms'] = Date.now() - data.startTs;
+  } else {
+    event['Timestamp'] = Date.now();
+  }
+
+  if (data.root) {
+    delete event.root;
+    event['trace.span_id'] = rootSpanId;
+  } else {
+    // event['meta.span_type'] = 'span_event';
+    event['trace.parentId'] = rootSpanId;
+    event['trace.span_id'] = generateUUID();
+  }
+
+  console.log('event', event);
+
+  try {
+    let res = await fetch('https://gs.daily.co/_ks_/x-hny', {
+      method: 'POST',
+      mode: 'cors',
+      cache: 'no-cache',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(event)    
+    });
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function swapInContent(contentId) {
+  let contentEl = document.getElementById(contentId);
+  instructionsContainer.innerHTML = contentEl.innerHTML;
+}
+</script>
+
+</body>
+</html>
