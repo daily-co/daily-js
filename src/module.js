@@ -76,6 +76,7 @@ import {
   DAILY_METHOD_DETECT_ALL_FACES,
   DAILY_METHOD_ROOM,
   DAILY_METHOD_SET_NETWORK_TOPOLOGY,
+  DAILY_METHOD_SET_PLAY_DING,
   DAILY_CUSTOM_TRACK,
   DAILY_UI_REQUEST_FULLSCREEN,
   DAILY_UI_EXIT_FULLSCREEN,
@@ -386,8 +387,10 @@ export default class DailyIframe extends EventEmitter {
   // instance methods
   //
 
-  destroy() {
-    try { this.leave(); } catch (e) {}
+  async destroy() {
+    try { 
+      await this.leave();
+    } catch (e) {}
     let iframe = this.iframe();
     if (iframe) {
       let parent = iframe.parentElement;
@@ -702,7 +705,9 @@ export default class DailyIframe extends EventEmitter {
     return new Promise((resolve, reject) => {
       let k = () => {
         if (this._iframe) {
-          this._iframe.src = '';
+          // resetting the iframe src maybe interferes with sending the
+          // ks beacon?
+          // this._iframe.src = '';
         }
         this._loaded = false;
         this._meetingState = DAILY_STATE_LEFT;
@@ -737,6 +742,10 @@ export default class DailyIframe extends EventEmitter {
   }
 
   getNetworkStats() {
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      let stats = { latest: {} };
+      return { stats };
+    }
     return new Promise((resolve, reject) => {
       let k = (msg) => {
         resolve({ stats: msg.stats, ...this._network });
@@ -750,7 +759,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async enumerateDevices(kind) {
-    if (this._callObjectMode && this.meetingState !== DAILY_STATE_JOINED) {
+    if (this._callObjectMode) {
       let raw = await navigator.mediaDevices.enumerateDevices();
       return { devices: raw.map((d) => JSON.parse(JSON.stringify(d))) };
     }
@@ -860,6 +869,15 @@ export default class DailyIframe extends EventEmitter {
       this._sendIframeMsg({ action: DAILY_METHOD_SET_NETWORK_TOPOLOGY,
                             opts }, k);
     });
+  }
+
+  setPlayNewParticipantSound(arg) {
+    if (!(typeof arg === 'number' ||
+          arg === true ||
+          arg === false)) {
+      throw new Error(`argument to setShouldPlayNewParticipantSound should be true, false, or a number, but is ${arg}`);
+    }
+    this._sendIframeMsg({ action: DAILY_METHOD_SET_PLAY_DING, arg });
   }
 
   //
@@ -1344,6 +1362,21 @@ function makeSafeForPostMessage(props) {
       // currently do in the validate-properties routines, which definitely
       // is a spooky-action-at-a-distance code anti-pattern
       safe[p] = DAILY_CUSTOM_TRACK;
+    } else if (p === 'dailyConfig') {
+      if (props[p].modifyLocalSdpHook) {
+        if (window._dailyConfig) {
+          window._dailyConfig.modifyLocalSdpHook = props[p].modifyLocalSdpHook;
+        }
+        delete props[p].modifyLocalSdpHook;
+      }
+      if (props[p].modifyRemoteSdpHook) {
+        if (window._dailyConfig) {
+          window._dailyConfig.modifyRemoteSdpHook =
+            props[p].modifyRemoteSdpHook;
+        }
+        delete props[p].modifyRemoteSdpHook;
+      }
+      safe[p] = props[p];
     } else {
       safe[p] = props[p];
     }
