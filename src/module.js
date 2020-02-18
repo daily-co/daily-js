@@ -402,7 +402,9 @@ export default class DailyIframe extends EventEmitter {
 
   async destroy() {
     try {
-      await this.leave();
+      if (this._meetingState === 'joined-meeting') {
+        await this.leave();
+      }
     } catch (e) {}
     let iframe = this.iframe();
     if (iframe) {
