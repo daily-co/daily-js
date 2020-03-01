@@ -19,8 +19,7 @@
     "build-dev": "NODE_ENV=development npm run build",
     "build-main": "webpack",
     "build-module": "rollup -c",
-    "prepublishOnly": "npm run build",
-    "demo": "npm run build-dev && cd demo && npm i && npm run dev"
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@babel/core": "^7.8.3",
