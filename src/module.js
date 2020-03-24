@@ -1236,7 +1236,10 @@ export default class DailyIframe extends EventEmitter {
     try {
       let sp = state.participants[p.session_id];
       if (sp && sp.public.rtcType.impl === 'peer-to-peer') {
-        if (sp.private && sp.private.peeringState !== 'connected') {
+        if (
+          sp.private &&
+          !['connected', 'completed'].includes(sp.private.peeringState)
+        ) {
           connected = false;
         }
       }
