@@ -66,6 +66,7 @@ import {
   DAILY_METHOD_APP_MSG,
   DAILY_METHOD_ADD_FAKE_PARTICIPANT,
   DAILY_METHOD_SET_SHOW_NAMES,
+  DAILY_METHOD_SET_ACTIVE_SPEAKER_MODE,
   DAILY_METHOD_SET_LANG,
   MAX_APP_MSG_SIZE,
   DAILY_METHOD_REGISTER_INPUT_HANDLER,
@@ -824,6 +825,14 @@ export default class DailyIframe extends EventEmitter {
 
   addFakeParticipant(args) {
     this._sendIframeMsg({ action: DAILY_METHOD_ADD_FAKE_PARTICIPANT, ...args });
+    return this;
+  }
+
+  setActiveSpeakerMode(enabled) {
+    this._sendIframeMsg({
+      action: DAILY_METHOD_SET_ACTIVE_SPEAKER_MODE,
+      enabled,
+    });
     return this;
   }
 
