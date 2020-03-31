@@ -212,12 +212,17 @@ export default class DailyIframe extends EventEmitter {
               safari: ">=12",
               edge: "<0",
             }
-          });
+          }),
+          isScreenShareSupported = isValidBrowser && 
+            // The following is the exact screen share compatibility check the site uses
+            navigator.userAgent.match(/Chrome\//) && 
+            !navigator.userAgent.match(/Edge\//);
     return {
       supported: isValidBrowser,
       mobile: parsed.platform.type === 'mobile',
       name: basic.name,
       version: basic.version,
+      supportsScreenShare: isScreenShareSupported
       // basic, parsed
     };
   }
