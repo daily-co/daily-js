@@ -38,6 +38,8 @@ export const DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED =
 export const DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED =
   'local-screen-share-stopped';
 export const DAILY_EVENT_ACTIVE_SPEAKER_CHANGE = 'active-speaker-change';
+export const DAILY_EVENT_ACTIVE_SPEAKER_MODE_CHANGE =
+  'active-speaker-mode-change';
 export const DAILY_EVENT_NETWORK_QUALITY_CHANGE = 'network-quality-change';
 export const DAILY_EVENT_NETWORK_CONNECTION = 'network-connection';
 
