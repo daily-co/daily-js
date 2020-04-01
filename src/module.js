@@ -41,6 +41,7 @@ import {
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED,
   DAILY_EVENT_NETWORK_QUALITY_CHANGE,
   DAILY_EVENT_ACTIVE_SPEAKER_CHANGE,
+  DAILY_EVENT_ACTIVE_SPEAKER_MODE_CHANGE,
   DAILY_EVENT_FULLSCREEN,
   DAILY_EVENT_EXIT_FULLSCREEN,
   DAILY_EVENT_NETWORK_CONNECTION,
@@ -70,6 +71,7 @@ import {
   DAILY_METHOD_APP_MSG,
   DAILY_METHOD_ADD_FAKE_PARTICIPANT,
   DAILY_METHOD_SET_SHOW_NAMES,
+  DAILY_METHOD_SET_ACTIVE_SPEAKER_MODE,
   DAILY_METHOD_SET_LANG,
   MAX_APP_MSG_SIZE,
   DAILY_METHOD_REGISTER_INPUT_HANDLER,
@@ -337,6 +339,7 @@ export default class DailyIframe extends EventEmitter {
     this._inputEventsOn = {}; // need to cache these until loaded
     this._network = { threshold: 'good', quality: 100 };
     this._activeSpeaker = {};
+    this._activeSpeakerMode = false;
     this._messageCallbacks = {};
     this._callFrameId = Date.now() + Math.random().toString();
 
@@ -714,6 +717,7 @@ export default class DailyIframe extends EventEmitter {
         this._loaded = false;
         this._meetingState = DAILY_STATE_LEFT;
         this._participants = {};
+        this._activeSpeakerMode = false;
         resetPreloadCache(this._preloadCache);
         try {
           this.emit(DAILY_STATE_LEFT, { action: DAILY_STATE_LEFT });
@@ -758,6 +762,15 @@ export default class DailyIframe extends EventEmitter {
 
   getActiveSpeaker() {
     return this._activeSpeaker;
+  }
+
+  setActiveSpeakerMode(enabled) {
+    this._sendIframeMsg({ action: DAILY_METHOD_SET_ACTIVE_SPEAKER_MODE, enabled });
+    return this;
+  }
+
+  activeSpeakerMode() {
+    return this._activeSpeakerMode;
   }
 
   async enumerateDevices(kind) {
@@ -1079,6 +1092,18 @@ export default class DailyIframe extends EventEmitter {
           try {
             this.emit(msg.action, { action: msg.action,
                                     activeSpeaker: this._activeSpeaker });
+          } catch (e) {
+            console.log('could not emit', msg);
+          }
+        }
+        break;
+      case DAILY_EVENT_ACTIVE_SPEAKER_MODE_CHANGE:
+        const { enabled } = msg;
+        if (this._activeSpeakerMode !== enabled) {
+          this._activeSpeakerMode = enabled;
+          try {
+            this.emit(msg.action, { action: msg.action,
+                                    enabled: this._activeSpeakerMode });
           } catch (e) {
             console.log('could not emit', msg);
           }
