@@ -124,6 +124,7 @@ const FRAME_PROPS = {
   userName: true, // ignored if there's a token
   showLeaveButton: true,
   showFullscreenButton: true,
+  hideMenuBar: true,
   // style to apply to iframe in createFrame factory method
   iframeStyle: true,
   // styles passed through to video calls inside the iframe
