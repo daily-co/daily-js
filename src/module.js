@@ -154,6 +154,9 @@ const FRAME_PROPS = {
   emb: {
     queryString: 'emb',
   },
+  embHref: {
+    queryString: 'embHref',
+  },
 };
 
 // todo: more validation?
@@ -965,7 +968,11 @@ export default class DailyIframe extends EventEmitter {
 
   assembleMeetingUrl() {
     // handle case of url with query string and without
-    let props = { ...this.properties, emb: this._callFrameId },
+    let props = {
+        ...this.properties,
+        emb: this._callFrameId,
+        embHref: encodeURIComponent(window.location.href),
+      },
       firstSep = props.url.match(/\?/) ? '&' : '?',
       url = props.url,
       urlProps = Object.keys(FRAME_PROPS).filter(
