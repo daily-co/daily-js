@@ -224,11 +224,12 @@ export default class DailyIframe extends EventEmitter {
           edge: '<0',
         },
       }),
-      isScreenShareSupported =
+      isScreenShareSupported = !!(
         isValidBrowser &&
-        // The following is the exact screen share compatibility check the site uses
-        navigator.userAgent.match(/Chrome\//) &&
-        !navigator.userAgent.match(/Edge\//);
+        navigator &&
+        navigator.mediaDevices &&
+        navigator.mediaDevices.getDisplayMedia
+      );
     return {
       supported: isValidBrowser,
       mobile: parsed.platform.type === 'mobile',
