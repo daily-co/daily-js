@@ -118,8 +118,10 @@ const FRAME_PROPS = {
   },
   lang: { 
     validate: (lang) => {
-      return lang === 'en-us' || lang === 'en' || lang === 'fr';
-    }
+      return lang === 'de' || lang === 'en-us' || lang === 'en' || lang === 'fi' ||
+        lang === 'fr' || lang === 'nl' || lang === 'pt' || lang === 'user';
+    },
+    help: 'language not supported. Options are: de, en-us, en, fi, fr, nl, pt, user'
   },
   userName: true, // ignored if there's a token
   showLeaveButton: true,
