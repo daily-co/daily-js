@@ -218,6 +218,7 @@ export default class DailyIframe extends EventEmitter {
               edge: "<0",
             }
           }),
+          // The below rightfully includes Electron, with its stubbed-out getDisplayMedia
           isScreenShareSupported = !!(isValidBrowser && 
             navigator && navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia);
     return {
