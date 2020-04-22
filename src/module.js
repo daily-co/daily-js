@@ -674,8 +674,13 @@ export default class DailyIframe extends EventEmitter {
             this._meetingState = DAILY_STATE_LOADED;
             resolve();
           };
-          let url = new URL(this.properties.url);
-          script.src = `${url.origin}/static/call-machine-object-bundle.js`;
+          // Use the CDN to get call-machine-object (but use whatever's "local" for dev)
+          if (process.env.NODE_ENV !== 'development') {
+            script.src = `https://c.daily.co/static/call-machine-object-bundle.js`;
+          } else {
+            let url = new URL(this.properties.url);
+            script.src = `${url.origin}/static/call-machine-object-bundle.js`;
+          }
           head.appendChild(script);
         }
       });
