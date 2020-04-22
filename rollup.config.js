@@ -1,3 +1,4 @@
+import replace from '@rollup/plugin-replace';
 import resolve from 'rollup-plugin-node-resolve';
 import commonJS from 'rollup-plugin-commonjs';
 import { terser } from 'rollup-plugin-terser';
@@ -11,6 +12,9 @@ export default [
     plugins: [
       resolve({
         preferBuiltins: false,
+      }),
+      replace({
+        'process.env.NODE_ENV': JSON.stringify('production'),
       }),
       commonJS({
         include: 'node_modules/**',
