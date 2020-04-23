@@ -199,6 +199,25 @@ export default class DailyIframe extends EventEmitter {
   //
 
   static supportedBrowser() {
+    function supportsUnifiedPlanSDP(browser) {
+      return browser.satisfies({
+        electron: ">=6",
+        chromium: ">=75",
+        chrome: ">=75",
+        firefox: ">=67",
+        opera: ">=61",  // Corresponds to Chrome 75
+        // Technically Safari 12.1 supports Unified Plan SDP, but for simplicity
+        // we're just checking for 13.0.1 and above to avoid a 13.0.0 bug. 12.1
+        // will fail the isDisplayMediaAccessible() check anyway.
+        safari: ">=13.0.1",
+        edge: ">=79",   // Corresponds to Edgium
+      });
+    }
+
+    function isDisplayMediaAccessible() {
+      return navigator && navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia;
+    }
+
     const browser = Bowser.getParser(window.navigator.userAgent),
           basic = browser.getBrowser(),
           parsed = Bowser.parse(window.navigator.userAgent),
@@ -219,15 +238,15 @@ export default class DailyIframe extends EventEmitter {
               edge: "<0",
             }
           }),
-          // The below rightfully includes Electron, with its stubbed-out getDisplayMedia
-          isScreenShareSupported = !!(isValidBrowser && 
-            navigator && navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia);
+        // See PluotUtil.isScreenSharingSupported() for a thorough explanation of this check
+        supportsScreenShare = !!(isValidBrowser && isDisplayMediaAccessible() && supportsUnifiedPlanSDP(browser));
+
     return {
       supported: isValidBrowser,
       mobile: parsed.platform.type === 'mobile',
       name: basic.name,
       version: basic.version,
-      supportsScreenShare: isScreenShareSupported
+      supportsScreenShare
       // basic, parsed
     };
   }
