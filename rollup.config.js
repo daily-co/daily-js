@@ -3,7 +3,7 @@ import resolve from 'rollup-plugin-node-resolve';
 import commonJS from 'rollup-plugin-commonjs';
 import { terser } from 'rollup-plugin-terser';
 
-const production = process.env.NODE_ENV !== 'development';
+const production = process.env.NODE_ENV || 'production';
 
 export default [
   {
@@ -14,7 +14,7 @@ export default [
         preferBuiltins: false,
       }),
       replace({
-        'process.env.NODE_ENV': JSON.stringify('production'),
+        'process.env.NODE_ENV': JSON.stringify(production),
       }),
       commonJS({
         include: 'node_modules/**',
