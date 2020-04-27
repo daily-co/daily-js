@@ -1,6 +1,6 @@
 {
   "name": "@daily-co/daily-js",
-  "version": "0.9.987",
+  "version": "0.9.988",
   "engines": {
     "node": ">=10.0.0"
   },
@@ -26,6 +26,7 @@
     "@babel/plugin-transform-modules-commonjs": "^7.8.3",
     "@babel/plugin-transform-runtime": "^7.8.3",
     "@babel/preset-env": "^7.8.3",
+    "@rollup/plugin-replace": "^2.3.2",
     "babel-cli": "^6.26.0",
     "babel-loader": "^8.0.6",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
@@ -34,7 +35,7 @@
     "rollup-plugin-commonjs": "^9.3.4",
     "rollup-plugin-node-resolve": "^4.2.4",
     "webpack": "^4.41.5",
-    "webpack-cli": "^3.3.10"
+    "webpack-cli": "^3.3.11"
   },
   "dependencies": {
     "@babel/runtime": "^7.8.3",

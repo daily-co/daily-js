@@ -1,6 +1,7 @@
 // todo: add debug target
 
 const path = require('path');
+const webpack = require('webpack');
 const mode = process.env.NODE_ENV || 'production';
 
 const bundle = {
@@ -14,6 +15,13 @@ const bundle = {
     libraryTarget: 'umd',
     globalObject: 'this'
   },
+  plugins: [
+    new webpack.DefinePlugin({
+        'process.env': {
+            'NODE_ENV': JSON.stringify(mode)
+        }
+    }),
+  ],
   module: {
     rules: [
       {
