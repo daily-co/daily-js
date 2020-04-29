@@ -205,6 +205,7 @@ export default class DailyIframe extends EventEmitter {
   //
 
   static supportedBrowser() {
+    methodNotSupportedInReactNative();
     function supportsUnifiedPlanSDP(browser) {
       return browser.satisfies({
         electron: '>=6',
@@ -275,6 +276,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   static wrap(iframeish, properties = {}) {
+    methodNotSupportedInReactNative();
     if (
       !iframeish ||
       !iframeish.contentWindow ||
@@ -293,6 +295,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   static createFrame(arg1, arg2) {
+    methodNotSupportedInReactNative();
     let parentEl, properties;
     if (arg1 && arg2) {
       parentEl = arg1;
@@ -348,6 +351,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   static createTransparentFrame(properties = {}) {
+    methodNotSupportedInReactNative();
     let iframeEl = document.createElement('iframe');
     iframeEl.allow = 'microphone; camera; autoplay';
     iframeEl.style.cssText = `
@@ -440,8 +444,9 @@ export default class DailyIframe extends EventEmitter {
   //
 
   async destroy() {
+    methodNotSupportedInReactNative();
     try {
-      if (this._meetingState === 'joined-meeting') {
+      if (this._meetingState === DAILY_STATE_JOINED) {
         await this.leave();
       }
     } catch (e) {}
@@ -456,6 +461,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   loadCss({ bodyClass, cssFile, cssText }) {
+    methodNotSupportedInReactNative();
     this._sendIframeMsg({
       action: DAILY_METHOD_LOAD_CSS,
       cssFile: this.absoluteUrl(cssFile),
@@ -466,6 +472,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   iframe() {
+    methodNotSupportedInReactNative();
     return this._iframe;
   }
 
@@ -474,10 +481,12 @@ export default class DailyIframe extends EventEmitter {
   }
 
   participants() {
+    methodNotSupportedInReactNative();
     return this._participants;
   }
 
   updateParticipant(sessionId, properties) {
+    methodNotSupportedInReactNative();
     if (
       this._participants.local &&
       this._participants.local.session_id === sessionId
@@ -505,6 +514,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   updateParticipants(properties) {
+    methodNotSupportedInReactNative();
     for (var sessionId in properties) {
       this.updateParticipant(sessionId, properties[sessionId]);
     }
@@ -512,6 +522,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   localAudio() {
+    methodNotSupportedInReactNative();
     if (this._participants.local) {
       return this._participants.local.audio;
     }
@@ -519,6 +530,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   localVideo() {
+    methodNotSupportedInReactNative();
     if (this._participants.local) {
       return this._participants.local.video;
     }
@@ -526,16 +538,19 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setLocalAudio(bool) {
+    methodNotSupportedInReactNative();
     this._sendIframeMsg({ action: DAILY_METHOD_LOCAL_AUDIO, state: bool });
     return this;
   }
 
   setLocalVideo(bool) {
+    methodNotSupportedInReactNative();
     this._sendIframeMsg({ action: DAILY_METHOD_LOCAL_VIDEO, state: bool });
     return this;
   }
 
   setBandwidth({ kbs, trackConstraints }) {
+    methodNotSupportedInReactNative();
     this._sendIframeMsg({
       action: DAILY_METHOD_SET_BANDWIDTH,
       kbs,
@@ -545,10 +560,12 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setDailyLang(lang) {
+    methodNotSupportedInReactNative();
     this._sendIframeMsg({ action: DAILY_METHOD_SET_LANG, lang });
   }
 
   startCamera(properties = {}) {
+    methodNotSupportedInReactNative();
     return new Promise(async (resolve, reject) => {
       let k = (msg) => {
         delete msg.action;
@@ -570,6 +587,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   cycleCamera() {
+    methodNotSupportedInReactNative();
     return new Promise((resolve, reject) => {
       let k = (msg) => {
         resolve({ device: msg.device });
@@ -579,6 +597,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   cycleMic() {
+    methodNotSupportedInReactNative();
     return new Promise((resolve, reject) => {
       let k = (msg) => {
         resolve({ device: msg.device });
@@ -588,6 +607,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setInputDevices({ audioDeviceId, videoDeviceId, audioSource, videoSource }) {
+    methodNotSupportedInReactNative();
     // use audioDeviceId and videoDeviceId internally
     if (audioSource !== undefined) {
       audioDeviceId = audioSource;
@@ -625,6 +645,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setOutputDevice({ outputDeviceId }) {
+    methodNotSupportedInReactNative();
     // cache this for use later
     if (outputDeviceId) {
       this._preloadCache.outputDeviceId = outputDeviceId;
@@ -643,6 +664,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   getInputDevices() {
+    methodNotSupportedInReactNative();
     if (this._callObjectMode && this._meetingState !== DAILY_STATE_JOINED) {
       return {
         camera: { deviceId: this._preloadCache.videoDeviceId },
@@ -808,6 +830,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   startScreenShare(captureOptions = {}) {
+    methodNotSupportedInReactNative();
     if (captureOptions.mediaStream) {
       this._preloadCache.screenMediaStream = captureOptions.mediaStream;
       captureOptions.mediaStream = DAILY_CUSTOM_TRACK;
@@ -819,18 +842,22 @@ export default class DailyIframe extends EventEmitter {
   }
 
   stopScreenShare() {
+    methodNotSupportedInReactNative();
     this._sendIframeMsg({ action: DAILY_METHOD_STOP_SCREENSHARE });
   }
 
   startRecording() {
+    methodNotSupportedInReactNative();
     this._sendIframeMsg({ action: DAILY_METHOD_START_RECORDING });
   }
 
   stopRecording() {
+    methodNotSupportedInReactNative();
     this._sendIframeMsg({ action: DAILY_METHOD_STOP_RECORDING });
   }
 
   getNetworkStats() {
+    methodNotSupportedInReactNative();
     if (this._meetingState !== DAILY_STATE_JOINED) {
       let stats = { latest: {} };
       return { stats };
@@ -844,10 +871,12 @@ export default class DailyIframe extends EventEmitter {
   }
 
   getActiveSpeaker() {
+    methodNotSupportedInReactNative();
     return this._activeSpeaker;
   }
 
   setActiveSpeakerMode(enabled) {
+    methodNotSupportedInReactNative();
     this._sendIframeMsg({
       action: DAILY_METHOD_SET_ACTIVE_SPEAKER_MODE,
       enabled,
@@ -856,10 +885,12 @@ export default class DailyIframe extends EventEmitter {
   }
 
   activeSpeakerMode() {
+    methodNotSupportedInReactNative();
     return this._activeSpeakerMode;
   }
 
   async enumerateDevices(kind) {
+    methodNotSupportedInReactNative();
     if (this._callObjectMode) {
       let raw = await navigator.mediaDevices.enumerateDevices();
       return { devices: raw.map((d) => JSON.parse(JSON.stringify(d))) };
@@ -874,6 +905,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   sendAppMessage(data, to = '*') {
+    methodNotSupportedInReactNative();
     if (JSON.stringify(data).length > MAX_APP_MSG_SIZE) {
       throw new Error(
         'Message data too large. Max size is ' + MAX_APP_MSG_SIZE
@@ -884,11 +916,13 @@ export default class DailyIframe extends EventEmitter {
   }
 
   addFakeParticipant(args) {
+    methodNotSupportedInReactNative();
     this._sendIframeMsg({ action: DAILY_METHOD_ADD_FAKE_PARTICIPANT, ...args });
     return this;
   }
 
   setShowNamesMode(mode) {
+    methodNotSupportedInReactNative();
     if (mode && !(mode === 'always' || mode === 'never')) {
       console.error(
         'setShowNamesMode argument should be "always", "never", or false'
@@ -900,6 +934,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   detectAllFaces() {
+    methodNotSupportedInReactNative();
     return new Promise((resolve, reject) => {
       let k = (msg) => {
         delete msg.action;
@@ -911,6 +946,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async requestFullscreen() {
+    methodNotSupportedInReactNative();
     if (!this._iframe || document.fullscreenElement) {
       return;
     }
@@ -924,6 +960,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   exitFullscreen() {
+    methodNotSupportedInReactNative();
     if (document.fullscreenElement) {
       document.exitFullscreen();
     } else if (document.webkitFullscreenElement) {
@@ -932,6 +969,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async room() {
+    methodNotSupportedInReactNative();
     if (this._meetingState !== DAILY_STATE_JOINED) {
       return null;
     }
@@ -946,6 +984,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async geo() {
+    methodNotSupportedInReactNative();
     return new Promise(async (resolve, reject) => {
       try {
         let url = 'https://gs.daily.co/_ks_/x-swsl/:';
@@ -960,6 +999,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async setNetworkTopology(opts) {
+    methodNotSupportedInReactNative();
     return new Promise(async (resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
@@ -976,12 +1016,45 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setPlayNewParticipantSound(arg) {
+    methodNotSupportedInReactNative();
     if (!(typeof arg === 'number' || arg === true || arg === false)) {
       throw new Error(
         `argument to setShouldPlayNewParticipantSound should be true, false, or a number, but is ${arg}`
       );
     }
     this._sendIframeMsg({ action: DAILY_METHOD_SET_PLAY_DING, arg });
+  }
+
+  on(eventName, k) {
+    this._inputEventsOn[eventName] = {};
+    this._sendIframeMsg({
+      action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
+      on: eventName,
+    });
+    return EventEmitter.prototype.on.call(this, eventName, k);
+  }
+
+  // todo: once is almost certainly implemented incorrectly. read the
+  // EventEmitter source to figure out how to do this properly. since
+  // overriding on/off/once are optimizations, anyway, we won't worry
+  // about it right now.
+  once(eventName, k) {
+    methodNotSupportedInReactNative();
+    this._inputEventsOn[eventName] = {};
+    this._sendIframeMsg({
+      action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
+      on: eventName,
+    });
+    return EventEmitter.prototype.once.call(this, eventName, k);
+  }
+
+  off(eventName, k) {
+    delete this._inputEventsOn[eventName];
+    this._sendIframeMsg({
+      action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
+      off: eventName,
+    });
+    return EventEmitter.prototype.off.call(this, eventName, k);
   }
 
   //
@@ -1072,7 +1145,7 @@ export default class DailyIframe extends EventEmitter {
         break;
       case DAILY_EVENT_PARTICIPANT_JOINED:
       case DAILY_EVENT_PARTICIPANT_UPDATED:
-        if (this._meetingState === 'left-meeting') {
+        if (this._meetingState === DAILY_STATE_LEFT) {
           return;
         }
         this.fixupParticipant(msg);
@@ -1516,37 +1589,6 @@ export default class DailyIframe extends EventEmitter {
     return a.href;
   }
 
-  on(eventName, k) {
-    this._inputEventsOn[eventName] = {};
-    this._sendIframeMsg({
-      action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
-      on: eventName,
-    });
-    return EventEmitter.prototype.on.call(this, eventName, k);
-  }
-
-  // todo: once is almost certainly implemented incorrectly. read the
-  // EventEmitter source to figure out how to do this properly. since
-  // overriding on/off/once are optimizations, anyway, we won't worry
-  // about it right now.
-  once(eventName, k) {
-    this._inputEventsOn[eventName] = {};
-    this._sendIframeMsg({
-      action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
-      on: eventName,
-    });
-    return EventEmitter.prototype.once.call(this, eventName, k);
-  }
-
-  off(eventName, k) {
-    delete this._inputEventsOn[eventName];
-    this._sendIframeMsg({
-      action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
-      off: eventName,
-    });
-    return EventEmitter.prototype.off.call(this, eventName, k);
-  }
-
   sayHello() {
     const str = 'hello, world.';
     console.log(str);
@@ -1596,4 +1638,20 @@ function makeSafeForPostMessage(props) {
     }
   }
   return safe;
+}
+
+function isReactNative() {
+  return (
+    typeof navigator !== 'undefined' &&
+    navigator.product &&
+    navigator.product === 'ReactNative'
+  );
+}
+
+function methodNotSupportedInReactNative() {
+  if (isReactNative()) {
+    throw new Error(
+      'This daily-js method is not currently supported in React Native'
+    );
+  }
 }
