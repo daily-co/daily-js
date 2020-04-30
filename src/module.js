@@ -428,7 +428,7 @@ export default class DailyIframe extends EventEmitter {
       }
     }
 
-    this._messageChannel.addListenerForCallMachineMessages(
+    this._messageChannel.addListenerForMessagesFromCallMachine(
       this.handleMessageFromCallMachine,
       this._callFrameId,
       this
