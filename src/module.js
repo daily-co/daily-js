@@ -83,7 +83,10 @@ import {
   DAILY_CUSTOM_TRACK,
   DAILY_UI_REQUEST_FULLSCREEN,
   DAILY_UI_EXIT_FULLSCREEN,
-} from './CommonIncludes.js';
+} from './shared-with-pluot-core/CommonIncludes.js';
+import { isReactNative } from './shared-with-pluot-core/Environment.js';
+import WebMessageChannel from './shared-with-pluot-core/script-message-channels/WebMessageChannel';
+import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
 
 
 export { DAILY_STATE_NEW, DAILY_STATE_JOINING, DAILY_STATE_JOINED,
@@ -374,19 +377,9 @@ export default class DailyIframe extends EventEmitter {
     this._activeSpeakerMode = false;
     this._messageCallbacks = {};
     this._callFrameId = Date.now() + Math.random().toString();
-
-    this._messageListener = (evt) => {
-      if (evt.data && evt.data.what === 'iframe-call-message' &&
-          // make callFrameId addressing backwards-compatible with
-          // old versions of the library, which didn't have it
-          (evt.data.callFrameId ?
-           evt.data.callFrameId === this._callFrameId : true) &&
-          (evt.data.from ? evt.data.from !== 'module' : true)) {
-        // console.log('handling module message', evt.data);
-        delete evt.data.from;
-        this.handleMessage(evt.data);
-      }
-    }
+    this._messageChannel = isReactNative() ? 
+      new ReactNativeMessageChannel() : 
+      new WebMessageChannel();
 
     // fullscreen event listener
     if (this._iframe) {
@@ -415,7 +408,7 @@ export default class DailyIframe extends EventEmitter {
       }
     }
 
-    window.addEventListener('message', this._messageListener);
+    this._messageChannel.addListenerForCallMachineMessages(this._callFrameId, this.handleCallMachineMessage, this);
   }
 
   //
@@ -436,7 +429,7 @@ export default class DailyIframe extends EventEmitter {
         parent.removeChild(iframe);
       }
     }
-    window.removeEventListener('message', this._messageListener);
+    this._messageChannel.removeListener(this.handleCallMachineMessage);
   }
 
   loadCss({ bodyClass, cssFile, cssText }) {
@@ -1048,7 +1041,7 @@ export default class DailyIframe extends EventEmitter {
     w.postMessage(msg, '*');
   }
 
-  handleMessage(msg) {
+  handleCallMachineMessage(msg) {
     // messages could be completely handled by callbacks
     if (msg.callbackStamp && this._messageCallbacks[msg.callbackStamp]) {
       this._messageCallbacks[msg.callbackStamp].call(this, msg);
@@ -1493,10 +1486,6 @@ function makeSafeForPostMessage(props) {
     }
   }
   return safe;
-}
-
-function isReactNative() {
-  return (typeof navigator !== 'undefined' && navigator.product && navigator.product === 'ReactNative');
 }
 
 function methodNotSupportedInReactNative() {
