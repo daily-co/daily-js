@@ -18,7 +18,9 @@
     "build": "npm run build-main && npm run build-module",
     "build-dev": "NODE_ENV=development npm run build",
     "build-main": "webpack",
+    "build-main-dev": "NODE_ENV=development npm run build-main",
     "build-module": "rollup -c",
+    "build-module-dev": "NODE_ENV=development npm run build-module",
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
