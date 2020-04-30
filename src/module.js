@@ -375,7 +375,6 @@ export default class DailyIframe extends EventEmitter {
     this._network = { threshold: 'good', quality: 100 };
     this._activeSpeaker = {};
     this._activeSpeakerMode = false;
-    this._messageCallbacks = {};
     this._callFrameId = Date.now() + Math.random().toString();
     this._messageChannel = isReactNative() ? 
       new ReactNativeMessageChannel() : 
@@ -408,7 +407,7 @@ export default class DailyIframe extends EventEmitter {
       }
     }
 
-    this._messageChannel.addListenerForCallMachineMessages(this._callFrameId, this.handleCallMachineMessage, this);
+    this._messageChannel.addListenerForCallMachineMessages(this.handleMessageFromCallMachine, this._callFrameId, this);
   }
 
   //
@@ -429,7 +428,7 @@ export default class DailyIframe extends EventEmitter {
         parent.removeChild(iframe);
       }
     }
-    this._messageChannel.removeListener(this.handleCallMachineMessage);
+    this._messageChannel.removeListener(this.handleMessageFromCallMachine);
   }
 
   loadCss({ bodyClass, cssFile, cssText }) {
@@ -1027,32 +1026,10 @@ export default class DailyIframe extends EventEmitter {
   }
 
   _sendIframeMsg(message, callback) {
-    let msg = { ...message };
-    msg.what = IFRAME_MESSAGE_MARKER;
-    msg.from = 'module';
-    msg.callFrameId = this._callFrameId;
-    if (callback) {
-      let ts = Date.now();
-      this._messageCallbacks[ts] = callback;
-      msg.callbackStamp = ts;
-    }
-    const w = this._iframe ? this._iframe.contentWindow : window;
-    // console.log('sending', msg);
-    w.postMessage(msg, '*');
+    this._messageChannel.sendMessageToCallMachine(message, callback, this._iframe, this._callFrameId);
   }
 
-  handleCallMachineMessage(msg) {
-    // messages could be completely handled by callbacks
-    if (msg.callbackStamp && this._messageCallbacks[msg.callbackStamp]) {
-      this._messageCallbacks[msg.callbackStamp].call(this, msg);
-      delete this._messageCallbacks[msg.callbackStamp];
-    }
-    // or perhaps we should handle this message based on its
-    // msg.action tag. first we'll delete internal fields so the
-    // 'case' code blocks have the option of just emitting the raw
-    // message as an event
-    delete msg.what;
-    delete msg.callbackStamp;
+  handleMessageFromCallMachine(msg) {
     switch (msg.action) {
       case DAILY_EVENT_LOADED:
         if (this._loadedCallback) {
