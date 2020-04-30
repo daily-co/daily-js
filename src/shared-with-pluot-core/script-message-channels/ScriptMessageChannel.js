@@ -10,7 +10,7 @@ export default class ScriptMessageChannel {
    * Adds a listener for messages from the call machine (pluot-core).
    * For use by daily-js.
    */
-  addListenerForCallMachineMessages(listener, callFrameId, thisValue) {
+  addListenerForMessagesFromCallMachine(listener, callFrameId, thisValue) {
     notImplementedError();
   }
 
@@ -18,7 +18,7 @@ export default class ScriptMessageChannel {
    * Adds a listener for messages from daily-js.
    * For use by the call machine (pluot-core).
    */
-  addListenerForDailyJsMessages(listener, callFrameId, thisValue) {
+  addListenerForMessagesFromDailyJs(listener, callFrameId, thisValue) {
     notImplementedError();
   }
 

@@ -12,7 +12,7 @@ export default class WebMessageChannel extends ScriptMessageChannel {
     this._messageCallbacks = {};
   }
 
-  addListenerForCallMachineMessages(listener, callFrameId, thisValue) {
+  addListenerForMessagesFromCallMachine(listener, callFrameId, thisValue) {
     const wrappedListener = (evt) => {
       if (evt.data && evt.data.what === 'iframe-call-message' &&
           // make callFrameId addressing backwards-compatible with
@@ -43,7 +43,7 @@ export default class WebMessageChannel extends ScriptMessageChannel {
     window.addEventListener('message', wrappedListener);
   }
 
-  addListenerForDailyJsMessages(listener, callFrameId, thisValue) {
+  addListenerForMessagesFromDailyJs(listener, callFrameId, thisValue) {
     const wrappedListener = (evt) => {
       if (!(evt.data && evt.data.what === IFRAME_MESSAGE_MARKER &&
         evt.data.action &&
