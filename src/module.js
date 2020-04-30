@@ -387,10 +387,10 @@ export default class DailyIframe extends EventEmitter {
         this._iframe.addEventListener('fullscreenchange', (e) => {
           if (document.fullscreenElement === this._iframe) {
             this.emit(DAILY_EVENT_FULLSCREEN);
-            this._sendIframeMsg({ action: DAILY_EVENT_FULLSCREEN });
+            this.sendMessageToCallMachine({ action: DAILY_EVENT_FULLSCREEN });
           } else {
             this.emit(DAILY_EVENT_EXIT_FULLSCREEN);
-            this._sendIframeMsg({ action: DAILY_EVENT_EXIT_FULLSCREEN });
+            this.sendMessageToCallMachine({ action: DAILY_EVENT_EXIT_FULLSCREEN });
           }
         });
       } else if (this._iframe.webkitRequestFullscreen) {
@@ -398,10 +398,10 @@ export default class DailyIframe extends EventEmitter {
         this._iframe.addEventListener('webkitfullscreenchange', (e) => {
           if (document.webkitFullscreenElement === this._iframe) {
             this.emit(DAILY_EVENT_FULLSCREEN);
-            this._sendIframeMsg({ action: DAILY_EVENT_FULLSCREEN });
+            this.sendMessageToCallMachine({ action: DAILY_EVENT_FULLSCREEN });
           } else {
             this.emit(DAILY_EVENT_EXIT_FULLSCREEN);
-            this._sendIframeMsg({ action: DAILY_EVENT_EXIT_FULLSCREEN });
+            this.sendMessageToCallMachine({ action: DAILY_EVENT_EXIT_FULLSCREEN });
           }
         });
       }
@@ -433,7 +433,7 @@ export default class DailyIframe extends EventEmitter {
 
   loadCss({ bodyClass, cssFile, cssText }) {
     methodNotSupportedInReactNative();
-    this._sendIframeMsg({ action: DAILY_METHOD_LOAD_CSS,
+    this.sendMessageToCallMachine({ action: DAILY_METHOD_LOAD_CSS,
                           cssFile: this.absoluteUrl(cssFile),
                           bodyClass, cssText });
     return this;
@@ -471,7 +471,7 @@ export default class DailyIframe extends EventEmitter {
           }
         }
       }
-      this._sendIframeMsg({ action: DAILY_METHOD_UPDATE_PARTICIPANT,
+      this.sendMessageToCallMachine({ action: DAILY_METHOD_UPDATE_PARTICIPANT,
                             id: sessionId, properties});
     }    
     return this;
@@ -503,26 +503,26 @@ export default class DailyIframe extends EventEmitter {
 
   setLocalAudio(bool) {
     methodNotSupportedInReactNative();
-    this._sendIframeMsg({ action: DAILY_METHOD_LOCAL_AUDIO, state: bool });
+    this.sendMessageToCallMachine({ action: DAILY_METHOD_LOCAL_AUDIO, state: bool });
     return this;
   }
 
   setLocalVideo(bool) {
     methodNotSupportedInReactNative();
-    this._sendIframeMsg({ action: DAILY_METHOD_LOCAL_VIDEO, state: bool });
+    this.sendMessageToCallMachine({ action: DAILY_METHOD_LOCAL_VIDEO, state: bool });
     return this;
   }
 
   setBandwidth({ kbs, trackConstraints }) {
     methodNotSupportedInReactNative();
-    this._sendIframeMsg({ action: DAILY_METHOD_SET_BANDWIDTH,
+    this.sendMessageToCallMachine({ action: DAILY_METHOD_SET_BANDWIDTH,
                           kbs, trackConstraints });
     return this;    
   }
 
   setDailyLang(lang) {
     methodNotSupportedInReactNative();
-    this._sendIframeMsg({ action: DAILY_METHOD_SET_LANG, lang });
+    this.sendMessageToCallMachine({ action: DAILY_METHOD_SET_LANG, lang });
   }
 
   startCamera(properties={}) {
@@ -536,7 +536,7 @@ export default class DailyIframe extends EventEmitter {
       if (!this._loaded) {
         await this.load(properties);
       }
-      this._sendIframeMsg({
+      this.sendMessageToCallMachine({
         action: DAILY_METHOD_START_CAMERA,
         properties: makeSafeForPostMessage(this.properties),
       }, k);
@@ -550,7 +550,7 @@ export default class DailyIframe extends EventEmitter {
       let k = (msg) => {
         resolve({ device: msg.device });
       };
-      this._sendIframeMsg({ action: DAILY_METHOD_CYCLE_CAMERA }, k);
+      this.sendMessageToCallMachine({ action: DAILY_METHOD_CYCLE_CAMERA }, k);
     });
   }
 
@@ -560,7 +560,7 @@ export default class DailyIframe extends EventEmitter {
       let k = (msg) => {
         resolve({ device: msg.device });
       };
-      this._sendIframeMsg({ action: DAILY_METHOD_CYCLE_MIC }, k);
+      this.sendMessageToCallMachine({ action: DAILY_METHOD_CYCLE_MIC }, k);
     });
   }
 
@@ -594,7 +594,7 @@ export default class DailyIframe extends EventEmitter {
       videoDeviceId = DAILY_CUSTOM_TRACK;
     }
 
-    this._sendIframeMsg({ action: DAILY_METHOD_SET_INPUT_DEVICES,
+    this.sendMessageToCallMachine({ action: DAILY_METHOD_SET_INPUT_DEVICES,
                           audioDeviceId, videoDeviceId });
     return this;
   }
@@ -611,7 +611,7 @@ export default class DailyIframe extends EventEmitter {
       return this;
     }
 
-    this._sendIframeMsg({ action: DAILY_METHOD_SET_OUTPUT_DEVICE,
+    this.sendMessageToCallMachine({ action: DAILY_METHOD_SET_OUTPUT_DEVICE,
                           outputDeviceId });
     return this;    
   }
@@ -632,7 +632,7 @@ export default class DailyIframe extends EventEmitter {
         delete msg.callbackStamp;
         resolve(msg);
       };
-      this._sendIframeMsg({ action: DAILY_METHOD_GET_INPUT_DEVICES }, k);
+      this.sendMessageToCallMachine({ action: DAILY_METHOD_GET_INPUT_DEVICES }, k);
     });
   }
 
@@ -695,7 +695,7 @@ export default class DailyIframe extends EventEmitter {
             this.loadCss(this.properties);
           }
           for (let eventName in this._inputEventsOn) {
-            this._sendIframeMsg({ action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
+            this.sendMessageToCallMachine({ action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
                                   on: eventName });
           }
           resolve();
@@ -728,7 +728,7 @@ export default class DailyIframe extends EventEmitter {
     } catch (e) {
       console.log("could not emit 'joining-meeting'");
     }
-    this._sendIframeMsg({
+    this.sendMessageToCallMachine({
       action: DAILY_METHOD_JOIN,
       properties: makeSafeForPostMessage(this.properties),
       preloadCache: makeSafeForPostMessage(this._preloadCache),
@@ -773,7 +773,7 @@ export default class DailyIframe extends EventEmitter {
         }
         resolve();
       }
-      this._sendIframeMsg({ action: DAILY_METHOD_LEAVE }, k);
+      this.sendMessageToCallMachine({ action: DAILY_METHOD_LEAVE }, k);
     });
   }
 
@@ -783,23 +783,23 @@ export default class DailyIframe extends EventEmitter {
       this._preloadCache.screenMediaStream = captureOptions.mediaStream;
       captureOptions.mediaStream = DAILY_CUSTOM_TRACK;
     }
-    this._sendIframeMsg({ action: DAILY_METHOD_START_SCREENSHARE,
+    this.sendMessageToCallMachine({ action: DAILY_METHOD_START_SCREENSHARE,
                           captureOptions });
   }
 
   stopScreenShare() {
     methodNotSupportedInReactNative();
-    this._sendIframeMsg({ action: DAILY_METHOD_STOP_SCREENSHARE });    
+    this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_SCREENSHARE });    
   }
 
   startRecording() {
     methodNotSupportedInReactNative();
-    this._sendIframeMsg({ action: DAILY_METHOD_START_RECORDING });
+    this.sendMessageToCallMachine({ action: DAILY_METHOD_START_RECORDING });
   }
 
   stopRecording() {
     methodNotSupportedInReactNative();
-    this._sendIframeMsg({ action: DAILY_METHOD_STOP_RECORDING });
+    this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_RECORDING });
   }
 
   getNetworkStats() {
@@ -812,7 +812,7 @@ export default class DailyIframe extends EventEmitter {
       let k = (msg) => {
         resolve({ stats: msg.stats, ...this._network });
       }
-      this._sendIframeMsg({ action: DAILY_METHOD_GET_CALC_STATS }, k);
+      this.sendMessageToCallMachine({ action: DAILY_METHOD_GET_CALC_STATS }, k);
     });
   }
 
@@ -823,7 +823,7 @@ export default class DailyIframe extends EventEmitter {
 
   setActiveSpeakerMode(enabled) {
     methodNotSupportedInReactNative();
-    this._sendIframeMsg({ action: DAILY_METHOD_SET_ACTIVE_SPEAKER_MODE, enabled });
+    this.sendMessageToCallMachine({ action: DAILY_METHOD_SET_ACTIVE_SPEAKER_MODE, enabled });
     return this;
   }
 
@@ -843,7 +843,7 @@ export default class DailyIframe extends EventEmitter {
       let k = (msg) => {
         resolve({ devices: msg.devices });
       }
-      this._sendIframeMsg({ action: DAILY_METHOD_ENUMERATE_DEVICES, kind }, k);
+      this.sendMessageToCallMachine({ action: DAILY_METHOD_ENUMERATE_DEVICES, kind }, k);
     });    
   }
 
@@ -853,13 +853,13 @@ export default class DailyIframe extends EventEmitter {
       throw new Error('Message data too large. Max size is ' +
                       MAX_APP_MSG_SIZE);
     }
-    this._sendIframeMsg({ action: DAILY_METHOD_APP_MSG, data, to });
+    this.sendMessageToCallMachine({ action: DAILY_METHOD_APP_MSG, data, to });
     return this;
   }
 
   addFakeParticipant(args) {
     methodNotSupportedInReactNative();
-    this._sendIframeMsg({ action: DAILY_METHOD_ADD_FAKE_PARTICIPANT, ...args });
+    this.sendMessageToCallMachine({ action: DAILY_METHOD_ADD_FAKE_PARTICIPANT, ...args });
     return this;
   }
 
@@ -871,7 +871,7 @@ export default class DailyIframe extends EventEmitter {
       );
       return this;
     }
-    this._sendIframeMsg({ action: DAILY_METHOD_SET_SHOW_NAMES, mode: mode })
+    this.sendMessageToCallMachine({ action: DAILY_METHOD_SET_SHOW_NAMES, mode: mode })
     return this;
   }
 
@@ -883,7 +883,7 @@ export default class DailyIframe extends EventEmitter {
         delete msg.callbackStamp;
         resolve(msg);
       };
-      this._sendIframeMsg({ action: DAILY_METHOD_DETECT_ALL_FACES }, k);
+      this.sendMessageToCallMachine({ action: DAILY_METHOD_DETECT_ALL_FACES }, k);
     });
   }
 
@@ -921,7 +921,7 @@ export default class DailyIframe extends EventEmitter {
         delete msg.callbackStamp;
         resolve(msg);
       };
-      this._sendIframeMsg({ action: DAILY_METHOD_ROOM }, k);
+      this.sendMessageToCallMachine({ action: DAILY_METHOD_ROOM }, k);
     });
   }
 
@@ -950,7 +950,7 @@ export default class DailyIframe extends EventEmitter {
           resolve({ workerId: msg.workerId });
         }
       };
-      this._sendIframeMsg({ action: DAILY_METHOD_SET_NETWORK_TOPOLOGY,
+      this.sendMessageToCallMachine({ action: DAILY_METHOD_SET_NETWORK_TOPOLOGY,
                             opts }, k);
     });
   }
@@ -962,12 +962,12 @@ export default class DailyIframe extends EventEmitter {
           arg === false)) {
       throw new Error(`argument to setShouldPlayNewParticipantSound should be true, false, or a number, but is ${arg}`);
     }
-    this._sendIframeMsg({ action: DAILY_METHOD_SET_PLAY_DING, arg });
+    this.sendMessageToCallMachine({ action: DAILY_METHOD_SET_PLAY_DING, arg });
   }
 
   on(eventName, k) {
     this._inputEventsOn[eventName] = {};
-    this._sendIframeMsg({ action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
+    this.sendMessageToCallMachine({ action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
                           on: eventName });
     return EventEmitter.prototype.on.call(this, eventName, k);
   }
@@ -979,14 +979,14 @@ export default class DailyIframe extends EventEmitter {
   once(eventName, k) {
     methodNotSupportedInReactNative();
     this._inputEventsOn[eventName] = {};
-    this._sendIframeMsg({ action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
+    this.sendMessageToCallMachine({ action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
                           on: eventName });
     return EventEmitter.prototype.once.call(this, eventName, k);
   }
 
   off(eventName, k) {
     delete this._inputEventsOn[eventName];
-    this._sendIframeMsg({ action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
+    this.sendMessageToCallMachine({ action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
                           off: eventName });
     return EventEmitter.prototype.off.call(this, eventName, k);
   }
@@ -1025,7 +1025,7 @@ export default class DailyIframe extends EventEmitter {
     return url + firstSep + newQueryString;
   }
 
-  _sendIframeMsg(message, callback) {
+  sendMessageToCallMachine(message, callback) {
     this._messageChannel.sendMessageToCallMachine(message, callback, this._iframe, this._callFrameId);
   }
 
