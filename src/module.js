@@ -806,7 +806,7 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  startScreenShare(captureOptions) {
+  startScreenShare(captureOptions = {}) {
     if (captureOptions.mediaStream) {
       this._preloadCache.screenMediaStream = captureOptions.mediaStream;
       captureOptions.mediaStream = DAILY_CUSTOM_TRACK;
