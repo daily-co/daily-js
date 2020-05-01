@@ -45,6 +45,7 @@ import {
   DAILY_EVENT_FULLSCREEN,
   DAILY_EVENT_EXIT_FULLSCREEN,
   DAILY_EVENT_NETWORK_CONNECTION,
+  DAILY_EVENT_RECORDING_DATA,
 
   // internals
   //
@@ -1156,6 +1157,7 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED:
       case DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED:
       case DAILY_EVENT_NETWORK_CONNECTION:
+      case DAILY_EVENT_RECORDING_DATA:
         try {
           this.emit(msg.action, msg);
         } catch (e) {
