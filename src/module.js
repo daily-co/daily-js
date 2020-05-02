@@ -763,7 +763,11 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  startScreenShare(captureOptions) {
+  startScreenShare(captureOptions={}) {
+    if (captureOptions.mediaStream) {
+      this._preloadCache.screenMediaStream = captureOptions.mediaStream;
+      captureOptions.mediaStream = DAILY_CUSTOM_TRACK;
+    }
     this._sendIframeMsg({ action: DAILY_METHOD_START_SCREENSHARE,
                           captureOptions });
   }
