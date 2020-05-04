@@ -1,4 +1,5 @@
 import CallObjectLoader from "./CallObjectLoader";
+import { callObjectBundleUrl } from "../utils";
 
 export default class CallObjectLoaderWeb extends CallObjectLoader {
   constructor() {
@@ -21,13 +22,7 @@ export default class CallObjectLoaderWeb extends CallObjectLoader {
         this._callObjectScriptLoaded = true;
         callback(false); // false = "wasn't no-op"
       };
-      // Use the CDN to get call-machine-object (but use whatever's "local" for dev+staging)
-      if (process.env.NODE_ENV === "production") {
-        script.src = `https://c.daily.co/static/call-machine-object-bundle.js`;
-      } else {
-        let url = new URL(meetingUrl);
-        script.src = `${url.origin}/static/call-machine-object-bundle.js`;
-      }
+      script.src = callObjectBundleUrl(meetingUrl);
       head.appendChild(script);
     }
   }

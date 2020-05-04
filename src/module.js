@@ -88,6 +88,7 @@ import { isReactNative } from './shared-with-pluot-core/Environment.js';
 import WebMessageChannel from './shared-with-pluot-core/script-message-channels/WebMessageChannel';
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
 import CallObjectLoaderWeb from './call-object-loaders/CallObjectLoaderWeb.js';
+import CallObjectLoaderReactNative from './call-object-loaders/CallObjectLoaderReactNative.js';
 
 
 export { DAILY_STATE_NEW, DAILY_STATE_JOINING, DAILY_STATE_JOINED,
@@ -372,7 +373,11 @@ export default class DailyIframe extends EventEmitter {
 
     this.validateProperties(properties);
     this.properties = { ...properties };
-    this._callObjectLoader = (this._callObjectMode ? new CallObjectLoaderWeb() : null);
+    this._callObjectLoader = this._callObjectMode
+      ? isReactNative()
+        ? new CallObjectLoaderReactNative()
+        : new CallObjectLoaderWeb()
+      : null;
     this._meetingState = DAILY_STATE_NEW;
     this._participants = {};
     this._inputEventsOn = {}; // need to cache these until loaded
