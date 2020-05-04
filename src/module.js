@@ -371,7 +371,6 @@ export default class DailyIframe extends EventEmitter {
 
     this.validateProperties(properties);
     this.properties = { ...properties };
-    this._loaded = false;
     this._callObjectScriptLoaded = false;
     this._meetingState = DAILY_STATE_NEW;
     this._participants = {};
@@ -538,7 +537,7 @@ export default class DailyIframe extends EventEmitter {
         delete msg.callbackStamp;
         resolve(msg);
       };
-      if (!this._loaded) {
+      if (this.needsLoad()) {
         await this.load(properties);
       }
       this.sendMessageToCallMachine({
@@ -666,7 +665,6 @@ export default class DailyIframe extends EventEmitter {
         }
         if (this._callObjectScriptLoaded) {
           window._dailyCallObjectSetup();
-          this._loaded = true;
           this._meetingState = DAILY_STATE_LOADED;
           this.emit(DAILY_EVENT_LOADED, { action: DAILY_EVENT_LOADED });
           resolve();
@@ -675,7 +673,6 @@ export default class DailyIframe extends EventEmitter {
                 script = document.createElement('script');
           script.onload = async () => {
             this._callObjectScriptLoaded = true;
-            this._loaded = true;
             this._meetingState = DAILY_STATE_LOADED;
             resolve();
           }
@@ -703,7 +700,6 @@ export default class DailyIframe extends EventEmitter {
       this._iframe.src = this.assembleMeetingUrl();
       return new Promise((resolve, reject) => {
         this._loadedCallback = () => {
-          this._loaded = true;
           this._meetingState = DAILY_STATE_LOADED;
           if (this.properties.cssFile || this.properties.cssText) {
             this.loadCss(this.properties);
@@ -721,7 +717,7 @@ export default class DailyIframe extends EventEmitter {
   async join(properties={}) {
     methodNotSupportedInReactNative()
     let newCss = false;
-    if (!this._loaded) {
+    if (this.needsLoad()) {
       await this.load(properties);
     } else {
       newCss = !!(this.properties.cssFile || this.properties.cssText)
@@ -777,7 +773,6 @@ export default class DailyIframe extends EventEmitter {
           // ks beacon?
           // this._iframe.src = '';
         }
-        this._loaded = false;
         this._meetingState = DAILY_STATE_LEFT;
         this._participants = {};
         this._activeSpeakerMode = false;
@@ -1043,6 +1038,13 @@ export default class DailyIframe extends EventEmitter {
     return url + firstSep + newQueryString;
   }
 
+  // Note that even if this is true, load() may decide that there's nothing
+  // more to do (e.g. in the case that the call object has already been loaded 
+  // once) and simply carry out the appropriate meeting state transition
+  needsLoad() {
+    return [DAILY_STATE_NEW, DAILY_STATE_LEFT, DAILY_STATE_ERROR].includes(this._meetingState);
+  }
+
   sendMessageToCallMachine(message, callback) {
     this._messageChannel.sendMessageToCallMachine(message, callback, this._iframe, this._callFrameId);
   }
@@ -1133,7 +1135,6 @@ export default class DailyIframe extends EventEmitter {
         if (this._iframe) {
           this._iframe.src = '';
         }
-        this._loaded = false;
         this._meetingState = DAILY_STATE_ERROR;
         try {
           this.emit(msg.action, msg);
