@@ -87,6 +87,7 @@ import {
 import { isReactNative } from './shared-with-pluot-core/Environment.js';
 import WebMessageChannel from './shared-with-pluot-core/script-message-channels/WebMessageChannel';
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
+import CallObjectLoaderWeb from './call-object-loaders/CallObjectLoaderWeb.js';
 
 
 export { DAILY_STATE_NEW, DAILY_STATE_JOINING, DAILY_STATE_JOINED,
@@ -371,7 +372,7 @@ export default class DailyIframe extends EventEmitter {
 
     this.validateProperties(properties);
     this.properties = { ...properties };
-    this._callObjectScriptLoaded = false;
+    this._callObjectLoader = (this._callObjectMode ? new CallObjectLoaderWeb() : null);
     this._meetingState = DAILY_STATE_NEW;
     this._participants = {};
     this._inputEventsOn = {}; // need to cache these until loaded
@@ -656,47 +657,20 @@ export default class DailyIframe extends EventEmitter {
       console.log("could not emit 'loading'");
     }
 
-    // non-iframe, callObjectMode ... load call-machine using script tag
     if (this._callObjectMode) {
-      return new Promise((resolve, reject) => {
-        if (!document) {
-          console.error('need to create call object in a DOM/web context');
-          return;
-        }
-        if (this._callObjectScriptLoaded) {
-          window._dailyCallObjectSetup();
+      // non-iframe, callObjectMode
+      return new Promise((resolve, _) => {
+        this._callObjectLoader.load(this.properties.url, (wasNoOp) => {
           this._meetingState = DAILY_STATE_LOADED;
-          this.emit(DAILY_EVENT_LOADED, { action: DAILY_EVENT_LOADED });
+          // Only need to emit event if load was a no-op, since the loaded
+          // bundle won't be emitting it if it's not executed again
+          wasNoOp && this.emit(DAILY_EVENT_LOADED, { action: DAILY_EVENT_LOADED });
           resolve();
-        } else {
-          const head = document.getElementsByTagName('head')[0],
-                script = document.createElement('script');
-          script.onload = async () => {
-            this._callObjectScriptLoaded = true;
-            this._meetingState = DAILY_STATE_LOADED;
-            resolve();
-          }
-          // Use the CDN to get call-machine-object (but use whatever's "local" for dev+staging)
-          if (process.env.NODE_ENV === 'production') {
-            if (!DailyIframe.supportedBrowser().supportsSfu) {
-              script.src = `https://c.daily.co/static/call-machine-object-nosfu-bundle.js`;
-            } else {
-              script.src = `https://c.daily.co/static/call-machine-object-bundle.js`;
-            }
-          } else {
-            let url = new URL(this.properties.url);
-            if (!DailyIframe.supportedBrowser().supportsSfu) {
-              script.src = `${url.origin}/static/call-machine-object-nosfu-bundle.js`;
-            } else {
-              script.src = `${url.origin}/static/call-machine-object-bundle.js`;
-            }
-          }
-          head.appendChild(script);
-        }
+        });
       });
-
-    // iframe ... load call in iframe
-    } else {
+    }
+    else {
+      // iframe
       this._iframe.src = this.assembleMeetingUrl();
       return new Promise((resolve, reject) => {
         this._loadedCallback = () => {
