@@ -1017,11 +1017,19 @@ export default class DailyIframe extends EventEmitter {
     return url + firstSep + newQueryString;
   }
 
-  // Note that even if this is true, load() may decide that there's nothing
-  // more to do (e.g. in the case that the call object has already been loaded 
-  // once) and simply carry out the appropriate meeting state transition
+  // Note that even if the below method returns true, load() may decide that 
+  // there's nothing more to do (e.g. in the case that the call object has 
+  // already been loaded once) and simply carry out the appropriate meeting 
+  // state transition.
   needsLoad() {
-    return [DAILY_STATE_NEW, DAILY_STATE_LEFT, DAILY_STATE_ERROR].includes(this._meetingState);
+    // NOTE: The *only* reason DAILY_STATE_LOADING is here is to preserve a bug
+    // that I (@kompfner) am a bit hesitant to fix until more time can be 
+    // dedicated to doing the *right* fix. If we're in DAILY_STATE_LOADING, we 
+    // probably *shouldn't* let you trigger another load() and get into a weird
+    // state, but this has been long-standing behavior. The alternative would mean
+    // that, if load() failed silently for some reason, you couldn't re-trigger it
+    // since we'd be stuck in the DAILY_STATE_LOADING state.
+    return [DAILY_STATE_NEW, DAILY_STATE_LOADING, DAILY_STATE_LEFT, DAILY_STATE_ERROR].includes(this._meetingState);
   }
 
   sendMessageToCallMachine(message, callback) {
