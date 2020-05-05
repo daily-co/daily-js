@@ -11,6 +11,9 @@ export default class CallObjectLoaderReactNative extends CallObjectLoader {
       .then((code) => {
         eval(code);
       })
+      .then(() => {
+        callback(false); // false = "wasn't no-op"
+      })
       .catch((e) => {
         console.error('Failed to load RN call object bundle', e);
       });
