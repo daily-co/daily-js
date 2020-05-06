@@ -1,5 +1,4 @@
 import EventEmitter from 'events';
-import Bowser from 'bowser';
 import { deepEqual } from 'fast-equals';
 import {
   filter,
@@ -84,9 +83,11 @@ import {
   DAILY_UI_REQUEST_FULLSCREEN,
   DAILY_UI_EXIT_FULLSCREEN,
 } from './shared-with-pluot-core/CommonIncludes.js';
-import { isReactNative } from './shared-with-pluot-core/Environment.js';
+import { isReactNative, browserInfo } from './shared-with-pluot-core/Environment.js';
 import WebMessageChannel from './shared-with-pluot-core/script-message-channels/WebMessageChannel';
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
+import CallObjectLoaderWeb from './call-object-loaders/CallObjectLoaderWeb.js';
+import CallObjectLoaderReactNative from './call-object-loaders/CallObjectLoaderReactNative.js';
 
 
 export { DAILY_STATE_NEW, DAILY_STATE_JOINING, DAILY_STATE_JOINED,
@@ -204,58 +205,7 @@ export default class DailyIframe extends EventEmitter {
 
   static supportedBrowser() {
     methodNotSupportedInReactNative();
-    function supportsUnifiedPlanSDP(browser) {
-      return browser.satisfies({
-        electron: ">=6",
-        chromium: ">=75",
-        chrome: ">=75",
-        firefox: ">=67",
-        opera: ">=61",  // Corresponds to Chrome 75
-        // Technically Safari 12.1 supports Unified Plan SDP, but for simplicity
-        // we're just checking for 13.0.1 and above to avoid a 13.0.0 bug. 12.1
-        // will fail the isDisplayMediaAccessible() check anyway.
-        safari: ">=13.0.1",
-        edge: ">=79",   // Corresponds to Edgium
-      });
-    }
-
-    function isDisplayMediaAccessible() {
-      return navigator && navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia;
-    }
-
-    const browser = Bowser.getParser(window.navigator.userAgent),
-          basic = browser.getBrowser(),
-          parsed = Bowser.parse(window.navigator.userAgent),
-          isValidBrowser = browser.satisfies({
-            electron: ">=6",
-            chromium: ">=61",
-            chrome: ">=61",
-            firefox: ">=63",
-            opera: ">=61",
-            safari: ">=12",
-            edge: ">=18",
-            iOS: {
-              chromium: "<0",
-              chrome: "<0",
-              firefox: "<0",
-              opera: "<0",
-              safari: ">=12",
-              edge: "<0",
-            }
-          }),
-        // See PluotUtil.isScreenSharingSupported() for a thorough explanation of this check
-        supportsScreenShare = !!(isValidBrowser && isDisplayMediaAccessible() && supportsUnifiedPlanSDP(browser)),
-        supportsSfu = !!(isValidBrowser && !browser.satisfies({edge: '<=18'}));
-
-    return {
-      supported: isValidBrowser,
-      mobile: parsed.platform.type === 'mobile',
-      name: basic.name,
-      version: basic.version,
-      supportsScreenShare,
-      supportsSfu,
-      // basic, parsed
-    };
+    return browserInfo();
   }
 
   //
@@ -371,8 +321,11 @@ export default class DailyIframe extends EventEmitter {
 
     this.validateProperties(properties);
     this.properties = { ...properties };
-    this._loaded = false;
-    this._callObjectScriptLoaded = false;
+    this._callObjectLoader = this._callObjectMode
+      ? isReactNative()
+        ? new CallObjectLoaderReactNative()
+        : new CallObjectLoaderWeb()
+      : null;
     this._meetingState = DAILY_STATE_NEW;
     this._participants = {};
     this._inputEventsOn = {}; // need to cache these until loaded
@@ -538,7 +491,7 @@ export default class DailyIframe extends EventEmitter {
         delete msg.callbackStamp;
         resolve(msg);
       };
-      if (!this._loaded) {
+      if (this.needsLoad()) {
         await this.load(properties);
       }
       this.sendMessageToCallMachine({
@@ -657,53 +610,23 @@ export default class DailyIframe extends EventEmitter {
       console.log("could not emit 'loading'");
     }
 
-    // non-iframe, callObjectMode ... load call-machine using script tag
     if (this._callObjectMode) {
-      return new Promise((resolve, reject) => {
-        if (!document) {
-          console.error('need to create call object in a DOM/web context');
-          return;
-        }
-        if (this._callObjectScriptLoaded) {
-          window._dailyCallObjectSetup();
-          this._loaded = true;
+      // non-iframe, callObjectMode
+      return new Promise((resolve, _) => {
+        this._callObjectLoader.load(this.properties.url, (wasNoOp) => {
           this._meetingState = DAILY_STATE_LOADED;
-          this.emit(DAILY_EVENT_LOADED, { action: DAILY_EVENT_LOADED });
+          // Only need to emit event if load was a no-op, since the loaded
+          // bundle won't be emitting it if it's not executed again
+          wasNoOp && this.emit(DAILY_EVENT_LOADED, { action: DAILY_EVENT_LOADED });
           resolve();
-        } else {
-          const head = document.getElementsByTagName('head')[0],
-                script = document.createElement('script');
-          script.onload = async () => {
-            this._callObjectScriptLoaded = true;
-            this._loaded = true;
-            this._meetingState = DAILY_STATE_LOADED;
-            resolve();
-          }
-          // Use the CDN to get call-machine-object (but use whatever's "local" for dev+staging)
-          if (process.env.NODE_ENV === 'production') {
-            if (!DailyIframe.supportedBrowser().supportsSfu) {
-              script.src = `https://c.daily.co/static/call-machine-object-nosfu-bundle.js`;
-            } else {
-              script.src = `https://c.daily.co/static/call-machine-object-bundle.js`;
-            }
-          } else {
-            let url = new URL(this.properties.url);
-            if (!DailyIframe.supportedBrowser().supportsSfu) {
-              script.src = `${url.origin}/static/call-machine-object-nosfu-bundle.js`;
-            } else {
-              script.src = `${url.origin}/static/call-machine-object-bundle.js`;
-            }
-          }
-          head.appendChild(script);
-        }
+        });
       });
-
-    // iframe ... load call in iframe
-    } else {
+    }
+    else {
+      // iframe
       this._iframe.src = this.assembleMeetingUrl();
       return new Promise((resolve, reject) => {
         this._loadedCallback = () => {
-          this._loaded = true;
           this._meetingState = DAILY_STATE_LOADED;
           if (this.properties.cssFile || this.properties.cssText) {
             this.loadCss(this.properties);
@@ -721,7 +644,7 @@ export default class DailyIframe extends EventEmitter {
   async join(properties={}) {
     methodNotSupportedInReactNative()
     let newCss = false;
-    if (!this._loaded) {
+    if (this.needsLoad()) {
       await this.load(properties);
     } else {
       newCss = !!(this.properties.cssFile || this.properties.cssText)
@@ -777,7 +700,6 @@ export default class DailyIframe extends EventEmitter {
           // ks beacon?
           // this._iframe.src = '';
         }
-        this._loaded = false;
         this._meetingState = DAILY_STATE_LEFT;
         this._participants = {};
         this._activeSpeakerMode = false;
@@ -1043,6 +965,21 @@ export default class DailyIframe extends EventEmitter {
     return url + firstSep + newQueryString;
   }
 
+  // Note that even if the below method returns true, load() may decide that 
+  // there's nothing more to do (e.g. in the case that the call object has 
+  // already been loaded once) and simply carry out the appropriate meeting 
+  // state transition.
+  needsLoad() {
+    // NOTE: The *only* reason DAILY_STATE_LOADING is here is to preserve a bug
+    // that I (@kompfner) am a bit hesitant to fix until more time can be 
+    // dedicated to doing the *right* fix. If we're in DAILY_STATE_LOADING, we 
+    // probably *shouldn't* let you trigger another load() and get into a weird
+    // state, but this has been long-standing behavior. The alternative would mean
+    // that, if load() failed silently for some reason, you couldn't re-trigger it
+    // since we'd be stuck in the DAILY_STATE_LOADING state.
+    return [DAILY_STATE_NEW, DAILY_STATE_LOADING, DAILY_STATE_LEFT, DAILY_STATE_ERROR].includes(this._meetingState);
+  }
+
   sendMessageToCallMachine(message, callback) {
     this._messageChannel.sendMessageToCallMachine(message, callback, this._iframe, this._callFrameId);
   }
@@ -1133,7 +1070,6 @@ export default class DailyIframe extends EventEmitter {
         if (this._iframe) {
           this._iframe.src = '';
         }
-        this._loaded = false;
         this._meetingState = DAILY_STATE_ERROR;
         try {
           this.emit(msg.action, msg);

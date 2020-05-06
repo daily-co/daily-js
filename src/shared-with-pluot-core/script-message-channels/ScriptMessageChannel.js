@@ -1,6 +1,4 @@
-function notImplementedError() {
-  throw new Error("Method must be implemented in subclass");
-}
+import { notImplementedError } from "../../utils";
 
 /**
  * A two-way message channel between daily-js and the call machine (pluot-core).
