@@ -731,10 +731,18 @@ export default class DailyIframe extends EventEmitter {
           };
           // Use the CDN to get call-machine-object (but use whatever's "local" for dev+staging)
           if (process.env.NODE_ENV === 'production') {
-            script.src = `https://c.daily.co/static/call-machine-object-bundle.js`;
+            if (DailyIframe.supportedBrowser().name === 'Microsoft Edge') {
+              script.src = `https://c.daily.co/static/call-machine-object-nosfu-bundle.js`;
+            } else {
+              script.src = `https://c.daily.co/static/call-machine-object-bundle.js`;
+            }
           } else {
             let url = new URL(this.properties.url);
-            script.src = `${url.origin}/static/call-machine-object-bundle.js`;
+            if (DailyIframe.supportedBrowser().name === 'Microsoft Edge') {
+              script.src = `${url.origin}/static/call-machine-object-nosfu-bundle.js`;
+            } else {
+              script.src = `${url.origin}/static/call-machine-object-bundle.js`;
+            }
           }
           head.appendChild(script);
         }
