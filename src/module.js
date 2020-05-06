@@ -240,14 +240,16 @@ export default class DailyIframe extends EventEmitter {
             }
           }),
         // See PluotUtil.isScreenSharingSupported() for a thorough explanation of this check
-        supportsScreenShare = !!(isValidBrowser && isDisplayMediaAccessible() && supportsUnifiedPlanSDP(browser));
+        supportsScreenShare = !!(isValidBrowser && isDisplayMediaAccessible() && supportsUnifiedPlanSDP(browser)),
+        supportsSfu = !!(isValidBrowser && !browser.satisfies({edge: '<=18'}));
 
     return {
       supported: isValidBrowser,
       mobile: parsed.platform.type === 'mobile',
       name: basic.name,
       version: basic.version,
-      supportsScreenShare
+      supportsScreenShare,
+      supportsSfu,
       // basic, parsed
     };
   }
@@ -661,14 +663,14 @@ export default class DailyIframe extends EventEmitter {
           }
           // Use the CDN to get call-machine-object (but use whatever's "local" for dev+staging)
           if (process.env.NODE_ENV === 'production') {
-            if (DailyIframe.supportedBrowser().name === 'Microsoft Edge') {
+            if (!DailyIframe.supportedBrowser().supportsSfu) {
               script.src = `https://c.daily.co/static/call-machine-object-nosfu-bundle.js`;
             } else {
               script.src = `https://c.daily.co/static/call-machine-object-bundle.js`;
             }
           } else {
             let url = new URL(this.properties.url);
-            if (DailyIframe.supportedBrowser().name === 'Microsoft Edge') {
+            if (!DailyIframe.supportedBrowser().supportsSfu) {
               script.src = `${url.origin}/static/call-machine-object-nosfu-bundle.js`;
             } else {
               script.src = `${url.origin}/static/call-machine-object-bundle.js`;
