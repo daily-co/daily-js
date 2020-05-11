@@ -79,6 +79,8 @@ import {
   DAILY_METHOD_ROOM,
   DAILY_METHOD_SET_NETWORK_TOPOLOGY,
   DAILY_METHOD_SET_PLAY_DING,
+  DAILY_METHOD_SET_SUBSCRIBE_TO_TRACKS_AUTOMATICALLY,
+
   DAILY_CUSTOM_TRACK,
   DAILY_UI_REQUEST_FULLSCREEN,
   DAILY_UI_EXIT_FULLSCREEN,
@@ -88,6 +90,9 @@ import WebMessageChannel from './shared-with-pluot-core/script-message-channels/
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
 import CallObjectLoaderWeb from './call-object-loaders/CallObjectLoaderWeb.js';
 import CallObjectLoaderReactNative from './call-object-loaders/CallObjectLoaderReactNative.js';
+import {
+  getLocalIsSubscribedToTrack,
+} from './shared-with-pluot-core/Util';
 
 
 export { DAILY_STATE_NEW, DAILY_STATE_JOINING, DAILY_STATE_JOINED,
@@ -147,6 +152,12 @@ const FRAME_PROPS = {
       return true;
     }
   },
+  subscribeToTracksAutomatically: {
+    validate: (s, callObject) => {
+      callObject._preloadCache.subscribeToTracksAutomatically = s;
+      return true;
+    }
+  },
   // used internally
   layout: {
     validate: (layout) => layout === 'custom-v1' || layout === 'browser' ||
@@ -190,7 +201,19 @@ const PARTICIPANT_PROPS = {
     help: 'styles format should be a subset of: ' +
           '{ cam: {div: {}, video: {}}, screen: {div: {}, video: {}} }'
   },
-  setAudio: true, setVideo: true, eject: true
+  setSubscribedTracks: {
+    validate: (subs) => {
+      for (const s in subs) {
+        if (!(s === 'audio' || s ===  'video' || s === 'screenVideo')) {
+          return false;
+        }
+      }
+      return true;
+    },
+    help: 'setSubscribedTracks should be an object of the form: ' +
+      '{ audio: true|false, video: true|false, screenVideo: true|false }'
+  },
+  setAudio: true, setVideo: true, eject: true, 
 };
 
 //
@@ -770,6 +793,25 @@ export default class DailyIframe extends EventEmitter {
     return this._activeSpeakerMode;
   }
 
+  subscribeToTracksAutomatically() {
+    methodNotSupportedInReactNative();
+    return this._preloadCache.subscribeToTracksAutomatically;
+  }
+
+  setSubscribeToTracksAutomatically(enabled) {
+    methodNotSupportedInReactNative();
+    // only support this feature in call object mode
+    if (this._meetingState !== DAILY_STATE_NEW &&
+        !this._callObjectMode) {
+      console.error('track subscription is only supported in call object mode');
+      return;
+    }
+    this._preloadCache.subscribeToTracksAutomatically = enabled;
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_SET_SUBSCRIBE_TO_TRACKS_AUTOMATICALLY, enabled
+    });
+  }
+
   async enumerateDevices(kind) {
     methodNotSupportedInReactNative();
     if (this._callObjectMode) {
@@ -1243,7 +1285,8 @@ export default class DailyIframe extends EventEmitter {
             prevP = this._participants[p.session_id];
 
       // find audio track
-      if (p.audio) {
+      if (p.audio &&
+          getLocalIsSubscribedToTrack(state, p.session_id, 'cam-audio')) {
         let audioTracks = orderBy(filter(allStreams, (s) => (
           s.participantId === p.session_id &&
             s.type === 'cam' &&
@@ -1265,7 +1308,8 @@ export default class DailyIframe extends EventEmitter {
         if (!p.audioTrack) { p.audio = false };
       }
       // find video track
-      if (p.video) {
+      if (p.video &&
+          getLocalIsSubscribedToTrack(state, p.session_id, 'cam-video')) {
         let videoTracks = orderBy(filter(allStreams, (s) => (
           s.participantId === p.session_id &&
             s.type === 'cam' &&
@@ -1283,7 +1327,8 @@ export default class DailyIframe extends EventEmitter {
         if (!p.videoTrack) { p.video = false };
       }
       // find screen-share video track
-      if (p.screen) {
+      if (p.screen &&
+          getLocalIsSubscribedToTrack(state, p.session_id, 'screen-video')) {
         let screenVideoTracks = orderBy(filter(allStreams, (s) => (
           s.participantId === p.session_id &&
             s.type === 'screen' &&
@@ -1377,6 +1422,7 @@ export default class DailyIframe extends EventEmitter {
 
 function initializePreloadCache(callObject, properties) {
   return {
+    subscribeToTracksAutomatically: true,
     audioDeviceId: null,
     videoDeviceId: null,
     outputDeviceId: null,
