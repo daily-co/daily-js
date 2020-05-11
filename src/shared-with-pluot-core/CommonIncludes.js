@@ -86,6 +86,9 @@ export const DAILY_METHOD_DETECT_ALL_FACES = 'detect-all-faces';
 export const DAILY_METHOD_ROOM = 'lib-room-info';
 export const DAILY_METHOD_SET_NETWORK_TOPOLOGY = 'set-network-topology';
 export const DAILY_METHOD_SET_PLAY_DING = 'daily-method-set-play-ding';
+export const DAILY_METHOD_SET_SUBSCRIBE_TO_TRACKS_AUTOMATICALLY =
+  'daily-method-subscribe-to-tracks-automatically';
+
 export const DAILY_CUSTOM_TRACK = 'daily-custom-track';
 export const DAILY_UI_REQUEST_FULLSCREEN = 'request-fullscreen';
 export const DAILY_UI_EXIT_FULLSCREEN = 'request-exit-fullscreen';
