@@ -9,6 +9,17 @@ export function isReactNative() {
 }
 
 export function browserInfo() {
+  if (isReactNative()) {
+    return {
+      supported: true,
+      mobile: true,
+      name: 'React Native',
+      version: null,
+      supportsScreenShare: false,
+      supportsSfu: true,
+    };
+  }
+
   function supportsUnifiedPlanSDP(browser) {
     return browser.satisfies({
       electron: '>=6',
