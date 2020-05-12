@@ -75,6 +75,7 @@ import {
   DAILY_METHOD_ROOM,
   DAILY_METHOD_SET_NETWORK_TOPOLOGY,
   DAILY_METHOD_SET_PLAY_DING,
+  DAILY_METHOD_SET_SUBSCRIBE_TO_TRACKS_AUTOMATICALLY,
   DAILY_CUSTOM_TRACK,
   DAILY_UI_REQUEST_FULLSCREEN,
   DAILY_UI_EXIT_FULLSCREEN,
@@ -87,6 +88,7 @@ import WebMessageChannel from './shared-with-pluot-core/script-message-channels/
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
 import CallObjectLoaderWeb from './call-object-loaders/CallObjectLoaderWeb.js';
 import CallObjectLoaderReactNative from './call-object-loaders/CallObjectLoaderReactNative.js';
+import { getLocalIsSubscribedToTrack } from './shared-with-pluot-core/selectors';
 
 export {
   DAILY_STATE_NEW,
@@ -153,6 +155,16 @@ const FRAME_PROPS = {
       return true;
     },
   },
+  subscribeToTracksAutomatically: {
+    validate: (s, callObject) => {
+      if (!callObject._callObjectMode) {
+        return false;
+      }
+      callObject._preloadCache.subscribeToTracksAutomatically = s;
+      return true;
+    },
+    help: 'can only be used with the createCallObject() constructor',
+  },
   // used internally
   layout: {
     validate: (layout) =>
@@ -196,6 +208,28 @@ const PARTICIPANT_PROPS = {
     help:
       'styles format should be a subset of: ' +
       '{ cam: {div: {}, video: {}}, screen: {div: {}, video: {}} }',
+  },
+  setSubscribedTracks: {
+    validate: (subs, callObject, participant) => {
+      if (!callObject._callObjectMode) {
+        return false;
+      }
+      if (callObject._preloadCache.subscribeToTracksAutomatically) {
+        return false;
+      }
+      if (participant.local) {
+        return false;
+      }
+      for (const s in subs) {
+        if (!(s === 'audio' || s === 'video' || s === 'screenVideo')) {
+          return false;
+        }
+      }
+      return true;
+    },
+    help:
+      'setSubscribedTracks can only be used in call object mode, cannot be used on the local participant, cannot be used when setSubscribeToTracksAutomatically is enabled, and should be of the form: ' +
+      'true | false | { [audio: true|false], [video: true|false], [screenVideo: true|false] }',
   },
   setAudio: true,
   setVideo: true,
@@ -298,7 +332,15 @@ export default class DailyIframe extends EventEmitter {
         properties.layout = 'browser';
       }
     }
-    return new DailyIframe(iframeEl, properties);
+    try {
+      let callFrame = new DailyIframe(iframeEl, properties);
+      return callFrame;
+    } catch (e) {
+      // something when wrong while constructing the object. so let's clean
+      // up by removing ourselves from the page, then rethrow the error.
+      parentEl.removeChild(iframeEl);
+      throw e;
+    }
   }
 
   static createTransparentFrame(properties = {}) {
@@ -448,7 +490,13 @@ export default class DailyIframe extends EventEmitter {
           throw new Error(`unrecognized updateParticipant property ${prop}`);
         }
         if (PARTICIPANT_PROPS[prop].validate) {
-          if (!PARTICIPANT_PROPS[prop].validate(properties[prop])) {
+          if (
+            !PARTICIPANT_PROPS[prop].validate(
+              properties[prop],
+              this,
+              this._participants[sessionId]
+            )
+          ) {
             throw new Error(PARTICIPANT_PROPS[prop].help);
           }
         }
@@ -825,6 +873,31 @@ export default class DailyIframe extends EventEmitter {
   activeSpeakerMode() {
     methodNotSupportedInReactNative();
     return this._activeSpeakerMode;
+  }
+
+  subscribeToTracksAutomatically() {
+    methodNotSupportedInReactNative();
+    return this._preloadCache.subscribeToTracksAutomatically;
+  }
+
+  setSubscribeToTracksAutomatically(enabled) {
+    methodNotSupportedInReactNative();
+    // only support this feature in call object mode
+    if (!this._callObjectMode) {
+      throw new Error(
+        'setSubscribeToTracksAutomatically() is only allowed in call object mode'
+      );
+    }
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      throw new Error(
+        'setSubscribeToTracksAutomatically() is only allowed while in a meeting'
+      );
+    }
+    this._preloadCache.subscribeToTracksAutomatically = enabled;
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_SET_SUBSCRIBE_TO_TRACKS_AUTOMATICALLY,
+      enabled,
+    });
   }
 
   async enumerateDevices(kind) {
@@ -1368,7 +1441,10 @@ export default class DailyIframe extends EventEmitter {
         prevP = this._participants[p.session_id];
 
       // find audio track
-      if (p.audio) {
+      if (
+        p.audio &&
+        getLocalIsSubscribedToTrack(state, p.session_id, 'cam-audio')
+      ) {
         let audioTracks = orderBy(
           filter(
             allStreams,
@@ -1402,7 +1478,10 @@ export default class DailyIframe extends EventEmitter {
         }
       }
       // find video track
-      if (p.video) {
+      if (
+        p.video &&
+        getLocalIsSubscribedToTrack(state, p.session_id, 'cam-video')
+      ) {
         let videoTracks = orderBy(
           filter(
             allStreams,
@@ -1432,7 +1511,10 @@ export default class DailyIframe extends EventEmitter {
         }
       }
       // find screen-share video track
-      if (p.screen) {
+      if (
+        p.screen &&
+        getLocalIsSubscribedToTrack(state, p.session_id, 'screen-video')
+      ) {
         let screenVideoTracks = orderBy(
           filter(
             allStreams,
@@ -1552,6 +1634,7 @@ export default class DailyIframe extends EventEmitter {
 
 function initializePreloadCache(callObject, properties) {
   return {
+    subscribeToTracksAutomatically: true,
     audioDeviceId: null,
     videoDeviceId: null,
     outputDeviceId: null,
