@@ -13,7 +13,7 @@ export const getLocalIsSubscribedToTrack = (state, id, mediaTag) => {
 
 export const _getIsSubscribedToTrack = (state, p, p2id, mediaTag) => {
   // if we don't have a participant record at all, assume that
-  // true is the safest thing to return, here
+  // false is the safest thing to return, here
   if (!p) {
     return false;
   }
@@ -23,7 +23,12 @@ export const _getIsSubscribedToTrack = (state, p, p2id, mediaTag) => {
   ) {
     return true;
   }
-  return (
-    p.public.subscribedTracks[p2id] && p.public.subscribedTracks[p2id][mediaTag]
-  );
+  if (!p.public.subscribedTracks[p2id]) {
+    // this shouldn't happen, so return false for safety, as above
+    return false;
+  }
+  if (p.public.subscribedTracks[p2id].ALL !== undefined) {
+    return p.public.subscribedTracks[p2id].ALL;
+  }
+  return p.public.subscribedTracks[p2id][mediaTag];
 };
