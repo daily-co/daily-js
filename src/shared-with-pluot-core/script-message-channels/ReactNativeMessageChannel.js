@@ -73,7 +73,6 @@ export default class ReactNativeMessageChannel extends ScriptMessageChannel {
         this._messageCallbacks[callbackStamp].call(thisValue, msg);
         delete this._messageCallbacks[callbackStamp];
       }
-      delete msg.callbackStamp;
       listener.call(thisValue, msg);
     };
     this._wrappedListeners[listener] = wrappedListener;
