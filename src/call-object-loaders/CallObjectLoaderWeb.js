@@ -13,7 +13,7 @@ export default class CallObjectLoaderWeb extends CallObjectLoader {
       return;
     }
     if (this._callObjectScriptLoaded) {
-      window._dailyCallObjectSetup();
+      window._dailyCallObjectSetup(callFrameId);
       callback(true); // true = "was no-op"
     } else {
       // add a global callFrameId so we can have both iframes and one
