@@ -2,7 +2,7 @@ import CallObjectLoader from "./CallObjectLoader";
 import { callObjectBundleUrl } from "../utils";
 
 export default class CallObjectLoaderReactNative extends CallObjectLoader {
-  load(meetingUrl, callback) {
+  load(meetingUrl, callFrameId, callback) {
     const url = callObjectBundleUrl(meetingUrl);
     fetch(url)
       .then((res) => {

@@ -47,8 +47,8 @@ export default class WebMessageChannel extends ScriptMessageChannel {
     const wrappedListener = (evt) => {
       if (!(evt.data && evt.data.what === IFRAME_MESSAGE_MARKER &&
         evt.data.action &&
-        (!evt.data.from || evt.data.from === 'module')) &&
-        (evt.data.callFrameId ? evt.data.callFrameId === callFrameId : true)) {
+        (!evt.data.from || evt.data.from === 'module') &&
+        (evt.data.callFrameId ? evt.data.callFrameId === callFrameId : true))) {
         return;
       }
       const msg = evt.data;

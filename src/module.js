@@ -662,7 +662,7 @@ export default class DailyIframe extends EventEmitter {
     if (this._callObjectMode) {
       // non-iframe, callObjectMode
       return new Promise((resolve, _) => {
-        this._callObjectLoader.load(this.properties.url, (wasNoOp) => {
+        this._callObjectLoader.load(this.properties.url, this._callFrameId, (wasNoOp) => {
           this._meetingState = DAILY_STATE_LOADED;
           // Only need to emit event if load was a no-op, since the loaded
           // bundle won't be emitting it if it's not executed again
