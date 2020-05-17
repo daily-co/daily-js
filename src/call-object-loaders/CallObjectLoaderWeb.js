@@ -7,7 +7,7 @@ export default class CallObjectLoaderWeb extends CallObjectLoader {
     this._callObjectScriptLoaded = false;
   }
 
-  load(meetingUrl, callback) {
+  load(meetingUrl, callFrameId, callback) {
     if (!document) {
       console.error('need to create call object in a DOM/web context');
       return;
@@ -16,6 +16,13 @@ export default class CallObjectLoaderWeb extends CallObjectLoader {
       window._dailyCallObjectSetup();
       callback(true); // true = "was no-op"
     } else {
+      // add a global callFrameId so we can have both iframes and one
+      // call object mode calls live at the same time
+      if (!window._dailyConfig) {
+        window._dailyConfig = {};
+      }
+      window._dailyConfig.callFrameId = callFrameId;
+
       const head = document.getElementsByTagName('head')[0],
         script = document.createElement('script');
       script.onload = async () => {
