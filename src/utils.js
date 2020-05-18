@@ -5,8 +5,15 @@ export function notImplementedError() {
 }
 
 export function callObjectBundleUrl(meetingUrl) {
-  // Use the CDN to get call-machine-object (but use whatever's "local" for dev+staging)
-  if (process.env.NODE_ENV === 'production') {
+  // Use the CDN to get call-machine-object. (But use whatever's
+  // "local" for dev+staging, checking both the build-time NODE_ENV
+  // variable and whether the meetingUrl is foo.daily.co and not, for
+  // example, foo.staging.daily.co)
+  if (
+    process.env.NODE_ENV === 'production' &&
+    meetingUrl &&
+    meetingUrl.match(/https:\/\/[^.]+\.daily\.co\//)
+  ) {
     if (!browserInfo().supportsSfu) {
       return `https://c.daily.co/static/call-machine-object-nosfu-bundle.js`;
     } else {
