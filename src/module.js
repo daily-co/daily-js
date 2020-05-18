@@ -423,7 +423,7 @@ export default class DailyIframe extends EventEmitter {
         await this.leave();
       }
     } catch (e) {}
-    let iframe = this.iframe();
+    let iframe = this._iframe;
     if (iframe) {
       let parent = iframe.parentElement;
       if (parent) {
