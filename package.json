@@ -36,6 +36,7 @@
     "rollup-plugin-cjs-es": "^0.7.0",
     "rollup-plugin-commonjs": "^9.3.4",
     "rollup-plugin-node-resolve": "^4.2.4",
+    "rollup-plugin-terser": "^4.0.4",
     "webpack": "^4.41.5",
     "webpack-cli": "^3.3.11"
   },
@@ -44,7 +45,6 @@
     "bowser": "^2.8.1",
     "events": "^3.1.0",
     "fast-equals": "^1.6.3",
-    "lodash": "^4.17.15",
-    "rollup-plugin-terser": "^4.0.4"
+    "lodash": "^4.17.15"
   }
 }
