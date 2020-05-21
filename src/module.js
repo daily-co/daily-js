@@ -317,7 +317,7 @@ export default class DailyIframe extends EventEmitter {
     if (window.navigator && window.navigator.userAgent.match(/Chrome\/61\./)) {
       iframeEl.allow = 'microphone, camera';
     } else {
-      iframeEl.allow = 'microphone; camera; autoplay';
+      iframeEl.allow = 'microphone; camera; autoplay; display-capture';
     }
     iframeEl.style.visibility = 'hidden';
     parentEl.appendChild(iframeEl);
