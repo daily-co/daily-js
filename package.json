@@ -7,6 +7,7 @@
   "homepage": "https://github.com/daily-co/daily-js/",
   "main": "dist/daily-iframe.js",
   "module": "dist/daily-iframe-esm.js",
+  "types": "index.d.ts",
   "files": "dist",
   "unpkg": "dist/daily-iframe.js",
   "browserslist": [
