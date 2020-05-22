@@ -21,7 +21,9 @@
     "build-main-dev": "NODE_ENV=development npm run build-main",
     "build-module": "rollup -c",
     "build-module-dev": "NODE_ENV=development npm run build-module",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "changelog": "conventional-changelog --same-file --preset angular --release-count 0 --infile CHANGELOG.md",
+    "version": "npm run changelog && git add CHANGELOG.md"
   },
   "devDependencies": {
     "@babel/core": "^7.8.3",
@@ -32,6 +34,8 @@
     "babel-cli": "^6.26.0",
     "babel-loader": "^8.0.6",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
+    "conventional-changelog": "^3.1.21",
+    "conventional-changelog-cli": "^2.0.34",
     "rollup": "^1.29.0",
     "rollup-plugin-cjs-es": "^0.7.0",
     "rollup-plugin-commonjs": "^9.3.4",
