@@ -975,7 +975,6 @@ export default class DailyIframe extends EventEmitter {
   // overriding on/off/once are optimizations, anyway, we won't worry
   // about it right now.
   once(eventName, k) {
-    methodNotSupportedInReactNative();
     this._inputEventsOn[eventName] = {};
     this.sendMessageToCallMachine({ action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
                           on: eventName });
