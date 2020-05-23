@@ -504,13 +504,11 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setLocalAudio(bool) {
-    methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({ action: DAILY_METHOD_LOCAL_AUDIO, state: bool });
     return this;
   }
 
   setLocalVideo(bool) {
-    methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({ action: DAILY_METHOD_LOCAL_VIDEO, state: bool });
     return this;
   }
