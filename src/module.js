@@ -530,7 +530,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setLocalAudio(bool) {
-    methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_LOCAL_AUDIO,
       state: bool,
@@ -539,7 +538,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setLocalVideo(bool) {
-    methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_LOCAL_VIDEO,
       state: bool,
