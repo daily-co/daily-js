@@ -250,7 +250,6 @@ export default class DailyIframe extends EventEmitter {
   //
 
   static createCallObject(properties={}) {
-    methodNotSupportedInReactNative()
     properties.layout = 'none';
     return new DailyIframe(null, properties);
   }
@@ -355,7 +354,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   constructor(iframeish, properties={}) {
-    methodNotSupportedInReactNative()
     super();
     this._iframe = iframeish;
     this._callObjectMode = (properties.layout === 'none' && !this._iframe);
@@ -417,7 +415,6 @@ export default class DailyIframe extends EventEmitter {
   //
 
   async destroy() {
-    methodNotSupportedInReactNative();
     try { 
       if (this._meetingState === DAILY_STATE_JOINED) {
         await this.leave();
@@ -447,12 +444,10 @@ export default class DailyIframe extends EventEmitter {
   }
 
   meetingState() {
-    methodNotSupportedInReactNative()
     return this._meetingState;
   }
 
   participants() {
-    methodNotSupportedInReactNative();
     return this._participants;
   }
 
@@ -509,13 +504,11 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setLocalAudio(bool) {
-    methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({ action: DAILY_METHOD_LOCAL_AUDIO, state: bool });
     return this;
   }
 
   setLocalVideo(bool) {
-    methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({ action: DAILY_METHOD_LOCAL_VIDEO, state: bool });
     return this;
   }
@@ -533,7 +526,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   startCamera(properties={}) {
-    methodNotSupportedInReactNative();
     return new Promise(async (resolve, reject) => {
       let k = (msg) => {
         delete msg.action;
@@ -644,7 +636,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async load(properties) {
-    methodNotSupportedInReactNative()
     if (properties) {
       this.validateProperties(properties);
       this.properties = { ...this.properties, ...properties };
@@ -691,7 +682,6 @@ export default class DailyIframe extends EventEmitter {
   }
     
   async join(properties={}) {
-    methodNotSupportedInReactNative()
     let newCss = false;
     if (this.needsLoad()) {
       await this.load(properties);
@@ -741,7 +731,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async leave() {
-    methodNotSupportedInReactNative()
     return new Promise((resolve, reject) => {
       let k = () => {
         if (this._iframe) {
@@ -973,7 +962,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   on(eventName, k) {
-    methodNotSupportedInReactNative()
     this._inputEventsOn[eventName] = {};
     this.sendMessageToCallMachine({ action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
                           on: eventName });
@@ -985,7 +973,6 @@ export default class DailyIframe extends EventEmitter {
   // overriding on/off/once are optimizations, anyway, we won't worry
   // about it right now.
   once(eventName, k) {
-    methodNotSupportedInReactNative();
     this._inputEventsOn[eventName] = {};
     this.sendMessageToCallMachine({ action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
                           on: eventName });
@@ -993,7 +980,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   off(eventName, k) {
-    methodNotSupportedInReactNative()
     delete this._inputEventsOn[eventName];
     this.sendMessageToCallMachine({ action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
                           off: eventName });
