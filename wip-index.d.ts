@@ -18,8 +18,11 @@ declare class DailyIframe {
   destroy(): Promise<void>;
   meetingState(): DailyIframe.MeetingState;
   participants(): { [id: string]: DailyIframe.Participant };
+  setLocalAudio(enabled: boolean): DailyIframe;
+  setLocalVideo(enabled: boolean): DailyIframe;
   startCamera(properties?: DailyIframe.FrameProps): Promise<any>; // TODO: flesh out return type
   on(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
+  once(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   off(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
 }
 
