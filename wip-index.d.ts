@@ -82,6 +82,7 @@ declare class DailyIframe {
   subscribeToTracksAutomatically(): boolean;
   setSubscribeToTracksAutomatically(enabled: boolean): DailyIframe;
   enumerateDevices(): Promise<{ devices: MediaDeviceInfo[] }>;
+  sendAppMessage(data: any, to?: string): DailyIframe;
   on(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   once(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   off(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
