@@ -79,6 +79,8 @@ declare class DailyIframe {
   getActiveSpeaker(): { peerId?: string };
   setActiveSpeakerMode(enabled: boolean): DailyIframe;
   activeSpeakerMode(): boolean;
+  subscribeToTracksAutomatically(): boolean;
+  setSubscribeToTracksAutomatically(enabled: boolean): DailyIframe;
   on(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   once(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   off(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
@@ -106,6 +108,7 @@ declare namespace DailyIframe {
     cssFile?: string;
     cssText?: string;
     dailyConfig?: object;
+    subscribeToTracksAutomatically?: boolean;
   }
 
   interface Participant {
