@@ -81,6 +81,7 @@ declare class DailyIframe {
   activeSpeakerMode(): boolean;
   subscribeToTracksAutomatically(): boolean;
   setSubscribeToTracksAutomatically(enabled: boolean): DailyIframe;
+  enumerateDevices(): Promise<{ devices: MediaDeviceInfo[] }>;
   on(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   once(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   off(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
