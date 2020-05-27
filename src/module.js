@@ -561,7 +561,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   startCamera(properties = {}) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve, _) => {
       let k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
@@ -578,7 +578,6 @@ export default class DailyIframe extends EventEmitter {
         k
       );
     });
-    return this;
   }
 
   cycleCamera() {
