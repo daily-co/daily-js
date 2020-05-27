@@ -64,6 +64,8 @@ declare class DailyIframe {
     mic?: {} | null | MediaDeviceInfo;
     speaker?: {} | null | MediaDeviceInfo;
   }>;
+  cycleCamera(): Promise<{ device?: MediaDeviceInfo | null }>;
+  cycleMic(): Promise<{ device?: MediaDeviceInfo | null }>;
   on(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   once(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   off(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
