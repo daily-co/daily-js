@@ -77,6 +77,8 @@ declare class DailyIframe {
   stopRecording(): void;
   getNetworkStats(): Promise<DailyIframe.NetworkStats>;
   getActiveSpeaker(): { peerId?: string };
+  setActiveSpeakerMode(enabled: boolean): DailyIframe;
+  activeSpeakerMode(): boolean;
   on(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   once(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   off(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
