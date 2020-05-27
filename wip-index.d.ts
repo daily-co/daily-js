@@ -73,6 +73,8 @@ declare class DailyIframe {
   load(properties: DailyIframe.FrameProps): Promise<void>;
   startScreenShare(captureOptions?: DailyIframe.ScreenCaptureOptions): void;
   stopScreenShare(): void;
+  startRecording(): void;
+  stopRecording(): void;
   on(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   once(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   off(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
