@@ -783,7 +783,7 @@ export default class DailyIframe extends EventEmitter {
       let stats = { latest: {} };
       return { stats };
     }
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _) => {
       let k = (msg) => {
         resolve({ stats: msg.stats, ...this._network });
       }
