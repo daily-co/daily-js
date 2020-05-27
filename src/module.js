@@ -714,7 +714,7 @@ export default class DailyIframe extends EventEmitter {
     } else {
       // iframe
       this._iframe.src = this.assembleMeetingUrl();
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve, _) => {
         this._loadedCallback = () => {
           this._meetingState = DAILY_STATE_LOADED;
           if (this.properties.cssFile || this.properties.cssText) {
