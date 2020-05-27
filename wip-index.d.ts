@@ -19,6 +19,11 @@ declare class DailyIframe {
     iframe: HTMLIFrameElement,
     properties?: DailyIframe.FrameProps
   ): DailyIframe;
+  static createFrame(
+    parentElement: HTMLElement,
+    properties?: DailyIframe.FrameProps
+  ): DailyIframe;
+  static createFrame(properties?: DailyIframe.FrameProps): DailyIframe;
   join(
     properties?: DailyIframe.FrameProps
   ): Promise<DailyIframe.Participant[] | void>;
