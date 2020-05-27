@@ -13,6 +13,7 @@ export = DailyIframe;
 
 // Declares class methods and properties.
 declare class DailyIframe {
+  static supportedBrowser(): DailyIframe.BrowserInfo;
   static createCallObject(properties?: DailyIframe.FrameProps): DailyIframe;
   join(
     properties?: DailyIframe.FrameProps
@@ -31,7 +32,17 @@ declare class DailyIframe {
 
 // Declares supporting types under the `DailyIframe` namespace.
 declare namespace DailyIframe {
+  type BrowserInfo = {
+    supported: boolean;
+    mobile: boolean;
+    name: string;
+    version: string;
+    supportsScreenShare: boolean;
+    supportsSfu: boolean;
+  };
+
   type FrameProps = object; // TODO: flesh out
+
   type Participant = {
     audio: boolean;
     audioTrack?: any; // TODO: see if there's a way we can use MediaStreamTrack here that works with browser + RN...

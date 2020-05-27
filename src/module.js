@@ -241,7 +241,6 @@ export default class DailyIframe extends EventEmitter {
   //
 
   static supportedBrowser() {
-    methodNotSupportedInReactNative();
     return browserInfo();
   }
 
