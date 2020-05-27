@@ -14,12 +14,12 @@ export default class CallObjectLoaderWeb extends CallObjectLoader {
     }
     if (this._callObjectScriptLoaded) {
       window._dailyCallObjectSetup(callFrameId);
-      callback(true); // true = "was no-op"
+      callback(true); // true = "this load() was a no-op"
     } else {
       // add a global callFrameId so we can have both iframes and one
       // call object mode calls live at the same time
       if (!window._dailyConfig) {
-        window._dailyConfig = {}
+        window._dailyConfig = {};
       }
       window._dailyConfig.callFrameId = callFrameId;
 
@@ -27,7 +27,7 @@ export default class CallObjectLoaderWeb extends CallObjectLoader {
         script = document.createElement("script");
       script.onload = async () => {
         this._callObjectScriptLoaded = true;
-        callback(false); // false = "wasn't no-op"
+        callback(false); // false = "this load() wasn't a no-op"
       };
       script.src = callObjectBundleUrl(meetingUrl);
       head.appendChild(script);
