@@ -57,7 +57,13 @@ declare class DailyIframe {
     trackConstraints?: MediaTrackConstraints;
   }): DailyIframe;
   setDailyLang(lang: DailyIframe.Language): DailyIframe;
-  startCamera(properties?: DailyIframe.FrameProps): Promise<any>; // TODO: flesh out return type
+  startCamera(
+    properties?: DailyIframe.FrameProps
+  ): Promise<{
+    camera?: {} | null | MediaDeviceInfo;
+    mic?: {} | null | MediaDeviceInfo;
+    speaker?: {} | null | MediaDeviceInfo;
+  }>;
   on(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   once(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   off(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
