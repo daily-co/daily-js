@@ -48,6 +48,8 @@ declare class DailyIframe {
   updateParticipants(updates: {
     [sessionId: string]: DailyIframe.ParticipantUpdates;
   }): DailyIframe;
+  localAudio(): boolean;
+  localVideo(): boolean;
   setLocalAudio(enabled: boolean): DailyIframe;
   setLocalVideo(enabled: boolean): DailyIframe;
   startCamera(properties?: DailyIframe.FrameProps): Promise<any>; // TODO: flesh out return type
