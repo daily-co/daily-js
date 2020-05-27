@@ -59,11 +59,7 @@ declare class DailyIframe {
   setDailyLang(lang: DailyIframe.Language): DailyIframe;
   startCamera(
     properties?: DailyIframe.FrameProps
-  ): Promise<{
-    camera?: {} | null | MediaDeviceInfo;
-    mic?: {} | null | MediaDeviceInfo;
-    speaker?: {} | null | MediaDeviceInfo;
-  }>;
+  ): Promise<DailyIframe.DeviceInfos>;
   cycleCamera(): Promise<{ device?: MediaDeviceInfo | null }>;
   cycleMic(): Promise<{ device?: MediaDeviceInfo | null }>;
   setInputDevices(devices: {
@@ -73,6 +69,7 @@ declare class DailyIframe {
     videoSource?: MediaStreamTrack;
   }): DailyIframe;
   setOutputDevice(audioDevice: { id?: string }): DailyIframe;
+  getInputDevices(): Promise<DailyIframe.DeviceInfos>;
   on(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   once(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   off(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
@@ -139,6 +136,12 @@ declare namespace DailyIframe {
     top: number;
     video_width: number;
     video_height: number;
+  }
+
+  interface DeviceInfos {
+    camera: {} | MediaDeviceInfo;
+    mic: {} | MediaDeviceInfo;
+    speaker: {} | MediaDeviceInfo;
   }
 
   type MeetingState =
