@@ -70,6 +70,7 @@ declare class DailyIframe {
   }): DailyIframe;
   setOutputDevice(audioDevice: { id?: string }): DailyIframe;
   getInputDevices(): Promise<DailyIframe.DeviceInfos>;
+  load(properties: DailyIframe.FrameProps): Promise<void>;
   on(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   once(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   off(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
