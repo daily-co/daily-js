@@ -87,7 +87,18 @@ declare namespace DailyIframe {
     supportsSfu: boolean;
   }
 
-  type FrameProps = object; // TODO: flesh out
+  interface FrameProps {
+    url?: string;
+    token?: string;
+    lang?: Language;
+    showLeaveButton?: boolean;
+    showFullscreenButton?: boolean;
+    iframeStyle?: object;
+    customLayout?: boolean;
+    cssFile?: string;
+    cssText?: string;
+    dailyConfig?: object;
+  }
 
   interface Participant {
     // audio/video info
