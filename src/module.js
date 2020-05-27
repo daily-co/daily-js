@@ -890,6 +890,7 @@ export default class DailyIframe extends EventEmitter {
       action: DAILY_METHOD_SET_SUBSCRIBE_TO_TRACKS_AUTOMATICALLY,
       enabled,
     });
+    return this;
   }
 
   async enumerateDevices(kind) {
