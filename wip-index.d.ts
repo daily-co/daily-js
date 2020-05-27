@@ -15,6 +15,10 @@ export = DailyIframe;
 declare class DailyIframe {
   static supportedBrowser(): DailyIframe.BrowserInfo;
   static createCallObject(properties?: DailyIframe.FrameProps): DailyIframe;
+  static wrap(
+    iframe: HTMLIFrameElement,
+    properties?: DailyIframe.FrameProps
+  ): DailyIframe;
   join(
     properties?: DailyIframe.FrameProps
   ): Promise<DailyIframe.Participant[] | void>;
