@@ -75,6 +75,7 @@ declare class DailyIframe {
   stopScreenShare(): void;
   startRecording(): void;
   stopRecording(): void;
+  getNetworkStats(): Promise<DailyIframe.NetworkStats>;
   on(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   once(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   off(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
@@ -166,6 +167,24 @@ declare namespace DailyIframe {
     maxHeight?: number;
     chromeMediaSourceId?: string;
     mediaStream?: MediaStream;
+  }
+
+  interface NetworkStats {
+    quality: number;
+    stats: {
+      latest: {
+        recvBitsPerSecond: number;
+        sendBitsPerSecond: number;
+        timestamp: number;
+        videoRecvBitsPerSecond: number;
+        videoRecvPacketLoss: number;
+        videoSendBitsPerSecond: number;
+        videoSendPacketLoss: number;
+      };
+      worstVideoRecvPacketLoss: number;
+      worstVideoSendPacketLoss: number;
+    };
+    threshold: 'good' | 'low' | 'very-low';
   }
 
   type MeetingState =
