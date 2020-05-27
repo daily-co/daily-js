@@ -13,6 +13,7 @@ export = DailyIframe;
 
 // Declares class methods and properties.
 declare class DailyIframe {
+  // Static methods
   static supportedBrowser(): DailyIframe.BrowserInfo;
   static createCallObject(properties?: DailyIframe.FrameProps): DailyIframe;
   static wrap(
@@ -27,6 +28,8 @@ declare class DailyIframe {
   static createTransparentFrame(
     properties?: DailyIframe.FrameProps
   ): DailyIframe;
+
+  // Instance methods
   iframe(): HTMLIFrameElement | null;
   join(
     properties?: DailyIframe.FrameProps
@@ -45,25 +48,25 @@ declare class DailyIframe {
 
 // Declares supporting types under the `DailyIframe` namespace.
 declare namespace DailyIframe {
-  type BrowserInfo = {
+  interface BrowserInfo {
     supported: boolean;
     mobile: boolean;
     name: string;
     version: string;
     supportsScreenShare: boolean;
     supportsSfu: boolean;
-  };
+  }
 
   type FrameProps = object; // TODO: flesh out
 
-  type Participant = {
+  interface Participant {
     audio: boolean;
-    audioTrack?: any; // TODO: see if there's a way we can use MediaStreamTrack here that works with browser + RN...
+    audioTrack?: MediaStreamTrack;
     video: boolean;
-    videoTrack?: any;
+    videoTrack?: MediaStreamTrack;
     screen: boolean;
-    screenVideoTrack?: any;
-  }; // TODO: flesh out
+    screenVideoTrack?: MediaStreamTrack;
+  }
 
   type MeetingState =
     | 'new'
