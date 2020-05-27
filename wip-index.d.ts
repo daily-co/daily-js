@@ -66,6 +66,12 @@ declare class DailyIframe {
   }>;
   cycleCamera(): Promise<{ device?: MediaDeviceInfo | null }>;
   cycleMic(): Promise<{ device?: MediaDeviceInfo | null }>;
+  setInputDevices(devices: {
+    audioDeviceId?: string;
+    audioSource?: MediaStreamTrack;
+    videoDeviceId?: string;
+    videoSource?: MediaStreamTrack;
+  }): DailyIframe;
   on(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   once(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   off(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
