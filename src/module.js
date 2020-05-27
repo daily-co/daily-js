@@ -557,6 +557,7 @@ export default class DailyIframe extends EventEmitter {
   setDailyLang(lang) {
     methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({ action: DAILY_METHOD_SET_LANG, lang });
+    return this;
   }
 
   startCamera(properties = {}) {

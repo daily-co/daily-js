@@ -56,6 +56,7 @@ declare class DailyIframe {
     kbs?: number | 'NO_CAP' | null;
     trackConstraints?: MediaTrackConstraints;
   }): DailyIframe;
+  setDailyLang(lang: DailyIframe.Language): DailyIframe;
   startCamera(properties?: DailyIframe.FrameProps): Promise<any>; // TODO: flesh out return type
   on(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   once(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
@@ -163,4 +164,6 @@ declare namespace DailyIframe {
     | 'fullscreen'
     | 'exited-fullscreen'
     | 'error';
+
+  type Language = 'de' | 'en' | 'fi' | 'fr' | 'nl' | 'pt';
 }
