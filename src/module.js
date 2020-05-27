@@ -785,7 +785,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async leave() {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _) => {
       let k = () => {
         if (this._iframe) {
           // resetting the iframe src maybe interferes with sending the
