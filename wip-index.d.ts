@@ -37,7 +37,10 @@ declare class DailyIframe {
   leave(): Promise<void>;
   destroy(): Promise<void>;
   meetingState(): DailyIframe.MeetingState;
-  participants(): { [id: string]: DailyIframe.Participant };
+  participants(): {
+    local: DailyIframe.Participant;
+    [id: string]: DailyIframe.Participant;
+  };
   setLocalAudio(enabled: boolean): DailyIframe;
   setLocalVideo(enabled: boolean): DailyIframe;
   startCamera(properties?: DailyIframe.FrameProps): Promise<any>; // TODO: flesh out return type
@@ -60,12 +63,35 @@ declare namespace DailyIframe {
   type FrameProps = object; // TODO: flesh out
 
   interface Participant {
+    // audio/video info
     audio: boolean;
     audioTrack?: MediaStreamTrack;
     video: boolean;
     videoTrack?: MediaStreamTrack;
     screen: boolean;
     screenVideoTrack?: MediaStreamTrack;
+
+    // user/session info
+    user_id: string;
+    user_name: string;
+    session_id: string;
+    joined_at: Date;
+    will_eject_at: Date;
+    local: boolean;
+    owner: boolean;
+
+    // video element info (iframe-based calls using standard UI only)
+    cam_info: {} | VideoElementInfo;
+    screen_info: {} | VideoElementInfo;
+  }
+
+  interface VideoElementInfo {
+    height: number;
+    left: number;
+    top: number;
+    video_height: number;
+    video_width: number;
+    width: number;
   }
 
   type MeetingState =
