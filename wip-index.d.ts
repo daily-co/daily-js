@@ -109,6 +109,8 @@ declare namespace DailyIframe {
     cssText?: string;
     dailyConfig?: object;
     subscribeToTracksAutomatically?: boolean;
+    videoSource?: string | MediaStreamTrack;
+    audioSource?: string | MediaStreamTrack;
   }
 
   interface Participant {
