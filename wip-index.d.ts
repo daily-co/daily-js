@@ -72,6 +72,7 @@ declare class DailyIframe {
     videoDeviceId?: string;
     videoSource?: MediaStreamTrack;
   }): DailyIframe;
+  setOutputDevice(audioDevice: { id?: string }): DailyIframe;
   on(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   once(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   off(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
