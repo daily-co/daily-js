@@ -27,6 +27,7 @@ declare class DailyIframe {
   static createTransparentFrame(
     properties?: DailyIframe.FrameProps
   ): DailyIframe;
+  iframe(): HTMLIFrameElement | null;
   join(
     properties?: DailyIframe.FrameProps
   ): Promise<DailyIframe.Participant[] | void>;
