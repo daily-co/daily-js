@@ -52,6 +52,10 @@ declare class DailyIframe {
   localVideo(): boolean;
   setLocalAudio(enabled: boolean): DailyIframe;
   setLocalVideo(enabled: boolean): DailyIframe;
+  setBandwidth(bw: {
+    kbs?: number | 'NO_CAP' | null;
+    trackConstraints?: MediaTrackConstraints;
+  }): DailyIframe;
   startCamera(properties?: DailyIframe.FrameProps): Promise<any>; // TODO: flesh out return type
   on(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   once(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
