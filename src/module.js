@@ -893,19 +893,19 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
-  async enumerateDevices(kind) {
+  async enumerateDevices() {
     methodNotSupportedInReactNative();
     if (this._callObjectMode) {
       let raw = await navigator.mediaDevices.enumerateDevices();
       return { devices: raw.map((d) => JSON.parse(JSON.stringify(d))) };
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _) => {
       let k = (msg) => {
         resolve({ devices: msg.devices });
       };
       this.sendMessageToCallMachine(
-        { action: DAILY_METHOD_ENUMERATE_DEVICES, kind },
+        { action: DAILY_METHOD_ENUMERATE_DEVICES },
         k
       );
     });
