@@ -948,7 +948,7 @@ export default class DailyIframe extends EventEmitter {
 
   detectAllFaces() {
     methodNotSupportedInReactNative();
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _) => {
       let k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
