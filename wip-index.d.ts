@@ -87,6 +87,7 @@ declare class DailyIframe {
   setShowNamesMode(mode: false | "always" | "never"): DailyIframe;
   requestFullscreen(): Promise<void>;
   exitFullscreen(): void;
+  room(): Promise<DailyIframe.RoomInfo | null>;
   on(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   once(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   off(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
@@ -199,6 +200,28 @@ declare namespace DailyIframe {
       worstVideoSendPacketLoss: number;
     };
     threshold: "good" | "low" | "very-low";
+  }
+
+  interface RoomInfo {
+    id: string;
+    name: string;
+    config: {
+      nbf?: number;
+      exp?: number;
+      max_participants?: number;
+      enable_chat?: boolean;
+      enable_knocking?: boolean;
+      enable_recording?: string;
+      enable_dialin?: boolean;
+      autojoin?: boolean;
+      meeting_join_hook?: string;
+      eject_at_room_exp?: boolean;
+      eject_after_elapsed?: number;
+      lang?: "" | Language;
+      signaling_impl?: string;
+      geo?: string;
+    };
+    dialInPIN?: string;
   }
 
   type MeetingState =
