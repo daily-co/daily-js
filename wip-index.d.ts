@@ -85,6 +85,8 @@ declare class DailyIframe {
   sendAppMessage(data: any, to?: string): DailyIframe;
   addFakeParticipant(details?: { aspectRatio: number }): DailyIframe;
   setShowNamesMode(mode: false | 'always' | 'never'): DailyIframe;
+  requestFullscreen(): Promise<void>;
+  exitFullscreen(): void;
   on(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   once(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
   off(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
