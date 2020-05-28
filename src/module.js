@@ -246,7 +246,6 @@ export default class DailyIframe extends EventEmitter {
   //
 
   static supportedBrowser() {
-    methodNotSupportedInReactNative();
     return browserInfo();
   }
 
@@ -558,10 +557,11 @@ export default class DailyIframe extends EventEmitter {
   setDailyLang(lang) {
     methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({ action: DAILY_METHOD_SET_LANG, lang });
+    return this;
   }
 
   startCamera(properties = {}) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve, _) => {
       let k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
@@ -578,12 +578,11 @@ export default class DailyIframe extends EventEmitter {
         k
       );
     });
-    return this;
   }
 
   cycleCamera() {
     methodNotSupportedInReactNative();
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _) => {
       let k = (msg) => {
         resolve({ device: msg.device });
       };
@@ -593,7 +592,7 @@ export default class DailyIframe extends EventEmitter {
 
   cycleMic() {
     methodNotSupportedInReactNative();
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _) => {
       let k = (msg) => {
         resolve({ device: msg.device });
       };
@@ -715,7 +714,7 @@ export default class DailyIframe extends EventEmitter {
     } else {
       // iframe
       this._iframe.src = this.assembleMeetingUrl();
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve, _) => {
         this._loadedCallback = () => {
           this._meetingState = DAILY_STATE_LOADED;
           if (this.properties.cssFile || this.properties.cssText) {
@@ -786,7 +785,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async leave() {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _) => {
       let k = () => {
         if (this._iframe) {
           // resetting the iframe src maybe interferes with sending the
@@ -841,7 +840,7 @@ export default class DailyIframe extends EventEmitter {
       let stats = { latest: {} };
       return { stats };
     }
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _) => {
       let k = (msg) => {
         resolve({ stats: msg.stats, ...this._network });
       };
@@ -891,21 +890,22 @@ export default class DailyIframe extends EventEmitter {
       action: DAILY_METHOD_SET_SUBSCRIBE_TO_TRACKS_AUTOMATICALLY,
       enabled,
     });
+    return this;
   }
 
-  async enumerateDevices(kind) {
+  async enumerateDevices() {
     methodNotSupportedInReactNative();
     if (this._callObjectMode) {
       let raw = await navigator.mediaDevices.enumerateDevices();
       return { devices: raw.map((d) => JSON.parse(JSON.stringify(d))) };
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _) => {
       let k = (msg) => {
         resolve({ devices: msg.devices });
       };
       this.sendMessageToCallMachine(
-        { action: DAILY_METHOD_ENUMERATE_DEVICES, kind },
+        { action: DAILY_METHOD_ENUMERATE_DEVICES },
         k
       );
     });
@@ -948,7 +948,7 @@ export default class DailyIframe extends EventEmitter {
 
   detectAllFaces() {
     methodNotSupportedInReactNative();
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _) => {
       let k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
@@ -989,7 +989,7 @@ export default class DailyIframe extends EventEmitter {
     if (this._meetingState !== DAILY_STATE_JOINED) {
       return null;
     }
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _) => {
       let k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
@@ -1001,7 +1001,7 @@ export default class DailyIframe extends EventEmitter {
 
   async geo() {
     methodNotSupportedInReactNative();
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve, _) => {
       try {
         let url = 'https://gs.daily.co/_ks_/x-swsl/:';
         let res = await fetch(url);
