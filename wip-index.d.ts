@@ -95,6 +95,7 @@ declare class DailyIframe {
   setNetworkTopology(options: {
     topology: "sfu" | "peer";
   }): Promise<{ workerId?: string; error?: string }>;
+  setPlayNewParticipantSound(sound: boolean | number): void;
   on(
     event: DailyIframe.Event,
     handler: (event?: DailyIframe.EventObject) => void
