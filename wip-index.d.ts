@@ -88,9 +88,18 @@ declare class DailyIframe {
   requestFullscreen(): Promise<void>;
   exitFullscreen(): void;
   room(): Promise<DailyIframe.RoomInfo | null>;
-  on(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
-  once(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
-  off(event: DailyIframe.Event, handler: (event?: any) => void): DailyIframe; // TODO: flesh out handler
+  on(
+    event: DailyIframe.Event,
+    handler: (event?: DailyIframe.EventObject) => void
+  ): DailyIframe;
+  once(
+    event: DailyIframe.Event,
+    handler: (event?: DailyIframe.EventObject) => void
+  ): DailyIframe;
+  off(
+    event: DailyIframe.Event,
+    handler: (event?: DailyIframe.EventObject) => void
+  ): DailyIframe;
 }
 
 // Declares supporting types under the `DailyIframe` namespace.
@@ -222,6 +231,11 @@ declare namespace DailyIframe {
       geo?: string;
     };
     dialInPIN?: string;
+  }
+
+  interface EventObject {
+    action: string;
+    [payloadProp: string]: any;
   }
 
   type MeetingState =
