@@ -91,6 +91,7 @@ declare class DailyIframe {
   requestFullscreen(): Promise<void>;
   exitFullscreen(): void;
   room(): Promise<DailyIframe.RoomInfo | null>;
+  geo(): Promise<{ current: string }>;
   on(
     event: DailyIframe.Event,
     handler: (event?: DailyIframe.EventObject) => void
