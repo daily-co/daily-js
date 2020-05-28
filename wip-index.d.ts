@@ -92,6 +92,9 @@ declare class DailyIframe {
   exitFullscreen(): void;
   room(): Promise<DailyIframe.RoomInfo | null>;
   geo(): Promise<{ current: string }>;
+  setNetworkTopology(options: {
+    topology: 'sfu' | 'peer';
+  }): Promise<{ workerId?: string; error?: string }>;
   on(
     event: DailyIframe.Event,
     handler: (event?: DailyIframe.EventObject) => void
