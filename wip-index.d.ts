@@ -285,6 +285,7 @@ declare namespace DailyIframe {
     | "recording-stats"
     | "recording-error"
     | "recording-upload-completed"
+    | "recording-data"
     | "app-message"
     | "input-event"
     | "local-screen-share-started"
