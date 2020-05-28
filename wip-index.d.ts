@@ -85,6 +85,9 @@ declare class DailyIframe {
   sendAppMessage(data: any, to?: string): DailyIframe;
   addFakeParticipant(details?: { aspectRatio: number }): DailyIframe;
   setShowNamesMode(mode: false | "always" | "never"): DailyIframe;
+  detectAllFaces(): Promise<{
+    faces?: { [id: string]: DailyIframe.FaceInfo[] };
+  }>;
   requestFullscreen(): Promise<void>;
   exitFullscreen(): void;
   room(): Promise<DailyIframe.RoomInfo | null>;
@@ -236,6 +239,18 @@ declare namespace DailyIframe {
   interface EventObject {
     action: string;
     [payloadProp: string]: any;
+  }
+
+  interface FaceInfo {
+    score: number;
+    viewportBox: {
+      width: number;
+      height: number;
+      left: number;
+      top: number;
+      right: number;
+      bottom: number;
+    };
   }
 
   type MeetingState =
