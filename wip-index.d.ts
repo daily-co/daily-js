@@ -5,6 +5,16 @@
 // Project: https://github.com/daily-co/daily-js
 // Definitions by: Paul Kompfner <https://github.com/kompfner>
 
+/**
+ * --- BROWSER-SPECIFIC SECTION ---
+ */
+
+/// <reference lib="dom" />
+
+/**
+ * --- SECTION DUPLICATED WITH REACT-NATIVE-DAILY-JS ---
+ */
+
 // Declares that global variable `DailyIframe` is provided outside a module loader environment.
 export as namespace DailyIframe;
 
