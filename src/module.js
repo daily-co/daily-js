@@ -526,14 +526,19 @@ export default class DailyIframe extends EventEmitter {
   }
 
   startCamera(properties={}) {
-    return new Promise(async (resolve, _) => {
+    return new Promise(async (resolve, reject) => {
       let k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
         resolve(msg);
       };
       if (this.needsLoad()) {
-        await this.load(properties);
+        try {
+          await this.load(properties);
+        }
+        catch (e) {
+          reject(e);
+        }
       }
       this.sendMessageToCallMachine({
         action: DAILY_METHOD_START_CAMERA,
@@ -651,13 +656,17 @@ export default class DailyIframe extends EventEmitter {
 
     if (this._callObjectMode) {
       // non-iframe, callObjectMode
-      return new Promise((resolve, _) => {
+      return new Promise((resolve, reject) => {
         this._callObjectLoader.load(this.properties.url, this._callFrameId, (wasNoOp) => {
           this._meetingState = DAILY_STATE_LOADED;
           // Only need to emit event if load was a no-op, since the loaded
           // bundle won't be emitting it if it's not executed again
           wasNoOp && this.emit(DAILY_EVENT_LOADED, { action: DAILY_EVENT_LOADED });
           resolve();
+        }, (errorMsg) => {
+          this._meetingState = DAILY_STATE_ERROR;
+          this.emit(DAILY_EVENT_ERROR, { action: DAILY_EVENT_ERROR, errorMsg });
+          reject(errorMsg);
         });
       });
     }
@@ -683,7 +692,12 @@ export default class DailyIframe extends EventEmitter {
   async join(properties={}) {
     let newCss = false;
     if (this.needsLoad()) {
-      await this.load(properties);
+      try {
+        await this.load(properties);
+      }
+      catch (e) {
+        return Promise.reject(e);
+      }
     } else {
       newCss = !!(this.properties.cssFile || this.properties.cssText)
       if (properties.url &&
