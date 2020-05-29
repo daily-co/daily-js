@@ -15,9 +15,9 @@
  * --- SECTION DUPLICATED WITH REACT-NATIVE-DAILY-JS ---
  */
 
-export type Language = 'de' | 'en' | 'fi' | 'fr' | 'nl' | 'pt';
+export type DailyLanguage = 'de' | 'en' | 'fi' | 'fr' | 'nl' | 'pt';
 
-export type Event =
+export type DailyEvent =
   | 'loading'
   | 'loaded'
   | 'started-camera'
@@ -48,7 +48,7 @@ export type Event =
   | 'exited-fullscreen'
   | 'error';
 
-export type MeetingState =
+export type DailyMeetingState =
   | 'new'
   | 'loading'
   | 'loaded'
@@ -57,7 +57,7 @@ export type MeetingState =
   | 'left-meeting'
   | 'error';
 
-export interface BrowserInfo {
+export interface DailyBrowserInfo {
   supported: boolean;
   mobile: boolean;
   name: string;
@@ -66,10 +66,10 @@ export interface BrowserInfo {
   supportsSfu: boolean;
 }
 
-export interface FrameProps {
+export interface DailyCallOptions {
   url?: string;
   token?: string;
-  lang?: Language;
+  lang?: DailyLanguage;
   showLeaveButton?: boolean;
   showFullscreenButton?: boolean;
   iframeStyle?: object;
@@ -82,7 +82,7 @@ export interface FrameProps {
   audioSource?: string | MediaStreamTrack;
 }
 
-export interface Participant {
+export interface DailyParticipant {
   // audio/video info
   audio: boolean;
   audioTrack?: MediaStreamTrack;
@@ -101,29 +101,29 @@ export interface Participant {
   owner: boolean;
 
   // video element info (iframe-based calls using standard UI only)
-  cam_info: {} | VideoElementInfo;
-  screen_info: {} | VideoElementInfo;
+  cam_info: {} | DailyVideoElementInfo;
+  screen_info: {} | DailyVideoElementInfo;
 }
 
-export interface ParticipantUpdates {
+export interface DailyParticipantUpdateOptions {
   setAudio?: boolean;
   setVideo?: boolean;
   eject?: true;
-  styles?: ParticipantCss;
+  styles?: DailyParticipantCss;
 }
 
-export interface ParticipantCss {
-  cam?: ParticipantStreamCss;
-  screen?: ParticipantStreamCss;
+export interface DailyParticipantCss {
+  cam?: DailyParticipantStreamCss;
+  screen?: DailyParticipantStreamCss;
 }
 
-export interface ParticipantStreamCss {
+export interface DailyParticipantStreamCss {
   div?: object;
   overlay?: object;
   video?: object;
 }
 
-export interface VideoElementInfo {
+export interface DailyVideoElementInfo {
   width: number;
   height: number;
   left: number;
@@ -132,13 +132,13 @@ export interface VideoElementInfo {
   video_height: number;
 }
 
-export interface DeviceInfos {
+export interface DailyDeviceInfos {
   camera: {} | MediaDeviceInfo;
   mic: {} | MediaDeviceInfo;
   speaker: {} | MediaDeviceInfo;
 }
 
-export interface ScreenCaptureOptions {
+export interface DailyScreenCaptureOptions {
   audio?: boolean;
   maxWidth?: number;
   maxHeight?: number;
@@ -146,7 +146,7 @@ export interface ScreenCaptureOptions {
   mediaStream?: MediaStream;
 }
 
-export interface NetworkStats {
+export interface DailyNetworkStats {
   quality: number;
   stats: {
     latest: {
@@ -164,7 +164,7 @@ export interface NetworkStats {
   threshold: 'good' | 'low' | 'very-low';
 }
 
-export interface RoomInfo {
+export interface DailyRoomInfo {
   id: string;
   name: string;
   config: {
@@ -179,19 +179,19 @@ export interface RoomInfo {
     meeting_join_hook?: string;
     eject_at_room_exp?: boolean;
     eject_after_elapsed?: number;
-    lang?: '' | Language;
+    lang?: '' | DailyLanguage;
     signaling_impl?: string;
     geo?: string;
   };
   dialInPIN?: string;
 }
 
-export interface EventObject {
+export interface DailyEventObject {
   action: string;
   [payloadProp: string]: any;
 }
 
-export interface FaceInfo {
+export interface DailyFaceInfo {
   score: number;
   viewportBox: {
     width: number;
@@ -204,30 +204,36 @@ export interface FaceInfo {
 }
 
 export interface DailyCallFactory {
-  createCallObject(properties?: FrameProps): DailyCall;
-  wrap(iframe: HTMLIFrameElement, properties?: FrameProps): DailyCall;
-  createFrame(parentElement: HTMLElement, properties?: FrameProps): DailyCall;
-  createFrame(properties?: FrameProps): DailyCall;
-  createTransparentFrame(properties?: FrameProps): DailyCall;
+  createCallObject(properties?: DailyCallOptions): DailyCall;
+  wrap(iframe: HTMLIFrameElement, properties?: DailyCallOptions): DailyCall;
+  createFrame(
+    parentElement: HTMLElement,
+    properties?: DailyCallOptions
+  ): DailyCall;
+  createFrame(properties?: DailyCallOptions): DailyCall;
+  createTransparentFrame(properties?: DailyCallOptions): DailyCall;
 }
 
 export interface DailyCallStaticUtils {
-  supportedBrowser(): BrowserInfo;
+  supportedBrowser(): DailyBrowserInfo;
 }
 
 export interface DailyCall {
   iframe(): HTMLIFrameElement | null;
-  join(properties?: FrameProps): Promise<Participant[] | void>;
+  join(properties?: DailyCallOptions): Promise<DailyParticipant[] | void>;
   leave(): Promise<void>;
   destroy(): Promise<void>;
-  meetingState(): MeetingState;
+  meetingState(): DailyMeetingState;
   participants(): {
-    local: Participant;
-    [id: string]: Participant;
+    local: DailyParticipant;
+    [id: string]: DailyParticipant;
   };
-  updateParticipant(sessionId: string, updates: ParticipantUpdates): DailyCall;
+  updateParticipant(
+    sessionId: string,
+    updates: DailyParticipantUpdateOptions
+  ): DailyCall;
   updateParticipants(updates: {
-    [sessionId: string]: ParticipantUpdates;
+    [sessionId: string]: DailyParticipantUpdateOptions;
   }): DailyCall;
   localAudio(): boolean;
   localVideo(): boolean;
@@ -237,8 +243,8 @@ export interface DailyCall {
     kbs?: number | 'NO_CAP' | null;
     trackConstraints?: MediaTrackConstraints;
   }): DailyCall;
-  setDailyLang(lang: Language): DailyCall;
-  startCamera(properties?: FrameProps): Promise<DeviceInfos>;
+  setDailyLang(lang: DailyLanguage): DailyCall;
+  startCamera(properties?: DailyCallOptions): Promise<DailyDeviceInfos>;
   cycleCamera(): Promise<{ device?: MediaDeviceInfo | null }>;
   cycleMic(): Promise<{ device?: MediaDeviceInfo | null }>;
   setInputDevices(devices: {
@@ -248,13 +254,13 @@ export interface DailyCall {
     videoSource?: MediaStreamTrack;
   }): DailyCall;
   setOutputDevice(audioDevice: { id?: string }): DailyCall;
-  getInputDevices(): Promise<DeviceInfos>;
-  load(properties: FrameProps): Promise<void>;
-  startScreenShare(captureOptions?: ScreenCaptureOptions): void;
+  getInputDevices(): Promise<DailyDeviceInfos>;
+  load(properties: DailyCallOptions): Promise<void>;
+  startScreenShare(captureOptions?: DailyScreenCaptureOptions): void;
   stopScreenShare(): void;
   startRecording(): void;
   stopRecording(): void;
-  getNetworkStats(): Promise<NetworkStats>;
+  getNetworkStats(): Promise<DailyNetworkStats>;
   getActiveSpeaker(): { peerId?: string };
   setActiveSpeakerMode(enabled: boolean): DailyCall;
   activeSpeakerMode(): boolean;
@@ -265,19 +271,25 @@ export interface DailyCall {
   addFakeParticipant(details?: { aspectRatio: number }): DailyCall;
   setShowNamesMode(mode: false | 'always' | 'never'): DailyCall;
   detectAllFaces(): Promise<{
-    faces?: { [id: string]: FaceInfo[] };
+    faces?: { [id: string]: DailyFaceInfo[] };
   }>;
   requestFullscreen(): Promise<void>;
   exitFullscreen(): void;
-  room(): Promise<RoomInfo | null>;
+  room(): Promise<DailyRoomInfo | null>;
   geo(): Promise<{ current: string }>;
   setNetworkTopology(options: {
     topology: 'sfu' | 'peer';
   }): Promise<{ workerId?: string; error?: string }>;
   setPlayNewParticipantSound(sound: boolean | number): void;
-  on(event: Event, handler: (event?: EventObject) => void): DailyCall;
-  once(event: Event, handler: (event?: EventObject) => void): DailyCall;
-  off(event: Event, handler: (event?: EventObject) => void): DailyCall;
+  on(event: DailyEvent, handler: (event?: DailyEventObject) => void): DailyCall;
+  once(
+    event: DailyEvent,
+    handler: (event?: DailyEventObject) => void
+  ): DailyCall;
+  off(
+    event: DailyEvent,
+    handler: (event?: DailyEventObject) => void
+  ): DailyCall;
 }
 
 declare const DailyIframe: DailyCallFactory & DailyCallStaticUtils;
