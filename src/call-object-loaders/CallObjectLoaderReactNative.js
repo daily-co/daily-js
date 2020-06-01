@@ -34,6 +34,9 @@ export default class CallObjectLoaderReactNative extends CallObjectLoader {
     const url = callObjectBundleUrl(meetingUrl);
     fetch(url)
       .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Received ${res.status} response`);
+        }
         return res.text();
       })
       .then((code) => {
