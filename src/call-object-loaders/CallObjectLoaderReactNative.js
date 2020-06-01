@@ -18,6 +18,7 @@ export default class CallObjectLoaderReactNative extends CallObjectLoader {
     super();
     this._callObjectScriptLoaded = false;
   }
+
   load(meetingUrl, _, successCallback, failureCallback) {
     setUpDailyConfig();
 
@@ -45,5 +46,9 @@ export default class CallObjectLoaderReactNative extends CallObjectLoader {
       .catch((e) => {
         failureCallback(`Failed to load call object bundle ${url}: ${e}`);
       });
+  }
+
+  get loaded() {
+    return this._callObjectScriptLoaded;
   }
 }

@@ -20,4 +20,12 @@ export default class CallObjectLoader {
   load(meetingUrl, callFrameId, successCallback, failureCallback) {
     return notImplementedError();
   }
+
+  /**
+   * Returns a boolean indicating whether the call object has been loaded and
+   * executed.
+   */
+  get loaded() {
+    return notImplementedError();
+  }
 }

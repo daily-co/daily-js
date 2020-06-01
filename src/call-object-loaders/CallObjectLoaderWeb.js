@@ -36,4 +36,8 @@ export default class CallObjectLoaderWeb extends CallObjectLoader {
       head.appendChild(script);
     }
   }
+
+  get loaded() {
+    return this._callObjectScriptLoaded;
+  }
 }

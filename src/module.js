@@ -819,7 +819,9 @@ export default class DailyIframe extends EventEmitter {
         }
         resolve();
       };
-      this.sendMessageToCallMachine({ action: DAILY_METHOD_LEAVE }, k);
+      this._callObjectLoader.loaded
+        ? this.sendMessageToCallMachine({ action: DAILY_METHOD_LEAVE }, k)
+        : k();
     });
   }
 
