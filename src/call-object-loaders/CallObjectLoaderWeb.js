@@ -1,6 +1,9 @@
 import CallObjectLoader from './CallObjectLoader';
 import { callObjectBundleUrl } from '../utils';
 
+const LOAD_ATTEMPTS = 3;
+const LOAD_ATTEMPT_DELAY_MS = 3000;
+
 export default class CallObjectLoaderWeb extends CallObjectLoader {
   constructor() {
     super();
@@ -8,6 +11,34 @@ export default class CallObjectLoaderWeb extends CallObjectLoader {
   }
 
   load(meetingUrl, callFrameId, successCallback, failureCallback) {
+    let attemptsRemaining = LOAD_ATTEMPTS;
+    const retryOrFailureCallback = (errorMessage) => {
+      --attemptsRemaining > 0
+        ? setTimeout(
+            () =>
+              this._tryLoad(
+                meetingUrl,
+                callFrameId,
+                successCallback,
+                retryOrFailureCallback
+              ),
+            LOAD_ATTEMPT_DELAY_MS
+          )
+        : failureCallback(errorMessage);
+    };
+    this._tryLoad(
+      meetingUrl,
+      callFrameId,
+      successCallback,
+      retryOrFailureCallback
+    );
+  }
+
+  get loaded() {
+    return this._callObjectScriptLoaded;
+  }
+
+  _tryLoad(meetingUrl, callFrameId, successCallback, failureCallback) {
     if (!document) {
       console.error('need to create call object in a DOM/web context');
       return;
@@ -35,9 +66,5 @@ export default class CallObjectLoaderWeb extends CallObjectLoader {
       script.src = callObjectBundleUrl(meetingUrl);
       head.appendChild(script);
     }
-  }
-
-  get loaded() {
-    return this._callObjectScriptLoaded;
   }
 }
