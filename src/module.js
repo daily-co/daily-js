@@ -47,6 +47,7 @@ import {
   DAILY_EVENT_RECORDING_DATA,
   DAILY_EVENT_LIVE_STREAMING_STARTED,
   DAILY_EVENT_LIVE_STREAMING_STOPPED,
+  DAILY_EVENT_LIVE_STREAMING_ERROR,
 
   // internals
   //
@@ -1230,6 +1231,7 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_RECORDING_DATA:
       case DAILY_EVENT_LIVE_STREAMING_STARTED:
       case DAILY_EVENT_LIVE_STREAMING_STOPPED:
+      case DAILY_EVENT_LIVE_STREAMING_ERROR:
         try {
           this.emit(msg.action, msg);
         } catch (e) {
