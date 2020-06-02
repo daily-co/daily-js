@@ -843,7 +843,7 @@ export default class DailyIframe extends EventEmitter {
     rtmpUrl,
     width = 1920,
     height = 1080,
-    backgroundColor = '0x00000000',
+    backgroundColor = '0xff000000',
   }) {
     methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({
