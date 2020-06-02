@@ -785,7 +785,7 @@ export default class DailyIframe extends EventEmitter {
   startLiveStreaming({ rtmpUrl,
                        width=1920,
                        height=1080,
-                       backgroundColor='0x00000000' }) {
+                       backgroundColor='0xff000000' }) {
     methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_START_LIVE_STREAMING,
