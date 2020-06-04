@@ -10,10 +10,22 @@ export default class CallObjectLoader {
    * Since the call object bundle sets up global state in the same scope as the
    * app code consuming it, it only needs to be loaded and executed once ever.
    *
-   * @param callback Callback function that takes a wasNoOp argument.
    * @param meetingUrl Meeting URL, used to determine where to load the bundle from.
+   * @param callFrameId A string identifying this "call frame", to distinguish it
+   *  from other iframe-based calls for message channel purposes.
+   * @param successCallback Callback function that takes a wasNoOp argument
+   *  (true if call object script was ever loaded once before).
+   * @param failureCallback Callback function that takes an error message.
    */
-  load(meetingUrl, callback) {
+  load(meetingUrl, callFrameId, successCallback, failureCallback) {
+    return notImplementedError();
+  }
+
+  /**
+   * Returns a boolean indicating whether the call object has been loaded and
+   * executed.
+   */
+  get loaded() {
     return notImplementedError();
   }
 }

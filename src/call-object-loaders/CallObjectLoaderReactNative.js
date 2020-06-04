@@ -2,6 +2,8 @@ import CallObjectLoader from './CallObjectLoader';
 import { callObjectBundleUrl } from '../utils';
 
 const EMPTY_CALL_FRAME_ID = '';
+const LOAD_ATTEMPTS = 3;
+const LOAD_ATTEMPT_DELAY_MS = 3000;
 
 function setUpDailyConfig() {
   // The call object bundle expects a global _dailyConfig to already exist,
@@ -18,14 +20,37 @@ export default class CallObjectLoaderReactNative extends CallObjectLoader {
     super();
     this._callObjectScriptLoaded = false;
   }
-  load(meetingUrl, _, callback) {
+
+  load(meetingUrl, _, successCallback, failureCallback) {
+    let attemptsRemaining = LOAD_ATTEMPTS;
+    const retryOrFailureCallback = (errorMessage) => {
+      --attemptsRemaining > 0
+        ? setTimeout(
+            () =>
+              this._tryLoad(
+                meetingUrl,
+                successCallback,
+                retryOrFailureCallback
+              ),
+            LOAD_ATTEMPT_DELAY_MS
+          )
+        : failureCallback(errorMessage);
+    };
+    this._tryLoad(meetingUrl, successCallback, retryOrFailureCallback);
+  }
+
+  get loaded() {
+    return this._callObjectScriptLoaded;
+  }
+
+  _tryLoad(meetingUrl, successCallback, failureCallback) {
     setUpDailyConfig();
 
     // Call object script already loaded once, so no-op.
     // This happens after leave()ing and join()ing again.
     if (this._callObjectScriptLoaded) {
       window._dailyCallObjectSetup(EMPTY_CALL_FRAME_ID);
-      callback(true); // true = "this load() was a no-op"
+      successCallback(true); // true = "this load() was a no-op"
       return;
     }
 
@@ -33,6 +58,9 @@ export default class CallObjectLoaderReactNative extends CallObjectLoader {
     const url = callObjectBundleUrl(meetingUrl);
     fetch(url)
       .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Received ${res.status} response`);
+        }
         return res.text();
       })
       .then((code) => {
@@ -40,10 +68,10 @@ export default class CallObjectLoaderReactNative extends CallObjectLoader {
       })
       .then(() => {
         this._callObjectScriptLoaded = true;
-        callback(false); // false = "this load() wasn't a no-op"
+        successCallback(false); // false = "this load() wasn't a no-op"
       })
       .catch((e) => {
-        console.error('Failed to load RN call object bundle', e);
+        failureCallback(`Failed to load call object bundle ${url}: ${e}`);
       });
   }
 }
