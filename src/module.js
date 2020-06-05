@@ -45,6 +45,9 @@ import {
   DAILY_EVENT_EXIT_FULLSCREEN,
   DAILY_EVENT_NETWORK_CONNECTION,
   DAILY_EVENT_RECORDING_DATA,
+  DAILY_EVENT_LIVE_STREAMING_STARTED,
+  DAILY_EVENT_LIVE_STREAMING_STOPPED,
+  DAILY_EVENT_LIVE_STREAMING_ERROR,
 
   // internals
   //
@@ -80,6 +83,8 @@ import {
   DAILY_METHOD_SET_NETWORK_TOPOLOGY,
   DAILY_METHOD_SET_PLAY_DING,
   DAILY_METHOD_SET_SUBSCRIBE_TO_TRACKS_AUTOMATICALLY,
+  DAILY_METHOD_START_LIVE_STREAMING,
+  DAILY_METHOD_STOP_LIVE_STREAMING,
 
   DAILY_CUSTOM_TRACK,
   DAILY_UI_REQUEST_FULLSCREEN,
@@ -793,6 +798,22 @@ export default class DailyIframe extends EventEmitter {
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_RECORDING });
   }
 
+  startLiveStreaming({ rtmpUrl,
+                       width=1920,
+                       height=1080,
+                       backgroundColor='0xff000000' }) {
+    methodNotSupportedInReactNative();
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_START_LIVE_STREAMING,
+      rtmpUrl, width, height, backgroundColor,
+    });
+  }
+
+  stopLiveStreaming() {
+    methodNotSupportedInReactNative();
+    this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_LIVE_STREAMING });
+  }
+
   getNetworkStats() {
     methodNotSupportedInReactNative();
     if (this._meetingState !== DAILY_STATE_JOINED) {
@@ -1224,6 +1245,9 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED:
       case DAILY_EVENT_NETWORK_CONNECTION:
       case DAILY_EVENT_RECORDING_DATA:
+      case DAILY_EVENT_LIVE_STREAMING_STARTED:
+      case DAILY_EVENT_LIVE_STREAMING_STOPPED:
+      case DAILY_EVENT_LIVE_STREAMING_ERROR:
         try {
           this.emit(msg.action, msg);
         } catch (e) {

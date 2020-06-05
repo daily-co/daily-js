@@ -47,6 +47,10 @@ export const DAILY_EVENT_NETWORK_CONNECTION = 'network-connection';
 export const DAILY_EVENT_FULLSCREEN = 'fullscreen';
 export const DAILY_EVENT_EXIT_FULLSCREEN = 'exited-fullscreen';
 
+export const DAILY_EVENT_LIVE_STREAMING_STARTED = 'live-streaming-started';
+export const DAILY_EVENT_LIVE_STREAMING_STOPPED = 'live-streaming-stopped';
+export const DAILY_EVENT_LIVE_STREAMING_ERROR = 'live-streaming-error';
+
 export const DAILY_EVENT_ERROR = 'error';
 
 //
@@ -88,6 +92,10 @@ export const DAILY_METHOD_SET_NETWORK_TOPOLOGY = 'set-network-topology';
 export const DAILY_METHOD_SET_PLAY_DING = 'daily-method-set-play-ding';
 export const DAILY_METHOD_SET_SUBSCRIBE_TO_TRACKS_AUTOMATICALLY =
   'daily-method-subscribe-to-tracks-automatically';
+export const DAILY_METHOD_START_LIVE_STREAMING =
+  'daily-method-start-live-streaming';
+export const DAILY_METHOD_STOP_LIVE_STREAMING =
+  'daily-method-stop-live-streaming';
 
 export const DAILY_CUSTOM_TRACK = 'daily-custom-track';
 export const DAILY_UI_REQUEST_FULLSCREEN = 'request-fullscreen';
