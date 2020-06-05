@@ -17,21 +17,23 @@ export default class CallObjectLoader {
    * Since the call object bundle sets up global state in the same scope as the
    * app code consuming it, it only needs to be loaded and executed once ever.
    *
-   * @param meetingUrl Meeting URL, used to determine where to load the bundle from.
+   * @param meetingOrBaseUrl Meeting URL (like https://somecompany.daily.co/hello)
+   *  or base URL (like https://somecompany.daily.co), used to determine where
+   *  to load the bundle from.
    * @param callFrameId A string identifying this "call frame", to distinguish it
    *  from other iframe-based calls for message channel purposes.
    * @param successCallback Callback function that takes a wasNoOp argument
    *  (true if call object script was ever loaded once before).
    * @param failureCallback Callback function that takes an error message.
    */
-  load(meetingUrl, callFrameId, successCallback, failureCallback) {
+  load(meetingOrBaseUrl, callFrameId, successCallback, failureCallback) {
     let attemptsRemaining = LOAD_ATTEMPTS;
     const retryOrFailureCallback = (errorMessage) => {
       --attemptsRemaining > 0
         ? setTimeout(
             () =>
               this._tryLoad(
-                meetingUrl,
+                meetingOrBaseUrl,
                 callFrameId,
                 successCallback,
                 retryOrFailureCallback
@@ -41,7 +43,7 @@ export default class CallObjectLoader {
         : failureCallback(errorMessage);
     };
     this._tryLoad(
-      meetingUrl,
+      meetingOrBaseUrl,
       callFrameId,
       successCallback,
       retryOrFailureCallback
@@ -56,7 +58,7 @@ export default class CallObjectLoader {
     return this._callObjectScriptLoaded;
   }
 
-  _tryLoad(meetingUrl, callFrameId, successCallback, failureCallback) {
+  _tryLoad(meetingOrBaseUrl, callFrameId, successCallback, failureCallback) {
     // Call object script already loaded once, so no-op.
     // This happens after leave()ing and join()ing again.
     if (this._callObjectScriptLoaded) {
@@ -73,7 +75,7 @@ export default class CallObjectLoader {
     window._dailyConfig.callFrameId = callFrameId;
 
     // Load the call object
-    const url = callObjectBundleUrl(meetingUrl);
+    const url = callObjectBundleUrl(meetingOrBaseUrl);
     fetch(url)
       .then((res) => {
         if (!res.ok) {
