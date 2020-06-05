@@ -82,6 +82,10 @@ export interface DailyCallOptions {
   audioSource?: string | MediaStreamTrack;
 }
 
+export interface DailyLoadOptions extends DailyCallOptions {
+  baseUrl?: string;
+}
+
 export type DailyAdvancedConfig = {
   experimentalChromeVideoMuteLightOff: boolean;
   fastConnect: boolean;
@@ -267,7 +271,7 @@ export interface DailyCall {
   }): DailyCall;
   setOutputDevice(audioDevice: { id?: string }): DailyCall;
   getInputDevices(): Promise<DailyDeviceInfos>;
-  load(properties: DailyCallOptions): Promise<void>;
+  load(properties: DailyLoadOptions): Promise<void>;
   startScreenShare(captureOptions?: DailyScreenCaptureOptions): void;
   stopScreenShare(): void;
   startRecording(): void;
