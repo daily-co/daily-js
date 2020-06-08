@@ -36,6 +36,7 @@ export default class CallObjectLoader {
     if (this.loaded) {
       window._dailyCallObjectSetup(callFrameId);
       successCallback(true); // true = "this load() was a no-op"
+      return;
     }
 
     prepareDailyConfig(callFrameId);
