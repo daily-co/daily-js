@@ -71,7 +71,7 @@ export default class CallObjectLoader {
 }
 
 const LOAD_ATTEMPTS = 3;
-const LOAD_ATTEMPT_DELAY_MS = 3000;
+const LOAD_ATTEMPT_DELAY = 3 * 1000;
 
 class LoadOperation {
   constructor(meetingOrBaseUrl, callFrameId, successCallback, failureCallback) {
@@ -111,7 +111,7 @@ class LoadOperation {
           retryOrFailureCallback
         );
         this._currentAttempt.start();
-      }, LOAD_ATTEMPT_DELAY_MS);
+      }, LOAD_ATTEMPT_DELAY);
     };
 
     this._currentAttempt = new LoadAttempt(
@@ -136,12 +136,17 @@ class LoadOperation {
   }
 }
 
-class LoadAttemptCancelledError extends Error {}
+class LoadAttemptAbortedError extends Error {}
+
+const LOAD_ATTEMPT_TIMEOUT = 20 * 1000;
 
 class LoadAttempt {
   constructor(meetingOrBaseUrl, callFrameId, successCallback, failureCallback) {
     this.cancelled = false;
     this.succeeded = false;
+
+    this._timedOut = false;
+    this._timeout = null;
 
     this._meetingOrBaseUrl = meetingOrBaseUrl;
     this._callFrameId = callFrameId;
@@ -151,10 +156,17 @@ class LoadAttempt {
 
   start() {
     const url = callObjectBundleUrl(this._meetingOrBaseUrl);
+
+    this._timeout = setTimeout(() => {
+      this._timedOut = true;
+      this._failureCallback(`Timed out when loading call object bundle ${url}`);
+    }, LOAD_ATTEMPT_TIMEOUT);
+
     fetch(url)
       .then((res) => {
-        if (this.cancelled) {
-          throw new LoadAttemptCancelledError();
+        clearTimeout(this._timeout);
+        if (this.cancelled || this._timedOut) {
+          throw new LoadAttemptAbortedError();
         }
         if (!res.ok) {
           throw new Error(`Received ${res.status} response`);
@@ -163,19 +175,21 @@ class LoadAttempt {
       })
       .then((code) => {
         if (this.cancelled) {
-          throw new LoadAttemptCancelledError();
+          throw new LoadAttemptAbortedError();
         }
         eval(code);
       })
       .then(() => {
         if (this.cancelled) {
-          throw new LoadAttemptCancelledError();
+          throw new LoadAttemptAbortedError();
         }
         this.succeeded = true;
         this._successCallback(false); // false = "this load() wasn't a no-op"
       })
       .catch((e) => {
-        if (e instanceof LoadAttemptCancelledError) {
+        clearTimeout(this._timeout);
+        if (e instanceof LoadAttemptAbortedError) {
+          console.log("[LoadAttempt] cancelled");
           return;
         }
         this._failureCallback(`Failed to load call object bundle ${url}: ${e}`);
@@ -183,6 +197,7 @@ class LoadAttempt {
   }
 
   cancel() {
+    clearTimeout(this._timeout);
     this.cancelled = true;
   }
 }
