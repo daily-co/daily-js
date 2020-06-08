@@ -439,7 +439,9 @@ export default class DailyIframe extends EventEmitter {
 
   async destroy() {
     try {
-      if (this._meetingState === DAILY_STATE_JOINED) {
+      if (
+        [DAILY_STATE_JOINED, DAILY_STATE_LOADING].includes(this._meetingState)
+      ) {
         await this.leave();
       }
     } catch (e) {}
