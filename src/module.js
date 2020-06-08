@@ -792,16 +792,18 @@ export default class DailyIframe extends EventEmitter {
         }
         resolve();
       }
-      // It's possible that the call machine has failed to load and is 
-      // unreachable. In that case, simply clean up *our* state without waiting
-      // for call machine to first clean up *its* state.
-      // TODO: also consider iframe-mode in isCallMachineUnreachable rather
-      // than assuming the call machine is reachable.
-      const isCallMachineUnreachable =
-        this._callObjectLoader && !this._callObjectLoader.loaded;
-      isCallMachineUnreachable
-        ? k()
-        : this.sendMessageToCallMachine({ action: DAILY_METHOD_LEAVE }, k);
+      if (this._callObjectLoader && !this._callObjectLoader.loaded) {
+        // If call object bundle never successfully loaded, cancel load if 
+        // needed and clean up state immediately (without waiting for call 
+        // machine to clean up its state).
+        this._callObjectLoader.cancel();
+        k();
+      }
+      else {
+        // TODO: the possibility that the iframe call machine is not yet loaded
+        // is never handled here...
+        this.sendMessageToCallMachine({ action: DAILY_METHOD_LEAVE }, k);
+      }
     });
   }
 
