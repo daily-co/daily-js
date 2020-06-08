@@ -716,6 +716,7 @@ export default class DailyIframe extends EventEmitter {
     if (this._callObjectMode) {
       // non-iframe, callObjectMode
       return new Promise((resolve, reject) => {
+        this._callObjectLoader.cancel();
         this._callObjectLoader.load(
           this.properties.url || this.properties.baseUrl,
           this._callFrameId,
