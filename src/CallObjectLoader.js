@@ -30,7 +30,8 @@ export default class CallObjectLoader {
    *  from other iframe-based calls for message channel purposes.
    * @param successCallback Callback function that takes a wasNoOp argument
    *  (true if call object script was ever loaded once before).
-   * @param failureCallback Callback function that takes an error message.
+   * @param failureCallback Callback function that takes an error message and a
+   *   boolean indicating whether an automatic retry is slated to occur.
    */
   load(meetingOrBaseUrl, callFrameId, successCallback, failureCallback) {
     if (this.loaded) {
@@ -48,7 +49,9 @@ export default class CallObjectLoader {
     this._currentLoad = new LoadOperation(
       meetingOrBaseUrl,
       callFrameId,
-      successCallback,
+      () => {
+        successCallback(false); // false = "this load() wasn't a no-op"
+      },
       failureCallback
     );
     this._currentLoad.start();
@@ -74,6 +77,8 @@ const LOAD_ATTEMPTS = 3;
 const LOAD_ATTEMPT_DELAY = 3 * 1000;
 
 class LoadOperation {
+  // Here failureCallback takes the same parameters as CallObjectLoader.load,
+  // and successCallback takes no parameters.
   constructor(meetingOrBaseUrl, callFrameId, successCallback, failureCallback) {
     this._attemptsRemaining = LOAD_ATTEMPTS;
     this._currentAttempt = null;
@@ -95,8 +100,9 @@ class LoadOperation {
         return;
       }
 
-      if (--this._attemptsRemaining === 0) {
-        this._failureCallback(errorMessage);
+      this._attemptsRemaining--;
+      this._failureCallback(errorMessage, this._attemptsRemaining > 0); // true = "will retry"
+      if (this._attemptsRemaining === 0) {
         return;
       }
 
@@ -141,6 +147,8 @@ class LoadAttemptAbortedError extends Error {}
 const LOAD_ATTEMPT_TIMEOUT = 20 * 1000;
 
 class LoadAttempt {
+  // Here successCallback takes no parameters, and failureCallback takes a
+  // single error message parameter.
   constructor(meetingOrBaseUrl, callFrameId, successCallback, failureCallback) {
     this.cancelled = false;
     this.succeeded = false;
@@ -186,7 +194,7 @@ class LoadAttempt {
           throw new LoadAttemptAbortedError();
         }
         this.succeeded = true;
-        this._successCallback(false); // false = "this load() wasn't a no-op"
+        this._successCallback();
       })
       .catch((e) => {
         clearTimeout(this._timeout);

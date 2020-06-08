@@ -84,6 +84,7 @@ import {
   DAILY_CUSTOM_TRACK,
   DAILY_UI_REQUEST_FULLSCREEN,
   DAILY_UI_EXIT_FULLSCREEN,
+  DAILY_EVENT_LOAD_ATTEMPT_FAILED,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -730,13 +731,19 @@ export default class DailyIframe extends EventEmitter {
               this.emit(DAILY_EVENT_LOADED, { action: DAILY_EVENT_LOADED });
             resolve();
           },
-          (errorMsg) => {
-            this._meetingState = DAILY_STATE_ERROR;
-            this.emit(DAILY_EVENT_ERROR, {
-              action: DAILY_EVENT_ERROR,
+          (errorMsg, willRetry) => {
+            this.emit(DAILY_EVENT_LOAD_ATTEMPT_FAILED, {
+              action: DAILY_EVENT_LOAD_ATTEMPT_FAILED,
               errorMsg,
             });
-            reject(errorMsg);
+            if (!willRetry) {
+              this._meetingState = DAILY_STATE_ERROR;
+              this.emit(DAILY_EVENT_ERROR, {
+                action: DAILY_EVENT_ERROR,
+                errorMsg,
+              });
+              reject(errorMsg);
+            }
           }
         );
       });

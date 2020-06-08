@@ -19,6 +19,7 @@ export type DailyLanguage = 'de' | 'en' | 'fi' | 'fr' | 'nl' | 'pt';
 
 export type DailyEvent =
   | 'loading'
+  | 'load-attempt-failed'
   | 'loaded'
   | 'started-camera'
   | 'camera-error'
