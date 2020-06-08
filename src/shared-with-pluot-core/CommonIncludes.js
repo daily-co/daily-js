@@ -12,6 +12,7 @@ export const DAILY_STATE_LEFT = 'left-meeting';
 export const DAILY_STATE_ERROR = 'error';
 
 export const DAILY_EVENT_LOADING = 'loading';
+export const DAILY_EVENT_LOAD_ATTEMPT_FAILED = 'load-attempt-failed';
 export const DAILY_EVENT_LOADED = 'loaded';
 export const DAILY_EVENT_STARTED_CAMERA = 'started-camera';
 export const DAILY_EVENT_CAMERA_ERROR = 'camera-error';
