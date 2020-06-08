@@ -195,7 +195,7 @@ class LoadAttempt {
         if (this.cancelled) {
           throw new LoadAttemptAbortedError();
         }
-        eval(code);
+        Function('"use strict";' + code)();
       })
       .then(() => {
         if (this.cancelled) {
