@@ -95,19 +95,24 @@ class LoadOperation {
       return;
     }
 
+    // console.log("[LoadOperation] starting...");
+
     const retryOrFailureCallback = (errorMessage) => {
       if (this._currentAttempt.cancelled) {
+        // console.log("[LoadOperation] cancelled");
         return;
       }
 
       this._attemptsRemaining--;
       this._failureCallback(errorMessage, this._attemptsRemaining > 0); // true = "will retry"
-      if (this._attemptsRemaining === 0) {
+      if (this._attemptsRemaining <= 0) { // Should never be <0, but just being extra careful here
+        // console.log("[LoadOperation] ran out of attempts");
         return;
       }
 
       setTimeout(() => {
         if (this._currentAttempt.cancelled) {
+          // console.log("[LoadOperation] cancelled");
           return;
         }
         this._currentAttempt = new LoadAttempt(
@@ -163,6 +168,8 @@ class LoadAttempt {
   }
 
   start() {
+    // console.log("[LoadAttempt] starting...");
+
     const url = callObjectBundleUrl(this._meetingOrBaseUrl);
 
     this._timeout = setTimeout(() => {
@@ -194,12 +201,15 @@ class LoadAttempt {
           throw new LoadAttemptAbortedError();
         }
         this.succeeded = true;
+        // console.log("[LoadAttempt] succeeded...");
         this._successCallback();
       })
       .catch((e) => {
         clearTimeout(this._timeout);
-        if (e instanceof LoadAttemptAbortedError) {
-          console.log("[LoadAttempt] cancelled");
+        // We need to check all these conditions since long outstanding
+        // requests can fail *after* cancellation or timeout
+        if (e instanceof LoadAttemptAbortedError || this.cancelled || this._timedOut) {
+          // console.log("[LoadAttempt] cancelled or timed out");
           return;
         }
         this._failureCallback(`Failed to load call object bundle ${url}: ${e}`);
