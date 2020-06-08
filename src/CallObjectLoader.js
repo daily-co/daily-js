@@ -1,11 +1,17 @@
 import { callObjectBundleUrl } from './utils';
 
-const LOAD_ATTEMPTS = 3;
-const LOAD_ATTEMPT_DELAY_MS = 3000;
+function prepareDailyConfig(callFrameId) {
+  // Add a global callFrameId so we can have both iframes and one
+  // call object mode calls live at the same time
+  if (!window._dailyConfig) {
+    window._dailyConfig = {};
+  }
+  window._dailyConfig.callFrameId = callFrameId;
+}
 
 export default class CallObjectLoader {
   constructor() {
-    this._callObjectScriptLoaded = false;
+    this._currentLoad = null;
   }
 
   /**
@@ -27,71 +33,155 @@ export default class CallObjectLoader {
    * @param failureCallback Callback function that takes an error message.
    */
   load(meetingOrBaseUrl, callFrameId, successCallback, failureCallback) {
-    let attemptsRemaining = LOAD_ATTEMPTS;
-    const retryOrFailureCallback = (errorMessage) => {
-      --attemptsRemaining > 0
-        ? setTimeout(
-            () =>
-              this._tryLoad(
-                meetingOrBaseUrl,
-                callFrameId,
-                successCallback,
-                retryOrFailureCallback
-              ),
-            LOAD_ATTEMPT_DELAY_MS
-          )
-        : failureCallback(errorMessage);
-    };
-    this._tryLoad(
+    if (this.loaded) {
+      window._dailyCallObjectSetup(callFrameId);
+      successCallback(true); // true = "this load() was a no-op"
+    }
+
+    prepareDailyConfig(callFrameId);
+
+    // Cancel current load, if any
+    this._currentLoad && this._currentLoad.cancel();
+
+    // Start a new load
+    this._currentLoad = new LoadOperation(
       meetingOrBaseUrl,
       callFrameId,
       successCallback,
-      retryOrFailureCallback
+      failureCallback
     );
+    this._currentLoad.start();
   }
 
   /**
-   * Returns a boolean indicating whether the call object has been loaded and
-   * executed.
+   * Cancel loading the call object bundle. No callbacks will be invoked.
    */
-  get loaded() {
-    return this._callObjectScriptLoaded;
+  cancel() {
+    this._currentLoad && this._currentLoad.cancel();
   }
 
-  _tryLoad(meetingOrBaseUrl, callFrameId, successCallback, failureCallback) {
-    // Call object script already loaded once, so no-op.
-    // This happens after leave()ing and join()ing again.
-    if (this._callObjectScriptLoaded) {
-      window._dailyCallObjectSetup(callFrameId);
-      successCallback(true); // true = "this load() was a no-op"
+  /**
+   * Returns a boolean indicating whether the call object bundle has been
+   * loaded and executed.
+   */
+  get loaded() {
+    return this._currentLoad && this._currentLoad.succeeded;
+  }
+}
+
+const LOAD_ATTEMPTS = 3;
+const LOAD_ATTEMPT_DELAY_MS = 3000;
+
+class LoadOperation {
+  constructor(meetingOrBaseUrl, callFrameId, successCallback, failureCallback) {
+    this._attemptsRemaining = LOAD_ATTEMPTS;
+    this._currentAttempt = null;
+
+    this._meetingOrBaseUrl = meetingOrBaseUrl;
+    this._callFrameId = callFrameId;
+    this._successCallback = successCallback;
+    this._failureCallback = failureCallback;
+  }
+
+  start() {
+    // Bail if this load has already started
+    if (this._currentAttempt) {
       return;
     }
 
-    // Add a global callFrameId so we can have both iframes and one
-    // call object mode calls live at the same time
-    if (!window._dailyConfig) {
-      window._dailyConfig = {};
-    }
-    window._dailyConfig.callFrameId = callFrameId;
+    const retryOrFailureCallback = (errorMessage) => {
+      if (this._currentAttempt.cancelled) {
+        return;
+      }
 
-    // Load the call object
-    const url = callObjectBundleUrl(meetingOrBaseUrl);
+      if (--this._attemptsRemaining === 0) {
+        this._failureCallback(errorMessage);
+        return;
+      }
+
+      setTimeout(() => {
+        if (this._currentAttempt.cancelled) {
+          return;
+        }
+        this._currentAttempt = new LoadAttempt(
+          this._meetingOrBaseUrl,
+          this._callFrameId,
+          this._successCallback,
+          retryOrFailureCallback
+        );
+        this._currentAttempt.start();
+      }, LOAD_ATTEMPT_DELAY_MS);
+    };
+
+    this._currentAttempt = new LoadAttempt(
+      this._meetingOrBaseUrl,
+      this._callFrameId,
+      this._successCallback,
+      retryOrFailureCallback
+    );
+    this._currentAttempt.start();
+  }
+
+  cancel() {
+    this._currentAttempt && this._currentAttempt.cancel();
+  }
+
+  get cancelled() {
+    return this._currentAttempt && this._currentAttempt.cancelled;
+  }
+
+  get succeeded() {
+    return this._currentAttempt && this._currentAttempt.succeeded;
+  }
+}
+
+class LoadAttemptCancelledError extends Error {}
+
+class LoadAttempt {
+  constructor(meetingOrBaseUrl, callFrameId, successCallback, failureCallback) {
+    this.cancelled = false;
+    this.succeeded = false;
+
+    this._meetingOrBaseUrl = meetingOrBaseUrl;
+    this._callFrameId = callFrameId;
+    this._successCallback = successCallback;
+    this._failureCallback = failureCallback;
+  }
+
+  start() {
+    const url = callObjectBundleUrl(this._meetingOrBaseUrl);
     fetch(url)
       .then((res) => {
+        if (this.cancelled) {
+          throw new LoadAttemptCancelledError();
+        }
         if (!res.ok) {
           throw new Error(`Received ${res.status} response`);
         }
         return res.text();
       })
       .then((code) => {
+        if (this.cancelled) {
+          throw new LoadAttemptCancelledError();
+        }
         eval(code);
       })
       .then(() => {
-        this._callObjectScriptLoaded = true;
-        successCallback(false); // false = "this load() wasn't a no-op"
+        if (this.cancelled) {
+          throw new LoadAttemptCancelledError();
+        }
+        this.succeeded = true;
+        this._successCallback(false); // false = "this load() wasn't a no-op"
       })
       .catch((e) => {
-        failureCallback(`Failed to load call object bundle ${url}: ${e}`);
+        if (e instanceof LoadAttemptCancelledError) {
+          return;
+        }
+        this._failureCallback(`Failed to load call object bundle ${url}: ${e}`);
       });
+  }
+
+  cancel() {
+    this.cancelled = true;
   }
 }
