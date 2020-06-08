@@ -105,7 +105,8 @@ class LoadOperation {
 
       this._attemptsRemaining--;
       this._failureCallback(errorMessage, this._attemptsRemaining > 0); // true = "will retry"
-      if (this._attemptsRemaining <= 0) { // Should never be <0, but just being extra careful here
+      if (this._attemptsRemaining <= 0) {
+        // Should never be <0, but just being extra careful here
         // console.log("[LoadOperation] ran out of attempts");
         return;
       }
@@ -208,7 +209,11 @@ class LoadAttempt {
         clearTimeout(this._timeout);
         // We need to check all these conditions since long outstanding
         // requests can fail *after* cancellation or timeout
-        if (e instanceof LoadAttemptAbortedError || this.cancelled || this._timedOut) {
+        if (
+          e instanceof LoadAttemptAbortedError ||
+          this.cancelled ||
+          this._timedOut
+        ) {
           // console.log("[LoadAttempt] cancelled or timed out");
           return;
         }
