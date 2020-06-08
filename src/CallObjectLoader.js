@@ -159,7 +159,9 @@ class LoadAttempt {
 
     this._timeout = setTimeout(() => {
       this._timedOut = true;
-      this._failureCallback(`Timed out when loading call object bundle ${url}`);
+      this._failureCallback(
+        `Timed out (>${LOAD_ATTEMPT_TIMEOUT} ms) when loading call object bundle ${url}`
+      );
     }, LOAD_ATTEMPT_TIMEOUT);
 
     fetch(url)
