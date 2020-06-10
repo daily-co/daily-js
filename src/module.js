@@ -89,15 +89,16 @@ import {
   DAILY_CUSTOM_TRACK,
   DAILY_UI_REQUEST_FULLSCREEN,
   DAILY_UI_EXIT_FULLSCREEN,
+  DAILY_EVENT_LOAD_ATTEMPT_FAILED,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import { isReactNative, browserInfo } from './shared-with-pluot-core/Environment.js';
 import WebMessageChannel from './shared-with-pluot-core/script-message-channels/WebMessageChannel';
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
-import CallObjectLoaderWeb from './call-object-loaders/CallObjectLoaderWeb.js';
-import CallObjectLoaderReactNative from './call-object-loaders/CallObjectLoaderReactNative.js';
+import CallObjectLoader from "./CallObjectLoader";
 import {
   getLocalIsSubscribedToTrack,
 } from './shared-with-pluot-core/selectors';
+import { callObjectBundleUrl } from './utils.js';
 
 
 export { DAILY_STATE_NEW, DAILY_STATE_JOINING, DAILY_STATE_JOINED,
@@ -113,6 +114,10 @@ const FRAME_PROPS = {
   url: {
     validate: (url) => typeof url === 'string',
     help: 'url should be a string'
+  },
+  baseUrl: {
+    validate: (url) => typeof url === 'string',
+    help: 'baseUrl should be a string'
   },
   token: {
     validate: (token) => typeof token === 'string',
@@ -369,9 +374,7 @@ export default class DailyIframe extends EventEmitter {
     this.validateProperties(properties);
     this.properties = { ...properties };
     this._callObjectLoader = this._callObjectMode
-      ? isReactNative()
-        ? new CallObjectLoaderReactNative()
-        : new CallObjectLoaderWeb()
+      ? new CallObjectLoader()
       : null;
     this._meetingState = DAILY_STATE_NEW;
     this._participants = {};
@@ -420,7 +423,7 @@ export default class DailyIframe extends EventEmitter {
 
   async destroy() {
     try { 
-      if (this._meetingState === DAILY_STATE_JOINED) {
+      if ([DAILY_STATE_JOINED, DAILY_STATE_LOADING].includes(this._meetingState)) {
         await this.leave();
       }
     } catch (e) {}
@@ -649,9 +652,14 @@ export default class DailyIframe extends EventEmitter {
       this.validateProperties(properties);
       this.properties = { ...this.properties, ...properties };
     }
-    if (!this.properties.url) {
-      throw new Error("can't load meeting because url property isn't set");
+
+    // In iframe mode, we *must* have a meeting url
+    // (As opposed to call object mode, where a meeting url, a base url, or no
+    // url at all are all valid here)
+    if (!this._callObjectMode && !this.properties.url) {
+      throw new Error("can't load iframe meeting because url property isn't set");
     }
+
     this._meetingState = DAILY_STATE_LOADING;
     try {
       this.emit(DAILY_EVENT_LOADING, { action: DAILY_EVENT_LOADING });
@@ -662,16 +670,20 @@ export default class DailyIframe extends EventEmitter {
     if (this._callObjectMode) {
       // non-iframe, callObjectMode
       return new Promise((resolve, reject) => {
-        this._callObjectLoader.load(this.properties.url, this._callFrameId, (wasNoOp) => {
+        this._callObjectLoader.cancel();
+        this._callObjectLoader.load(this.properties.url || this.properties.baseUrl, this._callFrameId, (wasNoOp) => {
           this._meetingState = DAILY_STATE_LOADED;
           // Only need to emit event if load was a no-op, since the loaded
           // bundle won't be emitting it if it's not executed again
           wasNoOp && this.emit(DAILY_EVENT_LOADED, { action: DAILY_EVENT_LOADED });
           resolve();
-        }, (errorMsg) => {
-          this._meetingState = DAILY_STATE_ERROR;
-          this.emit(DAILY_EVENT_ERROR, { action: DAILY_EVENT_ERROR, errorMsg });
-          reject(errorMsg);
+        }, (errorMsg, willRetry) => {
+          this.emit(DAILY_EVENT_LOAD_ATTEMPT_FAILED, { action: DAILY_EVENT_LOAD_ATTEMPT_FAILED, errorMsg });
+          if (!willRetry) {
+            this._meetingState = DAILY_STATE_ERROR;
+            this.emit(DAILY_EVENT_ERROR, { action: DAILY_EVENT_ERROR, errorMsg });
+            reject(errorMsg);
+          }
         });
       });
     }
@@ -704,11 +716,29 @@ export default class DailyIframe extends EventEmitter {
         return Promise.reject(e);
       }
     } else {
-      newCss = !!(this.properties.cssFile || this.properties.cssText)
-      if (properties.url &&
-          properties.url !== this.properties.url) {
-        console.error("error: can't change the daily.co call url after load()");
-        return Promise.reject();
+      newCss = !!(this.properties.cssFile || this.properties.cssText);
+      if (properties.url) {
+        if (this._callObjectMode) {
+          const newBundleUrl = callObjectBundleUrl(properties.url);
+          const loadedBundleUrl = callObjectBundleUrl(
+            this.properties.url || this.properties.baseUrl
+          );
+          if (newBundleUrl !== loadedBundleUrl) {
+            console.error(
+              `error: in call object mode, can't change the daily.co call url after load() to one with a different bundle url (${loadedBundleUrl} -> ${newBundleUrl})`
+            );
+            return Promise.reject();
+          }
+          this.properties.url = properties.url;
+        } else {
+          // iframe mode
+          if (properties.url && properties.url !== this.properties.url) {
+            console.error(
+              `error: in iframe mode, can't change the daily.co call url after load() (${this.properties.url} -> ${properties.url})`
+            );
+            return Promise.reject();
+          }
+        }
       }
     }
     if (this._meetingState === DAILY_STATE_JOINED ||
@@ -767,16 +797,18 @@ export default class DailyIframe extends EventEmitter {
         }
         resolve();
       }
-      // It's possible that the call machine has failed to load and is 
-      // unreachable. In that case, simply clean up *our* state without waiting
-      // for call machine to first clean up *its* state.
-      // TODO: also consider iframe-mode in isCallMachineUnreachable rather
-      // than assuming the call machine is reachable.
-      const isCallMachineUnreachable =
-        this._callObjectLoader && !this._callObjectLoader.loaded;
-      isCallMachineUnreachable
-        ? k()
-        : this.sendMessageToCallMachine({ action: DAILY_METHOD_LEAVE }, k);
+      if (this._callObjectLoader && !this._callObjectLoader.loaded) {
+        // If call object bundle never successfully loaded, cancel load if 
+        // needed and clean up state immediately (without waiting for call 
+        // machine to clean up its state).
+        this._callObjectLoader.cancel();
+        k();
+      }
+      else {
+        // TODO: the possibility that the iframe call machine is not yet loaded
+        // is never handled here...
+        this.sendMessageToCallMachine({ action: DAILY_METHOD_LEAVE }, k);
+      }
     });
   }
 
