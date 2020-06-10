@@ -19,6 +19,7 @@ export type DailyLanguage = 'de' | 'en' | 'fi' | 'fr' | 'nl' | 'pt';
 
 export type DailyEvent =
   | 'loading'
+  | 'load-attempt-failed'
   | 'loaded'
   | 'started-camera'
   | 'camera-error'
@@ -74,12 +75,17 @@ export interface DailyCallOptions {
   showFullscreenButton?: boolean;
   iframeStyle?: object;
   customLayout?: boolean;
+  bodyClass?: string;
   cssFile?: string;
   cssText?: string;
   dailyConfig?: DailyAdvancedConfig;
   subscribeToTracksAutomatically?: boolean;
   videoSource?: string | MediaStreamTrack;
   audioSource?: string | MediaStreamTrack;
+}
+
+export interface DailyLoadOptions extends DailyCallOptions {
+  baseUrl?: string;
 }
 
 export type DailyAdvancedConfig = {
@@ -235,6 +241,11 @@ export interface DailyCall {
   join(properties?: DailyCallOptions): Promise<DailyParticipant[] | void>;
   leave(): Promise<void>;
   destroy(): Promise<void>;
+  loadCss(properties: {
+    bodyClass?: string;
+    cssFile?: string;
+    cssText?: string;
+  }): DailyCall;
   meetingState(): DailyMeetingState;
   participants(): {
     local: DailyParticipant;
@@ -267,7 +278,7 @@ export interface DailyCall {
   }): DailyCall;
   setOutputDevice(audioDevice: { id?: string }): DailyCall;
   getInputDevices(): Promise<DailyDeviceInfos>;
-  load(properties: DailyCallOptions): Promise<void>;
+  load(properties: DailyLoadOptions): Promise<void>;
   startScreenShare(captureOptions?: DailyScreenCaptureOptions): void;
   stopScreenShare(): void;
   startRecording(): void;
