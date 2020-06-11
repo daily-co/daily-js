@@ -162,6 +162,10 @@ class LoadAttempt {
     this._networkTimedOut = false;
     this._networkTimeout = null;
 
+    this._iosCache =
+      typeof iOSCallObjectBundleCache !== "undefined" &&
+      iOSCallObjectBundleCache;
+
     this._meetingOrBaseUrl = meetingOrBaseUrl;
     this._callFrameId = callFrameId;
     this._successCallback = successCallback;
@@ -185,8 +189,7 @@ class LoadAttempt {
    */
   async _tryLoadFromIOSCache(url) {
     // console.log("[LoadAttempt] trying to load from iOS cache...");
-    const cache = window.iOSCallObjectBundleCache;
-    if (!cache) {
+    if (!this._iosCache) {
       return false;
     }
     try {
@@ -231,11 +234,13 @@ class LoadAttempt {
           throw new LoadAttemptAbortedError();
         }
         Function('"use strict";' + code)();
+        return code;
       })
-      .then(() => {
+      .then((code) => {
         if (this.cancelled) {
           throw new LoadAttemptAbortedError();
         }
+        this._iosCache && this._iosCache.set(url, code);
         this.succeeded = true;
         // console.log("[LoadAttempt] succeeded...");
         this._successCallback();
