@@ -165,6 +165,7 @@ class LoadAttempt {
     this._iosCache =
       typeof iOSCallObjectBundleCache !== "undefined" &&
       iOSCallObjectBundleCache;
+    this._refetchHeaders = null;
 
     this._meetingOrBaseUrl = meetingOrBaseUrl;
     this._callFrameId = callFrameId;
@@ -175,10 +176,13 @@ class LoadAttempt {
   async start() {
     // console.log("[LoadAttempt] starting...");
     const url = callObjectBundleUrl(this._meetingOrBaseUrl);
-    if (await this._tryLoadFromIOSCache(url)) {
-      return;
-    }
-    this._loadFromNetwork(url);
+    const loadedFromIOSCache = await this._tryLoadFromIOSCache(url);
+    !loadedFromIOSCache && this._loadFromNetwork(url);
+  }
+
+  cancel() {
+    clearTimeout(this._networkTimeout);
+    this.cancelled = true;
   }
 
   /**
@@ -200,22 +204,34 @@ class LoadAttempt {
     }
 
     try {
-      const code = await this._iosCache.get(url);
+      const cacheResponse = await this._iosCache.get(url);
 
       // If load has been cancelled, report work complete
       if (this.cancelled) {
         return true;
       }
 
-      // If no code found in the cache, report failure
-      if (!code) {
+      // If cache miss, report failure
+      if (!cacheResponse) {
         // console.log("[LoadAttempt] iOS cache miss");
         return false;
       }
 
-      // Run code, run success callback, and report work complete
+      // If cache expired, store refetch headers to use later and report
+      // failure
+      if (!cacheResponse.code) {
+        // console.log(
+        //   "[LoadAttempt] iOS cache expired, setting refetch headers",
+        //   cacheResponse.refetchHeaders
+        // );
+        this._refetchHeaders = cacheResponse.refetchHeaders;
+        return false;
+      }
+
+      // Cache is fresh, so run code and success callback, and report work
+      // complete
       // console.log("[LoadAttempt] iOS cache hit");
-      Function('"use strict";' + code)();
+      Function('"use strict";' + cacheResponse.code)();
       this.succeeded = true;
       this._successCallback();
       return true;
@@ -240,7 +256,10 @@ class LoadAttempt {
     }, LOAD_ATTEMPT_NETWORK_TIMEOUT);
 
     try {
-      const response = await fetch(url);
+      const fetchOptions = this._refetchHeaders
+        ? { headers: this._refetchHeaders }
+        : {};
+      const response = await fetch(url, fetchOptions);
       clearTimeout(this._networkTimeout);
 
       // Check that load wasn't cancelled or timed out during fetch
@@ -248,13 +267,7 @@ class LoadAttempt {
         throw new LoadAttemptAbortedError();
       }
 
-      // Check if response successful
-      if (!response.ok) {
-        throw new Error(`Received ${response.status} response`);
-      }
-
-      // Get bundle code from response
-      const code = await response.text();
+      const code = await this._getBundleCodeFromResponse(url, response);
 
       // Check again that load wasn't cancelled during reading response
       if (this.cancelled) {
@@ -289,8 +302,20 @@ class LoadAttempt {
     }
   }
 
-  cancel() {
-    clearTimeout(this._networkTimeout);
-    this.cancelled = true;
+  async _getBundleCodeFromResponse(url, response) {
+    // Normal success case
+    if (response.ok) {
+      return await response.text();
+    }
+
+    // React Native iOS-specific case: 304 Not-Modified response
+    // (Since we're doing manual cache management for iOS, the fetch mechanism
+    //  doesn't opaquely handle 304s for us)
+    if (this._iosCache && response.status === 304) {
+      const cacheResponse = await this._iosCache.renew(url, response.headers);
+      return cacheResponse.code;
+    }
+
+    throw new Error(`Received ${response.status} response`);
   }
 }
