@@ -150,7 +150,7 @@ class LoadOperation {
 
 class LoadAttemptAbortedError extends Error {}
 
-const LOAD_ATTEMPT_TIMEOUT = 20 * 1000;
+const LOAD_ATTEMPT_NETWORK_TIMEOUT = 20 * 1000;
 
 class LoadAttempt {
   // Here successCallback takes no parameters, and failureCallback takes a
@@ -159,8 +159,8 @@ class LoadAttempt {
     this.cancelled = false;
     this.succeeded = false;
 
-    this._timedOut = false;
-    this._timeout = null;
+    this._networkTimedOut = false;
+    this._networkTimeout = null;
 
     this._meetingOrBaseUrl = meetingOrBaseUrl;
     this._callFrameId = callFrameId;
@@ -168,22 +168,57 @@ class LoadAttempt {
     this._failureCallback = failureCallback;
   }
 
-  start() {
+  async start() {
     // console.log("[LoadAttempt] starting...");
-
     const url = callObjectBundleUrl(this._meetingOrBaseUrl);
+    if (await this._tryLoadFromIOSCache()) {
+      return;
+    }
+    this._loadFromNetwork(url);
+  }
 
-    this._timeout = setTimeout(() => {
-      this._timedOut = true;
+  /**
+   * Try to load the call object bundle from the network.
+   * @param {string} url The url of the call object bundle to try to load.
+   * @returns A Promise that resolves to false if the load failed or true
+   * otherwise (if it succeeded or was cancelled).
+   */
+  async _tryLoadFromIOSCache(url) {
+    // console.log("[LoadAttempt] trying to load from iOS cache...");
+    const cache = window.iOSCallObjectBundleCache;
+    if (!cache) {
+      return false;
+    }
+    try {
+      await cache.get(url);
+      if (this.cancelled) {
+        return true;
+      }
+      Function('"use strict";' + code)();
+      this.succeeded = true;
+      this._successCallback();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
+   * Try to load the call object bundle from the network.
+   * @param {string} url The url of the call object bundle to load.
+   */
+  _loadFromNetwork(url) {
+    // console.log("[LoadAttempt] trying to load from network...");
+    this._networkTimeout = setTimeout(() => {
+      this._networkTimedOut = true;
       this._failureCallback(
-        `Timed out (>${LOAD_ATTEMPT_TIMEOUT} ms) when loading call object bundle ${url}`
+        `Timed out (>${LOAD_ATTEMPT_NETWORK_TIMEOUT} ms) when loading call object bundle ${url}`
       );
-    }, LOAD_ATTEMPT_TIMEOUT);
+    }, LOAD_ATTEMPT_NETWORK_TIMEOUT);
 
     fetch(url)
       .then((res) => {
-        clearTimeout(this._timeout);
-        if (this.cancelled || this._timedOut) {
+        clearTimeout(this._networkTimeout);
+        if (this.cancelled || this._networkTimedOut) {
           throw new LoadAttemptAbortedError();
         }
         if (!res.ok) {
@@ -206,13 +241,13 @@ class LoadAttempt {
         this._successCallback();
       })
       .catch((e) => {
-        clearTimeout(this._timeout);
+        clearTimeout(this._networkTimeout);
         // We need to check all these conditions since long outstanding
         // requests can fail *after* cancellation or timeout
         if (
           e instanceof LoadAttemptAbortedError ||
           this.cancelled ||
-          this._timedOut
+          this._networkTimedOut
         ) {
           // console.log("[LoadAttempt] cancelled or timed out");
           return;
@@ -222,7 +257,7 @@ class LoadAttempt {
   }
 
   cancel() {
-    clearTimeout(this._timeout);
+    clearTimeout(this._networkTimeout);
     this.cancelled = true;
   }
 }
