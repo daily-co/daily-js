@@ -175,32 +175,53 @@ class LoadAttempt {
   async start() {
     // console.log("[LoadAttempt] starting...");
     const url = callObjectBundleUrl(this._meetingOrBaseUrl);
-    if (await this._tryLoadFromIOSCache()) {
+    if (await this._tryLoadFromIOSCache(url)) {
       return;
     }
     this._loadFromNetwork(url);
   }
 
   /**
-   * Try to load the call object bundle from the network.
+   * Try to load the call object bundle from the iOS cache.
+   * This is a React Native-specific workaround for the fact that the iOS HTTP
+   * cache won't cache the call object bundle due to size.
+   *
    * @param {string} url The url of the call object bundle to try to load.
    * @returns A Promise that resolves to false if the load failed or true
    * otherwise (if it succeeded or was cancelled).
    */
   async _tryLoadFromIOSCache(url) {
     // console.log("[LoadAttempt] trying to load from iOS cache...");
+
+    // Bail if we're not running in iOS
     if (!this._iosCache) {
+      // console.log("[LoadAttempt] not iOS, so not checking iOS cache");
       return false;
     }
+
     try {
-      await cache.get(url);
+      const code = await this._iosCache.get(url);
+
+      // If load has been cancelled, report work complete
       if (this.cancelled) {
         return true;
       }
+
+      // If no code found in the cache, report failure
+      if (!code) {
+        // console.log("[LoadAttempt] iOS cache miss");
+        return false;
+      }
+
+      // Run code, run success callback, and report work complete
+      // console.log("[LoadAttempt] iOS cache hit");
       Function('"use strict";' + code)();
       this.succeeded = true;
       this._successCallback();
+      return true;
     } catch (e) {
+      // Report failure
+      // console.log("[LoadAttempt] failure running bundle from iOS cache", e);
       return false;
     }
   }
@@ -248,7 +269,8 @@ class LoadAttempt {
       .catch((e) => {
         clearTimeout(this._networkTimeout);
         // We need to check all these conditions since long outstanding
-        // requests can fail *after* cancellation or timeout
+        // requests can fail *after* cancellation or timeout (i.e. checking for
+        // LoadAttemptAbortedError is not enough).
         if (
           e instanceof LoadAttemptAbortedError ||
           this.cancelled ||
