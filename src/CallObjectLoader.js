@@ -230,7 +230,7 @@ class LoadAttempt {
    * Try to load the call object bundle from the network.
    * @param {string} url The url of the call object bundle to load.
    */
-  _loadFromNetwork(url) {
+  async _loadFromNetwork(url) {
     // console.log("[LoadAttempt] trying to load from network...");
     this._networkTimeout = setTimeout(() => {
       this._networkTimedOut = true;
@@ -239,48 +239,54 @@ class LoadAttempt {
       );
     }, LOAD_ATTEMPT_NETWORK_TIMEOUT);
 
-    fetch(url)
-      .then((res) => {
-        clearTimeout(this._networkTimeout);
-        if (this.cancelled || this._networkTimedOut) {
-          throw new LoadAttemptAbortedError();
-        }
-        if (!res.ok) {
-          throw new Error(`Received ${res.status} response`);
-        }
-        return res.text();
-      })
-      .then((code) => {
-        if (this.cancelled) {
-          throw new LoadAttemptAbortedError();
-        }
-        Function('"use strict";' + code)();
-        return code;
-      })
-      .then((code) => {
-        if (this.cancelled) {
-          throw new LoadAttemptAbortedError();
-        }
-        this._iosCache && this._iosCache.set(url, code);
-        this.succeeded = true;
-        // console.log("[LoadAttempt] succeeded...");
-        this._successCallback();
-      })
-      .catch((e) => {
-        clearTimeout(this._networkTimeout);
-        // We need to check all these conditions since long outstanding
-        // requests can fail *after* cancellation or timeout (i.e. checking for
-        // LoadAttemptAbortedError is not enough).
-        if (
-          e instanceof LoadAttemptAbortedError ||
-          this.cancelled ||
-          this._networkTimedOut
-        ) {
-          // console.log("[LoadAttempt] cancelled or timed out");
-          return;
-        }
-        this._failureCallback(`Failed to load call object bundle ${url}: ${e}`);
-      });
+    try {
+      const response = await fetch(url);
+      clearTimeout(this._networkTimeout);
+
+      // Check that load wasn't cancelled or timed out during fetch
+      if (this.cancelled || this._networkTimedOut) {
+        throw new LoadAttemptAbortedError();
+      }
+
+      // Check if response successful
+      if (!response.ok) {
+        throw new Error(`Received ${response.status} response`);
+      }
+
+      // Get bundle code from response
+      const code = await response.text();
+
+      // Check again that load wasn't cancelled during reading response
+      if (this.cancelled) {
+        throw new LoadAttemptAbortedError();
+      }
+
+      // Execute bundle code
+      Function('"use strict";' + code)();
+
+      // Since code ran successfully (no errors thrown), cache it and call
+      // success callback
+      // console.log("[LoadAttempt] succeeded...");
+      this._iosCache && this._iosCache.set(url, code, response.headers);
+      this.succeeded = true;
+      this._successCallback();
+    } catch (e) {
+      clearTimeout(this._networkTimeout);
+
+      // We need to check all these conditions since long outstanding
+      // requests can fail *after* cancellation or timeout (i.e. checking for
+      // LoadAttemptAbortedError is not enough).
+      if (
+        e instanceof LoadAttemptAbortedError ||
+        this.cancelled ||
+        this._networkTimedOut
+      ) {
+        // console.log("[LoadAttempt] cancelled or timed out");
+        return;
+      }
+
+      this._failureCallback(`Failed to load call object bundle ${url}: ${e}`);
+    }
   }
 
   cancel() {
