@@ -1092,12 +1092,16 @@ export default class DailyIframe extends EventEmitter {
                                         'videoTrack');
             this.maybeEventTrackStopped(this._participants[id], msg.participant,
                                         'screenVideoTrack');
+            this.maybeEventTrackStopped(this._participants[id], msg.participant,
+                                        'screenAudioTrack');
             this.maybeEventTrackStarted(this._participants[id], msg.participant,
                                         'audioTrack');
             this.maybeEventTrackStarted(this._participants[id], msg.participant,
                                         'videoTrack');
             this.maybeEventTrackStarted(this._participants[id], msg.participant,
                                         'screenVideoTrack');
+            this.maybeEventTrackStarted(this._participants[id], msg.participant,
+                                        'screenAudioTrack');
           } catch (e) {
             console.error('track events error', e);
           }
@@ -1123,6 +1127,7 @@ export default class DailyIframe extends EventEmitter {
             this.maybeEventTrackStopped(prevP, null, 'audioTrack');
             this.maybeEventTrackStopped(prevP, null, 'videoTrack');
             this.maybeEventTrackStopped(prevP, null, 'screenVideoTrack');
+            this.maybeEventTrackStopped(prevP, null, 'screenAudioTrack');
           }
           // delete from local cach
           delete this._participants[msg.participant.session_id];
@@ -1279,7 +1284,9 @@ export default class DailyIframe extends EventEmitter {
         try {
           p.screenVideoTrack = state.local.streams.screen.stream.
             getVideoTracks()[0];
-          if (!p.screenVideoTrack) { p.screen = false };
+          p.screenAudioTrack = state.local.streams.screen.stream.
+            getAudioTracks()[0];
+          if (!(p.screenVideoTrack || p.screenAudioTrack)) { p.screen = false };
         } catch (e) {}
       }
       return;
@@ -1354,6 +1361,27 @@ export default class DailyIframe extends EventEmitter {
         }
         if (!p.videoTrack) { p.video = false };
       }
+
+      // find screen-share audio track
+      if (p.screen &&
+          getLocalIsSubscribedToTrack(state, p.session_id, 'screen-audio')) {
+        let screenAudioTracks = orderBy(filter(allStreams, (s) => (
+          s.participantId === p.session_id &&
+            s.type === 'screen' &&
+            s.pendingTrack && s.pendingTrack.kind === 'audio'
+        )), 'starttime', 'desc');
+        if (screenAudioTracks && screenAudioTracks[0] &&
+            screenAudioTracks[0].pendingTrack) {
+          if (prevP && prevP.screenAudioTrack &&
+              prevP.screenAudioTrack.id ===
+                screenAudioTracks[0].pendingTrack.id) {
+            p.screenAudioTrack = screenAudioTracks[0].pendingTrack;
+          } else if (!screenAudioTracks[0].pendingTrack.muted) {
+            // otherwise, add the found track if it's not muted
+            p.screenAudioTrack = screenAudioTracks[0].pendingTrack;
+          }
+        }
+      }
       // find screen-share video track
       if (p.screen &&
           getLocalIsSubscribedToTrack(state, p.session_id, 'screen-video')) {
@@ -1370,11 +1398,18 @@ export default class DailyIframe extends EventEmitter {
             p.screenVideoTrack = screenVideoTracks[0].pendingTrack;
           } else if (!screenVideoTracks[0].pendingTrack.muted) {
             // otherwise, add the found track if it's not muted
+            // note: there is an issue here with timing ... Chrome (and
+            // possibly other browsers), gets a video track that's initially
+            // not muted, for an audio-only screenshare. The track
+            // switches to muted fairly quickly, but we don't have any
+            // logic in place to respond to that. todo: fix this so that,
+            // at the very least we get a track-stopped event when the
+            // "empty" track switches to muted.
             p.screenVideoTrack = screenVideoTracks[0].pendingTrack;
           }
         }
-        if (!p.screenVideoTrack) { p.screen = false };
       }
+      if (!(p.screenVideoTrack || p.screenAudioTrack)) { p.screen = false };
     } catch (e) {
       console.error('unexpected error matching up tracks', e);
     }
