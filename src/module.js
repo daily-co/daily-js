@@ -159,14 +159,9 @@ const FRAME_PROPS = {
   },
   subscribeToTracksAutomatically: {
     validate: (s, callObject) => {
-      if (!callObject._callObjectMode) {
-        return false;
-      }
       callObject._preloadCache.subscribeToTracksAutomatically = s;
       return true;
     },
-    help: 'can only be used with the createCallObject() constructor',
-
   },
   // used internally
   layout: {
@@ -213,14 +208,14 @@ const PARTICIPANT_PROPS = {
   },
   setSubscribedTracks: {
     validate: (subs, callObject, participant) => {
-      if (!callObject._callObjectMode) {
-        return false;
-      }
       if (callObject._preloadCache.subscribeToTracksAutomatically) {
         return false;
       }
       if (participant.local) {
         return false;
+      }
+      if ([true, false, 'avatar'].includes(subs)) {
+        return true;
       }
       for (const s in subs) {
         if (!(s === 'audio' || s ===  'video' || s === 'screenVideo')) {
@@ -229,8 +224,8 @@ const PARTICIPANT_PROPS = {
       }
       return true;
     },
-    help: 'setSubscribedTracks can only be used in call object mode, cannot be used on the local participant, cannot be used when setSubscribeToTracksAutomatically is enabled, and should be of the form: ' +
-      'true | false | { [audio: true|false], [video: true|false], [screenVideo: true|false] }'
+    help: 'setSubscribedTracks cannot be used on the local participant, cannot be used when setSubscribeToTracksAutomatically is enabled, and should be of the form: ' +
+      'true | \'avatar\' | false | { [audio: true|false], [video: true|false], [screenVideo: true|false] }'
   },
   setAudio: true, setVideo: true, eject: true, 
 };
@@ -835,10 +830,6 @@ export default class DailyIframe extends EventEmitter {
 
   setSubscribeToTracksAutomatically(enabled) {
     methodNotSupportedInReactNative();
-    // only support this feature in call object mode
-    if (!this._callObjectMode) {
-      throw new Error('setSubscribeToTracksAutomatically() is only allowed in call object mode');
-    }
     if (this._meetingState !== DAILY_STATE_JOINED) {
       throw new Error('setSubscribeToTracksAutomatically() is only allowed while in a meeting');
     }
