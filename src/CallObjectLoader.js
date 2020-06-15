@@ -192,7 +192,8 @@ class LoadAttempt {
    *
    * @param {string} url The url of the call object bundle to try to load.
    * @returns A Promise that resolves to false if the load failed or true
-   * otherwise (if it succeeded or was cancelled).
+   * otherwise (if it succeeded or was cancelled), indicating whether a network
+   * load attempt is needed.
    */
   async _tryLoadFromIOSCache(url) {
     // console.log("[LoadAttempt] trying to load from iOS cache...");
@@ -206,19 +207,20 @@ class LoadAttempt {
     try {
       const cacheResponse = await this._iosCache.get(url);
 
-      // If load has been cancelled, report work complete
+      // If load has been cancelled, report work complete (no network load
+      // needed)
       if (this.cancelled) {
         return true;
       }
 
-      // If cache miss, report failure
+      // If cache miss, report failure (network load needed)
       if (!cacheResponse) {
         // console.log("[LoadAttempt] iOS cache miss");
         return false;
       }
 
       // If cache expired, store refetch headers to use later and report
-      // failure
+      // failure (network load needed)
       if (!cacheResponse.code) {
         // console.log(
         //   "[LoadAttempt] iOS cache expired, setting refetch headers",
@@ -229,7 +231,7 @@ class LoadAttempt {
       }
 
       // Cache is fresh, so run code and success callback, and report work
-      // complete
+      // complete (no network load needed)
       // console.log("[LoadAttempt] iOS cache hit");
       Function('"use strict";' + cacheResponse.code)();
       this.succeeded = true;
