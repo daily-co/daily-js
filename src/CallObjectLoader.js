@@ -150,7 +150,7 @@ class LoadOperation {
 
 class LoadAttemptAbortedError extends Error {}
 
-const LOAD_ATTEMPT_TIMEOUT = 20 * 1000;
+const LOAD_ATTEMPT_NETWORK_TIMEOUT = 20 * 1000;
 
 class LoadAttempt {
   // Here successCallback takes no parameters, and failureCallback takes a
@@ -159,8 +159,13 @@ class LoadAttempt {
     this.cancelled = false;
     this.succeeded = false;
 
-    this._timedOut = false;
-    this._timeout = null;
+    this._networkTimedOut = false;
+    this._networkTimeout = null;
+
+    this._iosCache =
+      typeof iOSCallObjectBundleCache !== 'undefined' &&
+      iOSCallObjectBundleCache;
+    this._refetchHeaders = null;
 
     this._meetingOrBaseUrl = meetingOrBaseUrl;
     this._callFrameId = callFrameId;
@@ -168,61 +173,151 @@ class LoadAttempt {
     this._failureCallback = failureCallback;
   }
 
-  start() {
+  async start() {
     // console.log("[LoadAttempt] starting...");
-
     const url = callObjectBundleUrl(this._meetingOrBaseUrl);
-
-    this._timeout = setTimeout(() => {
-      this._timedOut = true;
-      this._failureCallback(
-        `Timed out (>${LOAD_ATTEMPT_TIMEOUT} ms) when loading call object bundle ${url}`
-      );
-    }, LOAD_ATTEMPT_TIMEOUT);
-
-    fetch(url)
-      .then((res) => {
-        clearTimeout(this._timeout);
-        if (this.cancelled || this._timedOut) {
-          throw new LoadAttemptAbortedError();
-        }
-        if (!res.ok) {
-          throw new Error(`Received ${res.status} response`);
-        }
-        return res.text();
-      })
-      .then((code) => {
-        if (this.cancelled) {
-          throw new LoadAttemptAbortedError();
-        }
-        Function('"use strict";' + code)();
-      })
-      .then(() => {
-        if (this.cancelled) {
-          throw new LoadAttemptAbortedError();
-        }
-        this.succeeded = true;
-        // console.log("[LoadAttempt] succeeded...");
-        this._successCallback();
-      })
-      .catch((e) => {
-        clearTimeout(this._timeout);
-        // We need to check all these conditions since long outstanding
-        // requests can fail *after* cancellation or timeout
-        if (
-          e instanceof LoadAttemptAbortedError ||
-          this.cancelled ||
-          this._timedOut
-        ) {
-          // console.log("[LoadAttempt] cancelled or timed out");
-          return;
-        }
-        this._failureCallback(`Failed to load call object bundle ${url}: ${e}`);
-      });
+    const loadedFromIOSCache = await this._tryLoadFromIOSCache(url);
+    !loadedFromIOSCache && this._loadFromNetwork(url);
   }
 
   cancel() {
-    clearTimeout(this._timeout);
+    clearTimeout(this._networkTimeout);
     this.cancelled = true;
+  }
+
+  /**
+   * Try to load the call object bundle from the iOS cache.
+   * This is a React Native-specific workaround for the fact that the iOS HTTP
+   * cache won't cache the call object bundle due to size.
+   *
+   * @param {string} url The url of the call object bundle to try to load.
+   * @returns A Promise that resolves to false if the load failed or true
+   * otherwise (if it succeeded or was cancelled), indicating whether a network
+   * load attempt is needed.
+   */
+  async _tryLoadFromIOSCache(url) {
+    // console.log("[LoadAttempt] trying to load from iOS cache...");
+
+    // Bail if we're not running in iOS
+    if (!this._iosCache) {
+      // console.log("[LoadAttempt] not iOS, so not checking iOS cache");
+      return false;
+    }
+
+    try {
+      const cacheResponse = await this._iosCache.get(url);
+
+      // If load has been cancelled, report work complete (no network load
+      // needed)
+      if (this.cancelled) {
+        return true;
+      }
+
+      // If cache miss, report failure (network load needed)
+      if (!cacheResponse) {
+        // console.log("[LoadAttempt] iOS cache miss");
+        return false;
+      }
+
+      // If cache expired, store refetch headers to use later and report
+      // failure (network load needed)
+      if (!cacheResponse.code) {
+        // console.log(
+        //   "[LoadAttempt] iOS cache expired, setting refetch headers",
+        //   cacheResponse.refetchHeaders
+        // );
+        this._refetchHeaders = cacheResponse.refetchHeaders;
+        return false;
+      }
+
+      // Cache is fresh, so run code and success callback, and report work
+      // complete (no network load needed)
+      // console.log("[LoadAttempt] iOS cache hit");
+      Function('"use strict";' + cacheResponse.code)();
+      this.succeeded = true;
+      this._successCallback();
+      return true;
+    } catch (e) {
+      // Report failure
+      // console.log("[LoadAttempt] failure running bundle from iOS cache", e);
+      return false;
+    }
+  }
+
+  /**
+   * Try to load the call object bundle from the network.
+   * @param {string} url The url of the call object bundle to load.
+   */
+  async _loadFromNetwork(url) {
+    // console.log("[LoadAttempt] trying to load from network...");
+    this._networkTimeout = setTimeout(() => {
+      this._networkTimedOut = true;
+      this._failureCallback(
+        `Timed out (>${LOAD_ATTEMPT_NETWORK_TIMEOUT} ms) when loading call object bundle ${url}`
+      );
+    }, LOAD_ATTEMPT_NETWORK_TIMEOUT);
+
+    try {
+      const fetchOptions = this._refetchHeaders
+        ? { headers: this._refetchHeaders }
+        : {};
+      const response = await fetch(url, fetchOptions);
+      clearTimeout(this._networkTimeout);
+
+      // Check that load wasn't cancelled or timed out during fetch
+      if (this.cancelled || this._networkTimedOut) {
+        throw new LoadAttemptAbortedError();
+      }
+
+      const code = await this._getBundleCodeFromResponse(url, response);
+
+      // Check again that load wasn't cancelled during reading response
+      if (this.cancelled) {
+        throw new LoadAttemptAbortedError();
+      }
+
+      // Execute bundle code
+      Function('"use strict";' + code)();
+
+      // Since code ran successfully (no errors thrown), cache it and call
+      // success callback
+      // console.log("[LoadAttempt] succeeded...");
+      this._iosCache && this._iosCache.set(url, code, response.headers);
+      this.succeeded = true;
+      this._successCallback();
+    } catch (e) {
+      clearTimeout(this._networkTimeout);
+
+      // We need to check all these conditions since long outstanding
+      // requests can fail *after* cancellation or timeout (i.e. checking for
+      // LoadAttemptAbortedError is not enough).
+      if (
+        e instanceof LoadAttemptAbortedError ||
+        this.cancelled ||
+        this._networkTimedOut
+      ) {
+        // console.log("[LoadAttempt] cancelled or timed out");
+        return;
+      }
+
+      this._failureCallback(`Failed to load call object bundle ${url}: ${e}`);
+    }
+  }
+
+  async _getBundleCodeFromResponse(url, response) {
+    // Normal success case
+    if (response.ok) {
+      return await response.text();
+    }
+
+    // React Native iOS-specific case: 304 Not-Modified response
+    // (Since we're doing manual cache management for iOS, the fetch mechanism
+    //  doesn't opaquely handle 304s for us)
+    if (this._iosCache && response.status === 304) {
+      const cacheResponse = await this._iosCache.renew(url, response.headers);
+      return cacheResponse.code;
+    }
+
+    throw new Error(`Received ${response.status} response`);
   }
 }
