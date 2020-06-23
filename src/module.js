@@ -691,6 +691,10 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async load(properties) {
+    if (!this.needsLoad()) {
+      return;
+    }
+
     if (properties) {
       this.validateProperties(properties);
       this.properties = { ...this.properties, ...properties };
