@@ -712,6 +712,9 @@ export default class DailyIframe extends EventEmitter {
       }
     } else {
       newCss = !!(this.properties.cssFile || this.properties.cssText);
+
+      // Validate that url we're using to join() doesn't conflict with the url
+      // we used to load()
       if (properties.url) {
         if (this._callObjectMode) {
           const newBundleUrl = callObjectBundleUrl(properties.url);
@@ -735,6 +738,11 @@ export default class DailyIframe extends EventEmitter {
           }
         }
       }
+
+      // Validate and assign properties to this.properties, for use by call
+      // machine
+      this.validateProperties(properties);
+      this.properties = { ...this.properties, ...properties };
     }
     if (this._meetingState === DAILY_STATE_JOINED ||
         this._meetingState === DAILY_STATE_JOINING) {
