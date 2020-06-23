@@ -123,9 +123,15 @@ export interface DailyParticipant {
   screen_info: {} | DailyVideoElementInfo;
 }
 
+export type DailyTrackSubscriptionOptions =
+  | boolean
+  | 'avatar'
+  | { audio?: boolean; video?: boolean; screenVideo?: boolean };
+
 export interface DailyParticipantUpdateOptions {
   setAudio?: boolean;
   setVideo?: boolean;
+  setSubscribedTracks?: DailyTrackSubscriptionOptions;
   eject?: true;
   styles?: DailyParticipantCss;
 }
