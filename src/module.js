@@ -136,11 +136,11 @@ const FRAME_PROPS = {
       return true;
     }
   },
-  lang: { 
+  lang: {
     validate: (lang) => {
-      return ['de', 'en-us', 'en', 'fi', 'fr', 'nl', 'pt'].includes(lang);
+      return ['de', 'en-us', 'en', 'fi', 'fr', 'nl', 'pt', 'pl'].includes(lang);
     },
-    help: 'language not supported. Options are: de, en-us, en, fi, fr, nl, pt'
+    help: 'language not supported. Options are: de, en-us, en, fi, fr, nl, pt, pl'
   },
   userName: true, // ignored if there's a token
   showLeaveButton: true,
@@ -197,14 +197,14 @@ const PARTICIPANT_PROPS = {
           if (k !== 'div' && k !== 'video') {
             return false;
           }
-        }    
+        }
       }
       if (styles.screen) {
         for (var k in styles.screen) {
           if (k !== 'div' && k !== 'video') {
             return false;
           }
-        }    
+        }
       }
       return true;
     },
@@ -232,7 +232,7 @@ const PARTICIPANT_PROPS = {
     help: 'setSubscribedTracks cannot be used on the local participant, cannot be used when setSubscribeToTracksAutomatically is enabled, and should be of the form: ' +
       'true | \'avatar\' | false | { [audio: true|false], [video: true|false], [screenVideo: true|false] }'
   },
-  setAudio: true, setVideo: true, eject: true, 
+  setAudio: true, setVideo: true, eject: true,
 };
 
 //
@@ -378,8 +378,8 @@ export default class DailyIframe extends EventEmitter {
     this._activeSpeaker = {};
     this._activeSpeakerMode = false;
     this._callFrameId = Date.now() + Math.random().toString();
-    this._messageChannel = isReactNative() ? 
-      new ReactNativeMessageChannel() : 
+    this._messageChannel = isReactNative() ?
+      new ReactNativeMessageChannel() :
       new WebMessageChannel();
 
     // fullscreen event listener
@@ -417,7 +417,7 @@ export default class DailyIframe extends EventEmitter {
   //
 
   async destroy() {
-    try { 
+    try {
       if ([DAILY_STATE_JOINED, DAILY_STATE_LOADING].includes(this._meetingState)) {
         await this.leave();
       }
@@ -477,7 +477,7 @@ export default class DailyIframe extends EventEmitter {
       }
       this.sendMessageToCallMachine({ action: DAILY_METHOD_UPDATE_PARTICIPANT,
                             id: sessionId, properties});
-    }    
+    }
     return this;
   }
 
@@ -519,7 +519,7 @@ export default class DailyIframe extends EventEmitter {
     methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({ action: DAILY_METHOD_SET_BANDWIDTH,
                           kbs, trackConstraints });
-    return this;    
+    return this;
   }
 
   setDailyLang(lang) {
@@ -619,7 +619,7 @@ export default class DailyIframe extends EventEmitter {
 
     this.sendMessageToCallMachine({ action: DAILY_METHOD_SET_OUTPUT_DEVICE,
                           outputDeviceId });
-    return this;    
+    return this;
   }
 
   getInputDevices() {
@@ -704,7 +704,7 @@ export default class DailyIframe extends EventEmitter {
       });
     }
   }
-    
+
   async join(properties={}) {
     let newCss = false;
     if (this.needsLoad()) {
@@ -771,7 +771,7 @@ export default class DailyIframe extends EventEmitter {
         if (participants) {
           for (var id in participants) {
             this.fixupParticipant(participants[id]);
-            let lid = participants[id].local ? 'local' : 
+            let lid = participants[id].local ? 'local' :
                                                participants[id].session_id;
             this.matchParticipantTracks(lid, participants[id]);
             this._participants[id] = { ...participants[id] };
@@ -805,8 +805,8 @@ export default class DailyIframe extends EventEmitter {
         resolve();
       }
       if (this._callObjectLoader && !this._callObjectLoader.loaded) {
-        // If call object bundle never successfully loaded, cancel load if 
-        // needed and clean up state immediately (without waiting for call 
+        // If call object bundle never successfully loaded, cancel load if
+        // needed and clean up state immediately (without waiting for call
         // machine to clean up its state).
         this._callObjectLoader.cancel();
         k();
@@ -831,7 +831,7 @@ export default class DailyIframe extends EventEmitter {
 
   stopScreenShare() {
     methodNotSupportedInReactNative();
-    this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_SCREENSHARE });    
+    this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_SCREENSHARE });
   }
 
   startRecording() {
@@ -919,7 +919,7 @@ export default class DailyIframe extends EventEmitter {
         resolve({ devices: msg.devices });
       }
       this.sendMessageToCallMachine({ action: DAILY_METHOD_ENUMERATE_DEVICES }, k);
-    });    
+    });
   }
 
   sendAppMessage(data, to='*') {
@@ -1099,14 +1099,14 @@ export default class DailyIframe extends EventEmitter {
     return url + firstSep + newQueryString;
   }
 
-  // Note that even if the below method returns true, load() may decide that 
-  // there's nothing more to do (e.g. in the case that the call object has 
-  // already been loaded once) and simply carry out the appropriate meeting 
+  // Note that even if the below method returns true, load() may decide that
+  // there's nothing more to do (e.g. in the case that the call object has
+  // already been loaded once) and simply carry out the appropriate meeting
   // state transition.
   needsLoad() {
     // NOTE: The *only* reason DAILY_STATE_LOADING is here is to preserve a bug
-    // that I (@kompfner) am a bit hesitant to fix until more time can be 
-    // dedicated to doing the *right* fix. If we're in DAILY_STATE_LOADING, we 
+    // that I (@kompfner) am a bit hesitant to fix until more time can be
+    // dedicated to doing the *right* fix. If we're in DAILY_STATE_LOADING, we
     // probably *shouldn't* let you trigger another load() and get into a weird
     // state, but this has been long-standing behavior. The alternative would mean
     // that, if load() failed silently for some reason, you couldn't re-trigger it
@@ -1596,7 +1596,7 @@ function makeSafeForPostMessage(props) {
 }
 
 function methodNotSupportedInReactNative() {
-  if (isReactNative()) { 
+  if (isReactNative()) {
     throw new Error("This daily-js method is not currently supported in React Native");
   };
 }
