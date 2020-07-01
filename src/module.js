@@ -1078,7 +1078,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async room() {
-    methodNotSupportedInReactNative();
     if (this._meetingState !== DAILY_STATE_JOINED) {
       return null;
     }
