@@ -1001,7 +1001,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async geo() {
-    methodNotSupportedInReactNative();
     return new Promise(async (resolve, _) => {
       try {
         let url = 'https://gs.daily.co/_ks_/x-swsl/:';
