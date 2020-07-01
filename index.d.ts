@@ -188,6 +188,10 @@ export interface DailyNetworkStats {
   threshold: "good" | "low" | "very-low";
 }
 
+export interface DailyPendingRoomInfo {
+  roomUrlPendingJoin: string;
+}
+
 export interface DailyRoomInfo {
   id: string;
   name: string;
@@ -304,7 +308,7 @@ export interface DailyCall {
   }>;
   requestFullscreen(): Promise<void>;
   exitFullscreen(): void;
-  room(): Promise<DailyRoomInfo | null>;
+  room(): Promise<DailyPendingRoomInfo | DailyRoomInfo | null>;
   geo(): Promise<{ current: string }>;
   setNetworkTopology(options: {
     topology: "sfu" | "peer";
