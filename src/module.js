@@ -987,6 +987,12 @@ export default class DailyIframe extends EventEmitter {
 
   async room() {
     if (this._meetingState !== DAILY_STATE_JOINED) {
+      // Return the URL of the room we'd be in if we succesfully join()ed.
+      // Note that this doesn't mean you're necessarily in the process of
+      // joining; you might be waiting for join() to be called.
+      if (this.properties.url) {
+        return { roomUrlPendingJoin: this.properties.url };
+      }
       return null;
     }
     return new Promise((resolve, _) => {
