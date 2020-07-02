@@ -1,7 +1,4 @@
-// This is a work-in-progress and incomplete, and not yet exposed through
-// package.json. Use at your own risk!
-
-// Type definitions for daily-js 0.9.992-beta.5
+// Type definitions for daily-js 0.9.992
 // Project: https://github.com/daily-co/daily-js
 // Definitions by: Paul Kompfner <https://github.com/kompfner>
 
