@@ -52,7 +52,10 @@ export type DailyEvent =
   | 'mousemove'
   | 'touchstart'
   | 'touchmove'
-  | 'touchend';
+  | 'touchend'
+  | 'live-streaming-started'
+  | 'live-streaming-stopped'
+  | 'live-streaming-error';
 
 export type DailyMeetingState =
   | 'new'
@@ -63,9 +66,10 @@ export type DailyMeetingState =
   | 'left-meeting'
   | 'error';
 
-export type DailyParticipantsObject = Record<string, DailyParticipant> & {
+export interface DailyParticipantsObject {
   local: DailyParticipant;
-};
+  [id: string]: DailyParticipant;
+}
 
 export interface DailyBrowserInfo {
   supported: boolean;
@@ -97,7 +101,7 @@ export interface DailyLoadOptions extends DailyCallOptions {
   baseUrl?: string;
 }
 
-export type DailyAdvancedConfig = {
+export interface DailyAdvancedConfig {
   experimentalChromeVideoMuteLightOff: boolean;
   fastConnect: boolean;
   preferH264ForCam?: boolean;
@@ -107,7 +111,7 @@ export type DailyAdvancedConfig = {
   h264Profile?: string;
   camSimulcastEncodings?: any[];
   screenSimulcastEncodings?: any[];
-};
+}
 
 export interface DailyParticipant {
   // audio/video info
@@ -128,8 +132,8 @@ export interface DailyParticipant {
   owner: boolean;
 
   // video element info (iframe-based calls using standard UI only)
-  cam_info: DailyVideoElementInfo;
-  screen_info: DailyVideoElementInfo;
+  cam_info: {} | DailyVideoElementInfo;
+  screen_info: {} | DailyVideoElementInfo;
 }
 
 export type DailyTrackSubscriptionOptions =
@@ -237,8 +241,8 @@ export type DailyEventObjectNoPayload = {
     | 'recording-upload-completed'
     | 'fullscreen'
     | 'exited-fullscreen'
-    | 'live-stream-started'
-    | 'live-stream-stopped'
+    | 'live-streaming-started'
+    | 'live-streaming-stopped'
     | 'track-started'
     | 'track-stopped'
   >;
@@ -247,7 +251,7 @@ export type DailyEventObjectNoPayload = {
 export type DailyEventErrorObject = {
   action: Extract<
     DailyEvent,
-    'load-attempt-failed' | 'live-stream-error' | 'error'
+    'load-attempt-failed' | 'live-streaming-error' | 'error'
   >;
   errorMsg: string;
 };
@@ -270,12 +274,35 @@ export type DailyEventObjectMouseEvent = {
     DailyEvent,
     'click' | 'mousedown' | 'mouseup' | 'mouseover' | 'mousemove'
   >;
-  event: MouseEvent;
+  event: {
+    type: string;
+    button: number;
+    x: number;
+    y: number;
+    pageX: number;
+    pageY: number;
+    screenX: number;
+    screenY: number;
+    offsetX: number;
+    offsetY: number;
+    altKey: boolean;
+    ctrlKey: boolean;
+    metaKey: boolean;
+    shiftKey: boolean;
+  };
+  participant: DailyParticipant;
 };
 
 export type DailyEventObjectTouchEvent = {
   action: Extract<DailyEvent, 'touchstart' | 'touchmove' | 'touchend'>;
-  event: TouchEvent;
+  event: {
+    type: string;
+    altKey: boolean;
+    ctrlKey: boolean;
+    metaKey: boolean;
+    shiftKey: boolean;
+  };
+  participant: DailyParticipant;
 };
 
 export type DailyEventObjectNetworkQualityEvent = {
@@ -286,8 +313,8 @@ export type DailyEventObjectNetworkQualityEvent = {
 
 export type NetworkConnectionType = 'signaling' | 'peer-to-peer' | 'sfu';
 
-export type DailyEventObjectNetworkEvent = {
-  action: Extract<DailyEvent, 'network-quality-change'>;
+export type DailyEventObjectNetworkConnectionEvent = {
+  action: Extract<DailyEvent, 'network-connection'>;
   type: NetworkConnectionType;
   event: string;
   session_id?: string;
@@ -309,6 +336,7 @@ export type DailyEventObjectActiveSpeakerModeChange = {
 export type DailyEventObjectAppMessage = {
   action: Extract<DailyEvent, 'app-message'>;
   data: any;
+  fromId: string;
 };
 
 export type DailyEventObject<
@@ -329,8 +357,8 @@ export type DailyEventObject<
   ? DailyEventObjectTouchEvent
   : T extends DailyEventObjectNetworkQualityEvent['action']
   ? DailyEventObjectNetworkQualityEvent
-  : T extends DailyEventObjectNetworkEvent['action']
-  ? DailyEventObjectNetworkEvent
+  : T extends DailyEventObjectNetworkConnectionEvent['action']
+  ? DailyEventObjectNetworkConnectionEvent
   : T extends DailyEventObjectActiveSpeakerChange['action']
   ? DailyEventObjectActiveSpeakerChange
   : T extends DailyEventObjectActiveSpeakerModeChange['action']
@@ -366,7 +394,7 @@ export interface DailyCallStaticUtils {
 
 export interface DailyCall {
   iframe(): HTMLIFrameElement | null;
-  join(properties?: DailyCallOptions): Promise<DailyParticipantsObject>;
+  join(properties?: DailyCallOptions): Promise<DailyParticipantsObject | void>;
   leave(): Promise<void>;
   destroy(): Promise<void>;
   loadCss(properties: {
