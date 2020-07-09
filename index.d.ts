@@ -227,7 +227,7 @@ export interface DailyRoomInfo {
   dialInPIN?: string;
 }
 
-export type DailyEventObjectNoPayload = {
+export interface DailyEventObjectNoPayload {
   action: Extract<
     DailyEvent,
     | 'loading'
@@ -246,30 +246,30 @@ export type DailyEventObjectNoPayload = {
     | 'track-started'
     | 'track-stopped'
   >;
-};
+}
 
-export type DailyEventErrorObject = {
+export interface DailyEventErrorObject {
   action: Extract<
     DailyEvent,
     'load-attempt-failed' | 'live-streaming-error' | 'error'
   >;
   errorMsg: string;
-};
+}
 
-export type DailyEventObjectParticipants = {
+export interface DailyEventObjectParticipants {
   action: Extract<DailyEvent, 'joined-meeting'>;
   participants: DailyParticipantsObject;
-};
+}
 
-export type DailyEventObjectParticipant = {
+export interface DailyEventObjectParticipant {
   action: Extract<
     DailyEvent,
     'participant-joined' | 'participant-updated' | 'participant-left'
   >;
   participant: DailyParticipant;
-};
+}
 
-export type DailyEventObjectMouseEvent = {
+export interface DailyEventObjectMouseEvent {
   action: Extract<
     DailyEvent,
     'click' | 'mousedown' | 'mouseup' | 'mouseover' | 'mousemove'
@@ -291,9 +291,9 @@ export type DailyEventObjectMouseEvent = {
     shiftKey: boolean;
   };
   participant: DailyParticipant;
-};
+}
 
-export type DailyEventObjectTouchEvent = {
+export interface DailyEventObjectTouchEvent {
   action: Extract<DailyEvent, 'touchstart' | 'touchmove' | 'touchend'>;
   event: {
     type: string;
@@ -303,41 +303,41 @@ export type DailyEventObjectTouchEvent = {
     shiftKey: boolean;
   };
   participant: DailyParticipant;
-};
+}
 
-export type DailyEventObjectNetworkQualityEvent = {
+export interface DailyEventObjectNetworkQualityEvent {
   action: Extract<DailyEvent, 'network-quality-change'>;
   threshold: string;
   quality: number;
-};
+}
 
 export type NetworkConnectionType = 'signaling' | 'peer-to-peer' | 'sfu';
 
-export type DailyEventObjectNetworkConnectionEvent = {
+export interface DailyEventObjectNetworkConnectionEvent {
   action: Extract<DailyEvent, 'network-connection'>;
   type: NetworkConnectionType;
   event: string;
   session_id?: string;
   sfu_id?: string;
-};
+}
 
-export type DailyEventObjectActiveSpeakerChange = {
+export interface DailyEventObjectActiveSpeakerChange {
   action: Extract<DailyEvent, 'active-speaker-change'>;
   activeSpeaker: {
     peerId: string;
   };
-};
+}
 
-export type DailyEventObjectActiveSpeakerModeChange = {
+export interface DailyEventObjectActiveSpeakerModeChange {
   action: Extract<DailyEvent, 'active-speaker-mode-change'>;
   enabled: boolean;
-};
+}
 
-export type DailyEventObjectAppMessage = {
+export interface DailyEventObjectAppMessage {
   action: Extract<DailyEvent, 'app-message'>;
   data: any;
   fromId: string;
-};
+}
 
 export type DailyEventObject<
   T extends DailyEvent = any
