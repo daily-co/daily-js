@@ -221,9 +221,6 @@ const PARTICIPANT_PROPS = {
       if (callObject._preloadCache.subscribeToTracksAutomatically) {
         return false;
       }
-      if (participant.local) {
-        return false;
-      }
       if ([true, false, 'avatar'].includes(subs)) {
         return true;
       }
@@ -235,7 +232,7 @@ const PARTICIPANT_PROPS = {
       return true;
     },
     help:
-      'setSubscribedTracks cannot be used on the local participant, cannot be used when setSubscribeToTracksAutomatically is enabled, and should be of the form: ' +
+      'setSubscribedTracks cannot be used when setSubscribeToTracksAutomatically is enabled, and should be of the form: ' +
       "true | 'avatar' | false | { [audio: true|false], [video: true|false], [screenVideo: true|false] }",
   },
   setAudio: true,
