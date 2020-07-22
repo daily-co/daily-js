@@ -225,7 +225,14 @@ const PARTICIPANT_PROPS = {
         return true;
       }
       for (const s in subs) {
-        if (!(s === 'audio' || s === 'video' || s === 'screenVideo')) {
+        if (
+          !(
+            s === 'audio' ||
+            s === 'video' ||
+            s === 'screenVideo' ||
+            s === 'screenAudio'
+          )
+        ) {
           return false;
         }
       }
