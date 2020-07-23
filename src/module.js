@@ -1356,11 +1356,11 @@ export default class DailyIframe extends EventEmitter {
         }
         this._meetingState = DAILY_STATE_ERROR;
         if (this._loadedCallback) {
-          this._loadedCallback(msg);
+          this._loadedCallback(msg.errorMsg);
           this._loadedCallback = null;
         }
         if (this._joinedCallback) {
-          this._joinedCallback(null, msg);
+          this._joinedCallback(null, msg.errorMsg);
           this._joinedCallback = null;
         }
         try {
