@@ -755,8 +755,11 @@ export default class DailyIframe extends EventEmitter {
     } else {
       // iframe
       this._iframe.src = this.assembleMeetingUrl();
-      return new Promise((resolve, _) => {
-        this._loadedCallback = () => {
+      return new Promise((resolve, reject) => {
+        this._loadedCallback = (error) => {
+          if (this._meetingState === DAILY_STATE_ERROR) {
+            reject(error);
+          }
           this._meetingState = DAILY_STATE_LOADED;
           if (this.properties.cssFile || this.properties.cssText) {
             this.loadCss(this.properties);
@@ -836,7 +839,10 @@ export default class DailyIframe extends EventEmitter {
       preloadCache: makeSafeForPostMessage(this._preloadCache),
     });
     return new Promise((resolve, reject) => {
-      this._joinedCallback = (participants) => {
+      this._joinedCallback = (participants, error) => {
+        if (this._meetingState === DAILY_STATE_ERROR) {
+          reject(error);
+        }
         this._meetingState = DAILY_STATE_JOINED;
         if (participants) {
           for (var id in participants) {
@@ -1356,6 +1362,14 @@ export default class DailyIframe extends EventEmitter {
           this._iframe.src = '';
         }
         this._meetingState = DAILY_STATE_ERROR;
+        if (this._loadedCallback) {
+          this._loadedCallback(msg.errorMsg);
+          this._loadedCallback = null;
+        }
+        if (this._joinedCallback) {
+          this._joinedCallback(null, msg.errorMsg);
+          this._joinedCallback = null;
+        }
         try {
           this.emit(msg.action, msg);
         } catch (e) {
