@@ -35,7 +35,6 @@ export type DailyEvent =
   | 'recording-upload-completed'
   | 'recording-data'
   | 'app-message'
-  | 'input-event'
   | 'local-screen-share-started'
   | 'local-screen-share-stopped'
   | 'active-speaker-change'
