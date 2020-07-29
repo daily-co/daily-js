@@ -22,7 +22,7 @@
     "build-main-dev": "NODE_ENV=development npm run build-main",
     "build-module": "rollup -c",
     "build-module-dev": "NODE_ENV=development npm run build-module",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build && TAG_NAME=$(echo ${npm_package_name} | sed -E 's|^.+/||')-$(date -u +'%Y-%m-%d')-${npm_package_version} && git tag -a -m \"${npm_package_name} ${npm_package_version} published to npmjs\" ${TAG_NAME} HEAD && git push origin ${TAG_NAME}"
   },
   "devDependencies": {
     "@babel/core": "^7.8.3",
