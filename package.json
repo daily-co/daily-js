@@ -22,7 +22,8 @@
     "build-main-dev": "NODE_ENV=development npm run build-main",
     "build-module": "rollup -c",
     "build-module-dev": "NODE_ENV=development npm run build-module",
-    "prepublishOnly": "npm run build"
+    "tag": "scripts/tag",
+    "prepublishOnly": "npm run build && npm run tag"
   },
   "devDependencies": {
     "@babel/core": "^7.8.3",
