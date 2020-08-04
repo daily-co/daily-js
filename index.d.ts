@@ -428,7 +428,7 @@ export interface DailyCall {
     videoDeviceId?: string;
     videoSource?: MediaStreamTrack;
   }): DailyCall;
-  setOutputDevice(audioDevice: { id?: string }): DailyCall;
+  setOutputDevice(audioDevice: { outputDeviceId?: string }): DailyCall;
   getInputDevices(): Promise<DailyDeviceInfos>;
   load(properties: DailyLoadOptions): Promise<void>;
   startScreenShare(captureOptions?: DailyScreenCaptureOptions): void;
