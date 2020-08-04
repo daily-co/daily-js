@@ -596,7 +596,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   cycleCamera() {
-    methodNotSupportedInReactNative();
     return new Promise((resolve, _) => {
       let k = (msg) => {
         resolve({ device: msg.device });
