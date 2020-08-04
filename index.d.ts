@@ -431,7 +431,7 @@ export interface DailyCall {
   }): DailyCall;
   setOutputDevice(audioDevice: { outputDeviceId?: string }): DailyCall;
   getInputDevices(): Promise<DailyDeviceInfos>;
-  load(properties: DailyLoadOptions): Promise<void>;
+  load(properties?: DailyLoadOptions): Promise<void>;
   startScreenShare(captureOptions?: DailyScreenCaptureOptions): void;
   stopScreenShare(): void;
   startRecording(): void;
