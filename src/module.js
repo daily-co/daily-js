@@ -1362,6 +1362,7 @@ export default class DailyIframe extends EventEmitter {
           this._iframe.src = '';
         }
         this._meetingState = DAILY_STATE_ERROR;
+        this._participants = {};
         if (this._loadedCallback) {
           this._loadedCallback(msg.errorMsg);
           this._loadedCallback = null;
