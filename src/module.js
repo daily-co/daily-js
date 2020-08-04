@@ -887,6 +887,12 @@ export default class DailyIframe extends EventEmitter {
         // machine to clean up its state).
         this._callObjectLoader.cancel();
         k();
+      } else if (
+        this._meetingState === DAILY_STATE_LEFT ||
+        this._meetingState === DAILY_STATE_ERROR
+      ) {
+        // nothing to do, here, just resolve
+        resolve();
       } else {
         // TODO: the possibility that the iframe call machine is not yet loaded
         // is never handled here...
