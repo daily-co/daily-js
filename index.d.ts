@@ -120,6 +120,7 @@ export interface DailyParticipant {
   videoTrack?: MediaStreamTrack;
   screen: boolean;
   screenVideoTrack?: MediaStreamTrack;
+  screenAudioTrack?: MediaStreamTrack;
 
   // user/session info
   user_id: string;
