@@ -120,6 +120,7 @@ export interface DailyParticipant {
   videoTrack?: MediaStreamTrack;
   screen: boolean;
   screenVideoTrack?: MediaStreamTrack;
+  screenAudioTrack?: MediaStreamTrack;
 
   // user/session info
   user_id: string;
@@ -428,9 +429,9 @@ export interface DailyCall {
     videoDeviceId?: string;
     videoSource?: MediaStreamTrack;
   }): DailyCall;
-  setOutputDevice(audioDevice: { id?: string }): DailyCall;
+  setOutputDevice(audioDevice: { outputDeviceId?: string }): DailyCall;
   getInputDevices(): Promise<DailyDeviceInfos>;
-  load(properties: DailyLoadOptions): Promise<void>;
+  load(properties?: DailyLoadOptions): Promise<void>;
   startScreenShare(captureOptions?: DailyScreenCaptureOptions): void;
   stopScreenShare(): void;
   startRecording(): void;
