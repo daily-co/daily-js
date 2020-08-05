@@ -759,6 +759,7 @@ export default class DailyIframe extends EventEmitter {
         this._loadedCallback = (error) => {
           if (this._meetingState === DAILY_STATE_ERROR) {
             reject(error);
+            return;
           }
           this._meetingState = DAILY_STATE_LOADED;
           if (this.properties.cssFile || this.properties.cssText) {
@@ -842,6 +843,7 @@ export default class DailyIframe extends EventEmitter {
       this._joinedCallback = (participants, error) => {
         if (this._meetingState === DAILY_STATE_ERROR) {
           reject(error);
+          return;
         }
         this._meetingState = DAILY_STATE_JOINED;
         if (participants) {
@@ -887,6 +889,12 @@ export default class DailyIframe extends EventEmitter {
         // machine to clean up its state).
         this._callObjectLoader.cancel();
         k();
+      } else if (
+        this._meetingState === DAILY_STATE_LEFT ||
+        this._meetingState === DAILY_STATE_ERROR
+      ) {
+        // nothing to do, here, just resolve
+        resolve();
       } else {
         // TODO: the possibility that the iframe call machine is not yet loaded
         // is never handled here...
