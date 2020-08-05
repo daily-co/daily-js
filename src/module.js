@@ -1473,7 +1473,7 @@ export default class DailyIframe extends EventEmitter {
         try {
           this.emit(msg.action, msg);
         } catch (e) {
-          console.log('could not emit', msg);
+          console.log('could not emit', msg, e);
         }
         break;
       case DAILY_UI_REQUEST_FULLSCREEN:
