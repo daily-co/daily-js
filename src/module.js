@@ -842,6 +842,7 @@ export default class DailyIframe extends EventEmitter {
       this._joinedCallback = (participants, error) => {
         if (this._meetingState === DAILY_STATE_ERROR) {
           reject(error);
+          return;
         }
         this._meetingState = DAILY_STATE_JOINED;
         if (participants) {
