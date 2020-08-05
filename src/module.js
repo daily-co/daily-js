@@ -759,6 +759,7 @@ export default class DailyIframe extends EventEmitter {
         this._loadedCallback = (error) => {
           if (this._meetingState === DAILY_STATE_ERROR) {
             reject(error);
+            return;
           }
           this._meetingState = DAILY_STATE_LOADED;
           if (this.properties.cssFile || this.properties.cssText) {
