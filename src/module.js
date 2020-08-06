@@ -524,7 +524,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   localAudio() {
-    methodNotSupportedInReactNative();
     if (this._participants.local) {
       return this._participants.local.audio;
     }
@@ -532,7 +531,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   localVideo() {
-    methodNotSupportedInReactNative();
     if (this._participants.local) {
       return this._participants.local.video;
     }
