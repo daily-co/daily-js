@@ -1021,7 +1021,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   sendAppMessage(data, to = '*') {
-    methodNotSupportedInReactNative();
     if (JSON.stringify(data).length > MAX_APP_MSG_SIZE) {
       throw new Error(
         'Message data too large. Max size is ' + MAX_APP_MSG_SIZE
