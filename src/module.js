@@ -386,7 +386,7 @@ export default class DailyIframe extends EventEmitter {
     this._callObjectLoader = this._callObjectMode
       ? new CallObjectLoader()
       : null;
-    this._meetingState = DAILY_STATE_NEW;
+    this._meetingState = DAILY_STATE_NEW; // only update meeting state via updateMeetingState()
     this._participants = {};
     this._inputEventsOn = {}; // need to cache these until loaded
     this._network = { threshold: 'good', quality: 100 };
@@ -713,7 +713,7 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
-    this._meetingState = DAILY_STATE_LOADING;
+    this.updateMeetingState(DAILY_STATE_LOADING);
     try {
       this.emit(DAILY_EVENT_LOADING, { action: DAILY_EVENT_LOADING });
     } catch (e) {
@@ -728,7 +728,7 @@ export default class DailyIframe extends EventEmitter {
           this.properties.url || this.properties.baseUrl,
           this._callFrameId,
           (wasNoOp) => {
-            this._meetingState = DAILY_STATE_LOADED;
+            this.updateMeetingState(DAILY_STATE_LOADED);
             // Only need to emit event if load was a no-op, since the loaded
             // bundle won't be emitting it if it's not executed again
             wasNoOp &&
@@ -741,7 +741,7 @@ export default class DailyIframe extends EventEmitter {
               errorMsg,
             });
             if (!willRetry) {
-              this._meetingState = DAILY_STATE_ERROR;
+              this.updateMeetingState(DAILY_STATE_ERROR);
               this.emit(DAILY_EVENT_ERROR, {
                 action: DAILY_EVENT_ERROR,
                 errorMsg,
@@ -760,7 +760,7 @@ export default class DailyIframe extends EventEmitter {
             reject(error);
             return;
           }
-          this._meetingState = DAILY_STATE_LOADED;
+          this.updateMeetingState(DAILY_STATE_LOADED);
           if (this.properties.cssFile || this.properties.cssText) {
             this.loadCss(this.properties);
           }
@@ -825,7 +825,7 @@ export default class DailyIframe extends EventEmitter {
       console.warn('already joined meeting, call leave() before joining again');
       return;
     }
-    this._meetingState = DAILY_STATE_JOINING;
+    this.updateMeetingState(DAILY_STATE_JOINING);
     try {
       this.emit(DAILY_EVENT_JOINING_MEETING, {
         action: DAILY_EVENT_JOINING_MEETING,
@@ -844,7 +844,7 @@ export default class DailyIframe extends EventEmitter {
           reject(error);
           return;
         }
-        this._meetingState = DAILY_STATE_JOINED;
+        this.updateMeetingState(DAILY_STATE_JOINED);
         if (participants) {
           for (var id in participants) {
             this.fixupParticipant(participants[id]);
@@ -871,7 +871,7 @@ export default class DailyIframe extends EventEmitter {
           // ks beacon?
           // this._iframe.src = '';
         }
-        this._meetingState = DAILY_STATE_LEFT;
+        this.updateMeetingState(DAILY_STATE_LEFT);
         this._participants = {};
         this._activeSpeakerMode = false;
         resetPreloadCache(this._preloadCache);
@@ -1368,7 +1368,7 @@ export default class DailyIframe extends EventEmitter {
         if (this._iframe) {
           this._iframe.src = '';
         }
-        this._meetingState = DAILY_STATE_ERROR;
+        this.updateMeetingState(DAILY_STATE_ERROR);
         this._participants = {};
         if (this._loadedCallback) {
           this._loadedCallback(msg.errorMsg);
@@ -1386,7 +1386,7 @@ export default class DailyIframe extends EventEmitter {
         break;
       case DAILY_EVENT_LEFT_MEETING:
         if (this._meetingState !== DAILY_STATE_ERROR) {
-          this._meetingState = DAILY_STATE_LEFT;
+          this.updateMeetingState(DAILY_STATE_LEFT);
         }
         try {
           this.emit(msg.action, msg);
@@ -1788,6 +1788,47 @@ export default class DailyIframe extends EventEmitter {
       return false;
     }
     return true;
+  }
+
+  nativeUtils() {
+    if (!isReactNative()) {
+      return null;
+    }
+    if (typeof DailyNativeUtils === 'undefined') {
+      console.warn(
+        'in React Native, DailyNativeUtils is expected to be available'
+      );
+      return null;
+    }
+    return DailyNativeUtils;
+  }
+
+  updateMeetingState(meetingState) {
+    if (meetingState === this._meetingState) {
+      return;
+    }
+    const oldMeetingState = this._meetingState;
+    this._meetingState = meetingState;
+    this.updateKeepDeviceAwake(oldMeetingState);
+  }
+
+  updateKeepDeviceAwake(oldMeetingState) {
+    if (!isReactNative()) {
+      return;
+    }
+    const oldKeepDeviceAwake = this.shouldDeviceStayAwake(oldMeetingState);
+    const keepDeviceAwake = this.shouldDeviceStayAwake(this._meetingState);
+    if (oldKeepDeviceAwake === keepDeviceAwake) {
+      return;
+    }
+    this.nativeUtils() &&
+      this.nativeUtils().setKeepDeviceAwake(keepDeviceAwake, this._callFrameId);
+  }
+
+  shouldDeviceStayAwake(meetingState) {
+    return ![DAILY_STATE_NEW, DAILY_STATE_LEFT, DAILY_STATE_ERROR].includes(
+      meetingState
+    );
   }
 
   absoluteUrl(url) {
