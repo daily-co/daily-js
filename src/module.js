@@ -1807,6 +1807,7 @@ export default class DailyIframe extends EventEmitter {
     const oldMeetingState = this._meetingState;
     this._meetingState = meetingState;
     this.updateKeepDeviceAwake(oldMeetingState);
+    this.updateDeviceAudioMode(oldMeetingState);
   }
 
   updateKeepDeviceAwake(oldMeetingState) {
@@ -1822,7 +1823,30 @@ export default class DailyIframe extends EventEmitter {
       this.nativeUtils().setKeepDeviceAwake(keepDeviceAwake, this._callFrameId);
   }
 
+  updateDeviceAudioMode(oldMeetingState) {
+    if (!isReactNative()) {
+      return;
+    }
+    const oldInCallAudioMode = this.shouldDeviceUseInCallAudioMode(
+      oldMeetingState
+    );
+    const inCallAudioMode = this.shouldDeviceUseInCallAudioMode(
+      this._meetingState
+    );
+    if (oldInCallAudioMode === inCallAudioMode) {
+      return;
+    }
+    this.nativeUtils() &&
+      this.nativeUtils().setInCallAudioMode(inCallAudioMode);
+  }
+
   shouldDeviceStayAwake(meetingState) {
+    return ![DAILY_STATE_NEW, DAILY_STATE_LEFT, DAILY_STATE_ERROR].includes(
+      meetingState
+    );
+  }
+
+  shouldDeviceUseInCallAudioMode(meetingState) {
     return ![DAILY_STATE_NEW, DAILY_STATE_LEFT, DAILY_STATE_ERROR].includes(
       meetingState
     );
