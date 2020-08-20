@@ -987,7 +987,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   getNetworkStats() {
-    methodNotSupportedInReactNative();
     if (this._meetingState !== DAILY_STATE_JOINED) {
       let stats = { latest: {} };
       return { stats };
