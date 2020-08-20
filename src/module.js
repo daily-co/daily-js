@@ -107,6 +107,12 @@ export {
   DAILY_EVENT_LEFT_MEETING,
 };
 
+// Audio modes for React Native: whether we should configure audio for video
+// calls or audio calls (i.e. whether we should use speakerphone).
+const NATIVE_AUDIO_MODE_VIDEO_CALL = 'video';
+const NATIVE_AUDIO_MODE_VOICE_CALL = 'voice';
+const NATIVE_AUDIO_MODE_IDLE = 'idle';
+
 //
 //
 //
@@ -387,6 +393,7 @@ export default class DailyIframe extends EventEmitter {
       ? new CallObjectLoader()
       : null;
     this._meetingState = DAILY_STATE_NEW; // only update meeting state via updateMeetingState()
+    this._nativeInCallAudioMode = NATIVE_AUDIO_MODE_VIDEO_CALL;
     this._participants = {};
     this._inputEventsOn = {}; // need to cache these until loaded
     this._network = { threshold: 'good', quality: 100 };
@@ -690,6 +697,37 @@ export default class DailyIframe extends EventEmitter {
         k
       );
     });
+  }
+
+  nativeInCallAudioMode() {
+    methodOnlySupportedInReactNative();
+    return this._nativeInCallAudioMode;
+  }
+
+  setNativeInCallAudioMode(inCallAudioMode) {
+    methodOnlySupportedInReactNative();
+    if (
+      ![NATIVE_AUDIO_MODE_VIDEO_CALL, NATIVE_AUDIO_MODE_VOICE_CALL].includes(
+        inCallAudioMode
+      )
+    ) {
+      console.error('invalid in-call audio mode specified: ', inCallAudioMode);
+      return;
+    }
+
+    if (inCallAudioMode === this._nativeInCallAudioMode) {
+      return;
+    }
+
+    // Set new audio mode (video call, audio call) to use when we're in a call
+    this._nativeInCallAudioMode = inCallAudioMode;
+
+    // If we're in a call now, apply the new audio mode
+    if (this.shouldDeviceUseInCallAudioMode(this._meetingState)) {
+      this.nativeUtils().setAudioMode(this._nativeInCallAudioMode);
+    }
+
+    return this;
   }
 
   async load(properties) {
@@ -1807,6 +1845,7 @@ export default class DailyIframe extends EventEmitter {
     const oldMeetingState = this._meetingState;
     this._meetingState = meetingState;
     this.updateKeepDeviceAwake(oldMeetingState);
+    this.updateDeviceAudioMode(oldMeetingState);
   }
 
   updateKeepDeviceAwake(oldMeetingState) {
@@ -1818,11 +1857,37 @@ export default class DailyIframe extends EventEmitter {
     if (oldKeepDeviceAwake === keepDeviceAwake) {
       return;
     }
-    this.nativeUtils() &&
-      this.nativeUtils().setKeepDeviceAwake(keepDeviceAwake, this._callFrameId);
+    console.log('[pk][daily-js] updateKeepDeviceAwake: ', keepDeviceAwake);
+    this.nativeUtils().setKeepDeviceAwake(keepDeviceAwake, this._callFrameId);
+  }
+
+  updateDeviceAudioMode(oldMeetingState) {
+    if (!isReactNative()) {
+      return;
+    }
+    const oldUseInCallAudioMode = this.shouldDeviceUseInCallAudioMode(
+      oldMeetingState
+    );
+    const useInCallAudioMode = this.shouldDeviceUseInCallAudioMode(
+      this._meetingState
+    );
+    if (oldUseInCallAudioMode === useInCallAudioMode) {
+      return;
+    }
+    const inCallAudioMode = useInCallAudioMode
+      ? this._nativeInCallAudioMode
+      : NATIVE_AUDIO_MODE_IDLE;
+    console.log('[pk][daily-js] setAudioMode: ', useInCallAudioMode);
+    this.nativeUtils().setAudioMode(inCallAudioMode);
   }
 
   shouldDeviceStayAwake(meetingState) {
+    return ![DAILY_STATE_NEW, DAILY_STATE_LEFT, DAILY_STATE_ERROR].includes(
+      meetingState
+    );
+  }
+
+  shouldDeviceUseInCallAudioMode(meetingState) {
     return ![DAILY_STATE_NEW, DAILY_STATE_LEFT, DAILY_STATE_ERROR].includes(
       meetingState
     );
@@ -1894,5 +1959,11 @@ function methodNotSupportedInReactNative() {
     throw new Error(
       'This daily-js method is not currently supported in React Native'
     );
+  }
+}
+
+function methodOnlySupportedInReactNative() {
+  if (!isReactNative()) {
+    throw new Error('This daily-js method is only supported in React Native');
   }
 }
