@@ -431,6 +431,8 @@ export interface DailyCall {
   }): DailyCall;
   setOutputDevice(audioDevice: { outputDeviceId?: string }): DailyCall;
   getInputDevices(): Promise<DailyDeviceInfos>;
+  nativeInCallAudioMode(): string;
+  setNativeInCallAudioMode(inCallAudioMode: 'video' | 'voice'): DailyCall;
   load(properties?: DailyLoadOptions): Promise<void>;
   startScreenShare(captureOptions?: DailyScreenCaptureOptions): void;
   stopScreenShare(): void;
