@@ -1857,7 +1857,6 @@ export default class DailyIframe extends EventEmitter {
     if (oldKeepDeviceAwake === keepDeviceAwake) {
       return;
     }
-    console.log('[pk][daily-js] updateKeepDeviceAwake: ', keepDeviceAwake);
     this.nativeUtils().setKeepDeviceAwake(keepDeviceAwake, this._callFrameId);
   }
 
@@ -1877,7 +1876,6 @@ export default class DailyIframe extends EventEmitter {
     const inCallAudioMode = useInCallAudioMode
       ? this._nativeInCallAudioMode
       : NATIVE_AUDIO_MODE_IDLE;
-    console.log('[pk][daily-js] setAudioMode: ', useInCallAudioMode);
     this.nativeUtils().setAudioMode(inCallAudioMode);
   }
 
