@@ -146,7 +146,7 @@ const FRAME_PROPS = {
   reactNativeConfig: {
     validate: validateReactNativeConfig,
     help:
-      'reactNativeConfig should look like { androidInCallNotification: { title: string, subtitle: string, disableForCustomOverride: boolean } }, all optional',
+      'reactNativeConfig should look like { androidInCallNotification: { title: string, subtitle: string, iconName: string, disableForCustomOverride: boolean } }, all optional',
   },
   lang: {
     validate: (lang) => {
@@ -1903,7 +1903,7 @@ export default class DailyIframe extends EventEmitter {
       return;
     }
     // Use current this.properties to customize notification behavior
-    let title, subtitle, disableForCustomOverride;
+    let title, subtitle, iconName, disableForCustomOverride;
     if (
       this.properties.reactNativeConfig &&
       this.properties.reactNativeConfig.androidInCallNotification
@@ -1911,6 +1911,7 @@ export default class DailyIframe extends EventEmitter {
       ({
         title,
         subtitle,
+        iconName,
         disableForCustomOverride,
       } = this.properties.reactNativeConfig.androidInCallNotification);
     }
@@ -1921,6 +1922,7 @@ export default class DailyIframe extends EventEmitter {
       showNotification,
       title,
       subtitle,
+      iconName,
       this._callFrameId
     );
   }
@@ -2046,6 +2048,7 @@ function validateAndroidInCallNotificationConfig(config) {
         break;
       case 'title':
       case 'subtitle':
+      case 'iconName':
         if (typeof config[key] !== 'string') {
           return false;
         }
