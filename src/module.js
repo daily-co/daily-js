@@ -143,6 +143,11 @@ const FRAME_PROPS = {
       return true;
     },
   },
+  reactNativeConfig: {
+    validate: validateReactNativeConfig,
+    help:
+      'reactNativeConfig should look like { androidInCallNotification: { title: string, subtitle: string, iconName: string, disableForCustomOverride: boolean } }, all optional',
+  },
   lang: {
     validate: (lang) => {
       return ['de', 'en-us', 'en', 'fi', 'fr', 'nl', 'pt', 'pl'].includes(lang);
@@ -1846,6 +1851,7 @@ export default class DailyIframe extends EventEmitter {
     this._meetingState = meetingState;
     this.updateKeepDeviceAwake(oldMeetingState);
     this.updateDeviceAudioMode(oldMeetingState);
+    this.updateShowAndroidOngoingMeetingNotification(oldMeetingState);
   }
 
   updateKeepDeviceAwake(oldMeetingState) {
@@ -1879,13 +1885,61 @@ export default class DailyIframe extends EventEmitter {
     this.nativeUtils().setAudioMode(inCallAudioMode);
   }
 
-  shouldDeviceStayAwake(meetingState) {
-    return ![DAILY_STATE_NEW, DAILY_STATE_LEFT, DAILY_STATE_ERROR].includes(
-      meetingState
+  // Note: notification properties can't be changed while it is ongoing
+  updateShowAndroidOngoingMeetingNotification(oldMeetingState) {
+    // Check that we're React Native and that the Android-only method exists
+    if (
+      !(isReactNative() && this.nativeUtils().setShowOngoingMeetingNotification)
+    ) {
+      return;
+    }
+    const oldShowNotification = this.shouldShowAndroidOngoingMeetingNotification(
+      oldMeetingState
+    );
+    let showNotification = this.shouldShowAndroidOngoingMeetingNotification(
+      this._meetingState
+    );
+    if (oldShowNotification === showNotification) {
+      return;
+    }
+    // Use current this.properties to customize notification behavior
+    let title, subtitle, iconName, disableForCustomOverride;
+    if (
+      this.properties.reactNativeConfig &&
+      this.properties.reactNativeConfig.androidInCallNotification
+    ) {
+      ({
+        title,
+        subtitle,
+        iconName,
+        disableForCustomOverride,
+      } = this.properties.reactNativeConfig.androidInCallNotification);
+    }
+    if (disableForCustomOverride) {
+      showNotification = false;
+    }
+    this.nativeUtils().setShowOngoingMeetingNotification(
+      showNotification,
+      title,
+      subtitle,
+      iconName,
+      this._callFrameId
     );
   }
 
+  shouldDeviceStayAwake(meetingState) {
+    return this.isMeetingPendingOrOngoing(meetingState);
+  }
+
   shouldDeviceUseInCallAudioMode(meetingState) {
+    return this.isMeetingPendingOrOngoing(meetingState);
+  }
+
+  shouldShowAndroidOngoingMeetingNotification(meetingState) {
+    return this.isMeetingPendingOrOngoing(meetingState);
+  }
+
+  isMeetingPendingOrOngoing(meetingState) {
     return ![DAILY_STATE_NEW, DAILY_STATE_LEFT, DAILY_STATE_ERROR].includes(
       meetingState
     );
@@ -1964,4 +2018,44 @@ function methodOnlySupportedInReactNative() {
   if (!isReactNative()) {
     throw new Error('This daily-js method is only supported in React Native');
   }
+}
+
+// Note: this may get more complex in the future, in which case we may want
+// to revisit how FRAME_PROPS validation is done. Today it's hard to provide
+// validation help messages about unrecognized nested properties.
+function validateReactNativeConfig(config) {
+  for (const key in config) {
+    switch (key) {
+      case 'androidInCallNotification':
+        if (!validateAndroidInCallNotificationConfig(config[key])) {
+          return false;
+        }
+        break;
+      default:
+        return false;
+    }
+  }
+  return true;
+}
+
+function validateAndroidInCallNotificationConfig(config) {
+  for (const key in config) {
+    switch (key) {
+      case 'disableForCustomOverride':
+        if (typeof config[key] !== 'boolean') {
+          return false;
+        }
+        break;
+      case 'title':
+      case 'subtitle':
+      case 'iconName':
+        if (typeof config[key] !== 'string') {
+          return false;
+        }
+        break;
+      default:
+        return false;
+    }
+  }
+  return true;
 }
