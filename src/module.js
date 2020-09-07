@@ -440,6 +440,20 @@ export default class DailyIframe extends EventEmitter {
       }
     }
 
+    // add native event listeners
+    if (isReactNative()) {
+      const nativeUtils = this.nativeUtils();
+      // audio focus event
+      if (!nativeUtils.addAudioFocusChangeListener) {
+        console.warn(
+          'expected addAudioFocusChangeListener to be available in React Native'
+        );
+      }
+      nativeUtils.addAudioFocusChangeListener(
+        this.handleNativeAudioFocusChange
+      );
+    }
+
     this._messageChannel.addListenerForMessagesFromCallMachine(
       this.handleMessageFromCallMachine,
       this._callFrameId,
@@ -467,6 +481,20 @@ export default class DailyIframe extends EventEmitter {
       }
     }
     this._messageChannel.removeListener(this.handleMessageFromCallMachine);
+
+    // tear down native event listeners
+    if (isReactNative()) {
+      const nativeUtils = this.nativeUtils();
+      // audio focus event
+      if (!nativeUtils.removeAudioFocusChangeListener) {
+        console.warn(
+          'expected removeAudioFocusChangeListener to be available in React Native'
+        );
+      }
+      nativeUtils.removeAudioFocusChangeListener(
+        this.handleNativeAudioFocusChange
+      );
+    }
   }
 
   loadCss({ bodyClass, cssFile, cssText }) {
@@ -1944,6 +1972,20 @@ export default class DailyIframe extends EventEmitter {
       meetingState
     );
   }
+
+  handleNativeAudioFocusChange = (hasFocus) => {
+    if (hasFocus) {
+      // If we were unmuted before losing focus, unmute
+      // (Note this is assumption is not perfect, since theoretically an app
+      // could unmute while in the background, but it's decent for now)
+      if (this.unmutedBeforeLosingNativeAudioFocus) {
+        this.setLocalAudio(true);
+      }
+    } else {
+      this.unmutedBeforeLosingNativeAudioFocus = this.localAudio();
+      this.setLocalAudio(false);
+    }
+  };
 
   absoluteUrl(url) {
     if ('undefined' === typeof url) {
