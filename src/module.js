@@ -456,6 +456,7 @@ export default class DailyIframe extends EventEmitter {
         );
       }
       // audio focus event, used for auto-muting mic
+      this._hasNativeAudioFocus = true;
       nativeUtils.addAudioFocusChangeListener(
         this.handleNativeAudioFocusChange
       );
@@ -930,6 +931,7 @@ export default class DailyIframe extends EventEmitter {
               : participants[id].session_id;
             this.matchParticipantTracks(lid, participants[id]);
             this._participants[id] = { ...participants[id] };
+            this.toggleParticipantAudioBasedOnNativeAudioFocus();
           }
         }
         if (newCss) {
@@ -1412,6 +1414,7 @@ export default class DailyIframe extends EventEmitter {
             )
           ) {
             this._participants[id] = { ...msg.participant };
+            this.toggleParticipantAudioBasedOnNativeAudioFocus();
             try {
               this.emit(msg.action, msg);
             } catch (e) {
@@ -1981,20 +1984,6 @@ export default class DailyIframe extends EventEmitter {
     );
   }
 
-  handleNativeAudioFocusChange = (hasFocus) => {
-    if (hasFocus) {
-      // If mic was unmuted before losing focus, unmute
-      // (Note this is assumption is not perfect, since theoretically an app
-      // could unmute while in the background, but it's decent for now)
-      if (this.micUnmutedBeforeLosingNativeAudioFocus) {
-        this.setLocalAudio(true);
-      }
-    } else {
-      this.micUnmutedBeforeLosingNativeAudioFocus = this.localAudio();
-      this.setLocalAudio(false);
-    }
-  };
-
   handleNativeAppActiveStateChange = (isActive) => {
     if (isActive) {
       // If cam was unmuted before losing focus, unmute
@@ -2008,6 +1997,43 @@ export default class DailyIframe extends EventEmitter {
       this.setLocalVideo(false);
     }
   };
+
+  handleNativeAudioFocusChange = (hasFocus) => {
+    this._hasNativeAudioFocus = hasFocus;
+    // toggle participant audio if needed
+    this.toggleParticipantAudioBasedOnNativeAudioFocus();
+    // toggle mic mute if needed
+    if (this._hasNativeAudioFocus) {
+      // If mic was unmuted before losing focus, unmute
+      // (Note this is assumption is not perfect, since theoretically an app
+      // could unmute while in the background, but it's decent for now)
+      if (this.micUnmutedBeforeLosingNativeAudioFocus) {
+        this.setLocalAudio(true);
+      }
+    } else {
+      this.micUnmutedBeforeLosingNativeAudioFocus = this.localAudio();
+      this.setLocalAudio(false);
+    }
+  };
+
+  toggleParticipantAudioBasedOnNativeAudioFocus() {
+    if (!isReactNative()) {
+      return;
+    }
+    // Need to access store directly since when participant muted their audio we
+    // don't have access to their audio tracks in this._participants
+    const state = store.getState();
+    for (const streamId in state.streams) {
+      const streamData = state.streams[streamId];
+      if (
+        streamData &&
+        streamData.pendingTrack &&
+        streamData.pendingTrack.kind === 'audio'
+      ) {
+        streamData.pendingTrack.enabled = this._hasNativeAudioFocus;
+      }
+    }
+  }
 
   absoluteUrl(url) {
     if ('undefined' === typeof url) {
