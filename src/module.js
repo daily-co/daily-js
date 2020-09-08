@@ -443,14 +443,25 @@ export default class DailyIframe extends EventEmitter {
     // add native event listeners
     if (isReactNative()) {
       const nativeUtils = this.nativeUtils();
-      // audio focus event
-      if (!nativeUtils.addAudioFocusChangeListener) {
+      if (
+        !(
+          nativeUtils.addAudioFocusChangeListener &&
+          nativeUtils.removeAudioFocusChangeListener &&
+          nativeUtils.addAppActiveStateChangeListener &&
+          nativeUtils.removeAppActiveStateChangeListener
+        )
+      ) {
         console.warn(
-          'expected addAudioFocusChangeListener to be available in React Native'
+          'expected (add|remove)(AudioFocus|AppActiveState)ChangeListener to be available in React Native'
         );
       }
+      // audio focus event, used for auto-muting mic
       nativeUtils.addAudioFocusChangeListener(
         this.handleNativeAudioFocusChange
+      );
+      // app active state event, used for auto-muting cam
+      nativeUtils.addAppActiveStateChangeListener(
+        this.handleNativeAppActiveStateChange
       );
     }
 
@@ -485,14 +496,11 @@ export default class DailyIframe extends EventEmitter {
     // tear down native event listeners
     if (isReactNative()) {
       const nativeUtils = this.nativeUtils();
-      // audio focus event
-      if (!nativeUtils.removeAudioFocusChangeListener) {
-        console.warn(
-          'expected removeAudioFocusChangeListener to be available in React Native'
-        );
-      }
       nativeUtils.removeAudioFocusChangeListener(
         this.handleNativeAudioFocusChange
+      );
+      nativeUtils.removeAppActiveStateChangeListener(
+        this.handleNativeAppActiveStateChange
       );
     }
   }
@@ -1975,15 +1983,29 @@ export default class DailyIframe extends EventEmitter {
 
   handleNativeAudioFocusChange = (hasFocus) => {
     if (hasFocus) {
-      // If we were unmuted before losing focus, unmute
+      // If mic was unmuted before losing focus, unmute
       // (Note this is assumption is not perfect, since theoretically an app
       // could unmute while in the background, but it's decent for now)
-      if (this.unmutedBeforeLosingNativeAudioFocus) {
+      if (this.micUnmutedBeforeLosingNativeAudioFocus) {
         this.setLocalAudio(true);
       }
     } else {
-      this.unmutedBeforeLosingNativeAudioFocus = this.localAudio();
+      this.micUnmutedBeforeLosingNativeAudioFocus = this.localAudio();
       this.setLocalAudio(false);
+    }
+  };
+
+  handleNativeAppActiveStateChange = (isActive) => {
+    if (isActive) {
+      // If cam was unmuted before losing focus, unmute
+      // (Note this is assumption is not perfect, since theoretically an app
+      // could unmute while in the background, but it's decent for now)
+      if (this.camUnmutedBeforeLosingNativeActiveState) {
+        this.setLocalVideo(true);
+      }
+    } else {
+      this.camUnmutedBeforeLosingNativeActiveState = this.localVideo();
+      this.setLocalVideo(false);
     }
   };
 
