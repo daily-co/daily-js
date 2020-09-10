@@ -426,10 +426,10 @@ export interface DailyCall {
   cycleCamera(): Promise<{ device?: MediaDeviceInfo | null }>;
   cycleMic(): Promise<{ device?: MediaDeviceInfo | null }>;
   setInputDevices(devices: {
-    audioDeviceId?: string;
-    audioSource?: MediaStreamTrack;
-    videoDeviceId?: string;
-    videoSource?: MediaStreamTrack;
+    audioDeviceId?: string | false;
+    audioSource?: MediaStreamTrack | false;
+    videoDeviceId?: string | false;
+    videoSource?: MediaStreamTrack | false;
   }): DailyCall;
   setOutputDevice(audioDevice: { outputDeviceId?: string }): DailyCall;
   getInputDevices(): Promise<DailyDeviceInfos>;
