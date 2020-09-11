@@ -12,7 +12,20 @@
  * --- SECTION DUPLICATED WITH REACT-NATIVE-DAILY-JS ---
  */
 
-export type DailyLanguage = 'de' | 'en' | 'fi' | 'fr' | 'nl' | 'pt' | 'pl' | 'sv' | 'es' | 'tr' | 'it' | 'ka' | 'jp' ;
+export type DailyLanguage =
+  | 'de'
+  | 'en'
+  | 'fi'
+  | 'fr'
+  | 'nl'
+  | 'pt'
+  | 'pl'
+  | 'sv'
+  | 'es'
+  | 'tr'
+  | 'it'
+  | 'ka'
+  | 'jp';
 
 export type DailyEvent =
   | 'loading'
