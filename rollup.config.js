@@ -1,5 +1,6 @@
 import replace from '@rollup/plugin-replace';
 import resolve from 'rollup-plugin-node-resolve';
+import babel from '@rollup/plugin-babel';
 import commonJS from 'rollup-plugin-commonjs';
 import { terser } from 'rollup-plugin-terser';
 
@@ -15,6 +16,15 @@ export default [
       }),
       replace({
         'process.env.NODE_ENV': JSON.stringify(production),
+      }),
+      babel({
+        exclude: 'node_modules/**',
+        babelHelpers: 'runtime',
+        presets: ['@babel/preset-env'],
+        plugins: [
+          '@babel/plugin-transform-runtime',
+          '@babel/plugin-proposal-class-properties',
+        ],
       }),
       commonJS({
         include: 'node_modules/**',
