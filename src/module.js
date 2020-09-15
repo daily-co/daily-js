@@ -1994,7 +1994,12 @@ export default class DailyIframe extends EventEmitter {
       }
     } else {
       this.camUnmutedBeforeLosingNativeActiveState = this.localVideo();
-      this.setLocalVideo(false);
+      // Mute cam, but check first whether we have local video in the first
+      // place: if we don't, we may still be in the gUM process, with the app
+      // "inactive" simply because it's behind the permissions dialogs.
+      if (this.camUnmutedBeforeLosingNativeActiveState) {
+        this.setLocalVideo(false);
+      }
     }
   };
 
