@@ -1,6 +1,7 @@
 import EventEmitter from 'events';
 import { deepEqual } from 'fast-equals';
-import { filter, orderBy } from 'lodash';
+import filter from 'lodash/filter';
+import orderBy from 'lodash/orderBy';
 
 import {
   // re-export
