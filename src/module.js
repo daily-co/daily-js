@@ -794,7 +794,15 @@ export default class DailyIframe extends EventEmitter {
     this._nativeInCallAudioMode = inCallAudioMode;
 
     // If we're in a call now, apply the new audio mode
-    if (this.shouldDeviceUseInCallAudioMode(this._meetingState)) {
+    // (assuming automatic audio device management isn't disabled)
+    const deviceManagementDisabled =
+      this.properties.reactNativeConfig &&
+      this.properties.reactNativeConfig.disableAutoDeviceManagement &&
+      this.properties.reactNativeConfig.disableAutoDeviceManagement.audio;
+    if (
+      !deviceManagementDisabled &&
+      this.shouldDeviceUseInCallAudioMode(this._meetingState)
+    ) {
       this.nativeUtils().setAudioMode(this._nativeInCallAudioMode);
     }
 
@@ -1938,6 +1946,13 @@ export default class DailyIframe extends EventEmitter {
     if (!isReactNative()) {
       return;
     }
+    if (
+      this.properties.reactNativeConfig &&
+      this.properties.reactNativeConfig.disableAutoDeviceManagement &&
+      this.properties.reactNativeConfig.disableAutoDeviceManagement.audio
+    ) {
+      return;
+    }
     const oldUseInCallAudioMode = this.shouldDeviceUseInCallAudioMode(
       oldMeetingState
     );
@@ -2033,6 +2048,14 @@ export default class DailyIframe extends EventEmitter {
   };
 
   handleNativeAudioFocusChange = (hasFocus) => {
+    // If automatic audio device management is disabled, bail
+    if (
+      this.properties.reactNativeConfig &&
+      this.properties.reactNativeConfig.disableAutoDeviceManagement &&
+      this.properties.reactNativeConfig.disableAutoDeviceManagement.audio
+    ) {
+      return;
+    }
     this._hasNativeAudioFocus = hasFocus;
     // toggle participant audio if needed
     this.toggleParticipantAudioBasedOnNativeAudioFocus();
