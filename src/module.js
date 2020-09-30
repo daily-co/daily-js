@@ -2029,6 +2029,14 @@ export default class DailyIframe extends EventEmitter {
   }
 
   handleNativeAppActiveStateChange = (isActive) => {
+    // If automatic video device management is disabled, bail
+    if (
+      this.properties.reactNativeConfig &&
+      this.properties.reactNativeConfig.disableAutoDeviceManagement &&
+      this.properties.reactNativeConfig.disableAutoDeviceManagement.video
+    ) {
+      return;
+    }
     if (isActive) {
       // If cam was unmuted before losing focus, unmute
       // (Note this is assumption is not perfect, since theoretically an app
