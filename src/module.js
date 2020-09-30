@@ -117,6 +117,19 @@ const NATIVE_AUDIO_MODE_IDLE = 'idle';
 //
 //
 
+const reactNativeConfigType = {
+  androidInCallNotification: {
+    title: 'string',
+    subtitle: 'string',
+    iconName: 'string',
+    disableForCustomOverride: 'boolean',
+  },
+  disableAutoDeviceManagement: {
+    audio: 'boolean',
+    video: 'boolean',
+  },
+};
+
 const FRAME_PROPS = {
   url: {
     validate: (url) => typeof url === 'string',
@@ -145,8 +158,9 @@ const FRAME_PROPS = {
   },
   reactNativeConfig: {
     validate: validateReactNativeConfig,
-    help:
-      'reactNativeConfig should look like { androidInCallNotification: { title: string, subtitle: string, iconName: string, disableForCustomOverride: boolean } }, all optional',
+    help: `reactNativeConfig should look like ${JSON.stringify(
+      reactNativeConfigType
+    )}, all fields optional`,
   },
   lang: {
     validate: (lang) => {
@@ -2130,42 +2144,31 @@ function methodOnlySupportedInReactNative() {
   }
 }
 
-// Note: this may get more complex in the future, in which case we may want
-// to revisit how FRAME_PROPS validation is done. Today it's hard to provide
-// validation help messages about unrecognized nested properties.
 function validateReactNativeConfig(config) {
-  for (const key in config) {
-    switch (key) {
-      case 'androidInCallNotification':
-        if (!validateAndroidInCallNotificationConfig(config[key])) {
-          return false;
-        }
-        break;
-      default:
-        return false;
-    }
-  }
-  return true;
+  return validateConfigPropType(config, reactNativeConfigType);
 }
 
-function validateAndroidInCallNotificationConfig(config) {
-  for (const key in config) {
-    switch (key) {
-      case 'disableForCustomOverride':
-        if (typeof config[key] !== 'boolean') {
-          return false;
-        }
-        break;
-      case 'title':
-      case 'subtitle':
-      case 'iconName':
-        if (typeof config[key] !== 'string') {
-          return false;
-        }
-        break;
-      default:
-        return false;
-    }
+function validateConfigPropType(prop, propType) {
+  if (propType === undefined) {
+    return false;
   }
-  return true;
+  switch (typeof propType) {
+    case 'string':
+      return typeof prop === propType;
+    case 'object':
+      if (typeof prop !== 'object') {
+        return false;
+      }
+      for (const key in prop) {
+        if (!validateConfigPropType(prop[key], propType[key])) {
+          return false;
+        }
+      }
+      return true;
+    default:
+      // console.error(
+      //   "Internal programming error: we've defined our config prop types wrong"
+      // );
+      return false;
+  }
 }
