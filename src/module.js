@@ -117,6 +117,19 @@ const NATIVE_AUDIO_MODE_IDLE = 'idle';
 //
 //
 
+const reactNativeConfigType = {
+  androidInCallNotification: {
+    title: 'string',
+    subtitle: 'string',
+    iconName: 'string',
+    disableForCustomOverride: 'boolean',
+  },
+  disableAutoDeviceManagement: {
+    audio: 'boolean',
+    video: 'boolean',
+  },
+};
+
 const FRAME_PROPS = {
   url: {
     validate: (url) => typeof url === 'string',
@@ -145,8 +158,9 @@ const FRAME_PROPS = {
   },
   reactNativeConfig: {
     validate: validateReactNativeConfig,
-    help:
-      'reactNativeConfig should look like { androidInCallNotification: { title: string, subtitle: string, iconName: string, disableForCustomOverride: boolean } }, all optional',
+    help: `reactNativeConfig should look like ${JSON.stringify(
+      reactNativeConfigType
+    )}, all fields optional`,
   },
   lang: {
     validate: (lang) => {
@@ -780,7 +794,11 @@ export default class DailyIframe extends EventEmitter {
     this._nativeInCallAudioMode = inCallAudioMode;
 
     // If we're in a call now, apply the new audio mode
-    if (this.shouldDeviceUseInCallAudioMode(this._meetingState)) {
+    // (assuming automatic audio device management isn't disabled)
+    if (
+      !this.disableReactNativeAutoDeviceManagement('audio') &&
+      this.shouldDeviceUseInCallAudioMode(this._meetingState)
+    ) {
       this.nativeUtils().setAudioMode(this._nativeInCallAudioMode);
     }
 
@@ -1921,7 +1939,10 @@ export default class DailyIframe extends EventEmitter {
   }
 
   updateDeviceAudioMode(oldMeetingState) {
-    if (!isReactNative()) {
+    if (
+      !isReactNative() ||
+      this.disableReactNativeAutoDeviceManagement('audio')
+    ) {
       return;
     }
     const oldUseInCallAudioMode = this.shouldDeviceUseInCallAudioMode(
@@ -2000,6 +2021,10 @@ export default class DailyIframe extends EventEmitter {
   }
 
   handleNativeAppActiveStateChange = (isActive) => {
+    // If automatic video device management is disabled, bail
+    if (this.disableReactNativeAutoDeviceManagement('video')) {
+      return;
+    }
     if (isActive) {
       // If cam was unmuted before losing focus, unmute
       // (Note this is assumption is not perfect, since theoretically an app
@@ -2019,6 +2044,10 @@ export default class DailyIframe extends EventEmitter {
   };
 
   handleNativeAudioFocusChange = (hasFocus) => {
+    // If automatic audio device management is disabled, bail
+    if (this.disableReactNativeAutoDeviceManagement('audio')) {
+      return;
+    }
     this._hasNativeAudioFocus = hasFocus;
     // toggle participant audio if needed
     this.toggleParticipantAudioBasedOnNativeAudioFocus();
@@ -2053,6 +2082,15 @@ export default class DailyIframe extends EventEmitter {
         streamData.pendingTrack.enabled = this._hasNativeAudioFocus;
       }
     }
+  }
+
+  // type must be either 'audio' or 'video'
+  disableReactNativeAutoDeviceManagement(type) {
+    return (
+      this.properties.reactNativeConfig &&
+      this.properties.reactNativeConfig.disableAutoDeviceManagement &&
+      this.properties.reactNativeConfig.disableAutoDeviceManagement[type]
+    );
   }
 
   absoluteUrl(url) {
@@ -2130,42 +2168,31 @@ function methodOnlySupportedInReactNative() {
   }
 }
 
-// Note: this may get more complex in the future, in which case we may want
-// to revisit how FRAME_PROPS validation is done. Today it's hard to provide
-// validation help messages about unrecognized nested properties.
 function validateReactNativeConfig(config) {
-  for (const key in config) {
-    switch (key) {
-      case 'androidInCallNotification':
-        if (!validateAndroidInCallNotificationConfig(config[key])) {
-          return false;
-        }
-        break;
-      default:
-        return false;
-    }
-  }
-  return true;
+  return validateConfigPropType(config, reactNativeConfigType);
 }
 
-function validateAndroidInCallNotificationConfig(config) {
-  for (const key in config) {
-    switch (key) {
-      case 'disableForCustomOverride':
-        if (typeof config[key] !== 'boolean') {
-          return false;
-        }
-        break;
-      case 'title':
-      case 'subtitle':
-      case 'iconName':
-        if (typeof config[key] !== 'string') {
-          return false;
-        }
-        break;
-      default:
-        return false;
-    }
+function validateConfigPropType(prop, propType) {
+  if (propType === undefined) {
+    return false;
   }
-  return true;
+  switch (typeof propType) {
+    case 'string':
+      return typeof prop === propType;
+    case 'object':
+      if (typeof prop !== 'object') {
+        return false;
+      }
+      for (const key in prop) {
+        if (!validateConfigPropType(prop[key], propType[key])) {
+          return false;
+        }
+      }
+      return true;
+    default:
+      // console.error(
+      //   "Internal programming error: we've defined our config prop types wrong"
+      // );
+      return false;
+  }
 }
