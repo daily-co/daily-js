@@ -795,12 +795,8 @@ export default class DailyIframe extends EventEmitter {
 
     // If we're in a call now, apply the new audio mode
     // (assuming automatic audio device management isn't disabled)
-    const deviceManagementDisabled =
-      this.properties.reactNativeConfig &&
-      this.properties.reactNativeConfig.disableAutoDeviceManagement &&
-      this.properties.reactNativeConfig.disableAutoDeviceManagement.audio;
     if (
-      !deviceManagementDisabled &&
+      !this.disableReactNativeAutoDeviceManagement('audio') &&
       this.shouldDeviceUseInCallAudioMode(this._meetingState)
     ) {
       this.nativeUtils().setAudioMode(this._nativeInCallAudioMode);
@@ -1943,13 +1939,9 @@ export default class DailyIframe extends EventEmitter {
   }
 
   updateDeviceAudioMode(oldMeetingState) {
-    if (!isReactNative()) {
-      return;
-    }
     if (
-      this.properties.reactNativeConfig &&
-      this.properties.reactNativeConfig.disableAutoDeviceManagement &&
-      this.properties.reactNativeConfig.disableAutoDeviceManagement.audio
+      !isReactNative() ||
+      this.disableReactNativeAutoDeviceManagement('audio')
     ) {
       return;
     }
@@ -2030,11 +2022,7 @@ export default class DailyIframe extends EventEmitter {
 
   handleNativeAppActiveStateChange = (isActive) => {
     // If automatic video device management is disabled, bail
-    if (
-      this.properties.reactNativeConfig &&
-      this.properties.reactNativeConfig.disableAutoDeviceManagement &&
-      this.properties.reactNativeConfig.disableAutoDeviceManagement.video
-    ) {
+    if (this.disableReactNativeAutoDeviceManagement('video')) {
       return;
     }
     if (isActive) {
@@ -2057,11 +2045,7 @@ export default class DailyIframe extends EventEmitter {
 
   handleNativeAudioFocusChange = (hasFocus) => {
     // If automatic audio device management is disabled, bail
-    if (
-      this.properties.reactNativeConfig &&
-      this.properties.reactNativeConfig.disableAutoDeviceManagement &&
-      this.properties.reactNativeConfig.disableAutoDeviceManagement.audio
-    ) {
+    if (this.disableReactNativeAutoDeviceManagement('audio')) {
       return;
     }
     this._hasNativeAudioFocus = hasFocus;
@@ -2098,6 +2082,15 @@ export default class DailyIframe extends EventEmitter {
         streamData.pendingTrack.enabled = this._hasNativeAudioFocus;
       }
     }
+  }
+
+  // type must be either 'audio' or 'video'
+  disableReactNativeAutoDeviceManagement(type) {
+    return (
+      this.properties.reactNativeConfig &&
+      this.properties.reactNativeConfig.disableAutoDeviceManagement &&
+      this.properties.reactNativeConfig.disableAutoDeviceManagement[type]
+    );
   }
 
   absoluteUrl(url) {
