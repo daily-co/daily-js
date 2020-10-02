@@ -114,8 +114,11 @@ export interface DailyLoadOptions extends DailyCallOptions {
 }
 
 export interface DailyAdvancedConfig {
-  experimentalChromeVideoMuteLightOff: boolean;
-  fastConnect: boolean;
+  experimentalChromeVideoMuteLightOff?: boolean;
+  experimentalGetUserMediaConstraintsModify?: (
+    constraints: MediaStreamConstraints
+  ) => void;
+  fastConnect?: boolean;
   preferH264ForCam?: boolean;
   preferH264ForScreenSharing?: boolean;
   preferH264?: boolean;
