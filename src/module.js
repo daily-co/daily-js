@@ -1925,6 +1925,7 @@ export default class DailyIframe extends EventEmitter {
     this.updateKeepDeviceAwake(oldMeetingState);
     this.updateDeviceAudioMode(oldMeetingState);
     this.updateShowAndroidOngoingMeetingNotification(oldMeetingState);
+    this.updateNoOpRecordingEnsuringBackgroundContinuity(oldMeetingState);
   }
 
   updateKeepDeviceAwake(oldMeetingState) {
@@ -2003,6 +2004,34 @@ export default class DailyIframe extends EventEmitter {
     );
   }
 
+  // Whether to enable no-op audio recording to ensure continuity of the app
+  // when backgrounded. Required in iOS to ensure we can finish joining when the
+  // app is backgrounded before gUM is called, and to ensure that signaling
+  // remains connected when we're in an empty room and our own cam and mic are
+  // off.
+  updateNoOpRecordingEnsuringBackgroundContinuity(oldMeetingState) {
+    if (
+      !(
+        isReactNative() &&
+        this.nativeUtils().enableNoOpRecordingEnsuringBackgroundContinuity
+      )
+    ) {
+      return;
+    }
+    const oldEnableNoOpRecording = this.shouldEnableNoOpRecordingEnsuringBackgroundContinuity(
+      oldMeetingState
+    );
+    const enableNoOpRecording = this.shouldEnableNoOpRecordingEnsuringBackgroundContinuity(
+      this._meetingState
+    );
+    if (oldEnableNoOpRecording === enableNoOpRecording) {
+      return;
+    }
+    this.nativeUtils().enableNoOpRecordingEnsuringBackgroundContinuity(
+      enableNoOpRecording
+    );
+  }
+
   shouldDeviceStayAwake(meetingState) {
     return this.isMeetingPendingOrOngoing(meetingState);
   }
@@ -2012,6 +2041,10 @@ export default class DailyIframe extends EventEmitter {
   }
 
   shouldShowAndroidOngoingMeetingNotification(meetingState) {
+    return this.isMeetingPendingOrOngoing(meetingState);
+  }
+
+  shouldEnableNoOpRecordingEnsuringBackgroundContinuity(meetingState) {
     return this.isMeetingPendingOrOngoing(meetingState);
   }
 
