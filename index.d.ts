@@ -1,15 +1,15 @@
-// Type definitions for daily-js 0.9.992
+// Type definitions for daily-js
 // Project: https://github.com/daily-co/daily-js
 // Definitions by: Paul Kompfner <https://github.com/kompfner>
 
 /**
- * --- BROWSER-SPECIFIC SECTION ---
+ * --- BROWSER-SPECIFIC TYPES ---
  */
 
 /// <reference lib="dom" />
 
 /**
- * --- SECTION DUPLICATED WITH REACT-NATIVE-DAILY-JS ---
+ * --- DAILY-JS API ---
  */
 
 export type DailyLanguage =
@@ -25,7 +25,8 @@ export type DailyLanguage =
   | 'tr'
   | 'it'
   | 'ka'
-  | 'jp';
+  | 'jp'
+  | 'user';
 
 export type DailyEvent =
   | 'loading'
@@ -393,8 +394,6 @@ export interface DailyFaceInfo {
   };
 }
 
-export type DailyNativeInCallAudioMode = 'video' | 'voice';
-
 export interface DailyCallFactory {
   createCallObject(properties?: DailyCallOptions): DailyCall;
   wrap(iframe: HTMLIFrameElement, properties?: DailyCallOptions): DailyCall;
@@ -449,15 +448,16 @@ export interface DailyCall {
   }): DailyCall;
   setOutputDevice(audioDevice: { outputDeviceId?: string }): DailyCall;
   getInputDevices(): Promise<DailyDeviceInfos>;
-  nativeInCallAudioMode(): DailyNativeInCallAudioMode;
-  setNativeInCallAudioMode(
-    inCallAudioMode: DailyNativeInCallAudioMode
-  ): DailyCall;
   load(properties?: DailyLoadOptions): Promise<void>;
   startScreenShare(captureOptions?: DailyScreenCaptureOptions): void;
   stopScreenShare(): void;
   startRecording(): void;
   stopRecording(): void;
+  startLiveStreaming(options: {
+    rtmpUrl: string;
+    backgroundColor?: string;
+  }): void;
+  stopLiveStreaming(): void;
   getNetworkStats(): Promise<DailyNetworkStats>;
   getActiveSpeaker(): { peerId?: string };
   setActiveSpeakerMode(enabled: boolean): DailyCall;
