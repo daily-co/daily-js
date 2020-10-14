@@ -427,7 +427,8 @@ export default class DailyIframe extends EventEmitter {
     this._callObjectLoader = this._callObjectMode
       ? new CallObjectLoader()
       : null;
-    this._meetingState = DAILY_STATE_NEW; // only update meeting state via updateMeetingState()
+    this._meetingState = DAILY_STATE_NEW; // only update via updateIsPreparingToJoin() or updateMeetingState()
+    this._isPreparingToJoin = false; // only update via updateMeetingState()
     this._nativeInCallAudioMode = NATIVE_AUDIO_MODE_VIDEO_CALL;
     this._participants = {};
     this._inputEventsOn = {}; // need to cache these until loaded
@@ -891,9 +892,11 @@ export default class DailyIframe extends EventEmitter {
   async join(properties = {}) {
     let newCss = false;
     if (this.needsLoad()) {
+      this.updateIsPreparingToJoin(true);
       try {
         await this.load(properties);
       } catch (e) {
+        this.updateIsPreparingToJoin(false);
         return Promise.reject(e);
       }
     } else {
@@ -911,6 +914,7 @@ export default class DailyIframe extends EventEmitter {
             console.error(
               `error: in call object mode, can't change the daily.co call url after load() to one with a different bundle url (${loadedBundleUrl} -> ${newBundleUrl})`
             );
+            this.updateIsPreparingToJoin(false);
             return Promise.reject();
           }
           this.properties.url = properties.url;
@@ -920,6 +924,7 @@ export default class DailyIframe extends EventEmitter {
             console.error(
               `error: in iframe mode, can't change the daily.co call url after load() (${this.properties.url} -> ${properties.url})`
             );
+            this.updateIsPreparingToJoin(false);
             return Promise.reject();
           }
         }
@@ -935,9 +940,10 @@ export default class DailyIframe extends EventEmitter {
       this._meetingState === DAILY_STATE_JOINING
     ) {
       console.warn('already joined meeting, call leave() before joining again');
+      this.updateIsPreparingToJoin(false);
       return;
     }
-    this.updateMeetingState(DAILY_STATE_JOINING);
+    this.updateMeetingState(DAILY_STATE_JOINING, false);
     try {
       this.emit(DAILY_EVENT_JOINING_MEETING, {
         action: DAILY_EVENT_JOINING_MEETING,
@@ -1916,44 +1922,61 @@ export default class DailyIframe extends EventEmitter {
     return DailyNativeUtils;
   }
 
-  updateMeetingState(meetingState) {
-    if (meetingState === this._meetingState) {
-      return;
-    }
-    const oldMeetingState = this._meetingState;
-    this._meetingState = meetingState;
-    this.updateKeepDeviceAwake(oldMeetingState);
-    this.updateDeviceAudioMode(oldMeetingState);
-    this.updateShowAndroidOngoingMeetingNotification(oldMeetingState);
-    this.updateNoOpRecordingEnsuringBackgroundContinuity(oldMeetingState);
+  updateIsPreparingToJoin(isPreparingToJoin) {
+    this.updateMeetingState(this._meetingState, isPreparingToJoin);
   }
 
-  updateKeepDeviceAwake(oldMeetingState) {
+  updateMeetingState(
+    meetingState,
+    isPreparingToJoin = this._isPreparingToJoin
+  ) {
+    // If state hasn't changed, bail
+    if (
+      meetingState === this._meetingState &&
+      isPreparingToJoin === this._isPreparingToJoin
+    ) {
+      return;
+    }
+
+    // Update state
+    const oldMeetingState = this._meetingState;
+    const oldIsPreparingToJoin = this._isPreparingToJoin;
+    this._meetingState = meetingState;
+    this._isPreparingToJoin = isPreparingToJoin;
+
+    // Update state side-effects (which, for now, all depend on whether
+    // isMeetingPendingOrOngoing)
+    const oldIsMeetingPendingOrOngoing = this.isMeetingPendingOrOngoing(
+      oldMeetingState,
+      oldIsPreparingToJoin
+    );
+    const isMeetingPendingOrOngoing = this.isMeetingPendingOrOngoing(
+      this._meetingState,
+      this._isPreparingToJoin
+    );
+    if (oldIsMeetingPendingOrOngoing === isMeetingPendingOrOngoing) {
+      return;
+    }
+    this.updateKeepDeviceAwake(isMeetingPendingOrOngoing);
+    this.updateDeviceAudioMode(isMeetingPendingOrOngoing);
+    this.updateShowAndroidOngoingMeetingNotification(isMeetingPendingOrOngoing);
+    this.updateNoOpRecordingEnsuringBackgroundContinuity(
+      isMeetingPendingOrOngoing
+    );
+  }
+
+  updateKeepDeviceAwake(keepAwake) {
     if (!isReactNative()) {
       return;
     }
-    const oldKeepDeviceAwake = this.shouldDeviceStayAwake(oldMeetingState);
-    const keepDeviceAwake = this.shouldDeviceStayAwake(this._meetingState);
-    if (oldKeepDeviceAwake === keepDeviceAwake) {
-      return;
-    }
-    this.nativeUtils().setKeepDeviceAwake(keepDeviceAwake, this._callFrameId);
+    this.nativeUtils().setKeepDeviceAwake(keepAwake, this._callFrameId);
   }
 
-  updateDeviceAudioMode(oldMeetingState) {
+  updateDeviceAudioMode(useInCallAudioMode) {
     if (
       !isReactNative() ||
       this.disableReactNativeAutoDeviceManagement('audio')
     ) {
-      return;
-    }
-    const oldUseInCallAudioMode = this.shouldDeviceUseInCallAudioMode(
-      oldMeetingState
-    );
-    const useInCallAudioMode = this.shouldDeviceUseInCallAudioMode(
-      this._meetingState
-    );
-    if (oldUseInCallAudioMode === useInCallAudioMode) {
       return;
     }
     const inCallAudioMode = useInCallAudioMode
@@ -1963,20 +1986,11 @@ export default class DailyIframe extends EventEmitter {
   }
 
   // Note: notification properties can't be changed while it is ongoing
-  updateShowAndroidOngoingMeetingNotification(oldMeetingState) {
+  updateShowAndroidOngoingMeetingNotification(showNotification) {
     // Check that we're React Native and that the Android-only method exists
     if (
       !(isReactNative() && this.nativeUtils().setShowOngoingMeetingNotification)
     ) {
-      return;
-    }
-    const oldShowNotification = this.shouldShowAndroidOngoingMeetingNotification(
-      oldMeetingState
-    );
-    let showNotification = this.shouldShowAndroidOngoingMeetingNotification(
-      this._meetingState
-    );
-    if (oldShowNotification === showNotification) {
       return;
     }
     // Use current this.properties to customize notification behavior
@@ -2009,7 +2023,7 @@ export default class DailyIframe extends EventEmitter {
   // app is backgrounded before gUM is called, and to ensure that signaling
   // remains connected when we're in an empty room and our own cam and mic are
   // off.
-  updateNoOpRecordingEnsuringBackgroundContinuity(oldMeetingState) {
+  updateNoOpRecordingEnsuringBackgroundContinuity(enableNoOpRecording) {
     if (
       !(
         isReactNative() &&
@@ -2018,39 +2032,15 @@ export default class DailyIframe extends EventEmitter {
     ) {
       return;
     }
-    const oldEnableNoOpRecording = this.shouldEnableNoOpRecordingEnsuringBackgroundContinuity(
-      oldMeetingState
-    );
-    const enableNoOpRecording = this.shouldEnableNoOpRecordingEnsuringBackgroundContinuity(
-      this._meetingState
-    );
-    if (oldEnableNoOpRecording === enableNoOpRecording) {
-      return;
-    }
     this.nativeUtils().enableNoOpRecordingEnsuringBackgroundContinuity(
       enableNoOpRecording
     );
   }
 
-  shouldDeviceStayAwake(meetingState) {
-    return this.isMeetingPendingOrOngoing(meetingState);
-  }
-
-  shouldDeviceUseInCallAudioMode(meetingState) {
-    return this.isMeetingPendingOrOngoing(meetingState);
-  }
-
-  shouldShowAndroidOngoingMeetingNotification(meetingState) {
-    return this.isMeetingPendingOrOngoing(meetingState);
-  }
-
-  shouldEnableNoOpRecordingEnsuringBackgroundContinuity(meetingState) {
-    return this.isMeetingPendingOrOngoing(meetingState);
-  }
-
-  isMeetingPendingOrOngoing(meetingState) {
-    return ![DAILY_STATE_NEW, DAILY_STATE_LEFT, DAILY_STATE_ERROR].includes(
-      meetingState
+  isMeetingPendingOrOngoing(meetingState, isPreparingToJoin) {
+    return (
+      [DAILY_STATE_JOINING, DAILY_STATE_JOINED].includes(meetingState) ||
+      isPreparingToJoin
     );
   }
 
