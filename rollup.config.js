@@ -3,6 +3,7 @@ import resolve from 'rollup-plugin-node-resolve';
 import babel from '@rollup/plugin-babel';
 import commonJS from 'rollup-plugin-commonjs';
 import { terser } from 'rollup-plugin-terser';
+import { version } from './package-lock.json';
 
 const production = process.env.NODE_ENV || 'production';
 
@@ -16,6 +17,7 @@ export default [
       }),
       replace({
         'process.env.NODE_ENV': JSON.stringify(production),
+        __dailyJsVersion__: JSON.stringify(version),
       }),
       babel({
         exclude: 'node_modules/**',
