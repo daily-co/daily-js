@@ -226,6 +226,9 @@ const FRAME_PROPS = {
   embHref: {
     queryString: 'embHref',
   },
+  dailyJsVersion: {
+    queryString: 'dailyJsVersion',
+  },
 };
 
 // todo: more validation?
@@ -294,11 +297,15 @@ const PARTICIPANT_PROPS = {
 
 export default class DailyIframe extends EventEmitter {
   //
-  // browser support check
+  // static methods
   //
 
   static supportedBrowser() {
     return browserInfo();
+  }
+
+  static version() {
+    return __dailyJsVersion__;
   }
 
   //
@@ -415,6 +422,7 @@ export default class DailyIframe extends EventEmitter {
 
   constructor(iframeish, properties = {}) {
     super();
+    properties.dailyJsVersion = __dailyJsVersion__;
     this._iframe = iframeish;
     this._callObjectMode = properties.layout === 'none' && !this._iframe;
     this._preloadCache = initializePreloadCache();
