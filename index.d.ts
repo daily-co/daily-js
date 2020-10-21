@@ -407,6 +407,7 @@ export interface DailyCallFactory {
 
 export interface DailyCallStaticUtils {
   supportedBrowser(): DailyBrowserInfo;
+  version(): string;
 }
 
 export interface DailyCall {
