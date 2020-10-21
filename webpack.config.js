@@ -2,6 +2,7 @@
 
 const path = require('path');
 const webpack = require('webpack');
+const version = require('./package-lock.json').version;
 const mode = process.env.NODE_ENV || 'production';
 
 const bundle = {
@@ -20,6 +21,7 @@ const bundle = {
       'process.env': {
         NODE_ENV: JSON.stringify(mode),
       },
+      __dailyJsVersion__: JSON.stringify(version),
     }),
   ],
   module: {
