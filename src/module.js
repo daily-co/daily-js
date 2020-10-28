@@ -86,6 +86,7 @@ import {
   DAILY_UI_REQUEST_FULLSCREEN,
   DAILY_UI_EXIT_FULLSCREEN,
   DAILY_EVENT_LOAD_ATTEMPT_FAILED,
+  DAILY_METHOD_GET_CAMERA_FACING_MODE,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -697,6 +698,19 @@ export default class DailyIframe extends EventEmitter {
         resolve({ device: msg.device });
       };
       this.sendMessageToCallMachine({ action: DAILY_METHOD_CYCLE_MIC }, k);
+    });
+  }
+
+  getCameraFacingMode() {
+    methodOnlySupportedInReactNative();
+    return new Promise((resolve, _) => {
+      let k = (msg) => {
+        resolve(msg.facingMode);
+      };
+      this.sendMessageToCallMachine(
+        { action: DAILY_METHOD_GET_CAMERA_FACING_MODE },
+        k
+      );
     });
   }
 
