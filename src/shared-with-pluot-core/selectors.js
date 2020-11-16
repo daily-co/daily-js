@@ -1,3 +1,5 @@
+export const getLocalParticipantId = (state) => state.local.public.id;
+
 export const getParticipantIsSubscribedToTrack = (state, id, mediaTag) => {
   return _getIsSubscribedToTrack(
     state,
