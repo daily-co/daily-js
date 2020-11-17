@@ -1,79 +1,9 @@
-import {
-  getLocalParticipantId,
-  getLocalIsSubscribedToTrack,
-} from './selectors';
+import { getLocalIsSubscribedToTrack } from './shared-with-pluot-core/selectors';
 import filter from 'lodash/filter';
 import orderBy from 'lodash/orderBy';
 
-// Takes the "public" representation of a participant in Redux and returns a
-// daily-js Participant object without tracks, useful for sending over the
-// call-machine-to-daily-js message channel since tracks can't be serialized.
-export function fromReduxPublicState(pState, isCallObjectMode) {
-  if (!pState) {
-    return {};
-  }
-  let p = {};
-  // session id should be either the twilio `rawNumber-joinedAt` or
-  // the session id
-  if (pState.participationType === 'audioconf') {
-    p.session_id = `${pState.rawNumber}-${pState.joinedAt}`;
-    p.from_phone_number = pState.rawNumber;
-  } else {
-    p.session_id = pState.id;
-  }
-  p.user_name = pState.name && decodeURI(pState.name);
-  p.user_id = pState.user_id || p.session_id;
-  p.audio = pState.audioState.length === 0;
-  p.video = pState.videoState.length === 0;
-  p.screen = !!(pState.screenInfo && Object.keys(pState.screenInfo).length);
-  p.joined_at = new Date(pState.joinedAt);
-  p.local = p.session_id === getLocalParticipantId(window.store.getState());
-  p.owner = !!pState.owner;
-  p.will_eject_at = pState && new Date(pState.willEjectAt);
-
-  p.cam_info = {};
-  p.screen_info = {};
-
-  // only harvest info from DOM elements if we're not in call object mode
-  // (where we don't control the DOM).
-  // note that this check also prevents an error from being thrown in
-  // React Native, where `document` isn't defined.
-  if (!isCallObjectMode) {
-    try {
-      let vidEl = document.getElementById('cam-' + p.session_id);
-      if (vidEl) {
-        let { top, left, width, height } = vidEl.getBoundingClientRect();
-        p.cam_info = {
-          video_width: vidEl.videoWidth,
-          video_height: vidEl.videoHeight,
-          top,
-          left,
-          width,
-          height,
-        };
-      }
-      vidEl = document.getElementById('screen-' + p.session_id);
-      if (vidEl) {
-        let { top, left, width, height } = vidEl.getBoundingClientRect();
-        p.screen_info = {
-          video_width: vidEl.videoWidth,
-          video_height: vidEl.videoHeight,
-          top,
-          left,
-          width,
-          height,
-        };
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  return p;
-}
-
-// Returns a daily-js Participant object augmented with tracks.
-export function augmentWithTracks(p, prevP) {
+// Adds tracks to daily-js Participant object.
+export function addTracks(p, prevP) {
   let state = store.getState();
 
   if (p.local) {
@@ -144,6 +74,7 @@ export function augmentWithTracks(p, prevP) {
       p.audio &&
       getLocalIsSubscribedToTrack(state, p.session_id, 'cam-audio')
     ) {
+      // TODO: update to use getRemoteTrack selector
       let audioTracks = orderBy(
         filter(
           allStreams,

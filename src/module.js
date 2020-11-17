@@ -95,7 +95,7 @@ import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-c
 import CallObjectLoader from './CallObjectLoader';
 import { getLocalIsSubscribedToTrack } from './shared-with-pluot-core/selectors';
 import { callObjectBundleUrl } from './utils.js';
-import * as Participant from './shared-with-pluot-core/Participant';
+import * as Participant from './Participant';
 
 export {
   DAILY_STATE_NEW,
@@ -987,10 +987,7 @@ export default class DailyIframe extends EventEmitter {
         if (participants) {
           for (var id in participants) {
             this._callObjectMode &&
-              Participant.augmentWithTracks(
-                participants[id],
-                this._participants[id]
-              );
+              Participant.addTracks(participants[id], this._participants[id]);
             this._participants[id] = { ...participants[id] };
             this.toggleParticipantAudioBasedOnNativeAudioFocus();
           }
@@ -1421,10 +1418,7 @@ export default class DailyIframe extends EventEmitter {
         if (msg.participant && msg.participant.session_id) {
           let id = msg.participant.local ? 'local' : msg.participant.session_id;
           this._callObjectMode &&
-            Participant.augmentWithTracks(
-              msg.participant,
-              this._participants[id]
-            );
+            Participant.addTracks(msg.participant, this._participants[id]);
           // track events
           try {
             this.maybeEventTrackStopped(
