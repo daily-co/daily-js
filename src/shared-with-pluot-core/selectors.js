@@ -13,7 +13,38 @@ export const getLocalIsSubscribedToTrack = (state, id, mediaTag) => {
   return _getIsSubscribedToTrack(state.local, id, mediaTag);
 };
 
-export const _getIsSubscribedToTrack = (p, p2id, mediaTag) => {
+// type is "cam" or "screen"
+// kind is "video" or "audio"
+export const getLocalTrack = (state, type, kind) => {
+  return (
+    state.local.streams &&
+    state.local.streams[type] &&
+    state.local.streams[type].stream &&
+    state.local.streams[type].stream[
+      `get${kind === 'video' ? 'Video' : 'Audio'}Tracks`
+    ]()[0]
+  );
+};
+
+// type is "cam" or "screen"
+// kind is "video" or "audio"
+export const getRemoteTrack = (state, participantId, type, kind) => {
+  const streamEntry = _getRemoteStreamEntry(state, participantId, type, kind);
+  return streamEntry && streamEntry.pendingTrack;
+};
+
+// type is "cam" or "screen"
+// kind is "video" or "audio"
+// The following heuristic is used to determine whether a remote track is
+// "loading". We're probably still loading if:
+// - there is no stream entry at all
+// - there is a stream entry whose track has never been playable
+export const getIsRemoteTrackLoading = (state, participantId, type, kind) => {
+  const streamEntry = _getRemoteStreamEntry(state, participantId, type, kind);
+  return !streamEntry || !streamEntry.pendingTrackWasEverPlayable;
+};
+
+const _getIsSubscribedToTrack = (p, p2id, mediaTag) => {
   // if we don't have a participant record at all, assume that
   // false is the safest thing to return, here
   if (!p) {
@@ -35,23 +66,8 @@ export const _getIsSubscribedToTrack = (p, p2id, mediaTag) => {
   return p.public.subscribedTracks[p2id][mediaTag];
 };
 
-// type is "cam" or "screen"
-// kind is "video" or "audio"
-export const getLocalTrack = (state, type, kind) => {
-  return (
-    state.local.streams &&
-    state.local.streams[type] &&
-    state.local.streams[type].stream &&
-    state.local.streams[type].stream[
-      `get${kind === 'video' ? 'Video' : 'Audio'}Tracks`
-    ]()[0]
-  );
-};
-
-// type is "cam" or "screen"
-// kind is "video" or "audio"
-export const getRemoteTrack = (state, participantId, type, kind) => {
-  let tracks = orderBy(
+const _getRemoteStreamEntry = (state, participantId, type, kind) => {
+  let streams = orderBy(
     filter(
       state.streams,
       (s) =>
@@ -63,5 +79,5 @@ export const getRemoteTrack = (state, participantId, type, kind) => {
     'starttime',
     'desc'
   );
-  return tracks && tracks[0] && tracks[0].pendingTrack;
+  return streams && streams[0];
 };
