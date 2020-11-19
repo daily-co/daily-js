@@ -38,10 +38,10 @@ export const getRemoteTrack = (state, participantId, type, kind) => {
 // The following heuristic is used to determine whether a remote track is
 // "loading". We're probably still loading if:
 // - there is no stream entry at all
-// - there is a stream entry whose track has never been playable
+// - there is a stream entry whose track is marked "loading"
 export const getIsRemoteTrackLoading = (state, participantId, type, kind) => {
   const streamEntry = _getRemoteStreamEntry(state, participantId, type, kind);
-  return !streamEntry || !streamEntry.pendingTrackWasEverPlayable;
+  return !streamEntry || streamEntry.pendingTrackLoading;
 };
 
 const _getIsSubscribedToTrack = (p, p2id, mediaTag) => {
