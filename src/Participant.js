@@ -1,6 +1,7 @@
-import { getLocalIsSubscribedToTrack } from './shared-with-pluot-core/selectors';
-import filter from 'lodash/filter';
-import orderBy from 'lodash/orderBy';
+import {
+  getLocalIsSubscribedToTrack,
+  getRemoteTrack,
+} from './shared-with-pluot-core/selectors';
 
 // Adds tracks to daily-js Participant object.
 export function addTracks(p, prevP) {
@@ -74,33 +75,21 @@ export function addTracks(p, prevP) {
       p.audio &&
       getLocalIsSubscribedToTrack(state, p.session_id, 'cam-audio')
     ) {
-      // TODO: update to use getRemoteTrack selector
-      let audioTracks = orderBy(
-        filter(
-          allStreams,
-          (s) =>
-            s.participantId === p.session_id &&
-            s.type === 'cam' &&
-            s.pendingTrack &&
-            s.pendingTrack.kind === 'audio'
-        ),
-        'starttime',
-        'desc'
-      );
-      if (audioTracks && audioTracks[0] && audioTracks[0].pendingTrack) {
+      const audioTrack = getRemoteTrack(state, p.session_id, 'cam', 'audio');
+      if (audioTrack) {
         if (
           prevP &&
           prevP.audioTrack &&
-          prevP.audioTrack.id === audioTracks[0].pendingTrack.id
+          prevP.audioTrack.id === audioTrack.id
         ) {
           // if we have an apparently identical audio track already in
           // our participant struct leave it in place to avoid flicker
           // during quick muted/unmuted PeerConnection cycles. we'll update
           // audio/video muted at the app level via signaling
-          p.audioTrack = audioTracks[0].pendingTrack;
-        } else if (!audioTracks[0].pendingTrack.muted) {
+          p.audioTrack = audioTrack;
+        } else if (!audioTrack.muted) {
           // otherwise, add the found track if it's not muted
-          p.audioTrack = audioTracks[0].pendingTrack;
+          p.audioTrack = audioTrack;
         }
       }
       if (!p.audioTrack) {
@@ -112,28 +101,17 @@ export function addTracks(p, prevP) {
       p.video &&
       getLocalIsSubscribedToTrack(state, p.session_id, 'cam-video')
     ) {
-      let videoTracks = orderBy(
-        filter(
-          allStreams,
-          (s) =>
-            s.participantId === p.session_id &&
-            s.type === 'cam' &&
-            s.pendingTrack &&
-            s.pendingTrack.kind === 'video'
-        ),
-        'starttime',
-        'desc'
-      );
-      if (videoTracks && videoTracks[0] && videoTracks[0].pendingTrack) {
+      const videoTrack = getRemoteTrack(state, p.session_id, 'cam', 'video');
+      if (videoTrack) {
         if (
           prevP &&
           prevP.videoTrack &&
-          prevP.videoTrack.id === videoTracks[0].pendingTrack.id
+          prevP.videoTrack.id === videoTrack.id
         ) {
-          p.videoTrack = videoTracks[0].pendingTrack;
-        } else if (!videoTracks[0].pendingTrack.muted) {
+          p.videoTrack = videoTrack;
+        } else if (!videoTrack.muted) {
           // otherwise, add the found track if it's not muted
-          p.videoTrack = videoTracks[0].pendingTrack;
+          p.videoTrack = videoTrack;
         }
       }
       if (!p.videoTrack) {
@@ -146,32 +124,22 @@ export function addTracks(p, prevP) {
       p.screen &&
       getLocalIsSubscribedToTrack(state, p.session_id, 'screen-audio')
     ) {
-      let screenAudioTracks = orderBy(
-        filter(
-          allStreams,
-          (s) =>
-            s.participantId === p.session_id &&
-            s.type === 'screen' &&
-            s.pendingTrack &&
-            s.pendingTrack.kind === 'audio'
-        ),
-        'starttime',
-        'desc'
+      const screenAudioTrack = getRemoteTrack(
+        state,
+        p.session_id,
+        'screen',
+        'audio'
       );
-      if (
-        screenAudioTracks &&
-        screenAudioTracks[0] &&
-        screenAudioTracks[0].pendingTrack
-      ) {
+      if (screenAudioTrack) {
         if (
           prevP &&
           prevP.screenAudioTrack &&
-          prevP.screenAudioTrack.id === screenAudioTracks[0].pendingTrack.id
+          prevP.screenAudioTrack.id === screenAudioTrack.id
         ) {
-          p.screenAudioTrack = screenAudioTracks[0].pendingTrack;
-        } else if (!screenAudioTracks[0].pendingTrack.muted) {
+          p.screenAudioTrack = screenAudioTrack;
+        } else if (!screenAudioTrack.muted) {
           // otherwise, add the found track if it's not muted
-          p.screenAudioTrack = screenAudioTracks[0].pendingTrack;
+          p.screenAudioTrack = screenAudioTrack;
         }
       }
     }
@@ -180,30 +148,20 @@ export function addTracks(p, prevP) {
       p.screen &&
       getLocalIsSubscribedToTrack(state, p.session_id, 'screen-video')
     ) {
-      let screenVideoTracks = orderBy(
-        filter(
-          allStreams,
-          (s) =>
-            s.participantId === p.session_id &&
-            s.type === 'screen' &&
-            s.pendingTrack &&
-            s.pendingTrack.kind === 'video'
-        ),
-        'starttime',
-        'desc'
+      const screenVideoTrack = getRemoteTrack(
+        state,
+        p.session_id,
+        'screen',
+        'video'
       );
-      if (
-        screenVideoTracks &&
-        screenVideoTracks[0] &&
-        screenVideoTracks[0].pendingTrack
-      ) {
+      if (screenVideoTrack) {
         if (
           prevP &&
           prevP.screenVideoTrack &&
-          prevP.screenVideoTrack.id === screenVideoTracks[0].pendingTrack.id
+          prevP.screenVideoTrack.id === screenVideoTrack.id
         ) {
-          p.screenVideoTrack = screenVideoTracks[0].pendingTrack;
-        } else if (!screenVideoTracks[0].pendingTrack.muted) {
+          p.screenVideoTrack = screenVideoTrack;
+        } else if (!screenVideoTrack.muted) {
           // otherwise, add the found track if it's not muted
           // note: there is an issue here with timing ... Chrome (and
           // possibly other browsers), gets a video track that's initially
@@ -212,7 +170,7 @@ export function addTracks(p, prevP) {
           // logic in place to respond to that. todo: fix this so that,
           // at the very least we get a track-stopped event when the
           // "empty" track switches to muted.
-          p.screenVideoTrack = screenVideoTracks[0].pendingTrack;
+          p.screenVideoTrack = screenVideoTrack;
         }
       }
     }
