@@ -129,15 +129,44 @@ export interface DailyAdvancedConfig {
   screenSimulcastEncodings?: any[];
 }
 
+export interface DailyTrackState {
+  subscribed: boolean;
+  state:
+    | 'blocked'
+    | 'off'
+    | 'sendable'
+    | 'loading'
+    | 'interrupted'
+    | 'playable';
+  blocked?: {
+    byDeviceMissing?: boolean;
+    byPermissions?: boolean;
+  };
+  off?: {
+    byUser?: boolean;
+    byBandwidth?: boolean;
+  };
+}
+
 export interface DailyParticipant {
-  // audio/video info
-  audio: boolean;
+  // tracks
   audioTrack?: MediaStreamTrack;
-  video: boolean;
   videoTrack?: MediaStreamTrack;
-  screen: boolean;
   screenVideoTrack?: MediaStreamTrack;
   screenAudioTrack?: MediaStreamTrack;
+
+  // legacy track state
+  audio: boolean;
+  video: boolean;
+  screen: boolean;
+
+  // new track state
+  tracks: {
+    audio: DailyTrackState;
+    video: DailyTrackState;
+    screenAudio: DailyTrackState;
+    screenVideo: DailyTrackState;
+  };
 
   // user/session info
   user_id: string;
