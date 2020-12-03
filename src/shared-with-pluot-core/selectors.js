@@ -35,13 +35,20 @@ export const getRemoteTrack = (state, participantId, type, kind) => {
 
 // type is "cam" or "screen"
 // kind is "video" or "audio"
-// The following heuristic is used to determine whether a remote track is
-// "loading". We're probably still loading if:
-// - there is no stream entry at all
-// - there is a stream entry whose track is marked "loading"
 export const getIsRemoteTrackLoading = (state, participantId, type, kind) => {
-  const streamEntry = _getRemoteStreamEntry(state, participantId, type, kind);
-  return !streamEntry || streamEntry.pendingTrackLoading;
+  const participant = state.participants && state.participants[participantId];
+  const loadedTracks =
+    participant && participant.public && participant.public.loadedTracks;
+  if (loadedTracks) {
+    if (type === 'cam') {
+      return !loadedTracks[kind];
+    } else {
+      return !loadedTracks[
+        `screen${kind.charAt(0).toUpperCase() + kind.slice(1)}`
+      ];
+    }
+  }
+  return false;
 };
 
 const _getIsSubscribedToTrack = (p, p2id, mediaTag) => {
