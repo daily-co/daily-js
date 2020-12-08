@@ -446,7 +446,7 @@ export interface DailyCall {
     audioSource?: MediaStreamTrack | false;
     videoDeviceId?: string | false;
     videoSource?: MediaStreamTrack | false;
-  }): DailyCall;
+  }): Promise<DailyDeviceInfos>;
   setOutputDevice(audioDevice: { outputDeviceId?: string }): DailyCall;
   getInputDevices(): Promise<DailyDeviceInfos>;
   load(properties?: DailyLoadOptions): Promise<void>;

@@ -734,7 +734,11 @@ export default class DailyIframe extends EventEmitter {
 
     // if we're in callObject mode and not joined yet, don't do anything
     if (this._callObjectMode && this._meetingState !== DAILY_STATE_JOINED) {
-      return this;
+      return {
+        camera: { deviceId: this._preloadCache.videoDeviceId },
+        mic: { deviceId: this._preloadCache.audioDeviceId },
+        speaker: { deviceId: this._preloadCache.outputDeviceId },
+      };
     }
 
     if (audioDeviceId instanceof MediaStreamTrack) {
@@ -744,12 +748,21 @@ export default class DailyIframe extends EventEmitter {
       videoDeviceId = DAILY_CUSTOM_TRACK;
     }
 
-    this.sendMessageToCallMachine({
-      action: DAILY_METHOD_SET_INPUT_DEVICES,
-      audioDeviceId,
-      videoDeviceId,
+    return new Promise((resolve) => {
+      let k = (msg) => {
+        delete msg.action;
+        delete msg.callbackStamp;
+        resolve(msg);
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_SET_INPUT_DEVICES,
+          audioDeviceId,
+          videoDeviceId,
+        },
+        k
+      );
     });
-    return this;
   }
 
   setOutputDevice({ outputDeviceId }) {
