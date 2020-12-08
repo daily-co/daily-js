@@ -714,7 +714,12 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  setInputDevices({ audioDeviceId, videoDeviceId, audioSource, videoSource }) {
+  async setInputDevices({
+    audioDeviceId,
+    videoDeviceId,
+    audioSource,
+    videoSource,
+  }) {
     methodNotSupportedInReactNative();
     // use audioDeviceId and videoDeviceId internally
     if (audioSource !== undefined) {
@@ -784,7 +789,7 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
-  getInputDevices() {
+  async getInputDevices() {
     methodNotSupportedInReactNative();
     if (this._callObjectMode && this._meetingState !== DAILY_STATE_JOINED) {
       return {
