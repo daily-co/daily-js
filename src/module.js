@@ -75,8 +75,8 @@ import {
   DAILY_METHOD_APP_MSG,
   DAILY_METHOD_ADD_FAKE_PARTICIPANT,
   DAILY_METHOD_SET_SHOW_NAMES,
-  DAILY_METHOD_SHOW_LOCAL_VIDEO,
-  DAILY_METHOD_SHOW_PARTICIPANTS_BAR,
+  DAILY_METHOD_SET_SHOW_LOCAL_VIDEO,
+  DAILY_METHOD_SET_SHOW_PARTICIPANTS_BAR,
   DAILY_METHOD_SET_ACTIVE_SPEAKER_MODE,
   DAILY_METHOD_SET_LANG,
   MAX_APP_MSG_SIZE,
@@ -1243,7 +1243,7 @@ export default class DailyIframe extends EventEmitter {
       return this;
     }
     this.sendMessageToCallMachine({
-      action: DAILY_METHOD_SHOW_LOCAL_VIDEO,
+      action: DAILY_METHOD_SET_SHOW_LOCAL_VIDEO,
       bool,
     });
     return this;
@@ -1255,7 +1255,7 @@ export default class DailyIframe extends EventEmitter {
       return this;
     }
     this.sendMessageToCallMachine({
-      action: DAILY_METHOD_SHOW_PARTICIPANTS_BAR,
+      action: DAILY_METHOD_SET_SHOW_PARTICIPANTS_BAR,
       bool,
     });
     return this;

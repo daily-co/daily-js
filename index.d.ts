@@ -508,6 +508,8 @@ export interface DailyCall {
   sendAppMessage(data: any, to?: string): DailyCall;
   addFakeParticipant(details?: { aspectRatio: number }): DailyCall;
   setShowNamesMode(mode: false | 'always' | 'never'): DailyCall;
+  showLocalVideo(bool: boolean): DailyCall;
+  showParticipantsBar(bool: boolean): DailyCall;
   detectAllFaces(): Promise<{
     faces?: { [id: string]: DailyFaceInfo[] };
   }>;
