@@ -201,6 +201,8 @@ const FRAME_PROPS = {
   },
   userName: true, // ignored if there's a token
   showLeaveButton: true,
+  showLocalVideo: true,
+  showParticipantsBar: true,
   showFullscreenButton: true,
   // style to apply to iframe in createFrame factory method
   iframeStyle: true,

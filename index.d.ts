@@ -98,6 +98,8 @@ export interface DailyCallOptions {
   token?: string;
   lang?: DailyLanguage;
   showLeaveButton?: boolean;
+  showParticipantsBar?: boolean;
+  showLocalVideo?: boolean;
   showFullscreenButton?: boolean;
   iframeStyle?: CSSStyleDeclaration;
   customLayout?: boolean;
