@@ -461,6 +461,8 @@ export default class DailyIframe extends EventEmitter {
     this._network = { threshold: 'good', quality: 100 };
     this._activeSpeaker = {};
     this._activeSpeakerMode = false;
+    this._showLocalVideo = true;
+    this._showParticipantsBar = true;
     this._callFrameId = Date.now() + Math.random().toString();
     this._messageChannel = isReactNative()
       ? new ReactNativeMessageChannel()
@@ -1250,7 +1252,13 @@ export default class DailyIframe extends EventEmitter {
       action: DAILY_METHOD_SET_SHOW_LOCAL_VIDEO,
       bool,
     });
+    this._showLocalVideo = bool;
     return this;
+  }
+
+  showLocalVideo() {
+    methodNotSupportedInReactNative();
+    return this._showLocalVideo;
   }
 
   setShowParticipantsBar(bool = true) {
@@ -1269,7 +1277,13 @@ export default class DailyIframe extends EventEmitter {
       action: DAILY_METHOD_SET_SHOW_PARTICIPANTS_BAR,
       bool,
     });
+    this._showParticipantsBar = bool;
     return this;
+  }
+
+  showParticipantsBar() {
+    methodNotSupportedInReactNative();
+    return this._showParticipantsBar;
   }
 
   detectAllFaces() {
