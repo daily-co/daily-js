@@ -1249,7 +1249,7 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
-  showParticipantsBar(bool) {
+  showParticipantsBar(bool = true) {
     if (typeof bool !== 'boolean') {
       console.error('showParticipantsBar only accepts a boolean value');
       return this;
