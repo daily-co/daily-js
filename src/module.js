@@ -1236,10 +1236,14 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
-  showLocalVideo(bool = true) {
+  setShowLocalVideo(bool = true) {
     methodNotSupportedInReactNative();
     if (typeof bool !== 'boolean') {
-      console.error('showLocalVideo only accepts a boolean value');
+      console.error('setShowLocalVideo only accepts a boolean value');
+      return this;
+    }
+    if (this._callObjectMode) {
+      console.error('setShowLocalVideo is not available in callObject mode');
       return this;
     }
     this.sendMessageToCallMachine({
@@ -1249,9 +1253,16 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
-  showParticipantsBar(bool = true) {
+  setShowParticipantsBar(bool = true) {
+    methodNotSupportedInReactNative();
     if (typeof bool !== 'boolean') {
-      console.error('showParticipantsBar only accepts a boolean value');
+      console.error('setShowParticipantsBar only accepts a boolean value');
+      return this;
+    }
+    if (this._callObjectMode) {
+      console.error(
+        'setShowParticipantsBar is not available in callObject mode'
+      );
       return this;
     }
     this.sendMessageToCallMachine({
