@@ -446,6 +446,12 @@ export interface DailyCall {
     audioSource?: MediaStreamTrack | false;
     videoDeviceId?: string | false;
     videoSource?: MediaStreamTrack | false;
+  }): DailyCall;
+  setInputDevicesAsync(devices: {
+    audioDeviceId?: string | false;
+    audioSource?: MediaStreamTrack | false;
+    videoDeviceId?: string | false;
+    videoSource?: MediaStreamTrack | false;
   }): Promise<DailyDeviceInfos>;
   setOutputDevice(audioDevice: { outputDeviceId?: string }): DailyCall;
   getInputDevices(): Promise<DailyDeviceInfos>;
