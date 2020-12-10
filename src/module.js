@@ -571,7 +571,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   updateParticipant(sessionId, properties) {
-    methodNotSupportedInReactNative();
     if (
       this._participants.local &&
       this._participants.local.session_id === sessionId
@@ -605,7 +604,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   updateParticipants(properties) {
-    methodNotSupportedInReactNative();
     for (var sessionId in properties) {
       this.updateParticipant(sessionId, properties[sessionId]);
     }
@@ -1124,12 +1122,10 @@ export default class DailyIframe extends EventEmitter {
   }
 
   subscribeToTracksAutomatically() {
-    methodNotSupportedInReactNative();
     return this._preloadCache.subscribeToTracksAutomatically;
   }
 
   setSubscribeToTracksAutomatically(enabled) {
-    methodNotSupportedInReactNative();
     if (this._meetingState !== DAILY_STATE_JOINED) {
       throw new Error(
         'setSubscribeToTracksAutomatically() is only allowed while in a meeting'
