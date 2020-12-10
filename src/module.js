@@ -714,7 +714,20 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  async setInputDevices({
+  setInputDevices({ audioDeviceId, videoDeviceId, audioSource, videoSource }) {
+    console.warn(
+      'setInputDevices() is deprecated: instead use setInputDevicesAsync(), which returns a Promise'
+    );
+    this.setInputDevicesAsync({
+      audioDeviceId,
+      videoDeviceId,
+      audioSource,
+      videoSource,
+    });
+    return this;
+  }
+
+  async setInputDevicesAsync({
     audioDeviceId,
     videoDeviceId,
     audioSource,
