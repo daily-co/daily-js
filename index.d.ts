@@ -512,6 +512,8 @@ export interface DailyCall {
   setShowNamesMode(mode: false | 'always' | 'never'): DailyCall;
   setShowLocalVideo(show: boolean): DailyCall;
   setShowParticipantsBar(show: boolean): DailyCall;
+  showLocalVideo(): boolean;
+  showParticipantsBar(): boolean;
   detectAllFaces(): Promise<{
     faces?: { [id: string]: DailyFaceInfo[] };
   }>;
