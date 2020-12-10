@@ -1001,6 +1001,8 @@ export default class DailyIframe extends EventEmitter {
           }
         }
       }
+      properties.showLocalVideo = this._showLocalVideo;
+      properties.showParticipantsBar = this._showParticipantsBar;
 
       // Validate and assign properties to this.properties, for use by call
       // machine
@@ -1250,6 +1252,12 @@ export default class DailyIframe extends EventEmitter {
       console.error('setShowLocalVideo is not available in callObject mode');
       return this;
     }
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      console.error(
+        'the meeting must be joined before calling setShowLocalVideo'
+      );
+      return this;
+    }
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_SET_SHOW_LOCAL_VIDEO,
       bool,
@@ -1272,6 +1280,12 @@ export default class DailyIframe extends EventEmitter {
     if (this._callObjectMode) {
       console.error(
         'setShowParticipantsBar is not available in callObject mode'
+      );
+      return this;
+    }
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      console.error(
+        'the meeting must be joined before calling setShowParticipantsBar'
       );
       return this;
     }
