@@ -266,7 +266,9 @@ const PARTICIPANT_PROPS = {
       if (callObject._preloadCache.subscribeToTracksAutomatically) {
         return false;
       }
-      if ([true, false, 'avatar'].includes(subs)) {
+      let validPrimitiveValues = [true, false];
+      !isReactNative() && validPrimitiveValues.push('avatar');
+      if (validPrimitiveValues.includes(subs)) {
         return true;
       }
       for (const s in subs) {
@@ -285,7 +287,9 @@ const PARTICIPANT_PROPS = {
     },
     help:
       'setSubscribedTracks cannot be used when setSubscribeToTracksAutomatically is enabled, and should be of the form: ' +
-      "true | 'avatar' | false | { [audio: true|false], [video: true|false], [screenVideo: true|false] }",
+      `true${
+        !isReactNative() ? " | 'avatar'" : ''
+      } | false | { [audio: true|false], [video: true|false], [screenVideo: true|false] }`,
   },
   setAudio: true,
   setVideo: true,
