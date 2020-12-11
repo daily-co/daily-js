@@ -717,6 +717,24 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setInputDevices({ audioDeviceId, videoDeviceId, audioSource, videoSource }) {
+    console.warn(
+      'setInputDevices() is deprecated: instead use setInputDevicesAsync(), which returns a Promise'
+    );
+    this.setInputDevicesAsync({
+      audioDeviceId,
+      videoDeviceId,
+      audioSource,
+      videoSource,
+    });
+    return this;
+  }
+
+  async setInputDevicesAsync({
+    audioDeviceId,
+    videoDeviceId,
+    audioSource,
+    videoSource,
+  }) {
     methodNotSupportedInReactNative();
     // use audioDeviceId and videoDeviceId internally
     if (audioSource !== undefined) {
@@ -736,7 +754,11 @@ export default class DailyIframe extends EventEmitter {
 
     // if we're in callObject mode and not joined yet, don't do anything
     if (this._callObjectMode && this._meetingState !== DAILY_STATE_JOINED) {
-      return this;
+      return {
+        camera: { deviceId: this._preloadCache.videoDeviceId },
+        mic: { deviceId: this._preloadCache.audioDeviceId },
+        speaker: { deviceId: this._preloadCache.outputDeviceId },
+      };
     }
 
     if (audioDeviceId instanceof MediaStreamTrack) {
@@ -746,12 +768,21 @@ export default class DailyIframe extends EventEmitter {
       videoDeviceId = DAILY_CUSTOM_TRACK;
     }
 
-    this.sendMessageToCallMachine({
-      action: DAILY_METHOD_SET_INPUT_DEVICES,
-      audioDeviceId,
-      videoDeviceId,
+    return new Promise((resolve) => {
+      let k = (msg) => {
+        delete msg.action;
+        delete msg.callbackStamp;
+        resolve(msg);
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_SET_INPUT_DEVICES,
+          audioDeviceId,
+          videoDeviceId,
+        },
+        k
+      );
     });
-    return this;
   }
 
   setOutputDevice({ outputDeviceId }) {
@@ -773,7 +804,7 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
-  getInputDevices() {
+  async getInputDevices() {
     methodNotSupportedInReactNative();
     if (this._callObjectMode && this._meetingState !== DAILY_STATE_JOINED) {
       return {
