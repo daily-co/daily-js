@@ -156,7 +156,11 @@ export interface DailyParticipant {
 export type DailyTrackSubscriptionOptions =
   | boolean
   | 'avatar'
-  | { audio?: boolean; video?: boolean; screenVideo?: boolean };
+  | {
+      audio?: boolean;
+      video?: boolean;
+      screenVideo?: boolean;
+    };
 
 export interface DailyParticipantUpdateOptions {
   setAudio?: boolean;
