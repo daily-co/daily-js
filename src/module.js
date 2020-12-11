@@ -266,7 +266,9 @@ const PARTICIPANT_PROPS = {
       if (callObject._preloadCache.subscribeToTracksAutomatically) {
         return false;
       }
-      if ([true, false, 'avatar'].includes(subs)) {
+      let validPrimitiveValues = [true, false];
+      !isReactNative() && validPrimitiveValues.push('avatar');
+      if (validPrimitiveValues.includes(subs)) {
         return true;
       }
       for (const s in subs) {
@@ -285,7 +287,9 @@ const PARTICIPANT_PROPS = {
     },
     help:
       'setSubscribedTracks cannot be used when setSubscribeToTracksAutomatically is enabled, and should be of the form: ' +
-      "true | 'avatar' | false | { [audio: true|false], [video: true|false], [screenVideo: true|false] }",
+      `true${
+        !isReactNative() ? " | 'avatar'" : ''
+      } | false | { [audio: true|false], [video: true|false], [screenVideo: true|false] }`,
   },
   setAudio: true,
   setVideo: true,
@@ -571,7 +575,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   updateParticipant(sessionId, properties) {
-    methodNotSupportedInReactNative();
     if (
       this._participants.local &&
       this._participants.local.session_id === sessionId
@@ -605,7 +608,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   updateParticipants(properties) {
-    methodNotSupportedInReactNative();
     for (var sessionId in properties) {
       this.updateParticipant(sessionId, properties[sessionId]);
     }
@@ -1124,12 +1126,10 @@ export default class DailyIframe extends EventEmitter {
   }
 
   subscribeToTracksAutomatically() {
-    methodNotSupportedInReactNative();
     return this._preloadCache.subscribeToTracksAutomatically;
   }
 
   setSubscribeToTracksAutomatically(enabled) {
-    methodNotSupportedInReactNative();
     if (this._meetingState !== DAILY_STATE_JOINED) {
       throw new Error(
         'setSubscribeToTracksAutomatically() is only allowed while in a meeting'
