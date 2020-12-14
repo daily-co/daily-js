@@ -449,7 +449,6 @@ export default class DailyIframe extends EventEmitter {
     if (this._callObjectMode) {
       window._dailyPreloadCache = this._preloadCache;
     }
-
     this.validateProperties(properties);
     this.properties = { ...properties };
     this._callObjectLoader = this._callObjectMode
@@ -1001,14 +1000,16 @@ export default class DailyIframe extends EventEmitter {
           }
         }
       }
-      properties.showLocalVideo = this._showLocalVideo;
-      properties.showParticipantsBar = this._showParticipantsBar;
 
       // Validate and assign properties to this.properties, for use by call
       // machine
       this.validateProperties(properties);
       this.properties = { ...this.properties, ...properties };
     }
+
+    this._showLocalVideo = properties.showLocalVideo;
+    this._showParticipantsBar = properties.showParticipantsBar;
+
     if (
       this._meetingState === DAILY_STATE_JOINED ||
       this._meetingState === DAILY_STATE_JOINING
@@ -1242,9 +1243,9 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
-  setShowLocalVideo(bool = true) {
+  setShowLocalVideo(show = true) {
     methodNotSupportedInReactNative();
-    if (typeof bool !== 'boolean') {
+    if (typeof show !== 'boolean') {
       console.error('setShowLocalVideo only accepts a boolean value');
       return this;
     }
@@ -1260,9 +1261,9 @@ export default class DailyIframe extends EventEmitter {
     }
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_SET_SHOW_LOCAL_VIDEO,
-      bool,
+      show,
     });
-    this._showLocalVideo = bool;
+    this._showLocalVideo = show;
     return this;
   }
 
@@ -1271,9 +1272,9 @@ export default class DailyIframe extends EventEmitter {
     return this._showLocalVideo;
   }
 
-  setShowParticipantsBar(bool = true) {
+  setShowParticipantsBar(show = true) {
     methodNotSupportedInReactNative();
-    if (typeof bool !== 'boolean') {
+    if (typeof show !== 'boolean') {
       console.error('setShowParticipantsBar only accepts a boolean value');
       return this;
     }
@@ -1291,9 +1292,9 @@ export default class DailyIframe extends EventEmitter {
     }
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_SET_SHOW_PARTICIPANTS_BAR,
-      bool,
+      show,
     });
-    this._showParticipantsBar = bool;
+    this._showParticipantsBar = show;
     return this;
   }
 
