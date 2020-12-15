@@ -1,7 +1,5 @@
 import EventEmitter from 'events';
 import { deepEqual } from 'fast-equals';
-import filter from 'lodash/filter';
-import orderBy from 'lodash/orderBy';
 
 import {
   // re-export
@@ -13,6 +11,12 @@ import {
   DAILY_STATE_JOINED,
   DAILY_STATE_LEFT,
   DAILY_STATE_ERROR,
+  DAILY_TRACK_STATE_BLOCKED,
+  DAILY_TRACK_STATE_OFF,
+  DAILY_TRACK_STATE_SENDABLE,
+  DAILY_TRACK_STATE_LOADING,
+  DAILY_TRACK_STATE_INTERRUPTED,
+  DAILY_TRACK_STATE_PLAYABLE,
   DAILY_EVENT_LOADING,
   DAILY_EVENT_LOADED,
   DAILY_EVENT_STARTED_CAMERA,
@@ -97,6 +101,7 @@ import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-c
 import CallObjectLoader from './CallObjectLoader';
 import { getLocalIsSubscribedToTrack } from './shared-with-pluot-core/selectors';
 import { callObjectBundleUrl } from './utils.js';
+import * as Participant from './Participant';
 
 export {
   DAILY_STATE_NEW,
@@ -104,6 +109,12 @@ export {
   DAILY_STATE_JOINED,
   DAILY_STATE_LEFT,
   DAILY_STATE_ERROR,
+  DAILY_TRACK_STATE_BLOCKED,
+  DAILY_TRACK_STATE_OFF,
+  DAILY_TRACK_STATE_SENDABLE,
+  DAILY_TRACK_STATE_LOADING,
+  DAILY_TRACK_STATE_INTERRUPTED,
+  DAILY_TRACK_STATE_PLAYABLE,
   DAILY_EVENT_JOINING_MEETING,
   DAILY_EVENT_JOINED_MEETING,
   DAILY_EVENT_LEFT_MEETING,
@@ -1020,11 +1031,8 @@ export default class DailyIframe extends EventEmitter {
         this.updateMeetingState(DAILY_STATE_JOINED);
         if (participants) {
           for (var id in participants) {
-            this.fixupParticipant(participants[id]);
-            let lid = participants[id].local
-              ? 'local'
-              : participants[id].session_id;
-            this.matchParticipantTracks(lid, participants[id]);
+            this._callObjectMode &&
+              Participant.addTracks(participants[id], this._participants[id]);
             this._participants[id] = { ...participants[id] };
             this.toggleParticipantAudioBasedOnNativeAudioFocus();
           }
@@ -1450,10 +1458,10 @@ export default class DailyIframe extends EventEmitter {
         if (this._meetingState === DAILY_STATE_LEFT) {
           return;
         }
-        this.fixupParticipant(msg);
         if (msg.participant && msg.participant.session_id) {
           let id = msg.participant.local ? 'local' : msg.participant.session_id;
-          this.matchParticipantTracks(id, msg.participant);
+          this._callObjectMode &&
+            Participant.addTracks(msg.participant, this._participants[id]);
           // track events
           try {
             this.maybeEventTrackStopped(
@@ -1517,7 +1525,6 @@ export default class DailyIframe extends EventEmitter {
         }
         break;
       case DAILY_EVENT_PARTICIPANT_LEFT:
-        this.fixupParticipant(msg);
         if (msg.participant && msg.participant.session_id) {
           // track events
           let prevP = this._participants[msg.participant.session_id];
@@ -1656,245 +1663,6 @@ export default class DailyIframe extends EventEmitter {
         this.exitFullscreen();
         break;
       default: // no op
-    }
-  }
-
-  // fix this later to be a no-op
-  fixupParticipant(msgOrP) {
-    let p = msgOrP.participant ? msgOrP.participant : msgOrP;
-    if (!p.id) {
-      return;
-    }
-    p.owner = !!p.owner;
-    p.session_id = p.id;
-    p.user_name = p.name;
-    p.joined_at = p.joinedAt;
-    delete p.id;
-    delete p.name;
-    delete p.joinedAt;
-  }
-
-  matchParticipantTracks(id, p) {
-    if (!this._callObjectMode) {
-      return;
-    }
-    let state = store.getState();
-
-    if (id === 'local') {
-      if (p.audio) {
-        try {
-          p.audioTrack = state.local.streams.cam.stream.getAudioTracks()[0];
-          if (!p.audioTrack) {
-            p.audio = false;
-          }
-        } catch (e) {}
-      }
-      if (p.video) {
-        try {
-          p.videoTrack = state.local.streams.cam.stream.getVideoTracks()[0];
-          if (!p.videoTrack) {
-            p.video = false;
-          }
-        } catch (e) {}
-      }
-      if (p.screen) {
-        try {
-          p.screenVideoTrack = state.local.streams.screen.stream.getVideoTracks()[0];
-          p.screenAudioTrack = state.local.streams.screen.stream.getAudioTracks()[0];
-          if (!(p.screenVideoTrack || p.screenAudioTrack)) {
-            p.screen = false;
-          }
-        } catch (e) {}
-      }
-      return;
-    }
-
-    let connected = true; // default to true to minimize impact of new bugs
-    // as of 11/20/2019 when this block of code was
-    // first written
-    try {
-      let sp = state.participants[p.session_id];
-      if (
-        sp &&
-        sp.public &&
-        sp.public.rtcType &&
-        sp.public.rtcType.impl === 'peer-to-peer'
-      ) {
-        if (
-          sp.private &&
-          !['connected', 'completed'].includes(sp.private.peeringState)
-        ) {
-          connected = false;
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    }
-    if (!connected) {
-      p.audio = false;
-      p.audioTrack = false;
-      p.video = false;
-      p.videoTrack = false;
-      p.screen = false;
-      p.screenTrack = false;
-      return;
-    }
-
-    try {
-      const allStreams = state.streams,
-        prevP = this._participants[p.session_id];
-
-      // find audio track
-      if (
-        p.audio &&
-        getLocalIsSubscribedToTrack(state, p.session_id, 'cam-audio')
-      ) {
-        let audioTracks = orderBy(
-          filter(
-            allStreams,
-            (s) =>
-              s.participantId === p.session_id &&
-              s.type === 'cam' &&
-              s.pendingTrack &&
-              s.pendingTrack.kind === 'audio'
-          ),
-          'starttime',
-          'desc'
-        );
-        if (audioTracks && audioTracks[0] && audioTracks[0].pendingTrack) {
-          if (
-            prevP &&
-            prevP.audioTrack &&
-            prevP.audioTrack.id === audioTracks[0].pendingTrack.id
-          ) {
-            // if we have an apparently identical audio track already in
-            // our participant struct leave it in place to avoid flicker
-            // during quick muted/unmuted PeerConnection cycles. we'll update
-            // audio/video muted at the app level via signaling
-            p.audioTrack = audioTracks[0].pendingTrack;
-          } else if (!audioTracks[0].pendingTrack.muted) {
-            // otherwise, add the found track if it's not muted
-            p.audioTrack = audioTracks[0].pendingTrack;
-          }
-        }
-        if (!p.audioTrack) {
-          p.audio = false;
-        }
-      }
-      // find video track
-      if (
-        p.video &&
-        getLocalIsSubscribedToTrack(state, p.session_id, 'cam-video')
-      ) {
-        let videoTracks = orderBy(
-          filter(
-            allStreams,
-            (s) =>
-              s.participantId === p.session_id &&
-              s.type === 'cam' &&
-              s.pendingTrack &&
-              s.pendingTrack.kind === 'video'
-          ),
-          'starttime',
-          'desc'
-        );
-        if (videoTracks && videoTracks[0] && videoTracks[0].pendingTrack) {
-          if (
-            prevP &&
-            prevP.videoTrack &&
-            prevP.videoTrack.id === videoTracks[0].pendingTrack.id
-          ) {
-            p.videoTrack = videoTracks[0].pendingTrack;
-          } else if (!videoTracks[0].pendingTrack.muted) {
-            // otherwise, add the found track if it's not muted
-            p.videoTrack = videoTracks[0].pendingTrack;
-          }
-        }
-        if (!p.videoTrack) {
-          p.video = false;
-        }
-      }
-
-      // find screen-share audio track
-      if (
-        p.screen &&
-        getLocalIsSubscribedToTrack(state, p.session_id, 'screen-audio')
-      ) {
-        let screenAudioTracks = orderBy(
-          filter(
-            allStreams,
-            (s) =>
-              s.participantId === p.session_id &&
-              s.type === 'screen' &&
-              s.pendingTrack &&
-              s.pendingTrack.kind === 'audio'
-          ),
-          'starttime',
-          'desc'
-        );
-        if (
-          screenAudioTracks &&
-          screenAudioTracks[0] &&
-          screenAudioTracks[0].pendingTrack
-        ) {
-          if (
-            prevP &&
-            prevP.screenAudioTrack &&
-            prevP.screenAudioTrack.id === screenAudioTracks[0].pendingTrack.id
-          ) {
-            p.screenAudioTrack = screenAudioTracks[0].pendingTrack;
-          } else if (!screenAudioTracks[0].pendingTrack.muted) {
-            // otherwise, add the found track if it's not muted
-            p.screenAudioTrack = screenAudioTracks[0].pendingTrack;
-          }
-        }
-      }
-      // find screen-share video track
-      if (
-        p.screen &&
-        getLocalIsSubscribedToTrack(state, p.session_id, 'screen-video')
-      ) {
-        let screenVideoTracks = orderBy(
-          filter(
-            allStreams,
-            (s) =>
-              s.participantId === p.session_id &&
-              s.type === 'screen' &&
-              s.pendingTrack &&
-              s.pendingTrack.kind === 'video'
-          ),
-          'starttime',
-          'desc'
-        );
-        if (
-          screenVideoTracks &&
-          screenVideoTracks[0] &&
-          screenVideoTracks[0].pendingTrack
-        ) {
-          if (
-            prevP &&
-            prevP.screenVideoTrack &&
-            prevP.screenVideoTrack.id === screenVideoTracks[0].pendingTrack.id
-          ) {
-            p.screenVideoTrack = screenVideoTracks[0].pendingTrack;
-          } else if (!screenVideoTracks[0].pendingTrack.muted) {
-            // otherwise, add the found track if it's not muted
-            // note: there is an issue here with timing ... Chrome (and
-            // possibly other browsers), gets a video track that's initially
-            // not muted, for an audio-only screenshare. The track
-            // switches to muted fairly quickly, but we don't have any
-            // logic in place to respond to that. todo: fix this so that,
-            // at the very least we get a track-stopped event when the
-            // "empty" track switches to muted.
-            p.screenVideoTrack = screenVideoTracks[0].pendingTrack;
-          }
-        }
-      }
-      if (!(p.screenVideoTrack || p.screenAudioTrack)) {
-        p.screen = false;
-      }
-    } catch (e) {
-      console.error('unexpected error matching up tracks', e);
     }
   }
 

@@ -10,6 +10,13 @@ export const DAILY_STATE_JOINED = 'joined-meeting';
 export const DAILY_STATE_LEFT = 'left-meeting';
 export const DAILY_STATE_ERROR = 'error';
 
+export const DAILY_TRACK_STATE_BLOCKED = 'blocked';
+export const DAILY_TRACK_STATE_OFF = 'off';
+export const DAILY_TRACK_STATE_SENDABLE = 'sendable';
+export const DAILY_TRACK_STATE_LOADING = 'loading';
+export const DAILY_TRACK_STATE_INTERRUPTED = 'interrupted';
+export const DAILY_TRACK_STATE_PLAYABLE = 'playable';
+
 export const DAILY_EVENT_LOADING = 'loading';
 export const DAILY_EVENT_LOAD_ATTEMPT_FAILED = 'load-attempt-failed';
 export const DAILY_EVENT_LOADED = 'loaded';
