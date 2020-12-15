@@ -389,6 +389,14 @@ export default class DailyIframe extends EventEmitter {
         };
       }
     }
+    // default the local video + participants bar display to true if not specified
+    if (properties.showLocalVideo === undefined) {
+      properties.showLocalVideo = true;
+    }
+    if (properties.showParticipantsBar === undefined) {
+      properties.showParticipantsBar = true;
+    }
+
     let iframeEl = document.createElement('iframe');
     // special-case for old Electron for Figma
     if (window.navigator && window.navigator.userAgent.match(/Chrome\/61\./)) {
@@ -462,12 +470,12 @@ export default class DailyIframe extends EventEmitter {
     this._network = { threshold: 'good', quality: 100 };
     this._activeSpeaker = {};
     this._activeSpeakerMode = false;
-    this._showLocalVideo = true;
-    this._showParticipantsBar = true;
     this._callFrameId = Date.now() + Math.random().toString();
     this._messageChannel = isReactNative()
       ? new ReactNativeMessageChannel()
       : new WebMessageChannel();
+    this._showLocalVideo = properties.showLocalVideo;
+    this._showParticipantsBar = properties.showParticipantsBar;
 
     // fullscreen event listener
     if (this._iframe) {
@@ -1007,8 +1015,13 @@ export default class DailyIframe extends EventEmitter {
       this.properties = { ...this.properties, ...properties };
     }
 
-    this._showLocalVideo = properties.showLocalVideo;
-    this._showParticipantsBar = properties.showParticipantsBar;
+    // only update if showLocalVideo/showParticipantsBar are being explicitly set
+    if (properties.showLocalVideo !== undefined) {
+      this._showLocalVideo = !!properties.showLocalVideo;
+    }
+    if (properties.showParticipantsBar !== undefined) {
+      this._showParticipantsBar = !!properties.showParticipantsBar;
+    }
 
     if (
       this._meetingState === DAILY_STATE_JOINED ||
