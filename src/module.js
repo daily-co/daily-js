@@ -474,8 +474,20 @@ export default class DailyIframe extends EventEmitter {
     this._messageChannel = isReactNative()
       ? new ReactNativeMessageChannel()
       : new WebMessageChannel();
-    this._showLocalVideo = properties.showLocalVideo;
-    this._showParticipantsBar = properties.showParticipantsBar;
+
+    if (this._callObjectMode) {
+      if (properties.showLocalVideo !== undefined) {
+        console.error('showLocalVideo is not available in callObject mode');
+      }
+      if (properties.showParticipantsBar !== undefined) {
+        console.error(
+          'showParticipantsBar is not available in callObject mode'
+        );
+      }
+    } else {
+      this._showLocalVideo = properties.showLocalVideo;
+      this._showParticipantsBar = properties.showParticipantsBar;
+    }
 
     // fullscreen event listener
     if (this._iframe) {
