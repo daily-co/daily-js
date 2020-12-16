@@ -1017,10 +1017,20 @@ export default class DailyIframe extends EventEmitter {
 
     // only update if showLocalVideo/showParticipantsBar are being explicitly set
     if (properties.showLocalVideo !== undefined) {
-      this._showLocalVideo = !!properties.showLocalVideo;
+      if (this._callObjectMode) {
+        console.error('showLocalVideo is not available in callObject mode');
+      } else {
+        this._showLocalVideo = !!properties.showLocalVideo;
+      }
     }
     if (properties.showParticipantsBar !== undefined) {
-      this._showParticipantsBar = !!properties.showParticipantsBar;
+      if (this._callObjectMode) {
+        console.error(
+          'showParticipantsBar is not available in callObject mode'
+        );
+      } else {
+        this._showParticipantsBar = !!properties.showParticipantsBar;
+      }
     }
 
     if (
@@ -1282,6 +1292,10 @@ export default class DailyIframe extends EventEmitter {
 
   showLocalVideo() {
     methodNotSupportedInReactNative();
+    if (this._callObjectMode) {
+      console.error('showLocalVideo is not available in callObject mode');
+      return this;
+    }
     return this._showLocalVideo;
   }
 
@@ -1313,6 +1327,10 @@ export default class DailyIframe extends EventEmitter {
 
   showParticipantsBar() {
     methodNotSupportedInReactNative();
+    if (this._callObjectMode) {
+      console.error('showParticipantsBar is not available in callObject mode');
+      return this;
+    }
     return this._showParticipantsBar;
   }
 
