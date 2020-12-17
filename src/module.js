@@ -75,6 +75,8 @@ import {
   DAILY_METHOD_APP_MSG,
   DAILY_METHOD_ADD_FAKE_PARTICIPANT,
   DAILY_METHOD_SET_SHOW_NAMES,
+  DAILY_METHOD_SET_SHOW_LOCAL_VIDEO,
+  DAILY_METHOD_SET_SHOW_PARTICIPANTS_BAR,
   DAILY_METHOD_SET_ACTIVE_SPEAKER_MODE,
   DAILY_METHOD_SET_LANG,
   MAX_APP_MSG_SIZE,
@@ -199,6 +201,8 @@ const FRAME_PROPS = {
   },
   userName: true, // ignored if there's a token
   showLeaveButton: true,
+  showLocalVideo: true,
+  showParticipantsBar: true,
   showFullscreenButton: true,
   // style to apply to iframe in createFrame factory method
   iframeStyle: true,
@@ -385,6 +389,7 @@ export default class DailyIframe extends EventEmitter {
         };
       }
     }
+
     let iframeEl = document.createElement('iframe');
     // special-case for old Electron for Figma
     if (window.navigator && window.navigator.userAgent.match(/Chrome\/61\./)) {
@@ -444,6 +449,28 @@ export default class DailyIframe extends EventEmitter {
     this._preloadCache = initializePreloadCache();
     if (this._callObjectMode) {
       window._dailyPreloadCache = this._preloadCache;
+    }
+
+    if (properties.showLocalVideo !== undefined) {
+      if (this._callObjectMode) {
+        console.error('showLocalVideo is not available in callObject mode');
+      } else {
+        this._showLocalVideo = !!properties.showLocalVideo;
+      }
+    } else {
+      this._showLocalVideo = true;
+    }
+
+    if (properties.showParticipantsBar !== undefined) {
+      if (this._callObjectMode) {
+        console.error(
+          'showParticipantsBar is not available in callObject mode'
+        );
+      } else {
+        this._showParticipantsBar = !!properties.showParticipantsBar;
+      }
+    } else {
+      this._showParticipantsBar = true;
     }
 
     this.validateProperties(properties);
@@ -1001,6 +1028,25 @@ export default class DailyIframe extends EventEmitter {
       this.validateProperties(properties);
       this.properties = { ...this.properties, ...properties };
     }
+
+    // only update if showLocalVideo/showParticipantsBar are being explicitly set
+    if (properties.showLocalVideo !== undefined) {
+      if (this._callObjectMode) {
+        console.error('showLocalVideo is not available in callObject mode');
+      } else {
+        this._showLocalVideo = !!properties.showLocalVideo;
+      }
+    }
+    if (properties.showParticipantsBar !== undefined) {
+      if (this._callObjectMode) {
+        console.error(
+          'showParticipantsBar is not available in callObject mode'
+        );
+      } else {
+        this._showParticipantsBar = !!properties.showParticipantsBar;
+      }
+    }
+
     if (
       this._meetingState === DAILY_STATE_JOINED ||
       this._meetingState === DAILY_STATE_JOINING
@@ -1232,6 +1278,74 @@ export default class DailyIframe extends EventEmitter {
       mode: mode,
     });
     return this;
+  }
+
+  setShowLocalVideo(show = true) {
+    methodNotSupportedInReactNative();
+    if (typeof show !== 'boolean') {
+      console.error('setShowLocalVideo only accepts a boolean value');
+      return this;
+    }
+    if (this._callObjectMode) {
+      console.error('setShowLocalVideo is not available in callObject mode');
+      return this;
+    }
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      console.error(
+        'the meeting must be joined before calling setShowLocalVideo'
+      );
+      return this;
+    }
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_SET_SHOW_LOCAL_VIDEO,
+      show,
+    });
+    this._showLocalVideo = show;
+    return this;
+  }
+
+  showLocalVideo() {
+    methodNotSupportedInReactNative();
+    if (this._callObjectMode) {
+      console.error('showLocalVideo is not available in callObject mode');
+      return this;
+    }
+    return this._showLocalVideo;
+  }
+
+  setShowParticipantsBar(show = true) {
+    methodNotSupportedInReactNative();
+    if (typeof show !== 'boolean') {
+      console.error('setShowParticipantsBar only accepts a boolean value');
+      return this;
+    }
+    if (this._callObjectMode) {
+      console.error(
+        'setShowParticipantsBar is not available in callObject mode'
+      );
+      return this;
+    }
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      console.error(
+        'the meeting must be joined before calling setShowParticipantsBar'
+      );
+      return this;
+    }
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_SET_SHOW_PARTICIPANTS_BAR,
+      show,
+    });
+    this._showParticipantsBar = show;
+    return this;
+  }
+
+  showParticipantsBar() {
+    methodNotSupportedInReactNative();
+    if (this._callObjectMode) {
+      console.error('showParticipantsBar is not available in callObject mode');
+      return this;
+    }
+    return this._showParticipantsBar;
   }
 
   detectAllFaces() {
