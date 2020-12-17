@@ -389,13 +389,6 @@ export default class DailyIframe extends EventEmitter {
         };
       }
     }
-    // default the local video + participants bar display to true if not specified
-    if (properties.showLocalVideo === undefined) {
-      properties.showLocalVideo = true;
-    }
-    if (properties.showParticipantsBar === undefined) {
-      properties.showParticipantsBar = true;
-    }
 
     let iframeEl = document.createElement('iframe');
     // special-case for old Electron for Figma
@@ -457,6 +450,29 @@ export default class DailyIframe extends EventEmitter {
     if (this._callObjectMode) {
       window._dailyPreloadCache = this._preloadCache;
     }
+
+    if (properties.showLocalVideo !== undefined) {
+      if (this._callObjectMode) {
+        console.error('showLocalVideo is not available in callObject mode');
+      } else {
+        this._showLocalVideo = !!properties.showLocalVideo;
+      }
+    } else {
+      this._showLocalVideo = true;
+    }
+
+    if (properties.showParticipantsBar !== undefined) {
+      if (this._callObjectMode) {
+        console.error(
+          'showParticipantsBar is not available in callObject mode'
+        );
+      } else {
+        this._showParticipantsBar = !!properties.showParticipantsBar;
+      }
+    } else {
+      this._showParticipantsBar = true;
+    }
+
     this.validateProperties(properties);
     this.properties = { ...properties };
     this._callObjectLoader = this._callObjectMode
@@ -474,20 +490,6 @@ export default class DailyIframe extends EventEmitter {
     this._messageChannel = isReactNative()
       ? new ReactNativeMessageChannel()
       : new WebMessageChannel();
-
-    if (this._callObjectMode) {
-      if (properties.showLocalVideo !== undefined) {
-        console.error('showLocalVideo is not available in callObject mode');
-      }
-      if (properties.showParticipantsBar !== undefined) {
-        console.error(
-          'showParticipantsBar is not available in callObject mode'
-        );
-      }
-    } else {
-      this._showLocalVideo = properties.showLocalVideo;
-      this._showParticipantsBar = properties.showParticipantsBar;
-    }
 
     // fullscreen event listener
     if (this._iframe) {
