@@ -293,8 +293,6 @@ export interface DailyEventObjectNoPayload {
     | 'exited-fullscreen'
     | 'live-streaming-started'
     | 'live-streaming-stopped'
-    | 'track-started'
-    | 'track-stopped'
   >;
 }
 
@@ -317,6 +315,12 @@ export interface DailyEventObjectParticipant {
     'participant-joined' | 'participant-updated' | 'participant-left'
   >;
   participant: DailyParticipant;
+}
+
+export interface DailyEventObjectTrack {
+  action: Extract<DailyEvent, 'track-started' | 'track-stopped'>;
+  participant: DailyParticipant | null; // null if participant left meeting
+  track: MediaStreamTrack;
 }
 
 export interface DailyEventObjectMouseEvent {
@@ -401,6 +405,8 @@ export type DailyEventObject<
   ? DailyEventObjectParticipants
   : T extends DailyEventObjectParticipant['action']
   ? DailyEventObjectParticipant
+  : T extends DailyEventObjectTrack['action']
+  ? DailyEventObjectTrack
   : T extends DailyEventObjectMouseEvent['action']
   ? DailyEventObjectMouseEvent
   : T extends DailyEventObjectTouchEvent['action']
