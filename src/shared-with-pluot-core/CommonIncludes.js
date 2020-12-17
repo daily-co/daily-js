@@ -92,6 +92,9 @@ export const DAILY_METHOD_GET_CAMERA_FACING_MODE = 'get-camera-facing-mode';
 export const DAILY_METHOD_APP_MSG = 'app-msg';
 export const DAILY_METHOD_ADD_FAKE_PARTICIPANT = 'add-fake-participant';
 export const DAILY_METHOD_SET_SHOW_NAMES = 'set-show-names';
+export const DAILY_METHOD_SET_SHOW_LOCAL_VIDEO = 'set-show-local-video';
+export const DAILY_METHOD_SET_SHOW_PARTICIPANTS_BAR =
+  'set-show-participants-bar';
 export const DAILY_METHOD_SET_ACTIVE_SPEAKER_MODE = 'set-active-speaker-mode';
 export const DAILY_METHOD_REGISTER_INPUT_HANDLER = 'register-input-handler';
 export const DAILY_METHOD_SET_LANG = 'set-daily-lang';

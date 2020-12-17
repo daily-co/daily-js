@@ -98,6 +98,8 @@ export interface DailyCallOptions {
   token?: string;
   lang?: DailyLanguage;
   showLeaveButton?: boolean;
+  showParticipantsBar?: boolean;
+  showLocalVideo?: boolean;
   showFullscreenButton?: boolean;
   iframeStyle?: CSSStyleDeclaration;
   customLayout?: boolean;
@@ -508,6 +510,10 @@ export interface DailyCall {
   sendAppMessage(data: any, to?: string): DailyCall;
   addFakeParticipant(details?: { aspectRatio: number }): DailyCall;
   setShowNamesMode(mode: false | 'always' | 'never'): DailyCall;
+  setShowLocalVideo(show: boolean): DailyCall;
+  setShowParticipantsBar(show: boolean): DailyCall;
+  showLocalVideo(): boolean;
+  showParticipantsBar(): boolean;
   detectAllFaces(): Promise<{
     faces?: { [id: string]: DailyFaceInfo[] };
   }>;
