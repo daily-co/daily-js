@@ -93,6 +93,7 @@ import {
   DAILY_UI_EXIT_FULLSCREEN,
   DAILY_EVENT_LOAD_ATTEMPT_FAILED,
   DAILY_METHOD_GET_CAMERA_FACING_MODE,
+  DAILY_METHOD_SET_USER_NAME,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -696,6 +697,24 @@ export default class DailyIframe extends EventEmitter {
     methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({ action: DAILY_METHOD_SET_LANG, lang });
     return this;
+  }
+
+  setUserName(name, options) {
+    return new Promise(async (resolve) => {
+      const k = (msg) => {
+        delete msg.action;
+        delete msg.callbackStamp;
+        resolve(msg);
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_SET_USER_NAME,
+          name: name ?? '',
+          thisMeetingOnly: options ? !!options.thisMeetingOnly : false,
+        },
+        k
+      );
+    });
   }
 
   startCamera(properties = {}) {
