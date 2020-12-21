@@ -700,6 +700,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setUserName(name, options) {
+    methodNotSupportedInReactNative();
     return new Promise(async (resolve) => {
       const k = (msg) => {
         delete msg.action;
