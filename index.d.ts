@@ -480,6 +480,10 @@ export interface DailyCall {
     trackConstraints?: MediaTrackConstraints;
   }): DailyCall;
   setDailyLang(lang: DailyLanguage): DailyCall;
+  setUserName(
+    name: string,
+    options?: { thisMeetingOnly?: boolean }
+  ): Promise<{ userName: string }>;
   startCamera(properties?: DailyCallOptions): Promise<DailyDeviceInfos>;
   cycleCamera(): Promise<{ device?: MediaDeviceInfo | null }>;
   cycleMic(): Promise<{ device?: MediaDeviceInfo | null }>;
