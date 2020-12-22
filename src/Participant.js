@@ -4,7 +4,7 @@ import {
 } from './shared-with-pluot-core/selectors';
 
 // Adds tracks to daily-js Participant object.
-export function addTracks(p, prevP) {
+export function addLegacyTracks(p, prevP) {
   let state = store.getState();
 
   if (p.local) {
