@@ -1,7 +1,27 @@
 import {
   getLocalIsSubscribedToTrack,
+  getLocalTrack,
   getRemoteTrack,
 } from './shared-with-pluot-core/selectors';
+
+// Adds tracks to daily-js Participant object.
+export function addTracks(p) {
+  const state = store.getState();
+  for (const type of ['cam', 'screen']) {
+    for (const kind of ['video', 'audio']) {
+      const key =
+        type === 'cam'
+          ? kind
+          : `screen${kind.charAt(0).toUpperCase() + kind.slice(1)}`;
+      const trackInfo = p.tracks[key];
+      if (trackInfo && trackInfo.state === 'playable') {
+        trackInfo.track = p.local
+          ? getLocalTrack(state, type, kind)
+          : getRemoteTrack(state, p.session_id, type, kind);
+      }
+    }
+  }
+}
 
 // Adds tracks to daily-js Participant object.
 export function addLegacyTracks(p, prevP) {
