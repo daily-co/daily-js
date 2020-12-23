@@ -101,7 +101,7 @@ export interface DailyCallOptions {
   showParticipantsBar?: boolean;
   showLocalVideo?: boolean;
   showFullscreenButton?: boolean;
-  iframeStyle?: CSSStyleDeclaration;
+  iframeStyle?: Partial<CSSStyleDeclaration>;
   customLayout?: boolean;
   bodyClass?: string;
   cssFile?: string;
@@ -208,9 +208,9 @@ export interface DailyParticipantCss {
 }
 
 export interface DailyParticipantStreamCss {
-  div?: CSSStyleDeclaration;
-  overlay?: CSSStyleDeclaration;
-  video?: CSSStyleDeclaration;
+  div?: Partial<CSSStyleDeclaration>;
+  overlay?: Partial<CSSStyleDeclaration>;
+  video?: Partial<CSSStyleDeclaration>;
 }
 
 export interface DailyVideoElementInfo {
