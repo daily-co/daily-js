@@ -108,6 +108,10 @@ export interface DailyCallOptions {
   subscribeToTracksAutomatically?: boolean;
   videoSource?: string | MediaStreamTrack;
   audioSource?: string | MediaStreamTrack;
+  localVideoProperties?: DailyLocalVideoTrackProperties;
+  localScreenVideoProperties?: DailyLocalVideoTrackProperties;
+  localAudioProperties?: DailyLocalAudioTrackProperties;
+  localScreenAudioProperties?: DailyLocalAudioTrackProperties;
 }
 
 export interface DailyLoadOptions extends DailyCallOptions {
@@ -129,6 +133,42 @@ export interface DailyAdvancedConfig {
   screenSimulcastEncodings?: any[];
 }
 
+export interface DailyLocalVideoTrackPropertiesQuality {
+  quality:
+  | 'auto'
+  | 'low'
+  | 'medium'
+  | 'high';
+}
+
+export interface DailyLocalVideoTrackPropertiesExplicit {
+  bandwidthCap?: number,
+  trackConstraints?: {},
+  encodings?: any[],
+}
+
+export type DailyLocalVideoTrackProperties =
+  DailyLocalVideoTrackPropertiesQuality |
+  DailyLocalVideoTrackPropertiesExplicit;
+
+export interface DailyLocalAudioTrackPropertiesQuality {
+  quality:
+    | 'auto'
+    | 'speech'
+    | 'music';
+}
+  
+export interface DailyLocalAudioTrackPropertiesExplicit {
+  stereo?: boolean;
+  bitrate?: number,
+  trackConstraints?: {},
+  encodings?: any[],
+}
+  
+export type DailyLocalAudioTrackProperties =
+  DailyLocalAudioTrackPropertiesQuality |
+  DailyLocalAudioTrackPropertiesExplicit;
+  
 export interface DailyTrackState {
   subscribed: boolean;
   state:
@@ -470,6 +510,16 @@ export interface DailyCall {
     kbs?: number | 'NO_CAP' | null;
     trackConstraints?: MediaTrackConstraints;
   }): DailyCall;
+  setLocalAudioProperties(properties: DailyLocalAudioTrackProperties): Promise<null>;
+  setLocalVideoProperties(properties: DailyLocalVideoTrackProperties): Promise<null>;
+  setLocalScreenAudioProperties(properties: DailyLocalAudioTrackProperties): Promise<null>;
+  setLocalScreenVideoProperties(properties: DailyLocalVideoTrackProperties): Promise<null>;
+  getLocalTrackProperties(): Promise<{
+    audio: DailyLocalAudioTrackProperties;
+    video: DailyLocalVideoTrackProperties;
+    screenAudio: DailyLocalAudioTrackProperties;
+    screenVideo: DailyLocalVideoTrackProperties;
+  }>;
   setDailyLang(lang: DailyLanguage): DailyCall;
   startCamera(properties?: DailyCallOptions): Promise<DailyDeviceInfos>;
   cycleCamera(): Promise<{ device?: MediaDeviceInfo | null }>;
