@@ -1097,8 +1097,13 @@ export default class DailyIframe extends EventEmitter {
         this.updateMeetingState(DAILY_STATE_JOINED);
         if (participants) {
           for (var id in participants) {
-            this._callObjectMode &&
-              Participant.addTracks(participants[id], this._participants[id]);
+            if (this._callObjectMode) {
+              Participant.addTracks(participants[id]);
+              Participant.addLegacyTracks(
+                participants[id],
+                this._participants[id]
+              );
+            }
             this._participants[id] = { ...participants[id] };
             this.toggleParticipantAudioBasedOnNativeAudioFocus();
           }
@@ -1594,8 +1599,13 @@ export default class DailyIframe extends EventEmitter {
         }
         if (msg.participant && msg.participant.session_id) {
           let id = msg.participant.local ? 'local' : msg.participant.session_id;
-          this._callObjectMode &&
-            Participant.addTracks(msg.participant, this._participants[id]);
+          if (this._callObjectMode) {
+            Participant.addTracks(msg.participant);
+            Participant.addLegacyTracks(
+              msg.participant,
+              this._participants[id]
+            );
+          }
           // track events
           try {
             this.maybeEventTrackStopped(
