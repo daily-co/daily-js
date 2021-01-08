@@ -1125,9 +1125,7 @@ export default class DailyIframe extends EventEmitter {
           // this._iframe.src = '';
         }
         this.updateMeetingState(DAILY_STATE_LEFT);
-        this._participants = {};
-        this._activeSpeakerMode = false;
-        resetPreloadCache(this._preloadCache);
+        this.resetMeetingDependentVars();
         try {
           this.emit(DAILY_STATE_LEFT, { action: DAILY_STATE_LEFT });
         } catch (e) {
@@ -1692,7 +1690,7 @@ export default class DailyIframe extends EventEmitter {
           this._iframe.src = '';
         }
         this.updateMeetingState(DAILY_STATE_ERROR);
-        this._participants = {};
+        this.resetMeetingDependentVars();
         if (this._loadedCallback) {
           this._loadedCallback(msg.errorMsg);
           this._loadedCallback = null;
@@ -1711,6 +1709,7 @@ export default class DailyIframe extends EventEmitter {
         if (this._meetingState !== DAILY_STATE_ERROR) {
           this.updateMeetingState(DAILY_STATE_LEFT);
         }
+        this.resetMeetingDependentVars();
         try {
           this.emit(msg.action, msg);
         } catch (e) {
@@ -1928,6 +1927,16 @@ export default class DailyIframe extends EventEmitter {
     this.updateNoOpRecordingEnsuringBackgroundContinuity(
       isMeetingPendingOrOngoing
     );
+  }
+
+  // To be invoked this when leaving or erroring out of a meeting.
+  // NOTE (Paul, 2021-01-07): this could probably be expanded to reset *all*
+  // meeting-dependent vars, but starting with this targeted small set which
+  // were being reset properly on leave() but not when leaving via prebuilt ui.
+  resetMeetingDependentVars() {
+    this._participants = {};
+    this._activeSpeakerMode = false;
+    resetPreloadCache(this._preloadCache);
   }
 
   updateKeepDeviceAwake(keepAwake) {
