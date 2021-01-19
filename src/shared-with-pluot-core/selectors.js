@@ -57,20 +57,19 @@ const _getIsSubscribedToTrack = (p, p2id, mediaTag) => {
   if (!p) {
     return false;
   }
-  if (
-    !p.public.subscribedTracks || // sanity check
-    p.public.subscribedTracks.ALL
-  ) {
+  const sTracks = p.public.subscribedTracks;
+  if (!sTracks) {
     return true;
   }
-  if (!p.public.subscribedTracks[p2id]) {
-    // this shouldn't happen, so return false for safety, as above
-    return false;
+  if (!(sTracks && sTracks[p2id])) {
+    return sTracks
+      ? typeof sTracks.ALL !== 'undefined'
+        ? sTracks.ALL
+        : true
+      : true;
   }
-  if (p.public.subscribedTracks[p2id].ALL !== undefined) {
-    return p.public.subscribedTracks[p2id].ALL;
-  }
-  return p.public.subscribedTracks[p2id][mediaTag];
+
+  return sTracks[p2id][mediaTag];
 };
 
 const _getRemoteStreamEntry = (state, participantId, type, kind) => {
