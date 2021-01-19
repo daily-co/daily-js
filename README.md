@@ -4,5 +4,3 @@
 
 - [Javascript docs](https://docs.daily.co/reference#using-the-dailyco-front-end-library): To add video calls to web pages and mobile apps
 - [REST API docs](https://docs.daily.co/reference): To create video call rooms, configure features for the rooms, and manage users and permissions
-
-Test change
