@@ -58,15 +58,15 @@ const _getIsSubscribedToTrack = (p, p2id, mediaTag) => {
     return false;
   }
   const sTracks = p.public.subscribedTracks;
-  if (!sTracks) {
-    return true;
-  }
+  // Below shows the return values for all the various versions of sTracks
+  //   { ALL: true }                -> true
+  //   { ALL: false }               -> false
+  //   undefined                    -> true
+  //   {},                          -> false
+  //   { p2id: { mediaTag: true }}  -> true
+  //   { p2id: { mediaTag: false }} -> false
   if (!(sTracks && sTracks[p2id])) {
-    return sTracks
-      ? typeof sTracks.ALL !== 'undefined'
-        ? sTracks.ALL
-        : true
-      : true;
+    return sTracks ? !!sTracks.ALL : true;
   }
 
   return sTracks[p2id][mediaTag];
