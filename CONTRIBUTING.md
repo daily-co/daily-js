@@ -57,4 +57,4 @@ All issues labeled `good-first-issue` are up for grabs. If you'd like to tackle 
 
 - If it's been a minute or if you haven't yet cloned, forked, or branched a repository, GitHub has some [docs to help](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests).
 - When creating commit messages and pull request titles, please follow the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) standard.
-
+- Note that the `daily-js` repo is a public-facing mirror of an internal Daily repo, so when a pull request contribution is accepted, the pull request won't be merged in the tradtional way. But never fear! Your contributed commits _will_ appear, appropriately attributed to you, in the `daily-js` repo.
