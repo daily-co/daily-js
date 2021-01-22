@@ -659,7 +659,11 @@ export default class DailyIframe extends EventEmitter {
       if (sessionId === localId) {
         sessionId = 'local';
       }
-      if (sessionId && properties[sessionId] && this._participants[sessionId]) {
+      if (
+        sessionId &&
+        properties[sessionId] &&
+        (this._participants[sessionId] || sessionId === '*')
+      ) {
         this.validateParticipantProperties(sessionId, properties[sessionId]);
       } else {
         delete properties[sessionId];
