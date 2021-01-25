@@ -266,8 +266,13 @@ export interface DailyRoomInfo {
     nbf?: number;
     exp?: number;
     max_participants?: number;
+    enable_screenshare?: boolean;
     enable_chat?: boolean;
     enable_knocking?: boolean;
+    start_video_off?: boolean;
+    start_audio_off?: boolean;
+    owner_only_broadcast?: boolean;
+    audio_only?: boolean;
     enable_recording?: string;
     enable_screenshare?: boolean;
     enable_dialin?: boolean;
@@ -276,8 +281,29 @@ export interface DailyRoomInfo {
     eject_at_room_exp?: boolean;
     eject_after_elapsed?: number;
     lang?: '' | DailyLanguage;
+    sfu_switchover?: number;
+    switchover_impl?: string;
+    enable_help?: string;
     signaling_impl?: string;
     geo?: string;
+  };
+  domainConfig: {
+    hide_daily_branding?: boolean;
+    redirect_on_meeting_exit?: string;
+    meeting_join_hook?: string;
+    hipaa?: boolean;
+    intercom_auto_record?: boolean;
+    intercom_manual_record?: string;
+    sfu_impl?: string;
+    signaling_impl?: string;
+    sfu_switchover?: number;
+    switchover_impl?: string;
+    lang?: string;
+    callstats?: any;
+    max_api_rooms?: number;
+    webhook_meeting_end?: any;
+    max_live_streams?: number;
+    enable_daily_logger?: boolean;
   };
   dialInPIN?: string;
 }
