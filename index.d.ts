@@ -269,6 +269,7 @@ export interface DailyRoomInfo {
     enable_chat?: boolean;
     enable_knocking?: boolean;
     enable_recording?: string;
+    enable_screenshare?: boolean;
     enable_dialin?: boolean;
     autojoin?: boolean;
     meeting_join_hook?: string;
