@@ -61,7 +61,7 @@ const _getIsSubscribedToTrack = (p, p2id, mediaTag) => {
   // Below shows the return values for all the various versions of sTracks
   //   { ALL: true }                -> true
   //   { ALL: false }               -> false
-  //   undefined                    -> true
+  //   undefined                    -> true  // this should never happen
   //   {},                          -> false
   //   { p2id: { }}                 -> false
   //   { p2id: { mediaTag: true }}  -> true
