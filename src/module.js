@@ -652,7 +652,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   updateParticipants(properties) {
-    console.log('updateParticipantSSS');
     const localId =
       this._participants.local && this._participants.local.session_id;
     for (var sessionId in properties) {
@@ -666,6 +665,7 @@ export default class DailyIframe extends EventEmitter {
       ) {
         this.validateParticipantProperties(sessionId, properties[sessionId]);
       } else {
+        console.warn(`unrecognized participant id: ${sessionId}`);
         delete properties[sessionId];
       }
     }
