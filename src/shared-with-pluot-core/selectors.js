@@ -63,13 +63,14 @@ const _getIsSubscribedToTrack = (p, p2id, mediaTag) => {
   //   { ALL: false }               -> false
   //   undefined                    -> true
   //   {},                          -> false
+  //   { p2id: { }}                 -> false
   //   { p2id: { mediaTag: true }}  -> true
   //   { p2id: { mediaTag: false }} -> false
   if (!(sTracks && sTracks[p2id])) {
     return sTracks ? !!sTracks.ALL : true;
   }
 
-  return sTracks[p2id][mediaTag];
+  return !!sTracks[p2id][mediaTag];
 };
 
 const _getRemoteStreamEntry = (state, participantId, type, kind) => {
