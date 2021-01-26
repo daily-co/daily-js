@@ -297,7 +297,7 @@ export interface DailyRoomInfo {
     signaling_impl?: string;
     sfu_switchover?: number;
     switchover_impl?: string;
-    lang?: string;
+    lang?: '' | DailyLanguage;
     callstats?: any;
     max_api_rooms?: number;
     webhook_meeting_end?: any;
