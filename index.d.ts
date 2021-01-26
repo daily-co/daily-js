@@ -283,7 +283,6 @@ export interface DailyRoomInfo {
     lang?: '' | DailyLanguage;
     sfu_switchover?: number;
     switchover_impl?: string;
-    enable_help?: string;
     signaling_impl?: string;
     geo?: string;
   };
