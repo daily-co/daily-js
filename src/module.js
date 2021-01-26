@@ -60,6 +60,7 @@ import {
   DAILY_METHOD_JOIN,
   DAILY_METHOD_LEAVE,
   DAILY_METHOD_UPDATE_PARTICIPANT,
+  DAILY_METHOD_UPDATE_PARTICIPANTS,
   DAILY_METHOD_LOCAL_AUDIO,
   DAILY_METHOD_LOCAL_VIDEO,
   DAILY_METHOD_START_SCREENSHARE,
@@ -613,6 +614,25 @@ export default class DailyIframe extends EventEmitter {
     return this._participants;
   }
 
+  validateParticipantProperties(sessionId, properties) {
+    for (var prop in properties) {
+      if (!PARTICIPANT_PROPS[prop]) {
+        throw new Error(`unrecognized updateParticipant property ${prop}`);
+      }
+      if (PARTICIPANT_PROPS[prop].validate) {
+        if (
+          !PARTICIPANT_PROPS[prop].validate(
+            properties[prop],
+            this,
+            this._participants[sessionId]
+          )
+        ) {
+          throw new Error(PARTICIPANT_PROPS[prop].help);
+        }
+      }
+    }
+  }
+
   updateParticipant(sessionId, properties) {
     if (
       this._participants.local &&
@@ -621,22 +641,7 @@ export default class DailyIframe extends EventEmitter {
       sessionId = 'local';
     }
     if (sessionId && properties && this._participants[sessionId]) {
-      for (var prop in properties) {
-        if (!PARTICIPANT_PROPS[prop]) {
-          throw new Error(`unrecognized updateParticipant property ${prop}`);
-        }
-        if (PARTICIPANT_PROPS[prop].validate) {
-          if (
-            !PARTICIPANT_PROPS[prop].validate(
-              properties[prop],
-              this,
-              this._participants[sessionId]
-            )
-          ) {
-            throw new Error(PARTICIPANT_PROPS[prop].help);
-          }
-        }
-      }
+      this.validateParticipantProperties(sessionId, properties);
       this.sendMessageToCallMachine({
         action: DAILY_METHOD_UPDATE_PARTICIPANT,
         id: sessionId,
@@ -647,9 +652,29 @@ export default class DailyIframe extends EventEmitter {
   }
 
   updateParticipants(properties) {
+    const localId =
+      this._participants.local && this._participants.local.session_id;
     for (var sessionId in properties) {
-      this.updateParticipant(sessionId, properties[sessionId]);
+      if (sessionId === localId) {
+        sessionId = 'local';
+      }
+      if (
+        sessionId &&
+        properties[sessionId] &&
+        (this._participants[sessionId] || sessionId === '*')
+      ) {
+        this.validateParticipantProperties(sessionId, properties[sessionId]);
+      } else {
+        console.warn(
+          `unrecognized participant in updateParticipants: ${sessionId}`
+        );
+        delete properties[sessionId];
+      }
     }
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_UPDATE_PARTICIPANTS,
+      participants: properties,
+    });
     return this;
   }
 

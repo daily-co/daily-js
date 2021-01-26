@@ -57,20 +57,20 @@ const _getIsSubscribedToTrack = (p, p2id, mediaTag) => {
   if (!p) {
     return false;
   }
-  if (
-    !p.public.subscribedTracks || // sanity check
-    p.public.subscribedTracks.ALL
-  ) {
-    return true;
+  const sTracks = p.public.subscribedTracks;
+  // Below shows the return values for all the various versions of sTracks
+  //   { ALL: true }                -> true
+  //   { ALL: false }               -> false
+  //   undefined                    -> true  // this should never happen
+  //   {},                          -> false
+  //   { p2id: { }}                 -> false
+  //   { p2id: { mediaTag: true }}  -> true
+  //   { p2id: { mediaTag: false }} -> false
+  if (!(sTracks && sTracks[p2id])) {
+    return sTracks ? !!sTracks.ALL : true;
   }
-  if (!p.public.subscribedTracks[p2id]) {
-    // this shouldn't happen, so return false for safety, as above
-    return false;
-  }
-  if (p.public.subscribedTracks[p2id].ALL !== undefined) {
-    return p.public.subscribedTracks[p2id].ALL;
-  }
-  return p.public.subscribedTracks[p2id][mediaTag];
+
+  return !!sTracks[p2id][mediaTag];
 };
 
 const _getRemoteStreamEntry = (state, participantId, type, kind) => {

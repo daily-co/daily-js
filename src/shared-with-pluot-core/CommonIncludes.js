@@ -76,6 +76,7 @@ export const DAILY_METHOD_GET_INPUT_DEVICES = 'get-input-devices';
 export const DAILY_METHOD_JOIN = 'join-meeting';
 export const DAILY_METHOD_LEAVE = 'leave-meeting';
 export const DAILY_METHOD_UPDATE_PARTICIPANT = 'update-participant';
+export const DAILY_METHOD_UPDATE_PARTICIPANTS = 'update-participants';
 export const DAILY_METHOD_LOCAL_AUDIO = 'local-audio';
 export const DAILY_METHOD_LOCAL_VIDEO = 'local-video';
 export const DAILY_METHOD_START_SCREENSHARE = 'local-screen-start';
