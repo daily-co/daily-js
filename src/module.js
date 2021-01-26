@@ -665,7 +665,9 @@ export default class DailyIframe extends EventEmitter {
       ) {
         this.validateParticipantProperties(sessionId, properties[sessionId]);
       } else {
-        console.warn(`unrecognized participant id: ${sessionId}`);
+        console.warn(
+          `unrecognized participant in updateParticipants: ${sessionId}`
+        );
         delete properties[sessionId];
       }
     }
