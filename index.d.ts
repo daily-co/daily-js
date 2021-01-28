@@ -277,32 +277,24 @@ export interface DailyRoomInfo {
     enable_screenshare?: boolean;
     enable_dialin?: boolean;
     autojoin?: boolean;
-    meeting_join_hook?: string;
     eject_at_room_exp?: boolean;
     eject_after_elapsed?: number;
     lang?: '' | DailyLanguage;
     sfu_switchover?: number;
-    switchover_impl?: string;
     signaling_impl?: string;
     geo?: string;
   };
   domainConfig: {
     hide_daily_branding?: boolean;
     redirect_on_meeting_exit?: string;
-    meeting_join_hook?: string;
     hipaa?: boolean;
-    intercom_auto_record?: boolean;
-    intercom_manual_record?: string;
     sfu_impl?: string;
     signaling_impl?: string;
     sfu_switchover?: number;
-    switchover_impl?: string;
     lang?: '' | DailyLanguage;
-    callstats?: any;
     max_api_rooms?: number;
     webhook_meeting_end?: any;
     max_live_streams?: number;
-    enable_daily_logger?: boolean;
   };
   dialInPIN?: string;
 }
