@@ -274,7 +274,6 @@ export interface DailyRoomInfo {
     owner_only_broadcast?: boolean;
     audio_only?: boolean;
     enable_recording?: string;
-    enable_screenshare?: boolean;
     enable_dialin?: boolean;
     autojoin?: boolean;
     eject_at_room_exp?: boolean;
