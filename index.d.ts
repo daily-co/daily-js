@@ -548,7 +548,9 @@ export interface DailyCall {
   }>;
   requestFullscreen(): Promise<void>;
   exitFullscreen(): void;
-  room(): Promise<DailyPendingRoomInfo | DailyRoomInfo | null>;
+  room(options?: {
+    includeRoomConfigDefaults: boolean;
+  }): Promise<DailyPendingRoomInfo | DailyRoomInfo | null>;
   geo(): Promise<{ current: string }>;
   setNetworkTopology(options: {
     topology: 'sfu' | 'peer';

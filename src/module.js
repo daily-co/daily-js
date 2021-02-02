@@ -1434,7 +1434,7 @@ export default class DailyIframe extends EventEmitter {
     }
   }
 
-  async room() {
+  async room({ includeRoomConfigDefaults = true } = {}) {
     if (this._meetingState !== DAILY_STATE_JOINED) {
       // Return the URL of the room we'd be in if we succesfully join()ed.
       // Note that this doesn't mean you're necessarily in the process of
@@ -1450,7 +1450,10 @@ export default class DailyIframe extends EventEmitter {
         delete msg.callbackStamp;
         resolve(msg);
       };
-      this.sendMessageToCallMachine({ action: DAILY_METHOD_ROOM }, k);
+      this.sendMessageToCallMachine(
+        { action: DAILY_METHOD_ROOM, includeRoomConfigDefaults },
+        k
+      );
     });
   }
 
