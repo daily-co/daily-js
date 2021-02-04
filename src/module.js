@@ -1634,8 +1634,9 @@ export default class DailyIframe extends EventEmitter {
               this._participants[id]
             );
           }
-          // track events
+
           try {
+            // track events
             this.maybeEventTrackStopped(
               this._participants[id],
               msg.participant,
@@ -1675,6 +1676,16 @@ export default class DailyIframe extends EventEmitter {
               this._participants[id],
               msg.participant,
               'screenAudioTrack'
+            );
+
+            // recording events
+            this.maybeEventRecordingStopped(
+              this._participants[id],
+              msg.participant
+            );
+            this.maybeEventRecordingStarted(
+              this._participants[id],
+              msg.participant
             );
           } catch (e) {
             console.error('track events error', e);
@@ -1836,6 +1847,38 @@ export default class DailyIframe extends EventEmitter {
         this.exitFullscreen();
         break;
       default: // no op
+    }
+  }
+
+  maybeEventRecordingStopped(prevP, thisP) {
+    const key = 'record';
+    if (!prevP) {
+      return;
+    }
+    if (thisP[key] === false && prevP[key] !== thisP[key]) {
+      try {
+        this.emit(DAILY_EVENT_RECORDING_STOPPED, {
+          action: DAILY_EVENT_RECORDING_STOPPED,
+        });
+      } catch (e) {
+        console.log('could not emit', e);
+      }
+    }
+  }
+
+  maybeEventRecordingStarted(prevP, thisP) {
+    const key = 'record';
+    if (!prevP) {
+      return;
+    }
+    if (thisP[key] === true && prevP[key] !== thisP[key]) {
+      try {
+        this.emit(DAILY_EVENT_RECORDING_STARTED, {
+          action: DAILY_EVENT_RECORDING_STARTED,
+        });
+      } catch (e) {
+        console.log('could not emit', e);
+      }
     }
   }
 
