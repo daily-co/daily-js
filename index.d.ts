@@ -470,6 +470,19 @@ export interface DailyCallStaticUtils {
   version(): string;
 }
 
+export interface DailyStreamingDefaultLayoutConfig {
+  preset: "default";
+};
+
+export interface DailyStreamingSingleParticipantLayoutConfig {
+  preset: "single-participant";
+  session_id: string;
+};
+
+export type DailyStreamingLayoutConfig =
+  | DailyStreamingDefaultLayoutConfig
+  | DailyStreamingSingleParticipantLayoutConfig;
+
 export interface DailyCall {
   iframe(): HTMLIFrameElement | null;
   join(properties?: DailyCallOptions): Promise<DailyParticipantsObject | void>;
@@ -527,6 +540,7 @@ export interface DailyCall {
   startLiveStreaming(options: {
     rtmpUrl: string;
     backgroundColor?: string;
+    layout?: DailyStreamingLayoutConfig;
   }): void;
   stopLiveStreaming(): void;
   getNetworkStats(): Promise<DailyNetworkStats>;

@@ -1210,6 +1210,7 @@ export default class DailyIframe extends EventEmitter {
     width = 1920,
     height = 1080,
     backgroundColor = '0xff000000',
+    layout = { preset: 'default' },
   }) {
     methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({
@@ -1218,6 +1219,7 @@ export default class DailyIframe extends EventEmitter {
       width,
       height,
       backgroundColor,
+      layout,
     });
   }
 
