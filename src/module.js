@@ -96,6 +96,8 @@ import {
   DAILY_METHOD_GET_CAMERA_FACING_MODE,
   DAILY_METHOD_SET_USER_NAME,
   DAILY_METHOD_PREAUTH,
+  DAILY_ACCESS_STATE_UNKNOWN,
+  DAILY_EVENT_ACCESS_STATE_UPDATED,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -483,6 +485,7 @@ export default class DailyIframe extends EventEmitter {
       : null;
     this._meetingState = DAILY_STATE_NEW; // only update via updateIsPreparingToJoin() or updateMeetingState()
     this._isPreparingToJoin = false; // only update via updateMeetingState()
+    this._accessState = DAILY_ACCESS_STATE_UNKNOWN;
     this._nativeInCallAudioMode = NATIVE_AUDIO_MODE_VIDEO_CALL;
     this._participants = {};
     this._inputEventsOn = {}; // need to cache these until loaded
@@ -611,6 +614,10 @@ export default class DailyIframe extends EventEmitter {
 
   meetingState() {
     return this._meetingState;
+  }
+
+  accessState() {
+    return this._accessState;
   }
 
   participants() {
@@ -988,16 +995,17 @@ export default class DailyIframe extends EventEmitter {
     // Pre-auth with the server.
     return new Promise((resolve, reject) => {
       const k = (msg) => {
-        delete msg.action;
-        delete msg.callbackStamp;
-        delete msg.properties;
+        if (!msg.access) {
+          reject(new Error('unknown error in preAuth()'));
+        }
 
         // Set a flag indicating that we've pre-authed.
         // This flag has the effect of "locking in" url and token, so that they
         // can't be changed subsequently on join(), which would invalidate this
         // pre-auth.
         this._didPreAuth = true;
-        resolve(msg);
+
+        resolve({ access: msg.access });
       };
       this.sendMessageToCallMachine(
         {
@@ -1810,6 +1818,11 @@ export default class DailyIframe extends EventEmitter {
           }
         }
         break;
+      case DAILY_EVENT_ACCESS_STATE_UPDATED:
+        if (msg.access && !deepEqual(this._accessState, msg.access)) {
+          this._accessState = msg.access;
+        }
+        break;
       case DAILY_EVENT_ERROR:
         if (this._iframe) {
           this._iframe.src = '';
@@ -2094,6 +2107,7 @@ export default class DailyIframe extends EventEmitter {
     this._participants = {};
     this._activeSpeakerMode = false;
     this._didPreAuth = false;
+    this._accessState = DAILY_ACCESS_STATE_UNKNOWN;
     resetPreloadCache(this._preloadCache);
   }
 

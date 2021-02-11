@@ -499,6 +499,7 @@ export interface DailyCall {
     cssText?: string;
   }): DailyCall;
   meetingState(): DailyMeetingState;
+  accessState(): DailyAccessState;
   participants(): DailyParticipantsObject;
   updateParticipant(
     sessionId: string,

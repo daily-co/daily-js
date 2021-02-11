@@ -17,6 +17,8 @@ export const DAILY_TRACK_STATE_LOADING = 'loading';
 export const DAILY_TRACK_STATE_INTERRUPTED = 'interrupted';
 export const DAILY_TRACK_STATE_PLAYABLE = 'playable';
 
+export const DAILY_ACCESS_STATE_UNKNOWN = 'unknown';
+
 export const DAILY_EVENT_LOADING = 'loading';
 export const DAILY_EVENT_LOAD_ATTEMPT_FAILED = 'load-attempt-failed';
 export const DAILY_EVENT_LOADED = 'loaded';
@@ -29,6 +31,8 @@ export const DAILY_EVENT_LEFT_MEETING = 'left-meeting';
 export const DAILY_EVENT_PARTICIPANT_JOINED = 'participant-joined';
 export const DAILY_EVENT_PARTICIPANT_UPDATED = 'participant-updated';
 export const DAILY_EVENT_PARTICIPANT_LEFT = 'participant-left';
+
+export const DAILY_EVENT_ACCESS_STATE_UPDATED = 'access-state-updated';
 
 export const DAILY_EVENT_TRACK_STARTED = 'track-started';
 export const DAILY_EVENT_TRACK_STOPPED = 'track-stopped';
