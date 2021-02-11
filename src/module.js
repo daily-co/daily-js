@@ -95,6 +95,7 @@ import {
   DAILY_EVENT_LOAD_ATTEMPT_FAILED,
   DAILY_METHOD_GET_CAMERA_FACING_MODE,
   DAILY_METHOD_SET_USER_NAME,
+  DAILY_METHOD_PREAUTH,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -588,6 +589,8 @@ export default class DailyIframe extends EventEmitter {
         this.handleNativeAppActiveStateChange
       );
     }
+
+    this.resetMeetingDependentVars();
   }
 
   loadCss({ bodyClass, cssFile, cssText }) {
@@ -945,6 +948,67 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
+  async preAuth(properties = {}) {
+    // Validate mode.
+    if (!this._callObjectMode) {
+      throw new Error('preAuth() currently only supported in call object mode');
+    }
+
+    // Validate meeting state: pre-auth is only allowed if you haven't already
+    // joined (or aren't in the process of joining).
+    if (
+      [DAILY_STATE_JOINING, DAILY_STATE_JOINED].includes(this._meetingState)
+    ) {
+      throw new Error('preAuth() not supported after joining a meeting');
+    }
+
+    // Load call machine bundle, if needed.
+    if (this.needsLoad()) {
+      await this.load(properties);
+    }
+
+    // Assign properties, ensuring that at a minimum url is set.
+    // Disallow changing to a url with a different bundle url than the one used
+    // for load().
+    if (!properties.url) {
+      throw new Error('preAuth() requires at least a url to be provided');
+    }
+    const newBundleUrl = callObjectBundleUrl(properties.url);
+    const loadedBundleUrl = callObjectBundleUrl(
+      this.properties.url || this.properties.baseUrl
+    );
+    if (newBundleUrl !== loadedBundleUrl) {
+      throw new Error(
+        `url in preAuth() has a different bundle url than the one loaded (${loadedBundleUrl} -> ${newBundleUrl})`
+      );
+    }
+    this.validateProperties(properties);
+    this.properties = { ...this.properties, ...properties };
+
+    // Pre-auth with the server.
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        delete msg.action;
+        delete msg.callbackStamp;
+        delete msg.properties;
+
+        // Set a flag indicating that we've pre-authed.
+        // This flag has the effect of "locking in" url and token, so that they
+        // can't be changed subsequently on join(), which would invalidate this
+        // pre-auth.
+        this._didPreAuth = true;
+        resolve(msg);
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_PREAUTH,
+          properties: makeSafeForPostMessage(this.properties),
+        },
+        k
+      );
+    });
+  }
+
   async load(properties) {
     if (!this.needsLoad()) {
       return;
@@ -993,6 +1057,7 @@ export default class DailyIframe extends EventEmitter {
             });
             if (!willRetry) {
               this.updateMeetingState(DAILY_STATE_ERROR);
+              this.resetMeetingDependentVars();
               this.emit(DAILY_EVENT_ERROR, {
                 action: DAILY_EVENT_ERROR,
                 errorMsg,
@@ -1040,6 +1105,25 @@ export default class DailyIframe extends EventEmitter {
     } else {
       newCss = !!(this.properties.cssFile || this.properties.cssText);
 
+      // Validate that any provided url or token doesn't conflict with url or
+      // token already used to preAuth()
+      if (this._didPreAuth) {
+        if (properties.url && properties.url !== this.properties.url) {
+          console.error(
+            `url in join() is different than the one used in preAuth()`
+          );
+          this.updateIsPreparingToJoin(false);
+          return Promise.reject();
+        }
+        if (properties.token && properties.token !== this.properties.token) {
+          console.error(
+            `token in join() is different than the one used in preAuth()`
+          );
+          this.updateIsPreparingToJoin(false);
+          return Promise.reject();
+        }
+      }
+
       // Validate that url we're using to join() doesn't conflict with the url
       // we used to load()
       if (properties.url) {
@@ -1050,7 +1134,7 @@ export default class DailyIframe extends EventEmitter {
           );
           if (newBundleUrl !== loadedBundleUrl) {
             console.error(
-              `error: in call object mode, can't change the daily.co call url after load() to one with a different bundle url (${loadedBundleUrl} -> ${newBundleUrl})`
+              `url in join() has a different bundle url than the one loaded (${loadedBundleUrl} -> ${newBundleUrl})`
             );
             this.updateIsPreparingToJoin(false);
             return Promise.reject();
@@ -1060,7 +1144,7 @@ export default class DailyIframe extends EventEmitter {
           // iframe mode
           if (properties.url && properties.url !== this.properties.url) {
             console.error(
-              `error: in iframe mode, can't change the daily.co call url after load() (${this.properties.url} -> ${properties.url})`
+              `url in join() is different than the one used in load() (${this.properties.url} -> ${properties.url})`
             );
             this.updateIsPreparingToJoin(false);
             return Promise.reject();
@@ -2009,6 +2093,7 @@ export default class DailyIframe extends EventEmitter {
   resetMeetingDependentVars() {
     this._participants = {};
     this._activeSpeakerMode = false;
+    this._didPreAuth = false;
     resetPreloadCache(this._preloadCache);
   }
 

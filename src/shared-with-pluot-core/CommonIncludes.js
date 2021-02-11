@@ -110,6 +110,7 @@ export const DAILY_METHOD_START_LIVE_STREAMING =
   'daily-method-start-live-streaming';
 export const DAILY_METHOD_STOP_LIVE_STREAMING =
   'daily-method-stop-live-streaming';
+export const DAILY_METHOD_PREAUTH = 'daily-method-preauth';
 
 export const DAILY_CUSTOM_TRACK = 'daily-custom-track';
 export const DAILY_UI_REQUEST_FULLSCREEN = 'request-fullscreen';
