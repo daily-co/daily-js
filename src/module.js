@@ -492,6 +492,7 @@ export default class DailyIframe extends EventEmitter {
     this._accessState = DAILY_ACCESS_STATE_UNKNOWN;
     this._nativeInCallAudioMode = NATIVE_AUDIO_MODE_VIDEO_CALL;
     this._participants = {};
+    this._waitingParticipants = {};
     this._inputEventsOn = {}; // need to cache these until loaded
     this._network = { threshold: 'good', quality: 100 };
     this._activeSpeaker = {};
@@ -626,6 +627,10 @@ export default class DailyIframe extends EventEmitter {
 
   participants() {
     return this._participants;
+  }
+
+  waitingParticipants() {
+    return this._waitingParticipants;
   }
 
   validateParticipantProperties(sessionId, properties) {
@@ -1960,6 +1965,18 @@ export default class DailyIframe extends EventEmitter {
           }
         }
         break;
+      case DAILY_EVENT_WAITING_PARTICIPANT_ADDED:
+      case DAILY_EVENT_WAITING_PARTICIPANT_REMOVED:
+        this._waitingParticipants = msg.allWaitingParticipants;
+        try {
+          this.emit(msg.action, {
+            action: msg.action,
+            participant: msg.participant,
+          });
+        } catch (e) {
+          console.log('could not emit', msg, e);
+        }
+        break;
       case DAILY_EVENT_RECORDING_STARTED:
       case DAILY_EVENT_RECORDING_STOPPED:
       case DAILY_EVENT_RECORDING_STATS:
@@ -1975,8 +1992,6 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_LIVE_STREAMING_STARTED:
       case DAILY_EVENT_LIVE_STREAMING_STOPPED:
       case DAILY_EVENT_LIVE_STREAMING_ERROR:
-      case DAILY_EVENT_WAITING_PARTICIPANT_ADDED:
-      case DAILY_EVENT_WAITING_PARTICIPANT_REMOVED:
         try {
           this.emit(msg.action, msg);
         } catch (e) {
@@ -2151,6 +2166,7 @@ export default class DailyIframe extends EventEmitter {
   // were being reset properly on leave() but not when leaving via prebuilt ui.
   resetMeetingDependentVars() {
     this._participants = {};
+    this._waitingParticipants = {};
     this._activeSpeakerMode = false;
     this._didPreAuth = false;
     this._accessState = DAILY_ACCESS_STATE_UNKNOWN;

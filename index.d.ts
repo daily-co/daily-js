@@ -530,6 +530,7 @@ export interface DailyCall {
   updateParticipants(updates: {
     [sessionId: string]: DailyParticipantUpdateOptions;
   }): DailyCall;
+  waitingParticipants(): { [id: string]: DailyWaitingParticipant };
   requestAccess(access: DailyAccessRequest): Promise<DailyAccessState>;
   localAudio(): boolean;
   localVideo(): boolean;
