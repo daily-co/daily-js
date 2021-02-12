@@ -192,6 +192,7 @@ export interface DailyParticipant {
 export interface DailyWaitingParticipant {
   id: string;
   name: string;
+  awaitingAccess: DailyAccess;
 }
 
 export type DailyTrackSubscriptionOptions =
@@ -506,7 +507,9 @@ export type DailyStreamingLayoutConfig =
   | DailyStreamingDefaultLayoutConfig
   | DailyStreamingSingleParticipantLayoutConfig;
 
-export type DailyAccessState = 'unknown' | { level: 'none' | 'lobby' | 'full' };
+export type DailyAccess = { level: 'none' | 'lobby' | 'full' };
+
+export type DailyAccessState = 'unknown' | DailyAccess;
 
 export type DailyAccessRequest = {
   access?: { level: 'full' };
