@@ -213,6 +213,10 @@ export interface DailyParticipantUpdateOptions {
   styles?: DailyParticipantCss;
 }
 
+export interface DailyWaitingParticipantUpdateOptions {
+  grantRequestedAccess?: boolean;
+}
+
 export interface DailyParticipantCss {
   cam?: DailyParticipantStreamCss;
   screen?: DailyParticipantStreamCss;
@@ -537,6 +541,10 @@ export interface DailyCall {
     [sessionId: string]: DailyParticipantUpdateOptions;
   }): DailyCall;
   waitingParticipants(): { [id: string]: DailyWaitingParticipant };
+  updateWaitingParticipant(
+    id: string,
+    updates: DailyWaitingParticipantUpdateOptions
+  ): Promise<{ id: string }>;
   requestAccess(access: DailyAccessRequest): Promise<DailyAccessState>;
   localAudio(): boolean;
   localVideo(): boolean;

@@ -103,6 +103,7 @@ import {
   DAILY_EVENT_WAITING_PARTICIPANT_ADDED,
   DAILY_EVENT_WAITING_PARTICIPANT_REMOVED,
   DAILY_EVENT_WAITING_PARTICIPANT_UPDATED,
+  DAILY_METHOD_UPDATE_WAITING_PARTICIPANT,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -698,7 +699,52 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
-  requestAccess({
+  async updateWaitingParticipant(id = '', properties = {}) {
+    // Validate mode.
+    if (!this._callObjectMode) {
+      throw new Error(
+        'updateWaitingParticipant() currently only supported in call object mode'
+      );
+    }
+
+    // Validate meeting state: only allowed once you've joined.
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      throw new Error(
+        'updateWaitingParticipant() only supported for joined meetings'
+      );
+    }
+
+    // Validate argument presence.
+    if (!(typeof id === 'string' && typeof properties === 'object')) {
+      throw new Error(
+        'updateWaitingParticipant() must take an id string and a properties object'
+      );
+    }
+
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        }
+
+        if (!msg.id) {
+          reject(new Error('unknown error in updateWaitingParticipant()'));
+        }
+
+        resolve({ id: msg.id });
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_UPDATE_WAITING_PARTICIPANT,
+          id,
+          properties,
+        },
+        k
+      );
+    });
+  }
+
+  async requestAccess({
     access = { level: DAILY_ACCESS_STATE_LEVEL_FULL },
     name = '',
   } = {}) {

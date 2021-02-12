@@ -126,6 +126,8 @@ export const DAILY_METHOD_STOP_LIVE_STREAMING =
   'daily-method-stop-live-streaming';
 export const DAILY_METHOD_PREAUTH = 'daily-method-preauth';
 export const DAILY_METHOD_REQUEST_ACCESS = 'daily-method-request-access';
+export const DAILY_METHOD_UPDATE_WAITING_PARTICIPANT =
+  'daily-method-update-waiting-participant';
 
 export const DAILY_CUSTOM_TRACK = 'daily-custom-track';
 export const DAILY_UI_REQUEST_FULLSCREEN = 'request-fullscreen';
