@@ -545,6 +545,9 @@ export interface DailyCall {
     id: string,
     updates: DailyWaitingParticipantUpdateOptions
   ): Promise<{ id: string }>;
+  updateWaitingParticipants(updates: {
+    [id: string]: DailyWaitingParticipantUpdateOptions;
+  }): Promise<{ ids: string[] }>;
   requestAccess(access: DailyAccessRequest): Promise<DailyAccessState>;
   localAudio(): boolean;
   localVideo(): boolean;
