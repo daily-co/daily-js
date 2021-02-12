@@ -37,6 +37,11 @@ export const DAILY_EVENT_PARTICIPANT_LEFT = 'participant-left';
 
 export const DAILY_EVENT_ACCESS_STATE_UPDATED = 'access-state-updated';
 
+export const DAILY_EVENT_WAITING_PARTICIPANT_ADDED =
+  'waiting-participant-added';
+export const DAILY_EVENT_WAITING_PARTICIPANT_REMOVED =
+  'waiting-participant-removed';
+
 export const DAILY_EVENT_TRACK_STARTED = 'track-started';
 export const DAILY_EVENT_TRACK_STOPPED = 'track-stopped';
 

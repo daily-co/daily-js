@@ -100,6 +100,8 @@ import {
   DAILY_EVENT_ACCESS_STATE_UPDATED,
   DAILY_ACCESS_STATE_LEVEL_FULL,
   DAILY_METHOD_REQUEST_ACCESS,
+  DAILY_EVENT_WAITING_PARTICIPANT_ADDED,
+  DAILY_EVENT_WAITING_PARTICIPANT_REMOVED,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -1973,6 +1975,8 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_LIVE_STREAMING_STARTED:
       case DAILY_EVENT_LIVE_STREAMING_STOPPED:
       case DAILY_EVENT_LIVE_STREAMING_ERROR:
+      case DAILY_EVENT_WAITING_PARTICIPANT_ADDED:
+      case DAILY_EVENT_WAITING_PARTICIPANT_REMOVED:
         try {
           this.emit(msg.action, msg);
         } catch (e) {

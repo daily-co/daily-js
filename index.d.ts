@@ -68,7 +68,9 @@ export type DailyEvent =
   | 'touchend'
   | 'live-streaming-started'
   | 'live-streaming-stopped'
-  | 'live-streaming-error';
+  | 'live-streaming-error'
+  | 'waiting-participant-added'
+  | 'waiting-participant-removed';
 
 export type DailyMeetingState =
   | 'new'
@@ -184,6 +186,11 @@ export interface DailyParticipant {
   // video element info (iframe-based calls using standard UI only)
   cam_info: {} | DailyVideoElementInfo;
   screen_info: {} | DailyVideoElementInfo;
+}
+
+export interface DailyWaitingParticipant {
+  id: string;
+  name: string;
 }
 
 export type DailyTrackSubscriptionOptions =
@@ -341,6 +348,14 @@ export interface DailyEventObjectParticipant {
   participant: DailyParticipant;
 }
 
+export interface DailyEventObjectWaitingParticipant {
+  action: Extract<
+    DailyEvent,
+    'waiting-participant-added' | 'waiting-participant-removed'
+  >;
+  participant: DailyWaitingParticipant;
+}
+
 export interface DailyEventObjectTrack {
   action: Extract<DailyEvent, 'track-started' | 'track-stopped'>;
   participant: DailyParticipant | null; // null if participant left meeting
@@ -429,6 +444,8 @@ export type DailyEventObject<
   ? DailyEventObjectParticipants
   : T extends DailyEventObjectParticipant['action']
   ? DailyEventObjectParticipant
+  : T extends DailyEventObjectWaitingParticipant['action']
+  ? DailyEventObjectWaitingParticipant
   : T extends DailyEventObjectTrack['action']
   ? DailyEventObjectTrack
   : T extends DailyEventObjectMouseEvent['action']
