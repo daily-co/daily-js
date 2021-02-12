@@ -70,6 +70,7 @@ export type DailyEvent =
   | 'live-streaming-stopped'
   | 'live-streaming-error'
   | 'waiting-participant-added'
+  | 'waiting-participant-updated'
   | 'waiting-participant-removed';
 
 export type DailyMeetingState =
@@ -351,7 +352,9 @@ export interface DailyEventObjectParticipant {
 export interface DailyEventObjectWaitingParticipant {
   action: Extract<
     DailyEvent,
-    'waiting-participant-added' | 'waiting-participant-removed'
+    | 'waiting-participant-added'
+    | 'waiting-participant-updated'
+    | 'waiting-participant-removed'
   >;
   participant: DailyWaitingParticipant;
 }

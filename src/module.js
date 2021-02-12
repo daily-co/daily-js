@@ -102,6 +102,7 @@ import {
   DAILY_METHOD_REQUEST_ACCESS,
   DAILY_EVENT_WAITING_PARTICIPANT_ADDED,
   DAILY_EVENT_WAITING_PARTICIPANT_REMOVED,
+  DAILY_EVENT_WAITING_PARTICIPANT_UPDATED,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -1966,6 +1967,7 @@ export default class DailyIframe extends EventEmitter {
         }
         break;
       case DAILY_EVENT_WAITING_PARTICIPANT_ADDED:
+      case DAILY_EVENT_WAITING_PARTICIPANT_UPDATED:
       case DAILY_EVENT_WAITING_PARTICIPANT_REMOVED:
         this._waitingParticipants = msg.allWaitingParticipants;
         try {

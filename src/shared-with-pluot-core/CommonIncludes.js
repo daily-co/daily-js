@@ -39,6 +39,8 @@ export const DAILY_EVENT_ACCESS_STATE_UPDATED = 'access-state-updated';
 
 export const DAILY_EVENT_WAITING_PARTICIPANT_ADDED =
   'waiting-participant-added';
+export const DAILY_EVENT_WAITING_PARTICIPANT_UPDATED =
+  'waiting-participant-updated';
 export const DAILY_EVENT_WAITING_PARTICIPANT_REMOVED =
   'waiting-participant-removed';
 
