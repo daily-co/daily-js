@@ -488,6 +488,11 @@ export type DailyStreamingLayoutConfig =
 
 export type DailyAccessState = 'unknown' | { level: 'none' | 'lobby' | 'full' };
 
+export type DailyAccessRequest = {
+  access?: { level: 'full' };
+  name: string;
+};
+
 export interface DailyCall {
   iframe(): HTMLIFrameElement | null;
   join(properties?: DailyCallOptions): Promise<DailyParticipantsObject | void>;
@@ -508,6 +513,7 @@ export interface DailyCall {
   updateParticipants(updates: {
     [sessionId: string]: DailyParticipantUpdateOptions;
   }): DailyCall;
+  requestAccess(access: DailyAccessRequest): Promise<DailyAccessState>;
   localAudio(): boolean;
   localVideo(): boolean;
   setLocalAudio(enabled: boolean): DailyCall;

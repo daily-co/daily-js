@@ -98,6 +98,8 @@ import {
   DAILY_METHOD_PREAUTH,
   DAILY_ACCESS_STATE_UNKNOWN,
   DAILY_EVENT_ACCESS_STATE_UPDATED,
+  DAILY_ACCESS_STATE_LEVEL_FULL,
+  DAILY_METHOD_REQUEST_ACCESS,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -686,6 +688,46 @@ export default class DailyIframe extends EventEmitter {
       participants: properties,
     });
     return this;
+  }
+
+  requestAccess({
+    access = { level: DAILY_ACCESS_STATE_LEVEL_FULL },
+    name = '',
+  } = {}) {
+    // Validate mode.
+    if (!this._callObjectMode) {
+      throw new Error(
+        'requestAccess() currently only supported in call object mode'
+      );
+    }
+
+    // Validate meeting state: access requesting is only allowed once you've
+    // joined.
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      throw new Error('requestAccess() only supported for joined meetings');
+    }
+
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        }
+
+        if (!msg.access) {
+          reject(new Error('unknown error in requestAccess()'));
+        }
+
+        resolve({ access: msg.access, granted: msg.granted });
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_REQUEST_ACCESS,
+          access,
+          name,
+        },
+        k
+      );
+    });
   }
 
   localAudio() {

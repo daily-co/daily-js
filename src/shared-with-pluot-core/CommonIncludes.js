@@ -18,6 +18,9 @@ export const DAILY_TRACK_STATE_INTERRUPTED = 'interrupted';
 export const DAILY_TRACK_STATE_PLAYABLE = 'playable';
 
 export const DAILY_ACCESS_STATE_UNKNOWN = 'unknown';
+export const DAILY_ACCESS_STATE_LEVEL_FULL = 'full';
+export const DAILY_ACCESS_STATE_LEVEL_LOBBY = 'lobby';
+export const DAILY_ACCESS_STATE_LEVEL_NONE = 'none';
 
 export const DAILY_EVENT_LOADING = 'loading';
 export const DAILY_EVENT_LOAD_ATTEMPT_FAILED = 'load-attempt-failed';
@@ -115,6 +118,7 @@ export const DAILY_METHOD_START_LIVE_STREAMING =
 export const DAILY_METHOD_STOP_LIVE_STREAMING =
   'daily-method-stop-live-streaming';
 export const DAILY_METHOD_PREAUTH = 'daily-method-preauth';
+export const DAILY_METHOD_REQUEST_ACCESS = 'daily-method-request-access';
 
 export const DAILY_CUSTOM_TRACK = 'daily-custom-track';
 export const DAILY_UI_REQUEST_FULLSCREEN = 'request-fullscreen';
