@@ -1963,6 +1963,11 @@ export default class DailyIframe extends EventEmitter {
         if (msg.access && !deepEqual(this._accessState, msg.access)) {
           this._accessState = msg.access;
         }
+        try {
+          this.emit(msg.action, msg);
+        } catch (e) {
+          console.log('could not emit', msg);
+        }
         break;
       case DAILY_EVENT_ERROR:
         if (this._iframe) {
