@@ -1670,26 +1670,32 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async room({ includeRoomConfigDefaults = true } = {}) {
-    if (this._meetingState !== DAILY_STATE_JOINED) {
-      // Return the URL of the room we'd be in if we succesfully join()ed.
-      // Note that this doesn't mean you're necessarily in the process of
-      // joining; you might be waiting for join() to be called.
+    if (this._meetingState === DAILY_STATE_JOINED || this._didPreAuth) {
+      // We've succesfully join()ed or preAuth()ed, so we should have room info.
+      return new Promise((resolve, _) => {
+        let k = (msg) => {
+          delete msg.action;
+          delete msg.callbackStamp;
+          resolve(msg);
+        };
+        this.sendMessageToCallMachine(
+          { action: DAILY_METHOD_ROOM, includeRoomConfigDefaults },
+          k
+        );
+      });
+    } else {
+      // Return the URL of the room we'll be in if/when we successfully join(),
+      // since we have no other room info to show yet.
       if (this.properties.url) {
+        // NOTE: technically this should be called "roomUrlPendingJoinOrPreauth"
+        // to indicate that *either* a join() or a preAuth() will allow you to
+        // access room info, but preAuth() was added later and this name was
+        // preserved to maintain backward compatibility: if a consumer hasn't
+        // updated their app to use preAuth(), they'll be none the wiser.
         return { roomUrlPendingJoin: this.properties.url };
       }
       return null;
     }
-    return new Promise((resolve, _) => {
-      let k = (msg) => {
-        delete msg.action;
-        delete msg.callbackStamp;
-        resolve(msg);
-      };
-      this.sendMessageToCallMachine(
-        { action: DAILY_METHOD_ROOM, includeRoomConfigDefaults },
-        k
-      );
-    });
   }
 
   async geo() {
