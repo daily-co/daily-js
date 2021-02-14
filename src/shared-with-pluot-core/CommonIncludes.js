@@ -17,10 +17,10 @@ export const DAILY_TRACK_STATE_LOADING = 'loading';
 export const DAILY_TRACK_STATE_INTERRUPTED = 'interrupted';
 export const DAILY_TRACK_STATE_PLAYABLE = 'playable';
 
-export const DAILY_ACCESS_STATE_UNKNOWN = 'unknown';
-export const DAILY_ACCESS_STATE_LEVEL_FULL = 'full';
-export const DAILY_ACCESS_STATE_LEVEL_LOBBY = 'lobby';
-export const DAILY_ACCESS_STATE_LEVEL_NONE = 'none';
+export const DAILY_ACCESS_UNKNOWN = 'unknown';
+export const DAILY_ACCESS_LEVEL_FULL = 'full';
+export const DAILY_ACCESS_LEVEL_LOBBY = 'lobby';
+export const DAILY_ACCESS_LEVEL_NONE = 'none';
 
 export const DAILY_EVENT_LOADING = 'loading';
 export const DAILY_EVENT_LOAD_ATTEMPT_FAILED = 'load-attempt-failed';

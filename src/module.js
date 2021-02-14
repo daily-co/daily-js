@@ -96,9 +96,9 @@ import {
   DAILY_METHOD_GET_CAMERA_FACING_MODE,
   DAILY_METHOD_SET_USER_NAME,
   DAILY_METHOD_PREAUTH,
-  DAILY_ACCESS_STATE_UNKNOWN,
+  DAILY_ACCESS_UNKNOWN,
   DAILY_EVENT_ACCESS_STATE_UPDATED,
-  DAILY_ACCESS_STATE_LEVEL_FULL,
+  DAILY_ACCESS_LEVEL_FULL,
   DAILY_METHOD_REQUEST_ACCESS,
   DAILY_EVENT_WAITING_PARTICIPANT_ADDED,
   DAILY_EVENT_WAITING_PARTICIPANT_REMOVED,
@@ -492,7 +492,7 @@ export default class DailyIframe extends EventEmitter {
       : null;
     this._meetingState = DAILY_STATE_NEW; // only update via updateIsPreparingToJoin() or updateMeetingState()
     this._isPreparingToJoin = false; // only update via updateMeetingState()
-    this._accessState = DAILY_ACCESS_STATE_UNKNOWN;
+    this._accessState = { access: DAILY_ACCESS_UNKNOWN };
     this._nativeInCallAudioMode = NATIVE_AUDIO_MODE_VIDEO_CALL;
     this._participants = {};
     this._waitingParticipants = {};
@@ -790,7 +790,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async requestAccess({
-    access = { level: DAILY_ACCESS_STATE_LEVEL_FULL },
+    access = { level: DAILY_ACCESS_LEVEL_FULL },
     name = '',
   } = {}) {
     // Validate mode.
@@ -1966,13 +1966,19 @@ export default class DailyIframe extends EventEmitter {
         }
         break;
       case DAILY_EVENT_ACCESS_STATE_UPDATED:
-        if (msg.access && !deepEqual(this._accessState, msg.access)) {
-          this._accessState = msg.access;
+        let newAccessState = {
+          access: msg.access,
+        };
+        if (msg.awaitingAccess) {
+          newAccessState.awaitingAccess = msg.awaitingAccess;
         }
-        try {
-          this.emit(msg.action, msg);
-        } catch (e) {
-          console.log('could not emit', msg);
+        if (!deepEqual(this._accessState, newAccessState)) {
+          this._accessState = newAccessState;
+          try {
+            this.emit(msg.action, msg);
+          } catch (e) {
+            console.log('could not emit', msg);
+          }
         }
         break;
       case DAILY_EVENT_ERROR:
@@ -2273,7 +2279,7 @@ export default class DailyIframe extends EventEmitter {
     this._waitingParticipants = {};
     this._activeSpeakerMode = false;
     this._didPreAuth = false;
-    this._accessState = DAILY_ACCESS_STATE_UNKNOWN;
+    this._accessState = { access: DAILY_ACCESS_UNKNOWN };
     resetPreloadCache(this._preloadCache);
   }
 

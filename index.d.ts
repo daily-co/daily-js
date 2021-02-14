@@ -193,7 +193,7 @@ export interface DailyParticipant {
 export interface DailyWaitingParticipant {
   id: string;
   name: string;
-  awaitingAccess: DailyAccess;
+  awaitingAccess: SpecifiedDailyAccess;
 }
 
 export type DailyTrackSubscriptionOptions =
@@ -365,9 +365,8 @@ export interface DailyEventObjectWaitingParticipant {
   participant: DailyWaitingParticipant;
 }
 
-export interface DailyEventObjectAccessState {
+export interface DailyEventObjectAccessState extends DailyAccessState {
   action: Extract<DailyEvent, 'access-state-updated'>;
-  access: DailyAccessState;
 }
 
 export interface DailyEventObjectTrack {
@@ -519,9 +518,14 @@ export type DailyStreamingLayoutConfig =
   | DailyStreamingDefaultLayoutConfig
   | DailyStreamingSingleParticipantLayoutConfig;
 
-export type DailyAccess = { level: 'none' | 'lobby' | 'full' };
+export type DailyAccess = 'unknown' | SpecifiedDailyAccess;
 
-export type DailyAccessState = 'unknown' | DailyAccess;
+export type SpecifiedDailyAccess = { level: 'none' | 'lobby' | 'full' };
+
+export type DailyAccessState = {
+  access: DailyAccess;
+  awaitingAccess?: SpecifiedDailyAccess;
+};
 
 export type DailyAccessRequest = {
   access?: { level: 'full' };
@@ -556,7 +560,9 @@ export interface DailyCall {
   updateWaitingParticipants(updates: {
     [id: string]: DailyWaitingParticipantUpdateOptions;
   }): Promise<{ ids: string[] }>;
-  requestAccess(access: DailyAccessRequest): Promise<DailyAccessState>;
+  requestAccess(
+    access: DailyAccessRequest
+  ): Promise<{ access: DailyAccess; granted: boolean }>;
   localAudio(): boolean;
   localVideo(): boolean;
   setLocalAudio(enabled: boolean): DailyCall;
@@ -587,7 +593,7 @@ export interface DailyCall {
   }): Promise<DailyDeviceInfos>;
   setOutputDevice(audioDevice: { outputDeviceId?: string }): DailyCall;
   getInputDevices(): Promise<DailyDeviceInfos>;
-  preAuth(properties?: DailyCallOptions): Promise<{ access: DailyAccessState }>;
+  preAuth(properties?: DailyCallOptions): Promise<{ access: DailyAccess }>;
   load(properties?: DailyLoadOptions): Promise<void>;
   startScreenShare(captureOptions?: DailyScreenCaptureOptions): void;
   stopScreenShare(): void;
