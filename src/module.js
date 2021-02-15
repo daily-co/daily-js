@@ -625,6 +625,12 @@ export default class DailyIframe extends EventEmitter {
   }
 
   accessState() {
+    if (!this._callObjectMode) {
+      throw new Error(
+        'accessState() currently only supported in call object mode'
+      );
+    }
+
     return this._accessState;
   }
 
@@ -633,6 +639,12 @@ export default class DailyIframe extends EventEmitter {
   }
 
   waitingParticipants() {
+    if (!this._callObjectMode) {
+      throw new Error(
+        'waitingParticipants() currently only supported in call object mode'
+      );
+    }
+
     return this._waitingParticipants;
   }
 
