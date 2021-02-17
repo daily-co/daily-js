@@ -179,6 +179,7 @@ export interface DailyParticipant {
   will_eject_at: Date;
   local: boolean;
   owner: boolean;
+  record: boolean;
 
   // video element info (iframe-based calls using standard UI only)
   cam_info: {} | DailyVideoElementInfo;
@@ -473,13 +474,13 @@ export interface DailyCallStaticUtils {
 }
 
 export interface DailyStreamingDefaultLayoutConfig {
-  preset: "default";
-};
+  preset: 'default';
+}
 
 export interface DailyStreamingSingleParticipantLayoutConfig {
-  preset: "single-participant";
+  preset: 'single-participant';
   session_id: string;
-};
+}
 
 export type DailyStreamingLayoutConfig =
   | DailyStreamingDefaultLayoutConfig
