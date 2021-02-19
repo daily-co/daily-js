@@ -100,39 +100,26 @@ export default class WebMessageChannel extends ScriptMessageChannel {
     }
   }
 
-  ///
-  /// The below methods are meant to "shortcut" communication between an outer
-  /// callFrame driving an inner callObject living in an intermediate iframed
-  /// app, as in the new-prebuilt-UI-in-an-iframe case.
-  ///
-
   // Expects msg to already be packaged with all internal metadata fields
   // (what, from, callFrameId, etc.)
   forwardPackagedMessageToCallMachine(msg, iframe, newCallFrameId) {
     msg.callFrameId = newCallFrameId;
     const w = iframe ? iframe.contentWindow : window;
-    // TODO: comment out
-    console.log(
-      '[WebMessageChannel] forwarding packaged message to call machine',
-      msg
-    );
+    // console.log(
+    //   '[WebMessageChannel] forwarding packaged message to call machine',
+    //   msg
+    // );
     w.postMessage(msg, '*');
   }
 
   // Listener will be given packaged message with all internal metadata fields
   // (what, from, callFrameId, etc.)
   addListenerForPackagedMessagesFromCallMachine(listener, callFrameId) {
-    // TODO: remove
-    console.log(
-      '[WebMessageChannel] adding listener for packaged messages from call machine...'
-    );
     const wrappedListener = (evt) => {
-      // TODO: remove
-      console.log(
-        '[WebMessageChannel] wrapped listener invoked...',
-        evt,
-        callFrameId
-      );
+      // console.log(
+      //   '[WebMessageChannel] received packaged call machine message',
+      //   msg
+      // );
       if (
         evt.data &&
         evt.data.what === 'iframe-call-message' &&
@@ -145,7 +132,19 @@ export default class WebMessageChannel extends ScriptMessageChannel {
         listener(msg);
       }
     };
+    // For now we're still using the listener itself as the key, like in the
+    // other addListener* methods. We should probably change this everywhere to
+    // use a proper unique id.
     this._wrappedListeners[listener] = wrappedListener;
     window.addEventListener('message', wrappedListener);
+    return listener;
+  }
+
+  removeListenerForPackagedMessagesFromCallMachine(listenerId) {
+    const wrappedListener = this._wrappedListeners[listenerId];
+    if (wrappedListener) {
+      window.removeEventListener('message', wrappedListener);
+      delete this._wrappedListeners[listenerId];
+    }
   }
 }
