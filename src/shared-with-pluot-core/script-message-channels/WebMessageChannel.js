@@ -22,7 +22,7 @@ export default class WebMessageChannel extends ScriptMessageChannel {
         (evt.data.callFrameId ? evt.data.callFrameId === callFrameId : true) &&
         (evt.data.from ? evt.data.from !== 'module' : true)
       ) {
-        const msg = evt.data;
+        const msg = { ...evt.data };
         // console.log('[WebMessageChannel] received call machine message', msg);
         delete msg.from;
         // messages could be completely handled by callbacks
@@ -98,5 +98,54 @@ export default class WebMessageChannel extends ScriptMessageChannel {
       window.removeEventListener('message', wrappedListener);
       delete this._wrappedListeners[listener];
     }
+  }
+
+  ///
+  /// The below methods are meant to "shortcut" communication between an outer
+  /// callFrame driving an inner callObject living in an intermediate iframed
+  /// app, as in the new-prebuilt-UI-in-an-iframe case.
+  ///
+
+  // Expects msg to already be packaged with all internal metadata fields
+  // (what, from, callFrameId, etc.)
+  forwardPackagedMessageToCallMachine(msg, iframe, newCallFrameId) {
+    msg.callFrameId = newCallFrameId;
+    const w = iframe ? iframe.contentWindow : window;
+    // TODO: comment out
+    console.log(
+      '[WebMessageChannel] forwarding packaged message to call machine',
+      msg
+    );
+    w.postMessage(msg, '*');
+  }
+
+  // Listener will be given packaged message with all internal metadata fields
+  // (what, from, callFrameId, etc.)
+  addListenerForPackagedMessagesFromCallMachine(listener, callFrameId) {
+    // TODO: remove
+    console.log(
+      '[WebMessageChannel] adding listener for packaged messages from call machine...'
+    );
+    const wrappedListener = (evt) => {
+      // TODO: remove
+      console.log(
+        '[WebMessageChannel] wrapped listener invoked...',
+        evt,
+        callFrameId
+      );
+      if (
+        evt.data &&
+        evt.data.what === 'iframe-call-message' &&
+        // make callFrameId addressing backwards-compatible with
+        // old versions of the library, which didn't have it
+        (evt.data.callFrameId ? evt.data.callFrameId === callFrameId : true) &&
+        (evt.data.from ? evt.data.from !== 'module' : true)
+      ) {
+        const msg = evt.data;
+        listener(msg);
+      }
+    };
+    this._wrappedListeners[listener] = wrappedListener;
+    window.addEventListener('message', wrappedListener);
   }
 }

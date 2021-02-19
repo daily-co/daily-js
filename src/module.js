@@ -1875,6 +1875,25 @@ export default class DailyIframe extends EventEmitter {
     );
   }
 
+  // TODO: make a note about why these are here
+
+  forwardPackagedMessageToCallMachine(msg) {
+    this._messageChannel.forwardPackagedMessageToCallMachine(
+      msg,
+      this._iframe,
+      this._callFrameId
+    );
+  }
+
+  // TODO: provide a way to unwrap
+
+  addListenerForPackagedMessagesFromCallMachine(listener) {
+    this._messageChannel.addListenerForPackagedMessagesFromCallMachine(
+      listener,
+      this._callFrameId
+    );
+  }
+
   handleMessageFromCallMachine(msg) {
     switch (msg.action) {
       case DAILY_EVENT_LOADED:
