@@ -151,6 +151,7 @@ export interface DailyTrackState {
   off?: {
     byUser?: boolean;
     byBandwidth?: boolean;
+    byEmptySource?: boolean;
   };
   track?: MediaStreamTrack;
 }
