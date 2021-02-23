@@ -2135,7 +2135,7 @@ export default class DailyIframe extends EventEmitter {
     if (!prevP) {
       return;
     }
-    if (thisP[key] === false && prevP[key] !== thisP[key]) {
+    if (!thisP.local && thisP[key] === false && prevP[key] !== thisP[key]) {
       try {
         this.emit(DAILY_EVENT_RECORDING_STOPPED, {
           action: DAILY_EVENT_RECORDING_STOPPED,
@@ -2151,7 +2151,7 @@ export default class DailyIframe extends EventEmitter {
     if (!prevP) {
       return;
     }
-    if (thisP[key] === true && prevP[key] !== thisP[key]) {
+    if (!thisP.local && thisP[key] === true && prevP[key] !== thisP[key]) {
       try {
         this.emit(DAILY_EVENT_RECORDING_STARTED, {
           action: DAILY_EVENT_RECORDING_STARTED,
