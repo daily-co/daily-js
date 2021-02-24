@@ -998,8 +998,8 @@ export default class DailyIframe extends EventEmitter {
       this._preloadCache.videoDeviceId = videoDeviceId;
     }
 
-    // if we're in callObject mode and not joined yet, don't do anything
-    if (this._callObjectMode && this._meetingState !== DAILY_STATE_JOINED) {
+    // if we're in callObject mode and not loaded yet, don't do anything
+    if (this._callObjectMode && this.needsLoad()) {
       return {
         camera: { deviceId: this._preloadCache.videoDeviceId },
         mic: { deviceId: this._preloadCache.audioDeviceId },
@@ -1018,6 +1018,15 @@ export default class DailyIframe extends EventEmitter {
       let k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
+
+        if (msg.returnPreloadCache) {
+          resolve({
+            camera: { deviceId: this._preloadCache.videoDeviceId },
+            mic: { deviceId: this._preloadCache.audioDeviceId },
+            speaker: { deviceId: this._preloadCache.outputDeviceId },
+          });
+        }
+
         resolve(msg);
       };
       this.sendMessageToCallMachine(
@@ -1025,6 +1034,7 @@ export default class DailyIframe extends EventEmitter {
           action: DAILY_METHOD_SET_INPUT_DEVICES,
           audioDeviceId,
           videoDeviceId,
+          properties: makeSafeForPostMessage(this.properties),
         },
         k
       );
@@ -1052,7 +1062,7 @@ export default class DailyIframe extends EventEmitter {
 
   async getInputDevices() {
     methodNotSupportedInReactNative();
-    if (this._callObjectMode && this._meetingState !== DAILY_STATE_JOINED) {
+    if (this._callObjectMode && this.needsLoad()) {
       return {
         camera: { deviceId: this._preloadCache.videoDeviceId },
         mic: { deviceId: this._preloadCache.audioDeviceId },
@@ -1064,10 +1074,23 @@ export default class DailyIframe extends EventEmitter {
       let k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
+
+        if (msg.returnPreloadCache) {
+          resolve({
+            camera: { deviceId: this._preloadCache.videoDeviceId },
+            mic: { deviceId: this._preloadCache.audioDeviceId },
+            speaker: { deviceId: this._preloadCache.outputDeviceId },
+          });
+          return;
+        }
+
         resolve(msg);
       };
       this.sendMessageToCallMachine(
-        { action: DAILY_METHOD_GET_INPUT_DEVICES },
+        {
+          action: DAILY_METHOD_GET_INPUT_DEVICES,
+          properties: makeSafeForPostMessage(this.properties),
+        },
         k
       );
     });
