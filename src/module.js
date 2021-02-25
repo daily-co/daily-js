@@ -725,7 +725,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setUserName(name, options) {
-    methodNotSupportedInReactNative();
     return new Promise(async (resolve) => {
       const k = (msg) => {
         delete msg.action;
@@ -736,7 +735,8 @@ export default class DailyIframe extends EventEmitter {
         {
           action: DAILY_METHOD_SET_USER_NAME,
           name: name ?? '',
-          thisMeetingOnly: options ? !!options.thisMeetingOnly : false,
+          thisMeetingOnly:
+            isReactNative() || (options ? !!options.thisMeetingOnly : false),
         },
         k
       );
