@@ -1035,7 +1035,6 @@ export default class DailyIframe extends EventEmitter {
           action: DAILY_METHOD_SET_INPUT_DEVICES,
           audioDeviceId,
           videoDeviceId,
-          properties: makeSafeForPostMessage(this.properties),
         },
         k
       );
@@ -1088,10 +1087,7 @@ export default class DailyIframe extends EventEmitter {
         resolve(msg);
       };
       this.sendMessageToCallMachine(
-        {
-          action: DAILY_METHOD_GET_INPUT_DEVICES,
-          properties: makeSafeForPostMessage(this.properties),
-        },
+        { action: DAILY_METHOD_GET_INPUT_DEVICES },
         k
       );
     });
