@@ -932,6 +932,7 @@ export default class DailyIframe extends EventEmitter {
         {
           action: DAILY_METHOD_START_CAMERA,
           properties: makeSafeForPostMessage(this.properties),
+          preloadCache: makeSafeForPostMessage(this._preloadCache),
         },
         k
       );
