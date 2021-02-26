@@ -1025,6 +1025,7 @@ export default class DailyIframe extends EventEmitter {
             mic: { deviceId: this._preloadCache.audioDeviceId },
             speaker: { deviceId: this._preloadCache.outputDeviceId },
           });
+          return;
         }
 
         resolve(msg);
