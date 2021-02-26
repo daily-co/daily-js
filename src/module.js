@@ -511,10 +511,14 @@ export default class DailyIframe extends EventEmitter {
         // chrome (not safari)
         this._iframe.addEventListener('fullscreenchange', (e) => {
           if (document.fullscreenElement === this._iframe) {
-            this.emit(DAILY_EVENT_FULLSCREEN);
+            this.emit(DAILY_EVENT_FULLSCREEN, {
+              action: DAILY_EVENT_FULLSCREEN,
+            });
             this.sendMessageToCallMachine({ action: DAILY_EVENT_FULLSCREEN });
           } else {
-            this.emit(DAILY_EVENT_EXIT_FULLSCREEN);
+            this.emit(DAILY_EVENT_EXIT_FULLSCREEN, {
+              action: DAILY_EVENT_EXIT_FULLSCREEN,
+            });
             this.sendMessageToCallMachine({
               action: DAILY_EVENT_EXIT_FULLSCREEN,
             });
@@ -524,10 +528,14 @@ export default class DailyIframe extends EventEmitter {
         // safari
         this._iframe.addEventListener('webkitfullscreenchange', (e) => {
           if (document.webkitFullscreenElement === this._iframe) {
-            this.emit(DAILY_EVENT_FULLSCREEN);
+            this.emit(DAILY_EVENT_FULLSCREEN, {
+              action: DAILY_EVENT_FULLSCREEN,
+            });
             this.sendMessageToCallMachine({ action: DAILY_EVENT_FULLSCREEN });
           } else {
-            this.emit(DAILY_EVENT_EXIT_FULLSCREEN);
+            this.emit(DAILY_EVENT_EXIT_FULLSCREEN, {
+              action: DAILY_EVENT_EXIT_FULLSCREEN,
+            });
             this.sendMessageToCallMachine({
               action: DAILY_EVENT_EXIT_FULLSCREEN,
             });
