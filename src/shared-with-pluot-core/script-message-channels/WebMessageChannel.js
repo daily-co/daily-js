@@ -22,7 +22,7 @@ export default class WebMessageChannel extends ScriptMessageChannel {
         (evt.data.callFrameId ? evt.data.callFrameId === callFrameId : true) &&
         (evt.data.from ? evt.data.from !== 'module' : true)
       ) {
-        const msg = evt.data;
+        const msg = { ...evt.data };
         // console.log('[WebMessageChannel] received call machine message', msg);
         delete msg.from;
         // messages could be completely handled by callbacks
@@ -97,6 +97,54 @@ export default class WebMessageChannel extends ScriptMessageChannel {
     if (wrappedListener) {
       window.removeEventListener('message', wrappedListener);
       delete this._wrappedListeners[listener];
+    }
+  }
+
+  // Expects msg to already be packaged with all internal metadata fields
+  // (what, from, callFrameId, etc.)
+  forwardPackagedMessageToCallMachine(msg, iframe, newCallFrameId) {
+    msg.callFrameId = newCallFrameId;
+    const w = iframe ? iframe.contentWindow : window;
+    // console.log(
+    //   '[WebMessageChannel] forwarding packaged message to call machine',
+    //   msg
+    // );
+    w.postMessage(msg, '*');
+  }
+
+  // Listener will be given packaged message with all internal metadata fields
+  // (what, from, callFrameId, etc.)
+  addListenerForPackagedMessagesFromCallMachine(listener, callFrameId) {
+    const wrappedListener = (evt) => {
+      // console.log(
+      //   '[WebMessageChannel] received packaged call machine message',
+      //   msg
+      // );
+      if (
+        evt.data &&
+        evt.data.what === 'iframe-call-message' &&
+        // make callFrameId addressing backwards-compatible with
+        // old versions of the library, which didn't have it
+        (evt.data.callFrameId ? evt.data.callFrameId === callFrameId : true) &&
+        (evt.data.from ? evt.data.from !== 'module' : true)
+      ) {
+        const msg = evt.data;
+        listener(msg);
+      }
+    };
+    // For now we're still using the listener itself as the key, like in the
+    // other addListener* methods. We should probably change this everywhere to
+    // use a proper unique id.
+    this._wrappedListeners[listener] = wrappedListener;
+    window.addEventListener('message', wrappedListener);
+    return listener;
+  }
+
+  removeListenerForPackagedMessagesFromCallMachine(listenerId) {
+    const wrappedListener = this._wrappedListeners[listenerId];
+    if (wrappedListener) {
+      window.removeEventListener('message', wrappedListener);
+      delete this._wrappedListeners[listenerId];
     }
   }
 }

@@ -1875,6 +1875,34 @@ export default class DailyIframe extends EventEmitter {
     );
   }
 
+  ///
+  /// The below *packagedMessage* methods facilitate wiring up a DailyIframe
+  /// instance as a remote driver of another DailyIframe instance, like in the
+  /// new prebuilt UI case, where an "outer" callFrame controls an "inner"
+  /// callObject through an intermediate iframed app.
+  ///
+
+  forwardPackagedMessageToCallMachine(msg) {
+    this._messageChannel.forwardPackagedMessageToCallMachine(
+      msg,
+      this._iframe,
+      this._callFrameId
+    );
+  }
+
+  addListenerForPackagedMessagesFromCallMachine(listener) {
+    return this._messageChannel.addListenerForPackagedMessagesFromCallMachine(
+      listener,
+      this._callFrameId
+    );
+  }
+
+  removeListenerForPackagedMessagesFromCallMachine(listenerId) {
+    this._messageChannel.removeListenerForPackagedMessagesFromCallMachine(
+      listenerId
+    );
+  }
+
   handleMessageFromCallMachine(msg) {
     switch (msg.action) {
       case DAILY_EVENT_LOADED:
