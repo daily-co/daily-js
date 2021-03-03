@@ -103,13 +103,14 @@ export default class WebMessageChannel extends ScriptMessageChannel {
   // Expects msg to already be packaged with all internal metadata fields
   // (what, from, callFrameId, etc.)
   forwardPackagedMessageToCallMachine(msg, iframe, newCallFrameId) {
-    msg.callFrameId = newCallFrameId;
+    const newMsg = { ...msg };
+    newMsg.callFrameId = newCallFrameId;
     const w = iframe ? iframe.contentWindow : window;
     // console.log(
     //   '[WebMessageChannel] forwarding packaged message to call machine',
     //   msg
     // );
-    w.postMessage(msg, '*');
+    w.postMessage(newMsg, '*');
   }
 
   // Listener will be given packaged message with all internal metadata fields
