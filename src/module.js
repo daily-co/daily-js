@@ -1417,12 +1417,11 @@ export default class DailyIframe extends EventEmitter {
 
   async leave() {
     return new Promise((resolve, _) => {
-      let k = () => {
-        if (this._iframe) {
-          // resetting the iframe src maybe interferes with sending the
-          // ks beacon?
-          // this._iframe.src = '';
-        }
+      if (this._callObjectLoader && !this._callObjectLoader.loaded) {
+        // If call object bundle never successfully loaded, cancel load if
+        // needed and clean up state immediately (without waiting for call
+        // machine to clean up its state).
+        this._callObjectLoader.cancel();
         this.updateMeetingState(DAILY_STATE_LEFT);
         this.resetMeetingDependentVars();
         try {
@@ -1431,13 +1430,6 @@ export default class DailyIframe extends EventEmitter {
           console.log("could not emit 'left-meeting'");
         }
         resolve();
-      };
-      if (this._callObjectLoader && !this._callObjectLoader.loaded) {
-        // If call object bundle never successfully loaded, cancel load if
-        // needed and clean up state immediately (without waiting for call
-        // machine to clean up its state).
-        this._callObjectLoader.cancel();
-        k();
       } else if (
         this._meetingState === DAILY_STATE_LEFT ||
         this._meetingState === DAILY_STATE_ERROR
@@ -1447,7 +1439,9 @@ export default class DailyIframe extends EventEmitter {
       } else {
         // TODO: the possibility that the iframe call machine is not yet loaded
         // is never handled here...
-        this.sendMessageToCallMachine({ action: DAILY_METHOD_LEAVE }, k);
+        this.sendMessageToCallMachine({ action: DAILY_METHOD_LEAVE }, () => {
+          resolve();
+        });
       }
     });
   }
