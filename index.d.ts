@@ -338,7 +338,7 @@ export interface DailyEventObjectNoPayload {
   >;
 }
 
-export interface DailyEventMeetingErrorObject {
+export interface DailyEventObjectMeetingError {
   action: Extract<DailyEvent, 'error'>;
   errorMsg: string;
   error?: {
@@ -464,8 +464,8 @@ export type DailyEventObject<
   ? DailyEventObjectAppMessage
   : T extends DailyEventObjectNoPayload['action']
   ? DailyEventObjectNoPayload
-  : T extends DailyEventMeetingErrorObject['action']
-  ? DailyEventMeetingErrorObject
+  : T extends DailyEventObjectMeetingError['action']
+  ? DailyEventObjectMeetingError
   : T extends DailyEventErrorObject['action']
   ? DailyEventErrorObject
   : T extends DailyEventObjectParticipants['action']
