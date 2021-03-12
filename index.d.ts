@@ -324,7 +324,6 @@ export interface DailyEventObjectNoPayload {
     | 'loaded'
     | 'joining-meeting'
     | 'left-meeting'
-    | 'recording-started'
     | 'recording-stopped'
     | 'recording-stats'
     | 'recording-error'
@@ -375,6 +374,12 @@ export interface DailyEventObjectTrack {
   action: Extract<DailyEvent, 'track-started' | 'track-stopped'>;
   participant: DailyParticipant | null; // null if participant left meeting
   track: MediaStreamTrack;
+}
+
+export interface DailyEventObjectRecordingStarted {
+  action: Extract<DailyEvent, 'recording-started'>;
+  local?: boolean;
+  recordingId?: string;
 }
 
 export interface DailyEventObjectMouseEvent {
@@ -465,6 +470,8 @@ export type DailyEventObject<
   ? DailyEventObjectAccessState
   : T extends DailyEventObjectTrack['action']
   ? DailyEventObjectTrack
+  : T extends DailyEventObjectRecordingStarted['action']
+  ? DailyEventObjectRecordingStarted
   : T extends DailyEventObjectMouseEvent['action']
   ? DailyEventObjectMouseEvent
   : T extends DailyEventObjectTouchEvent['action']
