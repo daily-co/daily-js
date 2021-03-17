@@ -28,7 +28,7 @@ export const DAILY_ACCESS_LEVEL_FULL = 'full';
 export const DAILY_ACCESS_LEVEL_LOBBY = 'lobby';
 export const DAILY_ACCESS_LEVEL_NONE = 'none';
 
-// error codes
+// error types
 
 export const DAILY_ERROR_EJECTED = 'ejected';
 

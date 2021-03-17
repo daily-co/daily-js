@@ -24,7 +24,7 @@ import {
   DAILY_ACCESS_LEVEL_FULL,
   DAILY_ACCESS_LEVEL_LOBBY,
   DAILY_ACCESS_LEVEL_NONE,
-  // error codes
+  // error types
   DAILY_ERROR_EJECTED,
   // events
   DAILY_EVENT_LOADING,
@@ -151,10 +151,8 @@ export {
   DAILY_ACCESS_LEVEL_NONE,
 };
 
-// error codes
-export {
-  DAILY_ERROR_EJECTED
-}
+// error types
+export { DAILY_ERROR_EJECTED };
 
 // events
 export {
