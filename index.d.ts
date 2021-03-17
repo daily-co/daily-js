@@ -347,7 +347,7 @@ export interface DailyEventObjectFatalError {
   };
 }
 
-export interface DailyEventErrorObject {
+export interface DailyEventObjectGenericError {
   action: Extract<
     DailyEvent,
     'load-attempt-failed' | 'live-streaming-error' | 'camera-error'
@@ -466,8 +466,8 @@ export type DailyEventObject<
   ? DailyEventObjectNoPayload
   : T extends DailyEventObjectFatalError['action']
   ? DailyEventObjectFatalError
-  : T extends DailyEventErrorObject['action']
-  ? DailyEventErrorObject
+  : T extends DailyEventObjectGenericError['action']
+  ? DailyEventObjectGenericError
   : T extends DailyEventObjectParticipants['action']
   ? DailyEventObjectParticipants
   : T extends DailyEventObjectParticipant['action']
