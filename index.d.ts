@@ -150,6 +150,7 @@ export interface DailyTrackState {
   };
   off?: {
     byUser?: boolean;
+    byRemoteRequest?: boolean;
     byBandwidth?: boolean;
   };
   track?: MediaStreamTrack;
