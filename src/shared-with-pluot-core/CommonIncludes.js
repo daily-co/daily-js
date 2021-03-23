@@ -2,6 +2,8 @@
 // external - exported from module.js
 //
 
+// meeting states
+
 export const DAILY_STATE_NEW = 'new';
 export const DAILY_STATE_LOADING = 'loading';
 export const DAILY_STATE_LOADED = 'loaded';
@@ -10,6 +12,8 @@ export const DAILY_STATE_JOINED = 'joined-meeting';
 export const DAILY_STATE_LEFT = 'left-meeting';
 export const DAILY_STATE_ERROR = 'error';
 
+// track states
+
 export const DAILY_TRACK_STATE_BLOCKED = 'blocked';
 export const DAILY_TRACK_STATE_OFF = 'off';
 export const DAILY_TRACK_STATE_SENDABLE = 'sendable';
@@ -17,10 +21,18 @@ export const DAILY_TRACK_STATE_LOADING = 'loading';
 export const DAILY_TRACK_STATE_INTERRUPTED = 'interrupted';
 export const DAILY_TRACK_STATE_PLAYABLE = 'playable';
 
+// meeting access
+
 export const DAILY_ACCESS_UNKNOWN = 'unknown';
 export const DAILY_ACCESS_LEVEL_FULL = 'full';
 export const DAILY_ACCESS_LEVEL_LOBBY = 'lobby';
 export const DAILY_ACCESS_LEVEL_NONE = 'none';
+
+// error types
+
+export const DAILY_ERROR_EJECTED = 'ejected';
+
+// events
 
 export const DAILY_EVENT_LOADING = 'loading';
 export const DAILY_EVENT_LOAD_ATTEMPT_FAILED = 'load-attempt-failed';

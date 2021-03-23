@@ -83,6 +83,8 @@ export type DailyMeetingState =
   | 'left-meeting'
   | 'error';
 
+export type DailyFatalErrorType = 'ejected';
+
 export interface DailyParticipantsObject {
   local: DailyParticipant;
   [id: string]: DailyParticipant;
@@ -336,10 +338,19 @@ export interface DailyEventObjectNoPayload {
   >;
 }
 
-export interface DailyEventErrorObject {
+export interface DailyEventObjectFatalError {
+  action: Extract<DailyEvent, 'error'>;
+  errorMsg: string;
+  error?: {
+    type: DailyFatalErrorType;
+    localizedMsg?: string;
+  };
+}
+
+export interface DailyEventObjectGenericError {
   action: Extract<
     DailyEvent,
-    'load-attempt-failed' | 'live-streaming-error' | 'error'
+    'load-attempt-failed' | 'live-streaming-error' | 'camera-error'
   >;
   errorMsg: string;
 }
@@ -459,8 +470,10 @@ export type DailyEventObject<
   ? DailyEventObjectAppMessage
   : T extends DailyEventObjectNoPayload['action']
   ? DailyEventObjectNoPayload
-  : T extends DailyEventErrorObject['action']
-  ? DailyEventErrorObject
+  : T extends DailyEventObjectFatalError['action']
+  ? DailyEventObjectFatalError
+  : T extends DailyEventObjectGenericError['action']
+  ? DailyEventObjectGenericError
   : T extends DailyEventObjectParticipants['action']
   ? DailyEventObjectParticipants
   : T extends DailyEventObjectParticipant['action']
