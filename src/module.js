@@ -110,6 +110,7 @@ import {
   DAILY_METHOD_SET_PLAY_DING,
   DAILY_METHOD_SET_SUBSCRIBE_TO_TRACKS_AUTOMATICALLY,
   DAILY_METHOD_START_LIVE_STREAMING,
+  DAILY_METHOD_UPDATE_LIVE_STREAMING,
   DAILY_METHOD_STOP_LIVE_STREAMING,
   DAILY_CUSTOM_TRACK,
   DAILY_UI_REQUEST_FULLSCREEN,
@@ -1586,6 +1587,14 @@ export default class DailyIframe extends EventEmitter {
       width,
       height,
       backgroundColor,
+      layout,
+    });
+  }
+
+  updateLiveStreaming({ layout = { preset: 'default' } }) {
+    methodNotSupportedInReactNative();
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_UPDATE_LIVE_STREAMING,
       layout,
     });
   }

@@ -650,6 +650,9 @@ export interface DailyCall {
     backgroundColor?: string;
     layout?: DailyStreamingLayoutConfig;
   }): void;
+  updateLiveStreaming(options: {
+    layout?: DailyStreamingLayoutConfig;
+  }): void;
   stopLiveStreaming(): void;
   getNetworkStats(): Promise<DailyNetworkStats>;
   getActiveSpeaker(): { peerId?: string };
