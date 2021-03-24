@@ -517,7 +517,7 @@ export interface DailyCallStaticUtils {
 
 export interface DailyStreamingDefaultLayoutConfig {
   preset: 'default';
-  maxCamStreams?: number;
+  max_cam_streams?: number;
 }
 
 export interface DailyStreamingSingleParticipantLayoutConfig {
