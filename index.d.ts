@@ -83,7 +83,12 @@ export type DailyMeetingState =
   | 'left-meeting'
   | 'error';
 
-export type DailyFatalErrorType = 'ejected';
+export type DailyFatalErrorType =
+  | 'ejected'
+  | 'nbf-room'
+  | 'nbf-token'
+  | 'exp-room'
+  | 'exp-token';
 
 export interface DailyParticipantsObject {
   local: DailyParticipant;
