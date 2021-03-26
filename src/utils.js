@@ -1,4 +1,4 @@
-import { browserInfo } from './shared-with-pluot-core/Environment';
+import { isSfuSupported } from './shared-with-pluot-core/Environment';
 
 export function notImplementedError() {
   throw new Error('Method must be implemented in subclass');
@@ -18,7 +18,7 @@ export function callObjectBundleUrl(meetingOrBaseUrl) {
     process.env.NODE_ENV === 'production' &&
     (!baseUrl || baseUrl.match(/https:\/\/[^.]+\.daily\.co/))
   ) {
-    if (!browserInfo().supportsSfu) {
+    if (!isSfuSupported()) {
       return `https://c.daily.co/static/call-machine-object-nosfu-bundle.js`;
     } else {
       return `https://c.daily.co/static/call-machine-object-bundle.js`;
@@ -34,7 +34,7 @@ export function callObjectBundleUrl(meetingOrBaseUrl) {
     );
     baseUrl = 'https://c.daily.co';
   }
-  if (!browserInfo().supportsSfu) {
+  if (!isSfuSupported()) {
     return `${baseUrl}/static/call-machine-object-nosfu-bundle.js`;
   } else {
     return `${baseUrl}/static/call-machine-object-bundle.js`;

@@ -1,5 +1,6 @@
 import EventEmitter from 'events';
 import { deepEqual } from 'fast-equals';
+import Bowser from 'bowser';
 
 import {
   // re-export
@@ -119,7 +120,10 @@ import {
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
-  browserInfo,
+  browserNeedsUpgrade,
+  getUserAgent,
+  isScreenSharingSupported,
+  isSfuSupported,
 } from './shared-with-pluot-core/Environment.js';
 import WebMessageChannel from './shared-with-pluot-core/script-message-channels/WebMessageChannel';
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
@@ -404,7 +408,25 @@ export default class DailyIframe extends EventEmitter {
   //
 
   static supportedBrowser() {
-    return browserInfo();
+    if (isReactNative()) {
+      return {
+        supported: true,
+        mobile: true,
+        name: 'React Native',
+        version: null,
+        supportsScreenShare: false,
+        supportsSfu: true,
+      };
+    }
+    const browser = Bowser.getParser(getUserAgent());
+    return {
+      supported: !browserNeedsUpgrade(),
+      mobile: browser.getPlatformType() === 'mobile',
+      name: browser.getBrowserName(),
+      version: browser.getBrowserVersion(),
+      supportsScreenShare: isScreenSharingSupported(),
+      supportsSfu: isSfuSupported(),
+    };
   }
 
   static version() {
