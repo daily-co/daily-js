@@ -52,7 +52,7 @@ export function isScreenSharingSupported() {
 export function isSfuSupported() {
   if (isReactNative()) return true;
   const browser = Bowser.getParser(getUserAgent());
-  return !browserNeedsUpgrade() && !browser.satisfies({ edge: '<=18' });
+  return browserVideoSupported_p() && !browser.satisfies({ edge: '<=18' });
 }
 
 export function canUnifiedPlan() {
@@ -81,6 +81,10 @@ export function browserCanUnifiedPlan(browserName, browserVersion) {
       return browserVersion.major >= 67;
   }
   return false;
+}
+
+export function browserVideoSupported_p() {
+  return isUserMediaAccessible() && !browserNeedsUpgrade();
 }
 
 export function browserNeedsUpgrade() {

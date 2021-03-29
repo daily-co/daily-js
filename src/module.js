@@ -120,7 +120,7 @@ import {
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
-  browserNeedsUpgrade,
+  browserVideoSupported_p,
   getUserAgent,
   isScreenSharingSupported,
   isSfuSupported,
@@ -420,7 +420,7 @@ export default class DailyIframe extends EventEmitter {
     }
     const browser = Bowser.getParser(getUserAgent());
     return {
-      supported: !browserNeedsUpgrade(),
+      supported: browserVideoSupported_p(),
       mobile: browser.getPlatformType() === 'mobile',
       name: browser.getBrowserName(),
       version: browser.getBrowserVersion(),
