@@ -420,12 +420,12 @@ export default class DailyIframe extends EventEmitter {
     }
     const browser = Bowser.getParser(getUserAgent());
     return {
-      supported: browserVideoSupported_p(),
+      supported: !!browserVideoSupported_p(),
       mobile: browser.getPlatformType() === 'mobile',
       name: browser.getBrowserName(),
       version: browser.getBrowserVersion(),
-      supportsScreenShare: isScreenSharingSupported(),
-      supportsSfu: isSfuSupported(),
+      supportsScreenShare: !!isScreenSharingSupported(),
+      supportsSfu: !!isSfuSupported(),
     };
   }
 
