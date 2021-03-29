@@ -103,7 +103,7 @@ export function browserNeedsUpgrade() {
     case 'Safari':
       version = getSafariVersion();
       return version.major < 12;
-    case 'default':
+    default:
       return true;
   }
 }
