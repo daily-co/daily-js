@@ -31,6 +31,10 @@ export const DAILY_ACCESS_LEVEL_NONE = 'none';
 // error types
 
 export const DAILY_ERROR_EJECTED = 'ejected';
+export const DAILY_ERROR_NBF_ROOM = 'nbf-room';
+export const DAILY_ERROR_NBF_TOKEN = 'nbf-token';
+export const DAILY_ERROR_EXP_ROOM = 'exp-room';
+export const DAILY_ERROR_EXP_TOKEN = 'exp-token';
 
 // events
 
