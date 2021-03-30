@@ -83,6 +83,11 @@ export type DailyMeetingState =
   | 'left-meeting'
   | 'error';
 
+export type DailyCameraErrorType =
+  | 'cam-in-use'
+  | 'mic-in-use'
+  | 'cam-mic-in-use';
+
 export type DailyFatalErrorType =
   | 'ejected'
   | 'nbf-room'
@@ -349,6 +354,10 @@ export interface DailyEventObjectCameraError {
     errorMsg: string;
     audioOk?: boolean;
     videoOk?: boolean;
+  };
+  error?: {
+    type: DailyCameraErrorType;
+    localizedMsg?: string;
   };
 }
 
