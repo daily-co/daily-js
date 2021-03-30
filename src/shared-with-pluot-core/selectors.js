@@ -42,7 +42,7 @@ export const getIsRemoteTrackLoading = (state, participantId, type, kind) => {
   if (loadedTracks) {
     if (type === 'cam') {
       return !loadedTracks[kind];
-    } else {
+    } else if (type === 'screen') {
       return !loadedTracks[
         `screen${kind.charAt(0).toUpperCase() + kind.slice(1)}`
       ];
@@ -87,4 +87,28 @@ const _getRemoteStreamEntry = (state, participantId, type, kind) => {
     'desc'
   );
   return streams && streams[0];
+};
+
+export const getLocalCustomTrack = (state, trackEntryKey) => {
+  const trackEntries = state.local.public.customTracks;
+  if (!(trackEntries && trackEntries[trackEntryKey])) {
+    return;
+  }
+  return trackEntries[trackEntryKey].track;
+};
+
+export const getRemoteCustomTrack = (state, participantId, streamId, kind) => {
+  let streams = orderBy(
+    filter(
+      state.streams,
+      (s) =>
+        s.participantId === participantId &&
+        s.streamId === streamId &&
+        s.pendingTrack &&
+        s.pendingTrack.kind === kind
+    ),
+    'starttime',
+    'desc'
+  );
+  return streams && streams[0] && streams[0].pendingTrack;
 };
