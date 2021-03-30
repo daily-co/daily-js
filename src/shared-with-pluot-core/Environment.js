@@ -96,6 +96,7 @@ export function browserNeedsUpgrade() {
   }
   switch (browser) {
     case 'Chrome':
+      // Includes Chromium-based browsers
       version = getChromeVersion();
       return version.major && version.major > 0 && version.major < 61;
     case 'Firefox':
@@ -127,6 +128,7 @@ export function getBrowserName() {
       //            userAgent.indexOf('Opera') > -1) {
       //   return 'Opera';
     } else if (userAgent.match(/Chrome\//)) {
+      // Includes Chromium-based browsers
       return 'Chrome';
     } else if (userAgent.indexOf('Safari') > -1) {
       return 'Safari';
@@ -147,6 +149,7 @@ export function getBrowserVersion() {
   let name = getBrowserName();
   switch (name) {
     case 'Chrome':
+      // Includes Chromium-based browsers
       return getChromeVersion();
     case 'Safari':
       return getSafariVersion();
