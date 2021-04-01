@@ -150,3 +150,15 @@ export const DAILY_METHOD_UPDATE_WAITING_PARTICIPANTS =
 export const DAILY_CUSTOM_TRACK = 'daily-custom-track';
 export const DAILY_UI_REQUEST_FULLSCREEN = 'request-fullscreen';
 export const DAILY_UI_EXIT_FULLSCREEN = 'request-exit-fullscreen';
+
+export const DAILY_JS_NETWORK_QUALITY = {
+  VERY_LOW: 'very-low',
+  LOW: 'low',
+  HIGH: 'high',
+};
+
+export const DAILY_JS_NETWORK_THRESHOLDS = {
+  VERY_LOW: 'very-low',
+  LOW: 'low',
+  GOOD: 'good',
+};
