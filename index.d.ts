@@ -83,6 +83,11 @@ export type DailyMeetingState =
   | 'left-meeting'
   | 'error';
 
+export type DailyCameraErrorType =
+  | 'cam-in-use'
+  | 'mic-in-use'
+  | 'cam-mic-in-use';
+
 export type DailyFatalErrorType =
   | 'ejected'
   | 'nbf-room'
@@ -343,6 +348,19 @@ export interface DailyEventObjectNoPayload {
   >;
 }
 
+export interface DailyEventObjectCameraError {
+  action: Extract<DailyEvent, 'camera-error'>;
+  errorMsg: {
+    errorMsg: string;
+    audioOk?: boolean;
+    videoOk?: boolean;
+  };
+  error?: {
+    type: DailyCameraErrorType;
+    localizedMsg?: string;
+  };
+}
+
 export interface DailyEventObjectFatalError {
   action: Extract<DailyEvent, 'error'>;
   errorMsg: string;
@@ -353,10 +371,7 @@ export interface DailyEventObjectFatalError {
 }
 
 export interface DailyEventObjectGenericError {
-  action: Extract<
-    DailyEvent,
-    'load-attempt-failed' | 'live-streaming-error' | 'camera-error'
-  >;
+  action: Extract<DailyEvent, 'load-attempt-failed' | 'live-streaming-error'>;
   errorMsg: string;
 }
 
@@ -475,6 +490,8 @@ export type DailyEventObject<
   ? DailyEventObjectAppMessage
   : T extends DailyEventObjectNoPayload['action']
   ? DailyEventObjectNoPayload
+  : T extends DailyEventObjectCameraError['action']
+  ? DailyEventObjectCameraError
   : T extends DailyEventObjectFatalError['action']
   ? DailyEventObjectFatalError
   : T extends DailyEventObjectGenericError['action']

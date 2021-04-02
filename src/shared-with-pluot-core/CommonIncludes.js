@@ -30,11 +30,15 @@ export const DAILY_ACCESS_LEVEL_NONE = 'none';
 
 // error types
 
-export const DAILY_ERROR_EJECTED = 'ejected';
-export const DAILY_ERROR_NBF_ROOM = 'nbf-room';
-export const DAILY_ERROR_NBF_TOKEN = 'nbf-token';
-export const DAILY_ERROR_EXP_ROOM = 'exp-room';
-export const DAILY_ERROR_EXP_TOKEN = 'exp-token';
+export const DAILY_FATAL_ERROR_EJECTED = 'ejected';
+export const DAILY_FATAL_ERROR_NBF_ROOM = 'nbf-room';
+export const DAILY_FATAL_ERROR_NBF_TOKEN = 'nbf-token';
+export const DAILY_FATAL_ERROR_EXP_ROOM = 'exp-room';
+export const DAILY_FATAL_ERROR_EXP_TOKEN = 'exp-token';
+
+export const DAILY_CAMERA_ERROR_CAM_IN_USE = 'cam-in-use';
+export const DAILY_CAMERA_ERROR_MIC_IN_USE = 'mic-in-use';
+export const DAILY_CAMERA_ERROR_CAM_AND_MIC_IN_USE = 'cam-mic-in-use';
 
 // events
 
