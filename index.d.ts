@@ -560,9 +560,14 @@ export interface DailyStreamingSingleParticipantLayoutConfig {
   session_id: string;
 }
 
+export interface DailyStreamingActiveParticipantLayoutConfig {
+  preset: 'active-participant';
+}
+
 export type DailyStreamingLayoutConfig =
   | DailyStreamingDefaultLayoutConfig
-  | DailyStreamingSingleParticipantLayoutConfig;
+  | DailyStreamingSingleParticipantLayoutConfig
+  | DailyStreamingActiveParticipantLayoutConfig;
 
 export type DailyAccess = 'unknown' | SpecifiedDailyAccess;
 
