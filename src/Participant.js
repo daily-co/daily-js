@@ -25,6 +25,7 @@ export function addTracks(p) {
   }
 }
 
+// todo: refactor so that his logic is part of addTracks and friends()
 export function addCustomTracks(p) {
   try {
     const state = store.getState();
@@ -35,6 +36,7 @@ export function addCustomTracks(p) {
       const kind = p.tracks[trackEntryKey].kind;
       if (!kind) {
         console.error('unknown type for custom track');
+        continue;
       }
       const track = p.local
         ? getLocalCustomTrack(state, trackEntryKey, kind)
@@ -44,7 +46,8 @@ export function addCustomTracks(p) {
             'soup-' + trackEntryKey,
             kind
           );
-      if (track) {
+      const trackInfo = p.tracks[trackEntryKey];
+      if (track && trackInfo && trackInfo.state === 'playable') {
         p.tracks[trackEntryKey].track = track;
       }
     }
