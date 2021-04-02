@@ -40,12 +40,7 @@ export function addCustomTracks(p) {
       }
       const track = p.local
         ? getLocalCustomTrack(state, trackEntryKey, kind)
-        : getRemoteCustomTrack(
-            state,
-            p.session_id,
-            'soup-' + trackEntryKey,
-            kind
-          );
+        : getRemoteCustomTrack(state, p.session_id, trackEntryKey, kind);
       const trackInfo = p.tracks[trackEntryKey];
       if (track && trackInfo && trackInfo.state === 'playable') {
         p.tracks[trackEntryKey].track = track;

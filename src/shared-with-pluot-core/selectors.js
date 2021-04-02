@@ -97,7 +97,12 @@ export const getLocalCustomTrack = (state, trackEntryKey) => {
   return trackEntries[trackEntryKey].track;
 };
 
-export const getRemoteCustomTrack = (state, participantId, streamId, kind) => {
+export const getRemoteCustomTrack = (state, participantId, mediaTag, kind) => {
+  // for now, we only support sfu mode for custom tracks. the streamId is always
+  // prepended with "soup-" sfu-mode tracks. ("streamId" is a very old name that
+  // dates from the era of transitional support for tracks, rather than streams,
+  // in the WebRTC spec.)
+  const streamId = 'soup-' + mediaTag;
   let streams = orderBy(
     filter(
       state.streams,
