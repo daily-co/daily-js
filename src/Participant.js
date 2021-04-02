@@ -58,11 +58,8 @@ export function addCustomTracks(p) {
 }
 
 export function isPredefinedTrack(trackEntryKey) {
-  return (
-    trackEntryKey === 'video' ||
-    trackEntryKey === 'audio' ||
-    trackEntryKey === 'screenVideo' ||
-    trackEntryKey === 'screenAudio'
+  return ['video', 'audio', 'screenVideo', 'screenAudio'].includes(
+    trackEntryKey
   );
 }
 
