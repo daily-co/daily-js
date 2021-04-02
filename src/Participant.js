@@ -48,7 +48,6 @@ export function addCustomTracks(p) {
     }
   } catch (e) {
     console.error(e);
-    debugger;
   }
 }
 
