@@ -647,7 +647,12 @@ export interface DailyCall {
   stopRecording(): void;
   startLiveStreaming(options: {
     rtmpUrl: string;
+    width?: number;
+    height?: number;
     backgroundColor?: string;
+    layout?: DailyStreamingLayoutConfig;
+  }): void;
+  updateLiveStreaming(options: {
     layout?: DailyStreamingLayoutConfig;
   }): void;
   stopLiveStreaming(): void;

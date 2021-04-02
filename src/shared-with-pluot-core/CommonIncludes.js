@@ -142,6 +142,8 @@ export const DAILY_METHOD_SET_SUBSCRIBE_TO_TRACKS_AUTOMATICALLY =
   'daily-method-subscribe-to-tracks-automatically';
 export const DAILY_METHOD_START_LIVE_STREAMING =
   'daily-method-start-live-streaming';
+export const DAILY_METHOD_UPDATE_LIVE_STREAMING =
+  'daily-method-update-live-streaming';
 export const DAILY_METHOD_STOP_LIVE_STREAMING =
   'daily-method-stop-live-streaming';
 export const DAILY_METHOD_PREAUTH = 'daily-method-preauth';
