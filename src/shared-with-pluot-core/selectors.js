@@ -26,8 +26,9 @@ export const getLocalTrack = (state, type, kind) => {
   );
 };
 
-// type is "cam" or "screen"
 // kind is "video" or "audio"
+// for standard tracks, type is "cam" or "screen"
+// for custom tracks, type is the mediaTag
 export const getRemoteTrack = (state, participantId, type, kind) => {
   const streamEntry = _getRemoteStreamEntry(state, participantId, type, kind);
   return streamEntry && streamEntry.pendingTrack;
@@ -46,6 +47,8 @@ export const getIsRemoteTrackLoading = (state, participantId, type, kind) => {
       return !loadedTracks[
         `screen${kind.charAt(0).toUpperCase() + kind.slice(1)}`
       ];
+    } else {
+      return !loadedTracks[type];
     }
   }
   return false;
