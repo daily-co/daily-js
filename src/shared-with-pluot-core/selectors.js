@@ -26,8 +26,9 @@ export const getLocalTrack = (state, type, kind) => {
   );
 };
 
-// type is "cam" or "screen"
 // kind is "video" or "audio"
+// for standard tracks, type is "cam" or "screen"
+// for custom tracks, type is the mediaTag
 export const getRemoteTrack = (state, participantId, type, kind) => {
   const streamEntry = _getRemoteStreamEntry(state, participantId, type, kind);
   return streamEntry && streamEntry.pendingTrack;
@@ -42,10 +43,12 @@ export const getIsRemoteTrackLoading = (state, participantId, type, kind) => {
   if (loadedTracks) {
     if (type === 'cam') {
       return !loadedTracks[kind];
-    } else {
+    } else if (type === 'screen') {
       return !loadedTracks[
         `screen${kind.charAt(0).toUpperCase() + kind.slice(1)}`
       ];
+    } else {
+      return !loadedTracks[type];
     }
   }
   return false;
@@ -87,4 +90,33 @@ const _getRemoteStreamEntry = (state, participantId, type, kind) => {
     'desc'
   );
   return streams && streams[0];
+};
+
+export const getLocalCustomTrack = (state, trackEntryKey) => {
+  const trackEntries = state.local.public.customTracks;
+  if (!(trackEntries && trackEntries[trackEntryKey])) {
+    return;
+  }
+  return trackEntries[trackEntryKey].track;
+};
+
+export const getRemoteCustomTrack = (state, participantId, mediaTag, kind) => {
+  // for now, we only support sfu mode for custom tracks. the streamId is always
+  // prepended with "soup-" sfu-mode tracks. ("streamId" is a very old name that
+  // dates from the era of transitional support for tracks, rather than streams,
+  // in the WebRTC spec.)
+  const streamId = 'soup-' + mediaTag;
+  let streams = orderBy(
+    filter(
+      state.streams,
+      (s) =>
+        s.participantId === participantId &&
+        s.streamId === streamId &&
+        s.pendingTrack &&
+        s.pendingTrack.kind === kind
+    ),
+    'starttime',
+    'desc'
+  );
+  return streams && streams[0] && streams[0].pendingTrack;
 };

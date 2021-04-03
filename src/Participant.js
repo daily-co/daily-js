@@ -2,6 +2,8 @@ import {
   getLocalIsSubscribedToTrack,
   getLocalTrack,
   getRemoteTrack,
+  getLocalCustomTrack,
+  getRemoteCustomTrack,
 } from './shared-with-pluot-core/selectors';
 
 // Adds tracks to daily-js Participant object.
@@ -21,6 +23,38 @@ export function addTracks(p) {
       }
     }
   }
+}
+
+// todo: refactor so that his logic is part of addTracks and friends()
+export function addCustomTracks(p) {
+  try {
+    const state = store.getState();
+    for (const trackEntryKey in p.tracks) {
+      if (isPredefinedTrack(trackEntryKey)) {
+        continue;
+      }
+      const kind = p.tracks[trackEntryKey].kind;
+      if (!kind) {
+        console.error('unknown type for custom track');
+        continue;
+      }
+      const track = p.local
+        ? getLocalCustomTrack(state, trackEntryKey, kind)
+        : getRemoteCustomTrack(state, p.session_id, trackEntryKey, kind);
+      const trackInfo = p.tracks[trackEntryKey];
+      if (track && trackInfo && trackInfo.state === 'playable') {
+        p.tracks[trackEntryKey].track = track;
+      }
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+export function isPredefinedTrack(trackEntryKey) {
+  return ['video', 'audio', 'screenVideo', 'screenAudio'].includes(
+    trackEntryKey
+  );
 }
 
 // Adds tracks to daily-js Participant object.
