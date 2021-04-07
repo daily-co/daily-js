@@ -28,6 +28,8 @@ export type DailyLanguage =
   | 'jp'
   | 'user';
 
+export type DailyLanguageOption = DailyLanguage | 'user';
+
 export type DailyEvent =
   | 'loading'
   | 'load-attempt-failed'
@@ -112,7 +114,7 @@ export interface DailyBrowserInfo {
 export interface DailyCallOptions {
   url?: string;
   token?: string;
-  lang?: DailyLanguage;
+  lang?: DailyLanguageOption;
   showLeaveButton?: boolean;
   showParticipantsBar?: boolean;
   showLocalVideo?: boolean;
@@ -623,7 +625,7 @@ export interface DailyCall {
     trackConstraints?: MediaTrackConstraints;
   }): DailyCall;
   getDailyLang(): Promise<DailyLanguage>;
-  setDailyLang(lang: DailyLanguage): DailyCall;
+  setDailyLang(lang: DailyLanguageOption): DailyCall;
   setUserName(
     name: string,
     options?: { thisMeetingOnly?: boolean }
@@ -658,9 +660,7 @@ export interface DailyCall {
     backgroundColor?: string;
     layout?: DailyStreamingLayoutConfig;
   }): void;
-  updateLiveStreaming(options: {
-    layout?: DailyStreamingLayoutConfig;
-  }): void;
+  updateLiveStreaming(options: { layout?: DailyStreamingLayoutConfig }): void;
   stopLiveStreaming(): void;
   getNetworkStats(): Promise<DailyNetworkStats>;
   getActiveSpeaker(): { peerId?: string };
