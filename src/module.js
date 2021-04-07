@@ -101,6 +101,7 @@ import {
   DAILY_METHOD_SET_SHOW_LOCAL_VIDEO,
   DAILY_METHOD_SET_SHOW_PARTICIPANTS_BAR,
   DAILY_METHOD_SET_ACTIVE_SPEAKER_MODE,
+  DAILY_METHOD_GET_LANG,
   DAILY_METHOD_SET_LANG,
   MAX_APP_MSG_SIZE,
   DAILY_METHOD_REGISTER_INPUT_HANDLER,
@@ -987,6 +988,18 @@ export default class DailyIframe extends EventEmitter {
       trackConstraints,
     });
     return this;
+  }
+
+  getDailyLang() {
+    methodNotSupportedInReactNative();
+    return new Promise(async (resolve) => {
+      const k = (msg) => {
+        delete msg.action;
+        delete msg.callbackStamp;
+        resolve(msg.lang);
+      };
+      this.sendMessageToCallMachine({ action: DAILY_METHOD_GET_LANG }, k);
+    });
   }
 
   setDailyLang(lang) {

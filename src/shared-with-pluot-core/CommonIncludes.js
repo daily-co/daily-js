@@ -132,6 +132,7 @@ export const DAILY_METHOD_SET_SHOW_PARTICIPANTS_BAR =
   'set-show-participants-bar';
 export const DAILY_METHOD_SET_ACTIVE_SPEAKER_MODE = 'set-active-speaker-mode';
 export const DAILY_METHOD_REGISTER_INPUT_HANDLER = 'register-input-handler';
+export const DAILY_METHOD_GET_LANG = 'get-daily-lang';
 export const DAILY_METHOD_SET_LANG = 'set-daily-lang';
 export const DAILY_METHOD_SET_USER_NAME = 'set-user-name';
 export const DAILY_METHOD_DETECT_ALL_FACES = 'detect-all-faces';

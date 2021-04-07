@@ -622,6 +622,7 @@ export interface DailyCall {
     kbs?: number | 'NO_CAP' | null;
     trackConstraints?: MediaTrackConstraints;
   }): DailyCall;
+  getDailyLang(): Promise<DailyLanguage>;
   setDailyLang(lang: DailyLanguage): DailyCall;
   setUserName(
     name: string,
