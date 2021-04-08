@@ -997,7 +997,7 @@ export default class DailyIframe extends EventEmitter {
       const k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
-        resolve(msg.lang);
+        resolve(msg);
       };
       this.sendMessageToCallMachine({ action: DAILY_METHOD_GET_LANG }, k);
     });
