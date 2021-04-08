@@ -25,10 +25,9 @@ export type DailyLanguage =
   | 'tr'
   | 'it'
   | 'ka'
-  | 'jp'
-  | 'user';
+  | 'jp';
 
-export type DailyLanguageOption = DailyLanguage | 'user';
+export type DailyLanguageSetting = DailyLanguage | 'user';
 
 export type DailyEvent =
   | 'loading'
@@ -114,7 +113,7 @@ export interface DailyBrowserInfo {
 export interface DailyCallOptions {
   url?: string;
   token?: string;
-  lang?: DailyLanguageOption;
+  lang?: DailyLanguageSetting;
   showLeaveButton?: boolean;
   showParticipantsBar?: boolean;
   showLocalVideo?: boolean;
@@ -310,7 +309,7 @@ export interface DailyRoomInfo {
     autojoin?: boolean;
     eject_at_room_exp?: boolean;
     eject_after_elapsed?: number;
-    lang?: '' | DailyLanguage;
+    lang?: '' | DailyLanguageSetting;
     sfu_switchover?: number;
     signaling_impl?: string;
     geo?: string;
@@ -322,7 +321,7 @@ export interface DailyRoomInfo {
     sfu_impl?: string;
     signaling_impl?: string;
     sfu_switchover?: number;
-    lang?: '' | DailyLanguage;
+    lang?: '' | DailyLanguageSetting;
     max_api_rooms?: number;
     webhook_meeting_end?: any;
     max_live_streams?: number;
@@ -625,7 +624,7 @@ export interface DailyCall {
     trackConstraints?: MediaTrackConstraints;
   }): DailyCall;
   getDailyLang(): Promise<DailyLanguage>;
-  setDailyLang(lang: DailyLanguageOption): DailyCall;
+  setDailyLang(lang: DailyLanguageSetting): DailyCall;
   setUserName(
     name: string,
     options?: { thisMeetingOnly?: boolean }
