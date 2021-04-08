@@ -16,10 +16,15 @@ export function addTracks(p) {
           ? kind
           : `screen${kind.charAt(0).toUpperCase() + kind.slice(1)}`;
       const trackInfo = p.tracks[key];
-      if (trackInfo && trackInfo.state === 'playable') {
-        trackInfo.track = p.local
+      if (trackInfo) {
+        const track = p.local
           ? getLocalTrack(state, type, kind)
           : getRemoteTrack(state, p.session_id, type, kind);
+        if (trackInfo.state === 'playable') {
+          trackInfo.track = track;
+        }
+        // Set "persistent" track field where track is present even if not "playable"
+        trackInfo.persistentTrack = track;
       }
     }
   }
