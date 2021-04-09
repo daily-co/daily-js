@@ -1,5 +1,3 @@
-import Bowser from 'bowser';
-
 // This method should be used instead of window.navigator.userAgent, which
 // is not defined in React Native and results in an error.
 // (Actually, if it *is* defined in React Native, it's not meant for us, but
@@ -51,8 +49,7 @@ export function isScreenSharingSupported() {
 
 export function isSfuSupported() {
   if (isReactNative()) return true;
-  const browser = Bowser.getParser(getUserAgent());
-  return browserVideoSupported_p() && !browser.satisfies({ edge: '<=18' });
+  return browserVideoSupported_p();
 }
 
 export function canUnifiedPlan() {
@@ -103,8 +100,9 @@ export function browserNeedsUpgrade() {
       version = getFirefoxVersion();
       return version.major < 63;
     case 'Edge':
-      version = getEdgeVersion();
-      return version.major < 18;
+      // Since we only support chromium-based Edge, and chromium-based
+      // Edge reports as 'Chrome, we simply return true here
+      return true;
     case 'Safari':
       version = getSafariVersion();
       return version.major < 12;
@@ -122,6 +120,9 @@ export function getBrowserName() {
     if (isSupportedIOSEnvironment()) {
       return 'Safari';
     } else if (userAgent.indexOf('Edge') > -1) {
+      // Note: check will (purposefully) fail for chromium-based Edge
+      // since the user-agent for chromium-based Edge reports `Edg`
+      // (or EdgA (android) or EdgiOS)
       return 'Edge';
 
       // }  else if (userAgent.indexOf('OPR') > -1 ||
