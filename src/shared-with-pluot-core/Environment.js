@@ -74,6 +74,7 @@ export function browserCanUnifiedPlan(browserName, browserVersion) {
           browserVersion.point === 0
         )
       );
+    // Note: We now only support Firefox 80+ so this should always be true
     case 'Firefox':
       return browserVersion.major >= 67;
   }
@@ -98,7 +99,7 @@ export function browserNeedsUpgrade() {
       return version.major && version.major > 0 && version.major < 61;
     case 'Firefox':
       version = getFirefoxVersion();
-      return version.major < 63;
+      return version.major < 80;
     case 'Edge':
       // Since we only support chromium-based Edge, and chromium-based
       // Edge reports as 'Chrome, we simply return true here
