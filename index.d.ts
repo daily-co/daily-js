@@ -328,6 +328,23 @@ export interface DailyRoomInfo {
     enable_network_ui?: boolean;
     enable_prejoin_ui?: boolean;
   };
+  tokenConfig: {
+    eject_at_token_exp?: boolean;
+    eject_after_elapsed?: boolean;
+    nbf?: number;
+    exp?: number;
+    is_owner?: boolean;
+    user_name?: string;
+    user_id?: string;
+    enable_screenshare?: boolean;
+    start_video_off?: boolean;
+    start_audio_off?: boolean;
+    enable_recording?: string;
+    start_cloud_recording?: boolean;
+    close_tab_on_exit?: boolean;
+    redirect_on_meeting_exit?: string;
+    lang?: '' | DailyLanguageSetting;
+  };
   dialInPIN?: string;
 }
 
