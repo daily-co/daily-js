@@ -146,6 +146,7 @@ export interface DailyAdvancedConfig {
   h264Profile?: string;
   camSimulcastEncodings?: any[];
   screenSimulcastEncodings?: any[];
+  useDevicePreferenceCookies?: boolean;
 }
 
 export interface DailyTrackState {
