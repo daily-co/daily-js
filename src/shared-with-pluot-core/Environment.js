@@ -100,10 +100,6 @@ export function browserNeedsUpgrade() {
     case 'Firefox':
       version = getFirefoxVersion();
       return version.major < 80;
-    case 'Edge':
-      // Since we only support chromium-based Edge, and chromium-based
-      // Edge reports as 'Chrome, we simply return true here
-      return true;
     case 'Safari':
       version = getSafariVersion();
       return version.major < 12;
@@ -124,6 +120,10 @@ export function getBrowserName() {
       // Note: check will (purposefully) fail for chromium-based Edge
       // since the user-agent for chromium-based Edge reports `Edg`
       // (or EdgA (android) or EdgiOS)
+      // Also note: getBrowserName is primarily used for internal
+      //   logic, so this should go away eventually. However, it is used
+      //   in the old prebuilt UI for some upgrade messaging so leaving
+      //   it in until Edge or the old prebuilt is really no longer a thing
       return 'Edge';
 
       // }  else if (userAgent.indexOf('OPR') > -1 ||
