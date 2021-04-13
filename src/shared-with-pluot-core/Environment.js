@@ -1,5 +1,3 @@
-import Bowser from 'bowser';
-
 // This method should be used instead of window.navigator.userAgent, which
 // is not defined in React Native and results in an error.
 // (Actually, if it *is* defined in React Native, it's not meant for us, but
@@ -51,8 +49,7 @@ export function isScreenSharingSupported() {
 
 export function isSfuSupported() {
   if (isReactNative()) return true;
-  const browser = Bowser.getParser(getUserAgent());
-  return browserVideoSupported_p() && !browser.satisfies({ edge: '<=18' });
+  return browserVideoSupported_p();
 }
 
 export function canUnifiedPlan() {
@@ -77,6 +74,7 @@ export function browserCanUnifiedPlan(browserName, browserVersion) {
           browserVersion.point === 0
         )
       );
+    // Note: We now only support Firefox 80+ so this should always be true
     case 'Firefox':
       return browserVersion.major >= 67;
   }
@@ -101,10 +99,7 @@ export function browserNeedsUpgrade() {
       return version.major && version.major > 0 && version.major < 61;
     case 'Firefox':
       version = getFirefoxVersion();
-      return version.major < 63;
-    case 'Edge':
-      version = getEdgeVersion();
-      return version.major < 18;
+      return version.major < 80;
     case 'Safari':
       version = getSafariVersion();
       return version.major < 12;
@@ -122,6 +117,13 @@ export function getBrowserName() {
     if (isSupportedIOSEnvironment()) {
       return 'Safari';
     } else if (userAgent.indexOf('Edge') > -1) {
+      // Note: check will (purposefully) fail for chromium-based Edge
+      // since the user-agent for chromium-based Edge reports `Edg`
+      // (or EdgA (android) or EdgiOS)
+      // Also note: getBrowserName is primarily used for internal
+      //   logic, so this should go away eventually. However, it is used
+      //   in the old prebuilt UI for some upgrade messaging so leaving
+      //   it in until Edge or the old prebuilt is really no longer a thing
       return 'Edge';
 
       // }  else if (userAgent.indexOf('OPR') > -1 ||
