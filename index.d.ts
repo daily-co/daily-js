@@ -70,6 +70,7 @@ export type DailyEvent =
   | 'live-streaming-started'
   | 'live-streaming-stopped'
   | 'live-streaming-error'
+  | 'lang-updated'
   | 'access-state-updated'
   | 'waiting-participant-added'
   | 'waiting-participant-updated'
@@ -503,6 +504,12 @@ export interface DailyEventObjectAppMessage {
   fromId: string;
 }
 
+export interface DailyEventObjectLangUpdated {
+  action: Extract<DailyEvent, 'lang-updated'>;
+  lang: DailyLanguage;
+  langSetting: DailyLanguageSetting;
+}
+
 export type DailyEventObject<
   T extends DailyEvent = any
 > = T extends DailyEventObjectAppMessage['action']
@@ -539,6 +546,8 @@ export type DailyEventObject<
   ? DailyEventObjectActiveSpeakerChange
   : T extends DailyEventObjectActiveSpeakerModeChange['action']
   ? DailyEventObjectActiveSpeakerModeChange
+  : T extends DailyEventObjectLangUpdated['action']
+  ? DailyEventObjectLangUpdated
   : any;
 
 export interface DailyFaceInfo {
