@@ -350,6 +350,10 @@ export interface DailyRoomInfo {
   dialInPIN?: string;
 }
 
+export interface DailyMeetingSession {
+  id: string;
+}
+
 export interface DailyEventObjectNoPayload {
   action: Extract<
     DailyEvent,
@@ -655,6 +659,9 @@ export interface DailyCall {
     langSetting: DailyLanguageSetting;
   }>;
   setDailyLang(lang: DailyLanguageSetting): DailyCall;
+  getMeetingSession(): Promise<{
+    sessionInfo: DailyMeetingSession;
+  }>;
   setUserName(
     name: string,
     options?: { thisMeetingOnly?: boolean }

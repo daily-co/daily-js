@@ -104,6 +104,7 @@ import {
   DAILY_METHOD_SET_ACTIVE_SPEAKER_MODE,
   DAILY_METHOD_GET_LANG,
   DAILY_METHOD_SET_LANG,
+  DAILY_METHOD_GET_MEETING_SESSION,
   MAX_APP_MSG_SIZE,
   DAILY_METHOD_REGISTER_INPUT_HANDLER,
   DAILY_METHOD_DETECT_ALL_FACES,
@@ -1009,6 +1010,27 @@ export default class DailyIframe extends EventEmitter {
     methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({ action: DAILY_METHOD_SET_LANG, lang });
     return this;
+  }
+
+  async getMeetingSession() {
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      console.warn(
+        'daily-js.getMeetingSession: must be in a call to get session info'
+      );
+      return null;
+    }
+    return new Promise(async (resolve) => {
+      const k = (msg) => {
+        delete msg.action;
+        delete msg.callbackStamp;
+        delete msg.callFrameId;
+        resolve(msg);
+      };
+      this.sendMessageToCallMachine(
+        { action: DAILY_METHOD_GET_MEETING_SESSION },
+        k
+      );
+    });
   }
 
   setUserName(name, options) {
