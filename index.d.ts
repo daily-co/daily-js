@@ -660,7 +660,7 @@ export interface DailyCall {
   }>;
   setDailyLang(lang: DailyLanguageSetting): DailyCall;
   getMeetingSession(): Promise<{
-    sessionInfo: DailyMeetingSession;
+    meetingSession: DailyMeetingSession;
   }>;
   setUserName(
     name: string,

@@ -1013,11 +1013,10 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async getMeetingSession() {
+    // Validate meeting state: meeting session details are only available
+    // once you have joined the meeting
     if (this._meetingState !== DAILY_STATE_JOINED) {
-      console.warn(
-        'daily-js.getMeetingSession: must be in a call to get session info'
-      );
-      return null;
+      throw new Error('getMeetingSession() is only allowed while in a meeting');
     }
     return new Promise(async (resolve) => {
       const k = (msg) => {
