@@ -57,6 +57,8 @@ export const DAILY_EVENT_PARTICIPANT_LEFT = 'participant-left';
 
 export const DAILY_EVENT_ACCESS_STATE_UPDATED = 'access-state-updated';
 
+export const DAILY_EVENT_MEETING_SESSION_UPDATED = 'meeting-session-updated';
+
 export const DAILY_EVENT_WAITING_PARTICIPANT_ADDED =
   'waiting-participant-added';
 export const DAILY_EVENT_WAITING_PARTICIPANT_UPDATED =
