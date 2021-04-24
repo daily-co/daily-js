@@ -1278,6 +1278,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async preAuth(properties = {}) {
+    console.log("_____preAuth ")
     // Validate mode.
     if (!this._callObjectMode) {
       throw new Error('preAuth() currently only supported in call object mode');
@@ -1326,7 +1327,7 @@ export default class DailyIframe extends EventEmitter {
         // can't be changed subsequently on join(), which would invalidate this
         // pre-auth.
         this._didPreAuth = true;
-
+        console.log("_____module.js resolving preauth", msg)
         resolve({ access: msg.access });
       };
       this.sendMessageToCallMachine(
