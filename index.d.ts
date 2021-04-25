@@ -15,17 +15,18 @@
 export type DailyLanguage =
   | 'de'
   | 'en'
+  | 'es'
   | 'fi'
   | 'fr'
-  | 'nl'
-  | 'pt'
-  | 'pl'
-  | 'sv'
-  | 'es'
-  | 'tr'
   | 'it'
+  | 'jp'
   | 'ka'
-  | 'jp';
+  | 'nl'
+  | 'no'
+  | 'pl'
+  | 'pt'
+  | 'sv'
+  | 'tr';
 
 export type DailyLanguageSetting = DailyLanguage | 'user';
 
