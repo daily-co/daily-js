@@ -2203,7 +2203,7 @@ export default class DailyIframe extends EventEmitter {
         }
         break;
       case DAILY_EVENT_ERROR:
-        if (this._iframe) {
+        if (this._iframe && !msg.preserveIframe) {
           this._iframe.src = '';
         }
         this.updateMeetingState(DAILY_STATE_ERROR);
@@ -2217,7 +2217,8 @@ export default class DailyIframe extends EventEmitter {
           this._joinedCallback = null;
         }
         try {
-          this.emit(msg.action, msg);
+          let { preserveIframe, ...event } = msg;
+          this.emit(msg.action, event);
         } catch (e) {
           console.log('could not emit', msg);
         }
