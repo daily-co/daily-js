@@ -511,8 +511,7 @@ export default class DailyIframe extends EventEmitter {
     if (window.navigator && window.navigator.userAgent.match(/Chrome\/61\./)) {
       iframeEl.allow = 'microphone, camera';
     } else {
-      iframeEl.allow =
-        'microphone; camera; autoplay; display-capture; fullscreen;';
+      iframeEl.allow = 'microphone; camera; autoplay; display-capture';
     }
     iframeEl.style.visibility = 'hidden';
     parentEl.appendChild(iframeEl);
@@ -541,7 +540,7 @@ export default class DailyIframe extends EventEmitter {
   static createTransparentFrame(properties = {}) {
     methodNotSupportedInReactNative();
     let iframeEl = document.createElement('iframe');
-    iframeEl.allow = 'microphone; camera; autoplay; fullscreen;';
+    iframeEl.allow = 'microphone; camera; autoplay';
     iframeEl.style.cssText = `
       position: fixed;
       top: 0;
