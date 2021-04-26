@@ -70,6 +70,7 @@ import {
   DAILY_EVENT_LIVE_STREAMING_ERROR,
   DAILY_EVENT_LANG_UPDATED,
   DAILY_EVENT_ACCESS_STATE_UPDATED,
+  DAILY_EVENT_MEETING_SESSION_UPDATED,
   DAILY_EVENT_WAITING_PARTICIPANT_ADDED,
   DAILY_EVENT_WAITING_PARTICIPANT_REMOVED,
   DAILY_EVENT_WAITING_PARTICIPANT_UPDATED,
@@ -215,6 +216,7 @@ export {
   DAILY_EVENT_LIVE_STREAMING_ERROR,
   DAILY_EVENT_LANG_UPDATED,
   DAILY_EVENT_ACCESS_STATE_UPDATED,
+  DAILY_EVENT_MEETING_SESSION_UPDATED,
   DAILY_EVENT_WAITING_PARTICIPANT_ADDED,
   DAILY_EVENT_WAITING_PARTICIPANT_REMOVED,
   DAILY_EVENT_WAITING_PARTICIPANT_UPDATED,
@@ -2196,6 +2198,16 @@ export default class DailyIframe extends EventEmitter {
         if (!deepEqual(this._accessState, newAccessState)) {
           this._accessState = newAccessState;
           try {
+            this.emit(msg.action, msg);
+          } catch (e) {
+            console.log('could not emit', msg);
+          }
+        }
+        break;
+      case DAILY_EVENT_MEETING_SESSION_UPDATED:
+        if (msg.meetingSession) {
+          try {
+            delete msg.callFrameId;
             this.emit(msg.action, msg);
           } catch (e) {
             console.log('could not emit', msg);

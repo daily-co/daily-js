@@ -72,6 +72,7 @@ export type DailyEvent =
   | 'live-streaming-error'
   | 'lang-updated'
   | 'access-state-updated'
+  | 'meeting-session-updated'
   | 'waiting-participant-added'
   | 'waiting-participant-updated'
   | 'waiting-participant-removed';
@@ -426,6 +427,11 @@ export interface DailyEventObjectAccessState extends DailyAccessState {
   action: Extract<DailyEvent, 'access-state-updated'>;
 }
 
+export interface DailyEventObjectMeetingSessionUpdated {
+  action: Extract<DailyEvent, 'meeting-session-updated'>;
+  meetingSession: DailyMeetingSession;
+}
+
 export interface DailyEventObjectTrack {
   action: Extract<DailyEvent, 'track-started' | 'track-stopped'>;
   participant: DailyParticipant | null; // null if participant left meeting
@@ -534,6 +540,8 @@ export type DailyEventObject<
   ? DailyEventObjectWaitingParticipant
   : T extends DailyEventObjectAccessState['action']
   ? DailyEventObjectAccessState
+  : T extends DailyEventObjectMeetingSessionUpdated['action']
+  ? DailyEventObjectMeetingSessionUpdated
   : T extends DailyEventObjectTrack['action']
   ? DailyEventObjectTrack
   : T extends DailyEventObjectRecordingStarted['action']
