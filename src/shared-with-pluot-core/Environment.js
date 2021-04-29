@@ -99,7 +99,7 @@ export function browserNeedsUpgrade() {
       return version.major && version.major > 0 && version.major < 61;
     case 'Firefox':
       version = getFirefoxVersion();
-      return version.major < 80;
+      return version.major < 78;
     case 'Safari':
       version = getSafariVersion();
       return version.major < 12;
