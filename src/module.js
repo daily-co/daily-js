@@ -290,6 +290,7 @@ const FRAME_PROPS = {
         'jp',
         'ka',
         'nl',
+        'no',
         'pl',
         'pt',
         'sv',
@@ -298,7 +299,7 @@ const FRAME_PROPS = {
       ].includes(lang);
     },
     help:
-      'language not supported. Options are: de, en-us, en, es, fi, fr, it, jp, ka, nl, pl, pt, sv, tr, user',
+      'language not supported. Options are: de, en-us, en, es, fi, fr, it, jp, ka, nl, no, pl, pt, sv, tr, user',
   },
   userName: true, // ignored if there's a token
   showLeaveButton: true,
