@@ -1,5 +1,9 @@
 import { isSfuSupported } from './shared-with-pluot-core/Environment';
 
+export function randomStringId() {
+  return Date.now() + Math.random().toString();
+}
+
 export function notImplementedError() {
   throw new Error('Method must be implemented in subclass');
 }

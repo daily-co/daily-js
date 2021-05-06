@@ -137,7 +137,7 @@ import WebMessageChannel from './shared-with-pluot-core/script-message-channels/
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
 import CallObjectLoader from './CallObjectLoader';
 import { getLocalIsSubscribedToTrack } from './shared-with-pluot-core/selectors';
-import { callObjectBundleUrl } from './utils.js';
+import { callObjectBundleUrl, randomStringId } from './utils.js';
 import * as Participant from './Participant';
 
 // meeting states
@@ -608,7 +608,7 @@ export default class DailyIframe extends EventEmitter {
     this._network = { threshold: 'good', quality: 100 };
     this._activeSpeaker = {};
     this._activeSpeakerMode = false;
-    this._callFrameId = Date.now() + Math.random().toString();
+    this._callFrameId = randomStringId();
     this._messageChannel = isReactNative()
       ? new ReactNativeMessageChannel()
       : new WebMessageChannel();
