@@ -1,5 +1,6 @@
 import ScriptMessageChannel from './ScriptMessageChannel';
 import { EventEmitter } from 'events';
+import { randomStringId } from '../../utils';
 
 // This file is imported by both daily-js and the call machine. Make sure we
 // only instantiate each emitter once.
@@ -89,9 +90,9 @@ export default class ReactNativeMessageChannel extends ScriptMessageChannel {
 
   _sendMessage(message, messageEmitter, logMessage, callback) {
     if (callback) {
-      let ts = Date.now();
-      this._messageCallbacks[ts] = callback;
-      message.callbackStamp = ts;
+      let stamp = randomStringId();
+      this._messageCallbacks[stamp] = callback;
+      message.callbackStamp = stamp;
     }
     // console.log(`[ReactNativeMessageChannel] ${logMessage}`, message);
     messageEmitter.emit('message', message);
