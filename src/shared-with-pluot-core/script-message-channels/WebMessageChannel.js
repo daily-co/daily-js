@@ -1,5 +1,6 @@
 import ScriptMessageChannel from './ScriptMessageChannel';
 import { IFRAME_MESSAGE_MARKER } from '../CommonIncludes';
+import { randomStringId } from '../../utils';
 
 /**
  * A two-way message channel between daily-js and the call machine (pluot-core),
@@ -74,9 +75,9 @@ export default class WebMessageChannel extends ScriptMessageChannel {
     msg.from = 'module';
     msg.callFrameId = callFrameId;
     if (callback) {
-      let ts = Date.now();
-      this._messageCallbacks[ts] = callback;
-      msg.callbackStamp = ts;
+      let stamp = randomStringId();
+      this._messageCallbacks[stamp] = callback;
+      msg.callbackStamp = stamp;
     }
     const w = iframe ? iframe.contentWindow : window;
     // console.log('[WebMessageChannel] sending message to call machine', msg);
