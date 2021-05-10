@@ -1320,8 +1320,12 @@ export default class DailyIframe extends EventEmitter {
     // Pre-auth with the server.
     return new Promise((resolve, reject) => {
       const k = (msg) => {
+        if (msg.error) {
+          return reject(msg.error);
+        }
+
         if (!msg.access) {
-          reject(new Error('unknown error in preAuth()'));
+          return reject(new Error('unknown error in preAuth()'));
         }
 
         // Set a flag indicating that we've pre-authed.
