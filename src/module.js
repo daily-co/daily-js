@@ -1269,7 +1269,10 @@ export default class DailyIframe extends EventEmitter {
     // (assuming automatic audio device management isn't disabled)
     if (
       !this.disableReactNativeAutoDeviceManagement('audio') &&
-      this.shouldDeviceUseInCallAudioMode(this._meetingState)
+      this.isMeetingPendingOrOngoing(
+        this._meetingState,
+        this._isPreparingToJoin
+      )
     ) {
       this.nativeUtils().setAudioMode(this._nativeInCallAudioMode);
     }
@@ -2571,10 +2574,10 @@ export default class DailyIframe extends EventEmitter {
     ) {
       return;
     }
-    const inCallAudioMode = useInCallAudioMode
+    const audioMode = useInCallAudioMode
       ? this._nativeInCallAudioMode
       : NATIVE_AUDIO_MODE_IDLE;
-    this.nativeUtils().setAudioMode(inCallAudioMode);
+    this.nativeUtils().setAudioMode(audioMode);
   }
 
   // Note: notification properties can't be changed while it is ongoing
