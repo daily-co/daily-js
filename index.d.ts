@@ -128,8 +128,9 @@ export interface DailyCallOptions {
   cssText?: string;
   dailyConfig?: DailyAdvancedConfig;
   subscribeToTracksAutomatically?: boolean;
-  videoSource?: string | MediaStreamTrack;
-  audioSource?: string | MediaStreamTrack;
+  videoSource?: boolean | MediaStreamTrack;
+  audioSource?: boolean | MediaStreamTrack;
+  userName?: string;
 }
 
 export interface DailyLoadOptions extends DailyCallOptions {
@@ -627,7 +628,7 @@ export type DailyAccessRequest = {
 
 export interface DailyCall {
   iframe(): HTMLIFrameElement | null;
-  join(properties?: DailyCallOptions): Promise<DailyParticipantsObject | void>;
+  join(properties?: DailyCallOptions): Promise<DailyParticipantsObject>;
   leave(): Promise<void>;
   destroy(): Promise<void>;
   loadCss(properties: {
