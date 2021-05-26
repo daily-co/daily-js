@@ -1624,7 +1624,6 @@ export default class DailyIframe extends EventEmitter {
     backgroundColor = '0xff000000',
     layout = { preset: 'default' },
   }) {
-    methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_START_LIVE_STREAMING,
       rtmpUrl,
@@ -1636,7 +1635,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   updateLiveStreaming({ layout = { preset: 'default' } }) {
-    methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_UPDATE_LIVE_STREAMING,
       layout,
@@ -1644,7 +1642,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   stopLiveStreaming() {
-    methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_LIVE_STREAMING });
   }
 
