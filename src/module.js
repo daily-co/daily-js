@@ -1621,7 +1621,7 @@ export default class DailyIframe extends EventEmitter {
     rtmpUrl,
     width = 1920,
     height = 1080,
-    backgroundColor = '0xff000000',
+    backgroundColor = '#ff000000',
     layout = { preset: 'default' },
   }) {
     this.sendMessageToCallMachine({
