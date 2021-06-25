@@ -2551,6 +2551,7 @@ export default class DailyIframe extends EventEmitter {
   resetMeetingDependentVars() {
     this._participants = {};
     this._waitingParticipants = {};
+    this._activeSpeaker = {};
     this._activeSpeakerMode = false;
     this._didPreAuth = false;
     this._accessState = { access: DAILY_ACCESS_UNKNOWN };
