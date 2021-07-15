@@ -156,9 +156,15 @@ export interface DailyThemeColors {
   supportiveText?: string;
 }
 
-export type DailyThemeConfig = DailyThemeColors | {
-  light: DailyThemeColors;
-  dark: DailyThemeColors;
+export type DailyThemeConfig = {
+  colors: DailyThemeColors;
+} | {
+  light: {
+    colors: DailyThemeColors;
+  }
+  dark: {
+    colors: DailyThemeColors;
+  }
 }
 
 export interface DailyCallOptions {

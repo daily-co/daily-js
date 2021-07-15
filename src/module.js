@@ -382,9 +382,9 @@ const FRAME_PROPS = {
         return false;
       }
       if ('light' in o && 'dark' in o) {
-        return containsValidColors(o.light) && containsValidColors(o.dark);
+        return containsValidColors(o.light.colors) && containsValidColors(o.dark.colors);
       }
-      return containsValidColors(o);
+      return containsValidColors(o.colors);
     },
     help:
       'unsupported theme configuration. Check error logs for detailed info.',
