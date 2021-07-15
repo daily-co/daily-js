@@ -375,7 +375,10 @@ const FRAME_PROPS = {
         (!('light' in o) && 'dark' in o)
       ) {
         // Must define both themes
-        console.error('Theme must contain either both "light" and "dark" properties, or color keys.', o);
+        console.error(
+          'Theme must contain either both "light" and "dark" properties, or color keys.',
+          o
+        );
         return false;
       }
       if ('light' in o && 'dark' in o) {
@@ -383,7 +386,8 @@ const FRAME_PROPS = {
       }
       return containsValidColors(o);
     },
-    help: 'unsupported theme configuration. Check error logs for detailed info.'
+    help:
+      'unsupported theme configuration. Check error logs for detailed info.',
   },
   // used internally
   layout: {
@@ -1871,6 +1875,31 @@ export default class DailyIframe extends EventEmitter {
       return this;
     }
     return this._showParticipantsBar;
+  }
+
+  theme() {
+    if (this._callObjectMode) {
+      console.error('theme is not available in callObject mode');
+      return this;
+    }
+    return this.properties.theme;
+  }
+
+  setTheme(theme) {
+    if (this._callObjectMode) {
+      console.error('setTheme is not available in callObject mode');
+      return this;
+    }
+    this.validateProperties({
+      theme,
+    });
+    this.properties.theme = {
+      ...theme,
+    };
+    this._messageChannel.sendMessageToDailyJs({
+      action: DAILY_EVENT_READY_FOR_CONFIG,
+    });
+    return this;
   }
 
   detectAllFaces() {
