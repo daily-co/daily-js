@@ -337,8 +337,53 @@ const FRAME_PROPS = {
   },
   theme: {
     validate: (o) => {
-      return true;
-    }
+      const validColors = [
+        'accent',
+        'accentText',
+        'background',
+        'backgroundAccent',
+        'baseText',
+        'border',
+        'mainAreaBg',
+        'mainAreaBgAccent',
+        'mainAreaText',
+        'supportiveText',
+      ];
+      const containsValidColors = (colors) => {
+        for (const key of Object.keys(colors)) {
+          if (!validColors.includes(key)) {
+            // Key is not a supported theme color
+            console.error(
+              `unsupported color "${key}". Valid colors: ${validColors.join(
+                ', '
+              )}`
+            );
+            return false;
+          }
+          if (!colors[key].match(/^#[0-9a-f]{6}|#[0-9a-f]{3}$/i)) {
+            // Color is not in hex format
+            console.error(
+              `${key} theme color should be provided in valid hex color format. Received: "${colors[key]}"`
+            );
+            return false;
+          }
+        }
+        return true;
+      };
+      if (
+        ('light' in o && !('dark' in o)) ||
+        (!('light' in o) && 'dark' in o)
+      ) {
+        // Must define both themes
+        console.error('Theme must contain either both "light" and "dark" properties, or color keys.', o);
+        return false;
+      }
+      if ('light' in o && 'dark' in o) {
+        return containsValidColors(o.light) && containsValidColors(o.dark);
+      }
+      return containsValidColors(o);
+    },
+    help: 'unsupported theme configuration. Check error logs for detailed info.'
   },
   // used internally
   layout: {
@@ -2066,7 +2111,7 @@ export default class DailyIframe extends EventEmitter {
         this._messageChannel.sendMessageToCallMachine(
           {
             action: DAILY_EVENT_IFRAME_CONFIG,
-            ...this.properties
+            ...this.properties,
           },
           null,
           this._iframe,
