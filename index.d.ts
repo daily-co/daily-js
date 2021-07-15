@@ -113,6 +113,54 @@ export interface DailyBrowserInfo {
   supportsSfu: boolean;
 }
 
+export interface DailyThemeColors {
+  /**
+   * Main theme color. Used for primary actions and keyboard focus.
+   */
+  accent?: string;
+  /**
+   * Text color rendered on `accent`.
+   */
+  accentText?: string;
+  /**
+   * Background color.
+   */
+  background?: string;
+  /**
+   * Background color for highlighted elements.
+   */
+  backgroundAccent?: string;
+  /**
+   * Default text color, as rendered on `background` or `backgroundAccent`.
+   */
+  baseText?: string;
+  /**
+   * Default border color for bordered elements.
+   */
+  border?: string;
+  /**
+   * Background color for the call main area.
+   */
+  mainAreaBg?: string;
+  /**
+   * Background color for video tiles.
+   */
+  mainAreaBgAccent?: string;
+  /**
+   * Text color for text rendered inside the call main area, e.g. names.
+   */
+  mainAreaText?: string;
+  /**
+   * Text color for supportive, less emphasized, text.
+   */
+  supportiveText?: string;
+}
+
+export type DailyThemeConfig = DailyThemeColors | {
+  light: DailyThemeColors;
+  dark: DailyThemeColors;
+}
+
 export interface DailyCallOptions {
   url?: string;
   token?: string;
@@ -130,6 +178,7 @@ export interface DailyCallOptions {
   subscribeToTracksAutomatically?: boolean;
   videoSource?: string | MediaStreamTrack;
   audioSource?: string | MediaStreamTrack;
+  theme?: DailyThemeConfig;
 }
 
 export interface DailyLoadOptions extends DailyCallOptions {

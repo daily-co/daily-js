@@ -35,6 +35,8 @@ import {
   DAILY_CAMERA_ERROR_MIC_IN_USE,
   DAILY_CAMERA_ERROR_CAM_AND_MIC_IN_USE,
   // events
+  DAILY_EVENT_READY_FOR_CONFIG,
+  DAILY_EVENT_IFRAME_CONFIG,
   DAILY_EVENT_LOADING,
   DAILY_EVENT_LOADED,
   DAILY_EVENT_LOAD_ATTEMPT_FAILED,
@@ -181,6 +183,8 @@ export {
 
 // events
 export {
+  DAILY_EVENT_READY_FOR_CONFIG,
+  DAILY_EVENT_IFRAME_CONFIG,
   DAILY_EVENT_LOADING,
   DAILY_EVENT_LOADED,
   DAILY_EVENT_LOAD_ATTEMPT_FAILED,
@@ -330,6 +334,11 @@ const FRAME_PROPS = {
       callObject._preloadCache.subscribeToTracksAutomatically = s;
       return true;
     },
+  },
+  theme: {
+    validate: (o) => {
+      return true;
+    }
   },
   // used internally
   layout: {
@@ -2053,6 +2062,17 @@ export default class DailyIframe extends EventEmitter {
 
   handleMessageFromCallMachine(msg) {
     switch (msg.action) {
+      case DAILY_EVENT_READY_FOR_CONFIG:
+        this._messageChannel.sendMessageToCallMachine(
+          {
+            action: DAILY_EVENT_IFRAME_CONFIG,
+            ...this.properties
+          },
+          null,
+          this._iframe,
+          this._callFrameId
+        );
+        break;
       case DAILY_EVENT_LOADED:
         if (this._loadedCallback) {
           this._loadedCallback();

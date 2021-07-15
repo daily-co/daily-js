@@ -42,6 +42,8 @@ export const DAILY_CAMERA_ERROR_CAM_AND_MIC_IN_USE = 'cam-mic-in-use';
 
 // events
 
+export const DAILY_EVENT_READY_FOR_CONFIG = 'ready-for-config';
+export const DAILY_EVENT_IFRAME_CONFIG = 'iframe-config';
 export const DAILY_EVENT_LOADING = 'loading';
 export const DAILY_EVENT_LOAD_ATTEMPT_FAILED = 'load-attempt-failed';
 export const DAILY_EVENT_LOADED = 'loaded';
