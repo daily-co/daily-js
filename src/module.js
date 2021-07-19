@@ -140,7 +140,6 @@ import {
 import WebMessageChannel from './shared-with-pluot-core/script-message-channels/WebMessageChannel';
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
 import CallObjectLoader from './CallObjectLoader';
-import { getLocalIsSubscribedToTrack } from './shared-with-pluot-core/selectors';
 import { callObjectBundleUrl, randomStringId } from './utils.js';
 import * as Participant from './Participant';
 
@@ -455,7 +454,7 @@ const PARTICIPANT_PROPS = {
       if (callObject._preloadCache.subscribeToTracksAutomatically) {
         return false;
       }
-      let validPrimitiveValues = [true, false];
+      let validPrimitiveValues = [true, false, 'staged'];
       !isReactNative() && validPrimitiveValues.push('avatar');
       if (validPrimitiveValues.includes(subs)) {
         return true;
@@ -478,7 +477,7 @@ const PARTICIPANT_PROPS = {
       'setSubscribedTracks cannot be used when setSubscribeToTracksAutomatically is enabled, and should be of the form: ' +
       `true${
         !isReactNative() ? " | 'avatar'" : ''
-      } | false | { [audio: true|false], [video: true|false], [screenVideo: true|false] }`,
+      } | false | 'staged' | { [audio: true|false|'staged'], [video: true|false|'staged'], [screenAudio: true|false|'staged'], [screenVideo: true|false|'staged'] }`,
   },
   setAudio: true,
   setVideo: true,

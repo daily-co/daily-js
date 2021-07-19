@@ -208,7 +208,7 @@ export interface DailyAdvancedConfig {
 }
 
 export interface DailyTrackState {
-  subscribed: boolean;
+  subscribed: DailyTrackSubscriptionState;
   state:
     | 'blocked'
     | 'off'
@@ -270,14 +270,16 @@ export interface DailyWaitingParticipant {
   awaitingAccess: SpecifiedDailyAccess;
 }
 
+type DailyTrackSubscriptionState = 'staged' | boolean;
+
 export type DailyTrackSubscriptionOptions =
-  | boolean
+  | DailyTrackSubscriptionState
   | 'avatar'
   | {
-      audio?: boolean;
-      video?: boolean;
-      screenVideo?: boolean;
-      screenAudio?: boolean;
+      audio?: DailyTrackSubscriptionState;
+      video?: DailyTrackSubscriptionState;
+      screenVideo?: DailyTrackSubscriptionState;
+      screenAudio?: DailyTrackSubscriptionState;
     };
 
 export interface DailyParticipantUpdateOptions {

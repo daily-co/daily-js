@@ -1,16 +1,26 @@
 import filter from 'lodash/filter';
 import orderBy from 'lodash/orderBy';
 
-export const getParticipantIsSubscribedToTrack = (state, id, mediaTag) => {
-  return _getIsSubscribedToTrack(
-    state.participants[id],
-    state.local.public.id,
-    mediaTag
-  );
+export const getLocalSubscriptionToTrack = (state, id, mediaTag) => {
+  return _getSubscriptionToTrack(state.local, id, mediaTag);
 };
 
 export const getLocalIsSubscribedToTrack = (state, id, mediaTag) => {
-  return _getIsSubscribedToTrack(state.local, id, mediaTag);
+  return _getSubscriptionToTrack(state.local, id, mediaTag) === true;
+};
+
+export const getRemoteParticipantIsSubscribedToLocalTrack = (
+  state,
+  id,
+  mediaTag
+) => {
+  return (
+    _getSubscriptionToTrack(
+      state.participants[id],
+      state.local.public.id,
+      mediaTag
+    ) === true
+  );
 };
 
 // type is "cam" or "screen"
@@ -54,26 +64,44 @@ export const getIsRemoteTrackLoading = (state, participantId, type, kind) => {
   return false;
 };
 
-const _getIsSubscribedToTrack = (p, p2id, mediaTag) => {
+// NOTE: maps 'avatar' to true. 'avatar' is deprecated with the new prebuilt ui
+// and is currently accessed directly from redux anyway (not via this selector)
+// where it's needed.
+const _getSubscriptionToTrack = (p, p2id, mediaTag) => {
   // if we don't have a participant record at all, assume that
   // false is the safest thing to return, here
   if (!p) {
     return false;
   }
+  const mapToTrueFalseStaged = (subscription) => {
+    switch (subscription) {
+      case 'avatar':
+        return true;
+      case 'staged':
+        return subscription;
+      default:
+        // boolean or undefined
+        return !!subscription;
+    }
+  };
   const sTracks = p.public.subscribedTracks;
   // Below shows the return values for all the various versions of sTracks
-  //   { ALL: true }                -> true
-  //   { ALL: false }               -> false
-  //   undefined                    -> true  // this should never happen
-  //   {},                          -> false
-  //   { p2id: { }}                 -> false
-  //   { p2id: { mediaTag: true }}  -> true
-  //   { p2id: { mediaTag: false }} -> false
+  //   { ALL: true }                   -> true
+  //   { ALL: false }                  -> false
+  //   { ALL: 'staged' }               -> 'staged'
+  //   { ALL: 'avatar' }               -> true
+  //   undefined                       -> true  // this should never happen
+  //   {},                             -> false
+  //   { p2id: { }}                    -> false
+  //   { p2id: { mediaTag: true }}     -> true
+  //   { p2id: { mediaTag: false }}    -> false
+  //   { p2id: { mediaTag: 'staged' }} -> 'staged'
+  //   { p2id: { mediaTag: 'avatar' }} -> true
   if (!(sTracks && sTracks[p2id])) {
-    return sTracks ? !!sTracks.ALL : true;
+    return sTracks ? mapToTrueFalseStaged(sTracks.ALL) : true;
   }
 
-  return !!sTracks[p2id][mediaTag];
+  return mapToTrueFalseStaged(sTracks[p2id][mediaTag]);
 };
 
 const _getRemoteStreamEntry = (state, participantId, type, kind) => {
