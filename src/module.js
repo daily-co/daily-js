@@ -35,8 +35,9 @@ import {
   DAILY_CAMERA_ERROR_MIC_IN_USE,
   DAILY_CAMERA_ERROR_CAM_AND_MIC_IN_USE,
   // events
-  DAILY_EVENT_READY_FOR_CONFIG,
-  DAILY_EVENT_IFRAME_CONFIG,
+  DAILY_EVENT_IFRAME_READY_FOR_LAUNCH_CONFIG,
+  DAILY_EVENT_IFRAME_LAUNCH_CONFIG,
+  DAILY_EVENT_SET_THEME,
   DAILY_EVENT_LOADING,
   DAILY_EVENT_LOADED,
   DAILY_EVENT_LOAD_ATTEMPT_FAILED,
@@ -183,8 +184,9 @@ export {
 
 // events
 export {
-  DAILY_EVENT_READY_FOR_CONFIG,
-  DAILY_EVENT_IFRAME_CONFIG,
+  DAILY_EVENT_IFRAME_READY_FOR_LAUNCH_CONFIG,
+  DAILY_EVENT_IFRAME_LAUNCH_CONFIG,
+  DAILY_EVENT_SET_THEME,
   DAILY_EVENT_LOADING,
   DAILY_EVENT_LOADED,
   DAILY_EVENT_LOAD_ATTEMPT_FAILED,
@@ -382,7 +384,10 @@ const FRAME_PROPS = {
         return false;
       }
       if ('light' in o && 'dark' in o) {
-        return containsValidColors(o.light.colors) && containsValidColors(o.dark.colors);
+        return (
+          containsValidColors(o.light.colors) &&
+          containsValidColors(o.dark.colors)
+        );
       }
       return containsValidColors(o.colors);
     },
@@ -1897,7 +1902,7 @@ export default class DailyIframe extends EventEmitter {
       ...theme,
     };
     this._messageChannel.sendMessageToDailyJs({
-      action: DAILY_EVENT_READY_FOR_CONFIG,
+      action: DAILY_EVENT_SET_THEME,
     });
     return this;
   }
@@ -2136,10 +2141,21 @@ export default class DailyIframe extends EventEmitter {
 
   handleMessageFromCallMachine(msg) {
     switch (msg.action) {
-      case DAILY_EVENT_READY_FOR_CONFIG:
+      case DAILY_EVENT_IFRAME_READY_FOR_LAUNCH_CONFIG:
         this._messageChannel.sendMessageToCallMachine(
           {
-            action: DAILY_EVENT_IFRAME_CONFIG,
+            action: DAILY_EVENT_IFRAME_LAUNCH_CONFIG,
+            ...this.properties,
+          },
+          null,
+          this._iframe,
+          this._callFrameId
+        );
+        break;
+      case DAILY_EVENT_SET_THEME:
+        this._messageChannel.sendMessageToCallMachine(
+          {
+            action: DAILY_EVENT_SET_THEME,
             ...this.properties,
           },
           null,
