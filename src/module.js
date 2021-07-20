@@ -37,7 +37,7 @@ import {
   // events
   DAILY_EVENT_IFRAME_READY_FOR_LAUNCH_CONFIG,
   DAILY_EVENT_IFRAME_LAUNCH_CONFIG,
-  DAILY_EVENT_SET_THEME,
+  DAILY_EVENT_THEME_UPDATED,
   DAILY_EVENT_LOADING,
   DAILY_EVENT_LOADED,
   DAILY_EVENT_LOAD_ATTEMPT_FAILED,
@@ -80,6 +80,7 @@ import {
 
   // internals
   //
+  DAILY_METHOD_SET_THEME,
   DAILY_METHOD_START_CAMERA,
   DAILY_METHOD_SET_INPUT_DEVICES,
   DAILY_METHOD_SET_OUTPUT_DEVICE,
@@ -186,7 +187,7 @@ export {
 export {
   DAILY_EVENT_IFRAME_READY_FOR_LAUNCH_CONFIG,
   DAILY_EVENT_IFRAME_LAUNCH_CONFIG,
-  DAILY_EVENT_SET_THEME,
+  DAILY_EVENT_THEME_UPDATED,
   DAILY_EVENT_LOADING,
   DAILY_EVENT_LOADED,
   DAILY_EVENT_LOAD_ATTEMPT_FAILED,
@@ -373,17 +374,25 @@ const FRAME_PROPS = {
         return true;
       };
       if (
-        ('light' in o && !('dark' in o)) ||
-        (!('light' in o) && 'dark' in o)
+        typeof o !== 'object' ||
+        !(('light' in o && 'dark' in o) || 'colors' in o)
       ) {
-        // Must define both themes
+        // Must define either both themes or colors
         console.error(
-          'Theme must contain either both "light" and "dark" properties, or color keys.',
+          'Theme must contain either both "light" and "dark" properties, or "colors".',
           o
         );
         return false;
       }
       if ('light' in o && 'dark' in o) {
+        if (!('colors' in o.light)) {
+          console.error('Light theme is missing "colors" property.', o);
+          return false;
+        }
+        if (!('colors' in o.dark)) {
+          console.error('Dark theme is missing "colors" property.', o);
+          return false;
+        }
         return (
           containsValidColors(o.light.colors) &&
           containsValidColors(o.dark.colors)
@@ -1891,20 +1900,37 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setTheme(theme) {
-    if (this._callObjectMode) {
-      console.error('setTheme is not available in callObject mode');
-      return this;
-    }
-    this.validateProperties({
-      theme,
+    return new Promise((resolve, reject) => {
+      if (this._callObjectMode) {
+        reject('setTheme is not available in callObject mode');
+        return;
+      }
+      try {
+        this.validateProperties({
+          theme,
+        });
+        this.properties.theme = {
+          ...theme,
+        };
+        // Send message to Prebuilt UI Iframe driver
+        this.sendMessageToCallMachine({
+          action: DAILY_METHOD_SET_THEME,
+          theme: this.properties.theme,
+        });
+        // Emit theme-updated event to callFrame
+        try {
+          this.emit(DAILY_EVENT_THEME_UPDATED, {
+            action: DAILY_EVENT_THEME_UPDATED,
+            theme: this.properties.theme,
+          });
+        } catch (e) {
+          console.log("could not emit 'theme-updated'");
+        }
+        resolve(this.properties.theme);
+      } catch (e) {
+        reject(e);
+      }
     });
-    this.properties.theme = {
-      ...theme,
-    };
-    this._messageChannel.sendMessageToDailyJs({
-      action: DAILY_EVENT_SET_THEME,
-    });
-    return this;
   }
 
   detectAllFaces() {
@@ -2142,26 +2168,10 @@ export default class DailyIframe extends EventEmitter {
   handleMessageFromCallMachine(msg) {
     switch (msg.action) {
       case DAILY_EVENT_IFRAME_READY_FOR_LAUNCH_CONFIG:
-        this._messageChannel.sendMessageToCallMachine(
-          {
-            action: DAILY_EVENT_IFRAME_LAUNCH_CONFIG,
-            ...this.properties,
-          },
-          null,
-          this._iframe,
-          this._callFrameId
-        );
-        break;
-      case DAILY_EVENT_SET_THEME:
-        this._messageChannel.sendMessageToCallMachine(
-          {
-            action: DAILY_EVENT_SET_THEME,
-            ...this.properties,
-          },
-          null,
-          this._iframe,
-          this._callFrameId
-        );
+        this.sendMessageToCallMachine({
+          action: DAILY_EVENT_IFRAME_LAUNCH_CONFIG,
+          ...this.properties,
+        });
         break;
       case DAILY_EVENT_LOADED:
         if (this._loadedCallback) {

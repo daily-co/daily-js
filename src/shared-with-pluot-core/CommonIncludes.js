@@ -45,7 +45,7 @@ export const DAILY_CAMERA_ERROR_CAM_AND_MIC_IN_USE = 'cam-mic-in-use';
 export const DAILY_EVENT_IFRAME_READY_FOR_LAUNCH_CONFIG =
   'iframe-ready-for-launch-config';
 export const DAILY_EVENT_IFRAME_LAUNCH_CONFIG = 'iframe-launch-config';
-export const DAILY_EVENT_SET_THEME = 'set-theme';
+export const DAILY_EVENT_THEME_UPDATED = 'theme-updated';
 export const DAILY_EVENT_LOADING = 'loading';
 export const DAILY_EVENT_LOAD_ATTEMPT_FAILED = 'load-attempt-failed';
 export const DAILY_EVENT_LOADED = 'loaded';
@@ -111,6 +111,7 @@ export const MAX_APP_MSG_SIZE = 1024 * 4;
 
 export const IFRAME_MESSAGE_MARKER = 'iframe-call-message';
 
+export const DAILY_METHOD_SET_THEME = 'set-theme';
 export const DAILY_METHOD_START_CAMERA = 'start-camera';
 export const DAILY_METHOD_SET_INPUT_DEVICES = 'set-input-devices';
 export const DAILY_METHOD_SET_OUTPUT_DEVICE = 'set-output-device';

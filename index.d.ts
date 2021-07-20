@@ -76,7 +76,8 @@ export type DailyEvent =
   | 'meeting-session-updated'
   | 'waiting-participant-added'
   | 'waiting-participant-updated'
-  | 'waiting-participant-removed';
+  | 'waiting-participant-removed'
+  | 'theme-updated';
 
 export type DailyMeetingState =
   | 'new'
@@ -576,6 +577,11 @@ export interface DailyEventObjectLangUpdated {
   langSetting: DailyLanguageSetting;
 }
 
+export interface DailyEventObjectThemeUpdated {
+  action: Extract<DailyEvent, 'theme-updated'>;
+  theme: DailyThemeConfig;
+}
+
 export type DailyEventObject<
   T extends DailyEvent = any
 > = T extends DailyEventObjectAppMessage['action']
@@ -616,6 +622,8 @@ export type DailyEventObject<
   ? DailyEventObjectActiveSpeakerModeChange
   : T extends DailyEventObjectLangUpdated['action']
   ? DailyEventObjectLangUpdated
+  : T extends DailyEventObjectThemeUpdated['action']
+  ? DailyEventObjectThemeUpdated
   : any;
 
 export interface DailyFaceInfo {
@@ -775,7 +783,7 @@ export interface DailyCall {
   setShowLocalVideo(show: boolean): DailyCall;
   setShowParticipantsBar(show: boolean): DailyCall;
   theme(): DailyThemeConfig;
-  setTheme(theme: DailyThemeConfig): DailyCall;
+  setTheme(theme: DailyThemeConfig): Promise<DailyThemeConfig>;
   showLocalVideo(): boolean;
   showParticipantsBar(): boolean;
   detectAllFaces(): Promise<{
