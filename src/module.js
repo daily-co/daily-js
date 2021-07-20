@@ -454,18 +454,18 @@ const PARTICIPANT_PROPS = {
       if (callObject._preloadCache.subscribeToTracksAutomatically) {
         return false;
       }
-      let validPrimitiveValues = [true, false, 'staged'];
-      !isReactNative() && validPrimitiveValues.push('avatar');
-      if (validPrimitiveValues.includes(subs)) {
+      const validPrimitiveValues = [true, false, 'staged'];
+      if (
+        validPrimitiveValues.includes(subs) ||
+        (!isReactNative() && subs === 'avatar')
+      ) {
         return true;
       }
       for (const s in subs) {
         if (
           !(
-            s === 'audio' ||
-            s === 'video' ||
-            s === 'screenVideo' ||
-            s === 'screenAudio'
+            ['audio', 'video', 'screenAudio', 'screenVideo'].includes(s) &&
+            validPrimitiveValues.includes(subs[s])
           )
         ) {
           return false;
