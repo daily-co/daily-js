@@ -9,6 +9,8 @@ export const getLocalIsSubscribedToTrack = (state, id, mediaTag) => {
   return _getSubscriptionToTrack(state.local, id, mediaTag) === true;
 };
 
+// NOTE: only meant for use in P2P mode, where we have access to remote
+// participants' subscriptions info.
 export const getRemoteParticipantIsSubscribedToLocalTrack = (
   state,
   id,
