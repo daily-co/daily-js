@@ -115,6 +115,10 @@ export const DAILY_EVENT_SHOW_LOCAL_VIDEO_CHANGED = 'show-local-video-changed';
 
 export const DAILY_EVENT_RECEIVE_SETTINGS_UPDATED = 'receive-settings-updated';
 
+export const DAILY_EVENT_INPUT_SETTINGS_UPDATED = 'input-settings-updated';
+export const DAILY_EVENT_NONFATAL_ERROR = 'nonfatal-error';
+export const DAILY_INPUT_SETTINGS_ERROR_TYPE = 'input-settings-error';
+export const DAILY_VIDEO_PROCESSOR_ERROR_TYPE = 'video-processor-error';
 export const DAILY_EVENT_ERROR = 'error';
 
 export const DAILY_EVENT_MEDIA_INGEST_ERROR = 'media-ingest-error';
@@ -186,6 +190,7 @@ export const DAILY_METHOD_UPDATE_WAITING_PARTICIPANTS =
 export const DAILY_METHOD_GET_SINGLE_PARTICIPANT_RECEIVE_SETTINGS =
   'get-single-participant-receive-settings';
 export const DAILY_METHOD_UPDATE_RECEIVE_SETTINGS = 'update-receive-settings';
+export const DAILY_METHOD_UPDATE_INPUT_SETTINGS = 'update-input-settings';
 
 export const DAILY_CUSTOM_TRACK = 'daily-custom-track';
 export const DAILY_UI_REQUEST_FULLSCREEN = 'request-fullscreen';
@@ -201,4 +206,12 @@ export const DAILY_JS_NETWORK_THRESHOLDS = {
   VERY_LOW: 'very-low',
   LOW: 'low',
   GOOD: 'good',
+};
+
+// video processor settings enum
+export const DAILY_JS_VIDEO_PROCESSOR_TYPES = {
+  NONE: 'none',
+  BGBLUR: 'background-blur',
+  // BGIMAGE: 'background-image',
+  // CUSTOM: 'custom',
 };
