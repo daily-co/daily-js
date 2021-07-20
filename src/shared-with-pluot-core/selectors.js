@@ -67,10 +67,10 @@ export const getIsRemoteTrackLoading = (state, participantId, type, kind) => {
 // NOTE: maps 'avatar' to true. 'avatar' is deprecated with the new prebuilt ui
 // and is currently accessed directly from redux anyway (not via this selector)
 // where it's needed.
-const _getSubscriptionToTrack = (p, p2id, mediaTag) => {
+const _getSubscriptionToTrack = (subscriber, subscribeeId, mediaTag) => {
   // if we don't have a participant record at all, assume that
   // false is the safest thing to return, here
-  if (!p) {
+  if (!subscriber) {
     return false;
   }
   const mapToTrueFalseStaged = (subscription) => {
@@ -84,7 +84,7 @@ const _getSubscriptionToTrack = (p, p2id, mediaTag) => {
         return !!subscription;
     }
   };
-  const sTracks = p.public.subscribedTracks;
+  const sTracks = subscriber.public.subscribedTracks;
   // Below shows the return values for all the various versions of sTracks
   //   { ALL: true }                   -> true
   //   { ALL: false }                  -> false
@@ -97,11 +97,11 @@ const _getSubscriptionToTrack = (p, p2id, mediaTag) => {
   //   { p2id: { mediaTag: false }}    -> false
   //   { p2id: { mediaTag: 'staged' }} -> 'staged'
   //   { p2id: { mediaTag: 'avatar' }} -> true
-  if (!(sTracks && sTracks[p2id])) {
+  if (!(sTracks && sTracks[subscribeeId])) {
     return sTracks ? mapToTrueFalseStaged(sTracks.ALL) : true;
   }
 
-  return mapToTrueFalseStaged(sTracks[p2id][mediaTag]);
+  return mapToTrueFalseStaged(sTracks[subscribeeId][mediaTag]);
 };
 
 const _getRemoteStreamEntry = (state, participantId, type, kind) => {
