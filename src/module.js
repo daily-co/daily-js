@@ -1917,7 +1917,14 @@ export default class DailyIframe extends EventEmitter {
           action: DAILY_METHOD_SET_THEME,
           theme: this.properties.theme,
         });
-        // Emit theme-updated event to callFrame
+        /**
+         * For simplicity, emitting theme-updated here rather than
+         * listening for it from Prebuilt & re-emitting it, since:
+         * - we've fully validated the theme, so there's no risk of it not being applied
+         * - we set `this.properties.theme` first, so in a customer's `theme-updated`
+         *   handler, a call to `theme()` will return the latest value
+         * - this method is the only way `theme-updated` can change
+         */
         try {
           this.emit(DAILY_EVENT_THEME_UPDATED, {
             action: DAILY_EVENT_THEME_UPDATED,
