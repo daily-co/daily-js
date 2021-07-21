@@ -72,6 +72,7 @@ import {
   DAILY_EVENT_LIVE_STREAMING_STOPPED,
   DAILY_EVENT_LIVE_STREAMING_ERROR,
   DAILY_EVENT_LANG_UPDATED,
+  DAILY_EVENT_SHOW_LOCAL_VIDEO_CHANGED,
   DAILY_EVENT_ACCESS_STATE_UPDATED,
   DAILY_EVENT_MEETING_SESSION_UPDATED,
   DAILY_EVENT_WAITING_PARTICIPANT_ADDED,
@@ -2468,6 +2469,11 @@ export default class DailyIframe extends EventEmitter {
             console.log('could not emit', msg);
           }
         }
+        break;
+      case DAILY_EVENT_SHOW_LOCAL_VIDEO_CHANGED:
+        if (this._callObjectMode) return;
+        const { show } = msg;
+        this._showLocalVideo = show;
         break;
       case DAILY_EVENT_ACTIVE_SPEAKER_MODE_CHANGE:
         const { enabled } = msg;

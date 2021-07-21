@@ -101,6 +101,8 @@ export const DAILY_EVENT_LIVE_STREAMING_ERROR = 'live-streaming-error';
 
 export const DAILY_EVENT_LANG_UPDATED = 'lang-updated';
 
+export const DAILY_EVENT_SHOW_LOCAL_VIDEO_CHANGED = 'show-local-video-changed';
+
 export const DAILY_EVENT_ERROR = 'error';
 
 //
