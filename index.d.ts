@@ -270,7 +270,7 @@ export interface DailyWaitingParticipant {
   awaitingAccess: SpecifiedDailyAccess;
 }
 
-type DailyTrackSubscriptionState = 'staged' | boolean;
+export type DailyTrackSubscriptionState = 'staged' | boolean;
 
 export type DailyTrackSubscriptionOptions =
   | DailyTrackSubscriptionState
