@@ -103,6 +103,8 @@ export const DAILY_EVENT_LANG_UPDATED = 'lang-updated';
 
 export const DAILY_EVENT_SHOW_LOCAL_VIDEO_CHANGED = 'show-local-video-changed';
 
+export const DAILY_EVENT_RECEIVE_SETTINGS_UPDATED = 'receive-settings-updated';
+
 export const DAILY_EVENT_ERROR = 'error';
 
 //
@@ -165,6 +167,7 @@ export const DAILY_METHOD_UPDATE_WAITING_PARTICIPANT =
   'daily-method-update-waiting-participant';
 export const DAILY_METHOD_UPDATE_WAITING_PARTICIPANTS =
   'daily-method-update-waiting-participants';
+export const DAILY_METHOD_UPDATE_RECEIVE_SETTINGS = 'update-receive-settings';
 
 export const DAILY_CUSTOM_TRACK = 'daily-custom-track';
 export const DAILY_UI_REQUEST_FULLSCREEN = 'request-fullscreen';

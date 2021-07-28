@@ -78,6 +78,7 @@ import {
   DAILY_EVENT_WAITING_PARTICIPANT_ADDED,
   DAILY_EVENT_WAITING_PARTICIPANT_REMOVED,
   DAILY_EVENT_WAITING_PARTICIPANT_UPDATED,
+  DAILY_EVENT_RECEIVE_SETTINGS_UPDATED,
 
   // internals
   //
@@ -130,6 +131,7 @@ import {
   DAILY_METHOD_REQUEST_ACCESS,
   DAILY_METHOD_UPDATE_WAITING_PARTICIPANT,
   DAILY_METHOD_UPDATE_WAITING_PARTICIPANTS,
+  DAILY_METHOD_UPDATE_RECEIVE_SETTINGS,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -227,6 +229,7 @@ export {
   DAILY_EVENT_WAITING_PARTICIPANT_ADDED,
   DAILY_EVENT_WAITING_PARTICIPANT_REMOVED,
   DAILY_EVENT_WAITING_PARTICIPANT_UPDATED,
+  DAILY_EVENT_RECEIVE_SETTINGS_UPDATED,
 };
 
 // Audio modes for React Native: whether we should configure audio for video
@@ -447,6 +450,60 @@ const FRAME_PROPS = {
       return true;
     },
     help: 'unsupported layoutConfig. Check error logs for detailed info.',
+  },
+  receiveSettings: {
+    validate: (receiveSettingsPerParticipant) => {
+      // TODO: remove comment
+      console.log('[pk] [daily-js] validating receiveSettings!');
+      const isParticipantIdValid = (participantId) => {
+        return participantId && participantId !== 'local';
+      };
+      const areVideoReceiveSettingsValid = (videoReceiveSettings) => {
+        if (videoReceiveSettings.layer !== undefined) {
+          if (
+            !(
+              Number.isInteger(videoReceiveSettings.layer) &&
+              videoReceiveSettings.layer >= 0
+            )
+          ) {
+            return false;
+          }
+        }
+        return true;
+      };
+      // NOTE: partial receive settings *are* allowed, in both senses:
+      // - only a subset of media types (e.g. only "video")
+      // - only a subset of settings per media type (e.g. only "layer")
+      const areReceiveSettingsValid = (receiveSettings) => {
+        if (!receiveSettings) return false;
+        if (receiveSettings.video) {
+          if (!areVideoReceiveSettingsValid(receiveSettings.video)) {
+            return false;
+          }
+        }
+        if (receiveSettings.screenVideo) {
+          if (!areVideoReceiveSettingsValid(receiveSettings.screenVideo)) {
+            return false;
+          }
+        }
+        return true;
+      };
+      for (const [participantId, receiveSettings] of Object.entries(
+        receiveSettingsPerParticipant
+      )) {
+        if (
+          !(
+            isParticipantIdValid(participantId) &&
+            areReceiveSettingsValid(receiveSettings)
+          )
+        ) {
+          return false;
+        }
+      }
+      return true;
+    },
+    help:
+      'receiveSettings must be of the form { <remote participantId>: { video?: { layer: <non-negative integer> }, screenVideo?: { layer: <non-negative integer> } }}}',
   },
   // used internally
   layout: {
@@ -690,7 +747,7 @@ export default class DailyIframe extends EventEmitter {
 
     if (properties.showLocalVideo !== undefined) {
       if (this._callObjectMode) {
-        console.error('showLocalVideo is not available in callObject mode');
+        console.error('showLocalVideo is not available in call object mode');
       } else {
         this._showLocalVideo = !!properties.showLocalVideo;
       }
@@ -701,7 +758,7 @@ export default class DailyIframe extends EventEmitter {
     if (properties.showParticipantsBar !== undefined) {
       if (this._callObjectMode) {
         console.error(
-          'showParticipantsBar is not available in callObject mode'
+          'showParticipantsBar is not available in call object mode'
         );
       } else {
         this._showParticipantsBar = !!properties.showParticipantsBar;
@@ -712,14 +769,27 @@ export default class DailyIframe extends EventEmitter {
 
     if (properties.activeSpeakerMode !== undefined) {
       if (this._callObjectMode) {
-        console.error(
-          'activeSpeakerMode is not available in callObject mode'
-        );
+        console.error('activeSpeakerMode is not available in callObject mode');
       } else {
         this._activeSpeakerMode = !!properties.activeSpeakerMode;
       }
     } else {
       this._activeSpeakerMode = false;
+    }
+
+    if (properties.receiveSettings) {
+      if (this._callObjectMode) {
+        this._receiveSettings = properties.receiveSettings;
+      } else {
+        console.error('receiveSettings is only available in call object mode');
+      }
+    } else {
+      // Here we avoid falling back to defaults, instead letting the call
+      // machine decide on defaults when its loaded and telling us about them
+      // via a DAILY_EVENT_RECEIVE_SETTINGS_UPDATED event. This will make it
+      // easier to update defaults in the future, eliminating the worry of
+      // daily-js getting out of sync with the call machine.
+      this._receiveSettings = {};
     }
 
     this.validateProperties(properties);
@@ -1115,6 +1185,60 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
+  // NOTE: this will be empty or simply reflect the receiveSettings call
+  // argument before the call machine bundle is initialized (e.g. on join()), at
+  // which point defaults will also be populated.
+  // Listen for the receive-settings-updated to be notified when those come in.
+  receiveSettings() {
+    // Validate mode.
+    if (!this._callObjectMode) {
+      throw new Error('receiveSettings() only supported in call object mode');
+    }
+
+    return this._receiveSettings;
+  }
+
+  async updateReceiveSettings(receiveSettings) {
+    // TODO: remove
+    console.log('[pk] [daily-js] in updateReceiveSettings!');
+
+    // Validate mode.
+    if (!this._callObjectMode) {
+      throw new Error(
+        'updateReceiveSettings() only supported in call object mode'
+      );
+    }
+
+    // Validate receive settings.
+    this.validateProperties({ receiveSettings });
+
+    // Validate that call machine is joined.
+    // (We need the Redux state to be set up first; technically, we could
+    // proceed if we've either join()ed *or* preAuth()ed *or* startCamera()ed
+    // but since there's an easy alternative way to specify initial receive
+    // settings until join(), for simplicity let's just require that we be
+    // joined).
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      throw new Error(
+        'updateReceiveSettings() is only allowed when joined. To specify receive settings earlier, use the receiveSettings config property.'
+      );
+    }
+
+    // Ask call machine to update receive settings, then await callback.
+    return new Promise((resolve) => {
+      const k = (msg) => {
+        resolve({ receiveSettings: msg.receiveSettings });
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_UPDATE_RECEIVE_SETTINGS,
+          receiveSettings,
+        },
+        k
+      );
+    });
+  }
+
   setBandwidth({ kbs, trackConstraints }) {
     methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({
@@ -1147,7 +1271,7 @@ export default class DailyIframe extends EventEmitter {
     // Validate meeting state: meeting session details are only available
     // once you have joined the meeting
     if (this._meetingState !== DAILY_STATE_JOINED) {
-      throw new Error('getMeetingSession() is only allowed while in a meeting');
+      throw new Error('getMeetingSession() is only allowed when joined');
     }
     return new Promise(async (resolve) => {
       const k = (msg) => {
@@ -1816,7 +1940,7 @@ export default class DailyIframe extends EventEmitter {
   setSubscribeToTracksAutomatically(enabled) {
     if (this._meetingState !== DAILY_STATE_JOINED) {
       throw new Error(
-        'setSubscribeToTracksAutomatically() is only allowed while in a meeting'
+        'setSubscribeToTracksAutomatically() is only allowed when joined'
       );
     }
     this._preloadCache.subscribeToTracksAutomatically = enabled;
@@ -2514,6 +2638,22 @@ export default class DailyIframe extends EventEmitter {
           console.log('could not emit', msg, e);
         }
         break;
+      case DAILY_EVENT_RECEIVE_SETTINGS_UPDATED:
+        // NOTE: doing equality check here rather than before sending message in
+        // the first place from call machine, to simplify handling initial
+        // receive settings
+        if (!deepEqual(this._receiveSettings, msg.receiveSettings)) {
+          this._receiveSettings = msg.receiveSettings;
+          try {
+            this.emit(msg.action, {
+              action: msg.action,
+              receiveSettings: msg.receiveSettings,
+            });
+          } catch (e) {
+            console.log('could not emit', msg, e);
+          }
+        }
+        break;
       case DAILY_EVENT_RECORDING_STARTED:
       case DAILY_EVENT_RECORDING_STOPPED:
       case DAILY_EVENT_RECORDING_STATS:
@@ -2747,6 +2887,7 @@ export default class DailyIframe extends EventEmitter {
     this._activeSpeakerMode = false;
     this._didPreAuth = false;
     this._accessState = { access: DAILY_ACCESS_UNKNOWN };
+    this._receiveSettings = {};
     resetPreloadCache(this._preloadCache);
   }
 

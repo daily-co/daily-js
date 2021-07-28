@@ -77,7 +77,8 @@ export type DailyEvent =
   | 'waiting-participant-added'
   | 'waiting-participant-updated'
   | 'waiting-participant-removed'
-  | 'theme-updated';
+  | 'theme-updated'
+  | 'receive-settings-updated'; // TODO: add payload type
 
 export type DailyMeetingState =
   | 'new'
@@ -195,6 +196,7 @@ export interface DailyCallOptions {
   audioSource?: string | MediaStreamTrack;
   theme?: DailyThemeConfig;
   layoutConfig?: DailyLayoutConfig;
+  receiveSettings?: DailyReceiveSettings;
 }
 
 export interface DailyLoadOptions extends DailyCallOptions {
@@ -422,6 +424,18 @@ export interface DailyRoomInfo {
 
 export interface DailyMeetingSession {
   id: string;
+}
+
+export interface DailyVideoReceiveSettings {
+  layer?: number;
+}
+export interface DailySingleParticipantReceiveSettings {
+  video?: DailyVideoReceiveSettings;
+  screenVideo?: DailyVideoReceiveSettings;
+}
+
+export interface DailyReceiveSettings {
+  [participantId: string]: DailySingleParticipantReceiveSettings;
 }
 
 export interface DailyEventObjectNoPayload {
@@ -734,6 +748,10 @@ export interface DailyCall {
   localVideo(): boolean;
   setLocalAudio(enabled: boolean): DailyCall;
   setLocalVideo(enabled: boolean): DailyCall;
+  receiveSettings(): DailyReceiveSettings;
+  updateReceiveSettings(
+    receiveSettings: DailyReceiveSettings
+  ): Promise<DailyReceiveSettings>;
   setBandwidth(bw: {
     kbs?: number | 'NO_CAP' | null;
     trackConstraints?: MediaTrackConstraints;
