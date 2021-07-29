@@ -179,6 +179,7 @@ export interface DailyCallOptions {
   url?: string;
   token?: string;
   lang?: DailyLanguageSetting;
+  activeSpeakerMode?: boolean;
   showLeaveButton?: boolean;
   showParticipantsBar?: boolean;
   showLocalVideo?: boolean;
