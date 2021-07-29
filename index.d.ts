@@ -167,6 +167,12 @@ export type DailyThemeConfig =
       dark: DailyTheme;
     };
 
+export interface DailyLayoutConfig {
+  enableGridPagination?: boolean;
+  maxGridTilesPerPage?: number;
+  minGridTilesPerPage?: number;
+}
+
 export interface DailyCallOptions {
   url?: string;
   token?: string;
@@ -185,6 +191,7 @@ export interface DailyCallOptions {
   videoSource?: string | MediaStreamTrack;
   audioSource?: string | MediaStreamTrack;
   theme?: DailyThemeConfig;
+  layoutConfig?: DailyLayoutConfig;
 }
 
 export interface DailyLoadOptions extends DailyCallOptions {

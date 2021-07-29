@@ -403,6 +403,47 @@ const FRAME_PROPS = {
     help:
       'unsupported theme configuration. Check error logs for detailed info.',
   },
+  layoutConfig: {
+    validate: (layoutConfig) => {
+      if (
+        'enableGridPagination' in layoutConfig &&
+        typeof layoutConfig.enableGridPagination !== 'boolean'
+      ) {
+        console.error(
+          `enableGridPagination should be a boolean. You passed a ${typeof layoutConfig.enableGridPagination}`
+        );
+        return false;
+      }
+      if ('maxGridTilesPerPage' in layoutConfig) {
+        if (typeof layoutConfig.maxGridTilesPerPage !== 'number') {
+          console.error(
+            `maxGridTilesPerPage should be a number. You passed a ${typeof layoutConfig.maxGridTilesPerPage}.`
+          );
+          return false;
+        }
+        if (layoutConfig.maxGridTilesPerPage > 64) {
+          console.error(
+            `maxGridTilesPerPage can't be larger than 64 without sacrificing browser performance. Please contact us at https://www.daily.co/contact to talk about your use case.`
+          );
+          return false;
+        }
+      }
+      if ('minGridTilesPerPage' in layoutConfig) {
+        if (typeof layoutConfig.minGridTilesPerPage !== 'number') {
+          console.error(
+            `minGridTilesPerPage should be a number. You passed a ${typeof layoutConfig.minGridTilesPerPage}.`
+          );
+          return false;
+        }
+        if (layoutConfig.minGridTilesPerPage < 1) {
+          console.error(`minGridTilesPerPage can't be lower than 1.`);
+          return false;
+        }
+      }
+      return true;
+    },
+    help: 'unsupported layoutConfig. Check error logs for detailed info.',
+  },
   // used internally
   layout: {
     validate: (layout) =>
