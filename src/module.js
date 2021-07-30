@@ -453,8 +453,6 @@ const FRAME_PROPS = {
   },
   receiveSettings: {
     validate: (receiveSettingsPerParticipant) => {
-      // TODO: remove comment
-      console.log('[pk] [daily-js] validating receiveSettings!');
       const isParticipantIdValid = (participantId) => {
         return participantId && participantId !== 'local';
       };
@@ -1199,9 +1197,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async updateReceiveSettings(receiveSettings) {
-    // TODO: remove
-    console.log('[pk] [daily-js] in updateReceiveSettings!');
-
     // Validate mode.
     if (!this._callObjectMode) {
       throw new Error(
