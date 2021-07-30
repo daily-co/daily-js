@@ -78,7 +78,7 @@ export type DailyEvent =
   | 'waiting-participant-updated'
   | 'waiting-participant-removed'
   | 'theme-updated'
-  | 'receive-settings-updated'; // TODO: add payload type
+  | 'receive-settings-updated';
 
 export type DailyMeetingState =
   | 'new'
@@ -608,6 +608,11 @@ export interface DailyEventObjectThemeUpdated {
   theme: DailyThemeConfig;
 }
 
+export interface DailyEventObjectReceiveSettingsUpdated {
+  action: Extract<DailyEvent, 'receive-settings-updated'>;
+  receiveSettings: DailyReceiveSettings;
+}
+
 export type DailyEventObject<
   T extends DailyEvent = any
 > = T extends DailyEventObjectAppMessage['action']
@@ -650,6 +655,8 @@ export type DailyEventObject<
   ? DailyEventObjectLangUpdated
   : T extends DailyEventObjectThemeUpdated['action']
   ? DailyEventObjectThemeUpdated
+  : T extends DailyEventObjectReceiveSettingsUpdated['action']
+  ? DailyEventObjectReceiveSettingsUpdated
   : any;
 
 export interface DailyFaceInfo {
