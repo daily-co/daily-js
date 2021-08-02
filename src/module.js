@@ -461,55 +461,18 @@ const FRAME_PROPS = {
     help: 'unsupported layoutConfig. Check error logs for detailed info.',
   },
   receiveSettings: {
-    validate: (receiveSettingsPerParticipant) => {
-      const isParticipantIdValid = (participantId) => {
-        return participantId && participantId !== 'local';
-      };
-      const areVideoReceiveSettingsValid = (videoReceiveSettings) => {
-        if (videoReceiveSettings.layer !== undefined) {
-          if (
-            !(
-              Number.isInteger(videoReceiveSettings.layer) &&
-              videoReceiveSettings.layer >= 0
-            )
-          ) {
-            return false;
-          }
-        }
-        return true;
-      };
-      // NOTE: partial receive settings *are* allowed, in both senses:
-      // - only a subset of media types (e.g. only "video")
-      // - only a subset of settings per media type (e.g. only "layer")
-      const areReceiveSettingsValid = (receiveSettings) => {
-        if (!receiveSettings) return false;
-        if (receiveSettings.video) {
-          if (!areVideoReceiveSettingsValid(receiveSettings.video)) {
-            return false;
-          }
-        }
-        if (receiveSettings.screenVideo) {
-          if (!areVideoReceiveSettingsValid(receiveSettings.screenVideo)) {
-            return false;
-          }
-        }
-        return true;
-      };
-      for (const [participantId, receiveSettings] of Object.entries(
-        receiveSettingsPerParticipant
-      )) {
-        if (
-          !(
-            isParticipantIdValid(participantId) &&
-            areReceiveSettingsValid(receiveSettings)
-          )
-        ) {
-          return false;
-        }
-      }
-      return true;
-    },
-    help: `receiveSettings must be of the form { [<remote participant id> | ${DAILY_RECEIVE_SETTINGS_NEW_PARTICIPANTS_KEY} | ${DAILY_RECEIVE_SETTINGS_CURRENT_PARTICIPANTS_KEY}]: { video?: { layer: <non-negative integer> }, screenVideo?: { layer: <non-negative integer> } }}}`,
+    // Disallow "currentParticipants" shorthand key since it's a shorthand for
+    // participants currently connected *to you* (i.e. participants already in
+    // participants()), which is necessarily empty at join time. Allowing this
+    // key might only sow confusion: it might lead people to think it's a
+    // shorthand for participants currently connected *to the room*.
+    validate: (receiveSettings) =>
+      validateReceiveSettings(receiveSettings, {
+        allowCurrentParticipantsKey: false,
+      }),
+    help: receiveSettingsValidationHelpMsg({
+      allowCurrentParticipantsKey: false,
+    }),
   },
   // used internally
   layout: {
@@ -1213,7 +1176,15 @@ export default class DailyIframe extends EventEmitter {
     }
 
     // Validate receive settings.
-    this.validateProperties({ receiveSettings });
+    if (
+      !validateReceiveSettings(receiveSettings, {
+        allowCurrentParticipantsKey: true,
+      })
+    ) {
+      throw new Error(
+        receiveSettingsValidationHelpMsg({ allowCurrentParticipantsKey: true })
+      );
+    }
 
     // Validate that call machine is joined.
     // (We need the Redux state to be set up first; technically, we could
@@ -3119,6 +3090,69 @@ function methodOnlySupportedInReactNative() {
   if (!isReactNative()) {
     throw new Error('This daily-js method is only supported in React Native');
   }
+}
+
+function validateReceiveSettings(
+  receiveSettingsParam,
+  { allowCurrentParticipantsKey }
+) {
+  const isParticipantIdValid = (participantId) => {
+    const disallowedKeys = ['local'];
+    if (!allowCurrentParticipantsKey)
+      disallowedKeys.push('currentParticipants');
+    return participantId && !disallowedKeys.includes(participantId);
+  };
+  const areVideoReceiveSettingsValid = (videoReceiveSettings) => {
+    if (videoReceiveSettings.layer !== undefined) {
+      if (
+        !(
+          Number.isInteger(videoReceiveSettings.layer) &&
+          videoReceiveSettings.layer >= 0
+        )
+      ) {
+        return false;
+      }
+    }
+    return true;
+  };
+  // NOTE: partial receive settings *are* allowed, in both senses:
+  // - only a subset of media types (e.g. only "video")
+  // - only a subset of settings per media type (e.g. only "layer")
+  const areParticipantReceiveSettingsValid = (receiveSettings) => {
+    if (!receiveSettings) return false;
+    if (receiveSettings.video) {
+      if (!areVideoReceiveSettingsValid(receiveSettings.video)) {
+        return false;
+      }
+    }
+    if (receiveSettings.screenVideo) {
+      if (!areVideoReceiveSettingsValid(receiveSettings.screenVideo)) {
+        return false;
+      }
+    }
+    return true;
+  };
+  for (const [participantId, receiveSettings] of Object.entries(
+    receiveSettingsParam
+  )) {
+    if (
+      !(
+        isParticipantIdValid(participantId) &&
+        areParticipantReceiveSettingsValid(receiveSettings)
+      )
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function receiveSettingsValidationHelpMsg({ allowCurrentParticipantsKey }) {
+  return `receiveSettings must be of the form { [<remote participant id> | ${DAILY_RECEIVE_SETTINGS_NEW_PARTICIPANTS_KEY}${
+    allowCurrentParticipantsKey
+      ? ` | ${DAILY_RECEIVE_SETTINGS_CURRENT_PARTICIPANTS_KEY}`
+      : ''
+  }]: { [video: { layer: <non-negative integer> }], [screenVideo: { layer: <non-negative integer> }] }}}`;
 }
 
 function validateReactNativeConfig(config) {

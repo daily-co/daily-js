@@ -437,6 +437,9 @@ export interface DailySingleParticipantReceiveSettings {
 export interface DailyReceiveSettings {
   [participantId: string]: DailySingleParticipantReceiveSettings;
   newParticipants?: DailySingleParticipantReceiveSettings;
+}
+
+export interface DailyReceiveSettingsUpdates extends DailyReceiveSettings {
   currentParticipants?: DailySingleParticipantReceiveSettings;
 }
 
@@ -759,7 +762,7 @@ export interface DailyCall {
   setLocalVideo(enabled: boolean): DailyCall;
   receiveSettings(): DailyReceiveSettings;
   updateReceiveSettings(
-    receiveSettings: DailyReceiveSettings
+    receiveSettings: DailyReceiveSettingsUpdates
   ): Promise<DailyReceiveSettings>;
   setBandwidth(bw: {
     kbs?: number | 'NO_CAP' | null;
