@@ -25,6 +25,9 @@ import {
   DAILY_ACCESS_LEVEL_FULL,
   DAILY_ACCESS_LEVEL_LOBBY,
   DAILY_ACCESS_LEVEL_NONE,
+  // receive settings
+  DAILY_RECEIVE_SETTINGS_NEW_PARTICIPANTS_KEY,
+  DAILY_RECEIVE_SETTINGS_CURRENT_PARTICIPANTS_KEY,
   // error types
   DAILY_FATAL_ERROR_EJECTED,
   DAILY_FATAL_ERROR_NBF_ROOM,
@@ -171,6 +174,12 @@ export {
   DAILY_ACCESS_LEVEL_FULL,
   DAILY_ACCESS_LEVEL_LOBBY,
   DAILY_ACCESS_LEVEL_NONE,
+};
+
+// receive settings
+export {
+  DAILY_RECEIVE_SETTINGS_NEW_PARTICIPANTS_KEY,
+  DAILY_RECEIVE_SETTINGS_CURRENT_PARTICIPANTS_KEY,
 };
 
 // error types
@@ -500,8 +509,7 @@ const FRAME_PROPS = {
       }
       return true;
     },
-    help:
-      'receiveSettings must be of the form { <remote participantId>: { video?: { layer: <non-negative integer> }, screenVideo?: { layer: <non-negative integer> } }}}',
+    help: `receiveSettings must be of the form { [<remote participant id> | ${DAILY_RECEIVE_SETTINGS_NEW_PARTICIPANTS_KEY} | ${DAILY_RECEIVE_SETTINGS_CURRENT_PARTICIPANTS_KEY}]: { video?: { layer: <non-negative integer> }, screenVideo?: { layer: <non-negative integer> } }}}`,
   },
   // used internally
   layout: {

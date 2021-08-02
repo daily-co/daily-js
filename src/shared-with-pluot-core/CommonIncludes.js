@@ -28,6 +28,12 @@ export const DAILY_ACCESS_LEVEL_FULL = 'full';
 export const DAILY_ACCESS_LEVEL_LOBBY = 'lobby';
 export const DAILY_ACCESS_LEVEL_NONE = 'none';
 
+// receive settings
+
+export const DAILY_RECEIVE_SETTINGS_NEW_PARTICIPANTS_KEY = 'newParticipants';
+export const DAILY_RECEIVE_SETTINGS_CURRENT_PARTICIPANTS_KEY =
+  'currentParticipants';
+
 // error types
 
 export const DAILY_FATAL_ERROR_EJECTED = 'ejected';
