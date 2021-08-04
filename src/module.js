@@ -412,9 +412,9 @@ const FRAME_PROPS = {
           );
           return false;
         }
-        if (layoutConfig.maxGridTilesPerPage > 64) {
+        if (layoutConfig.maxGridTilesPerPage > 49) {
           console.error(
-            `maxGridTilesPerPage can't be larger than 64 without sacrificing browser performance. Please contact us at https://www.daily.co/contact to talk about your use case.`
+            `maxGridTilesPerPage can't be larger than 49 without sacrificing browser performance. Please contact us at https://www.daily.co/contact to talk about your use case.`
           );
           return false;
         }
