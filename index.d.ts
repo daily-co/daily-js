@@ -168,7 +168,6 @@ export type DailyThemeConfig =
     };
 
 export interface DailyLayoutConfig {
-  enableGridPagination?: boolean;
   maxGridTilesPerPage?: number;
   minGridTilesPerPage?: number;
 }

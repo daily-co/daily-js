@@ -405,15 +405,6 @@ const FRAME_PROPS = {
   },
   layoutConfig: {
     validate: (layoutConfig) => {
-      if (
-        'enableGridPagination' in layoutConfig &&
-        typeof layoutConfig.enableGridPagination !== 'boolean'
-      ) {
-        console.error(
-          `enableGridPagination should be a boolean. You passed a ${typeof layoutConfig.enableGridPagination}`
-        );
-        return false;
-      }
       if ('maxGridTilesPerPage' in layoutConfig) {
         if (typeof layoutConfig.maxGridTilesPerPage !== 'number') {
           console.error(
