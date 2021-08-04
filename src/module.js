@@ -405,30 +405,42 @@ const FRAME_PROPS = {
   },
   layoutConfig: {
     validate: (layoutConfig) => {
-      if ('maxGridTilesPerPage' in layoutConfig) {
-        if (typeof layoutConfig.maxGridTilesPerPage !== 'number') {
-          console.error(
-            `maxGridTilesPerPage should be a number. You passed a ${typeof layoutConfig.maxGridTilesPerPage}.`
-          );
-          return false;
+      if ('grid' in layoutConfig) {
+        const gridConfig = layoutConfig.grid;
+        if ('maxTilesPerPage' in gridConfig) {
+          if (typeof gridConfig.maxTilesPerPage !== 'number') {
+            console.error(
+              `grid.maxTilesPerPage should be a number. You passed a ${typeof gridConfig.maxTilesPerPage}.`
+            );
+            return false;
+          }
+          if (gridConfig.maxTilesPerPage > 49) {
+            console.error(
+              `grid.maxTilesPerPage can't be larger than 49 without sacrificing browser performance. Please contact us at https://www.daily.co/contact to talk about your use case.`
+            );
+            return false;
+          }
         }
-        if (layoutConfig.maxGridTilesPerPage > 49) {
-          console.error(
-            `maxGridTilesPerPage can't be larger than 49 without sacrificing browser performance. Please contact us at https://www.daily.co/contact to talk about your use case.`
-          );
-          return false;
-        }
-      }
-      if ('minGridTilesPerPage' in layoutConfig) {
-        if (typeof layoutConfig.minGridTilesPerPage !== 'number') {
-          console.error(
-            `minGridTilesPerPage should be a number. You passed a ${typeof layoutConfig.minGridTilesPerPage}.`
-          );
-          return false;
-        }
-        if (layoutConfig.minGridTilesPerPage < 1) {
-          console.error(`minGridTilesPerPage can't be lower than 1.`);
-          return false;
+        if ('minTilesPerPage' in gridConfig) {
+          if (typeof gridConfig.minTilesPerPage !== 'number') {
+            console.error(
+              `grid.minTilesPerPage should be a number. You passed a ${typeof gridConfig.minTilesPerPage}.`
+            );
+            return false;
+          }
+          if (gridConfig.minTilesPerPage < 1) {
+            console.error(`grid.minTilesPerPage can't be lower than 1.`);
+            return false;
+          }
+          if (
+            'maxTilesPerPage' in gridConfig &&
+            gridConfig.minTilesPerPage > gridConfig.maxTilesPerPage
+          ) {
+            console.error(
+              `grid.minTilesPerPage can't be higher than grid.maxTilesPerPage.`
+            );
+            return false;
+          }
         }
       }
       return true;

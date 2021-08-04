@@ -167,9 +167,12 @@ export type DailyThemeConfig =
       dark: DailyTheme;
     };
 
+export interface DailyGridLayoutConfig {
+  maxTilesPerPage?: number;
+  minTilesPerPage?: number;
+}
 export interface DailyLayoutConfig {
-  maxGridTilesPerPage?: number;
-  minGridTilesPerPage?: number;
+  grid?: DailyGridLayoutConfig;
 }
 
 export interface DailyCallOptions {
