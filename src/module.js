@@ -709,6 +709,18 @@ export default class DailyIframe extends EventEmitter {
       this._showParticipantsBar = true;
     }
 
+    if (properties.activeSpeakerMode !== undefined) {
+      if (this._callObjectMode) {
+        console.error(
+          'activeSpeakerMode is not available in callObject mode'
+        );
+      } else {
+        this._activeSpeakerMode = !!properties.activeSpeakerMode;
+      }
+    } else {
+      this._activeSpeakerMode = false;
+    }
+
     this.validateProperties(properties);
     this.properties = { ...properties };
     this._callObjectLoader = this._callObjectMode
@@ -723,7 +735,6 @@ export default class DailyIframe extends EventEmitter {
     this._inputEventsOn = {}; // need to cache these until loaded
     this._network = { threshold: 'good', quality: 100 };
     this._activeSpeaker = {};
-    this._activeSpeakerMode = false;
     this._callFrameId = randomStringId();
     this._messageChannel = isReactNative()
       ? new ReactNativeMessageChannel()
