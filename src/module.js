@@ -408,9 +408,9 @@ const FRAME_PROPS = {
       if ('grid' in layoutConfig) {
         const gridConfig = layoutConfig.grid;
         if ('maxTilesPerPage' in gridConfig) {
-          if (typeof gridConfig.maxTilesPerPage !== 'number') {
+          if (!Number.isInteger(gridConfig.maxTilesPerPage)) {
             console.error(
-              `grid.maxTilesPerPage should be a number. You passed a ${typeof gridConfig.maxTilesPerPage}.`
+              `grid.maxTilesPerPage should be an integer. You passed ${gridConfig.maxTilesPerPage}.`
             );
             return false;
           }
@@ -422,9 +422,9 @@ const FRAME_PROPS = {
           }
         }
         if ('minTilesPerPage' in gridConfig) {
-          if (typeof gridConfig.minTilesPerPage !== 'number') {
+          if (!Number.isInteger(gridConfig.minTilesPerPage)) {
             console.error(
-              `grid.minTilesPerPage should be a number. You passed a ${typeof gridConfig.minTilesPerPage}.`
+              `grid.minTilesPerPage should be an integer. You passed ${gridConfig.minTilesPerPage}.`
             );
             return false;
           }
