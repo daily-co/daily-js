@@ -402,6 +402,50 @@ const FRAME_PROPS = {
     help:
       'unsupported theme configuration. Check error logs for detailed info.',
   },
+  layoutConfig: {
+    validate: (layoutConfig) => {
+      if ('grid' in layoutConfig) {
+        const gridConfig = layoutConfig.grid;
+        if ('maxTilesPerPage' in gridConfig) {
+          if (!Number.isInteger(gridConfig.maxTilesPerPage)) {
+            console.error(
+              `grid.maxTilesPerPage should be an integer. You passed ${gridConfig.maxTilesPerPage}.`
+            );
+            return false;
+          }
+          if (gridConfig.maxTilesPerPage > 49) {
+            console.error(
+              `grid.maxTilesPerPage can't be larger than 49 without sacrificing browser performance. Please contact us at https://www.daily.co/contact to talk about your use case.`
+            );
+            return false;
+          }
+        }
+        if ('minTilesPerPage' in gridConfig) {
+          if (!Number.isInteger(gridConfig.minTilesPerPage)) {
+            console.error(
+              `grid.minTilesPerPage should be an integer. You passed ${gridConfig.minTilesPerPage}.`
+            );
+            return false;
+          }
+          if (gridConfig.minTilesPerPage < 1) {
+            console.error(`grid.minTilesPerPage can't be lower than 1.`);
+            return false;
+          }
+          if (
+            'maxTilesPerPage' in gridConfig &&
+            gridConfig.minTilesPerPage > gridConfig.maxTilesPerPage
+          ) {
+            console.error(
+              `grid.minTilesPerPage can't be higher than grid.maxTilesPerPage.`
+            );
+            return false;
+          }
+        }
+      }
+      return true;
+    },
+    help: 'unsupported layoutConfig. Check error logs for detailed info.',
+  },
   // used internally
   layout: {
     validate: (layout) =>
