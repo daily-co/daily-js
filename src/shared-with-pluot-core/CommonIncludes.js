@@ -31,8 +31,7 @@ export const DAILY_ACCESS_LEVEL_NONE = 'none';
 // receive settings
 
 export const DAILY_RECEIVE_SETTINGS_BASE_KEY = 'base';
-export const DAILY_RECEIVE_SETTINGS_CURRENT_PARTICIPANTS_KEY =
-  'currentParticipants';
+export const DAILY_RECEIVE_SETTINGS_ALL_PARTICIPANTS_KEY = '*';
 
 // error types
 

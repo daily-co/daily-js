@@ -440,7 +440,7 @@ export interface DailyReceiveSettings {
 }
 
 export interface DailyReceiveSettingsUpdates extends DailyReceiveSettings {
-  currentParticipants?: DailySingleParticipantReceiveSettings;
+  '*'?: DailySingleParticipantReceiveSettings;
 }
 
 export interface DailyEventObjectNoPayload {

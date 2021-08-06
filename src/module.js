@@ -27,7 +27,7 @@ import {
   DAILY_ACCESS_LEVEL_NONE,
   // receive settings
   DAILY_RECEIVE_SETTINGS_BASE_KEY,
-  DAILY_RECEIVE_SETTINGS_CURRENT_PARTICIPANTS_KEY,
+  DAILY_RECEIVE_SETTINGS_ALL_PARTICIPANTS_KEY,
   // error types
   DAILY_FATAL_ERROR_EJECTED,
   DAILY_FATAL_ERROR_NBF_ROOM,
@@ -179,7 +179,7 @@ export {
 // receive settings
 export {
   DAILY_RECEIVE_SETTINGS_BASE_KEY,
-  DAILY_RECEIVE_SETTINGS_CURRENT_PARTICIPANTS_KEY,
+  DAILY_RECEIVE_SETTINGS_ALL_PARTICIPANTS_KEY,
 };
 
 // error types
@@ -461,17 +461,17 @@ const FRAME_PROPS = {
     help: 'unsupported layoutConfig. Check error logs for detailed info.',
   },
   receiveSettings: {
-    // Disallow "currentParticipants" shorthand key since it's a shorthand for
-    // participants currently connected *to you* (i.e. participants already in
+    // Disallow "*" shorthand key since it's a shorthand for participants
+    // currently connected *to you* (i.e. participants already in
     // participants()), which is necessarily empty at join time. Allowing this
     // key might only sow confusion: it might lead people to think it's a
     // shorthand for participants currently connected *to the room*.
     validate: (receiveSettings) =>
       validateReceiveSettings(receiveSettings, {
-        allowCurrentParticipantsKey: false,
+        allowAllParticipantsKey: false,
       }),
     help: receiveSettingsValidationHelpMsg({
-      allowCurrentParticipantsKey: false,
+      allowAllParticipantsKey: false,
     }),
   },
   // used internally
@@ -1178,11 +1178,11 @@ export default class DailyIframe extends EventEmitter {
     // Validate receive settings.
     if (
       !validateReceiveSettings(receiveSettings, {
-        allowCurrentParticipantsKey: true,
+        allowAllParticipantsKey: true,
       })
     ) {
       throw new Error(
-        receiveSettingsValidationHelpMsg({ allowCurrentParticipantsKey: true })
+        receiveSettingsValidationHelpMsg({ allowAllParticipantsKey: true })
       );
     }
 
@@ -3094,12 +3094,11 @@ function methodOnlySupportedInReactNative() {
 
 function validateReceiveSettings(
   receiveSettingsParam,
-  { allowCurrentParticipantsKey }
+  { allowAllParticipantsKey }
 ) {
   const isParticipantIdValid = (participantId) => {
     const disallowedKeys = ['local'];
-    if (!allowCurrentParticipantsKey)
-      disallowedKeys.push('currentParticipants');
+    if (!allowAllParticipantsKey) disallowedKeys.push('*');
     return participantId && !disallowedKeys.includes(participantId);
   };
   const areVideoReceiveSettingsValid = (videoReceiveSettings) => {
@@ -3147,10 +3146,10 @@ function validateReceiveSettings(
   return true;
 }
 
-function receiveSettingsValidationHelpMsg({ allowCurrentParticipantsKey }) {
+function receiveSettingsValidationHelpMsg({ allowAllParticipantsKey }) {
   return `receiveSettings must be of the form { [<remote participant id> | ${DAILY_RECEIVE_SETTINGS_BASE_KEY}${
-    allowCurrentParticipantsKey
-      ? ` | ${DAILY_RECEIVE_SETTINGS_CURRENT_PARTICIPANTS_KEY}`
+    allowAllParticipantsKey
+      ? ` | "${DAILY_RECEIVE_SETTINGS_ALL_PARTICIPANTS_KEY}"`
       : ''
   }]: { [video: { layer: <non-negative integer> }], [screenVideo: { layer: <non-negative integer> }] }}}`;
 }
