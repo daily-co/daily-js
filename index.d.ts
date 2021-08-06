@@ -436,7 +436,7 @@ export interface DailySingleParticipantReceiveSettings {
 
 export interface DailyReceiveSettings {
   [participantId: string]: DailySingleParticipantReceiveSettings;
-  newParticipants?: DailySingleParticipantReceiveSettings;
+  base?: DailySingleParticipantReceiveSettings;
 }
 
 export interface DailyReceiveSettingsUpdates extends DailyReceiveSettings {

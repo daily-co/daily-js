@@ -26,7 +26,7 @@ import {
   DAILY_ACCESS_LEVEL_LOBBY,
   DAILY_ACCESS_LEVEL_NONE,
   // receive settings
-  DAILY_RECEIVE_SETTINGS_NEW_PARTICIPANTS_KEY,
+  DAILY_RECEIVE_SETTINGS_BASE_KEY,
   DAILY_RECEIVE_SETTINGS_CURRENT_PARTICIPANTS_KEY,
   // error types
   DAILY_FATAL_ERROR_EJECTED,
@@ -178,7 +178,7 @@ export {
 
 // receive settings
 export {
-  DAILY_RECEIVE_SETTINGS_NEW_PARTICIPANTS_KEY,
+  DAILY_RECEIVE_SETTINGS_BASE_KEY,
   DAILY_RECEIVE_SETTINGS_CURRENT_PARTICIPANTS_KEY,
 };
 
@@ -3148,7 +3148,7 @@ function validateReceiveSettings(
 }
 
 function receiveSettingsValidationHelpMsg({ allowCurrentParticipantsKey }) {
-  return `receiveSettings must be of the form { [<remote participant id> | ${DAILY_RECEIVE_SETTINGS_NEW_PARTICIPANTS_KEY}${
+  return `receiveSettings must be of the form { [<remote participant id> | ${DAILY_RECEIVE_SETTINGS_BASE_KEY}${
     allowCurrentParticipantsKey
       ? ` | ${DAILY_RECEIVE_SETTINGS_CURRENT_PARTICIPANTS_KEY}`
       : ''
