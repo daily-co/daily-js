@@ -172,6 +172,8 @@ export const DAILY_METHOD_UPDATE_WAITING_PARTICIPANT =
   'daily-method-update-waiting-participant';
 export const DAILY_METHOD_UPDATE_WAITING_PARTICIPANTS =
   'daily-method-update-waiting-participants';
+export const DAILY_METHOD_GET_SINGLE_PARTICIPANT_RECEIVE_SETTINGS =
+  'get-single-participant-receive-settings';
 export const DAILY_METHOD_UPDATE_RECEIVE_SETTINGS = 'update-receive-settings';
 
 export const DAILY_CUSTOM_TRACK = 'daily-custom-track';

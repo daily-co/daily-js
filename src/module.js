@@ -134,6 +134,7 @@ import {
   DAILY_METHOD_REQUEST_ACCESS,
   DAILY_METHOD_UPDATE_WAITING_PARTICIPANT,
   DAILY_METHOD_UPDATE_WAITING_PARTICIPANTS,
+  DAILY_METHOD_GET_SINGLE_PARTICIPANT_RECEIVE_SETTINGS,
   DAILY_METHOD_UPDATE_RECEIVE_SETTINGS,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
@@ -1154,17 +1155,48 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
-  // NOTE: this will be empty or simply reflect the receiveSettings call
-  // argument before the call machine bundle is initialized (e.g. on join()), at
-  // which point defaults will also be populated.
+  // NOTE: "base" receive settings will not appear until the call machine bundle
+  // is initialized (e.g. after a call to join()).
   // Listen for the receive-settings-updated to be notified when those come in.
-  receiveSettings() {
+  async getReceiveSettings(id, { showInheritedValues = false } = {}) {
     // Validate mode.
     if (!this._callObjectMode) {
-      throw new Error('receiveSettings() only supported in call object mode');
+      throw new Error(
+        'getReceiveSettings() only supported in call object mode'
+      );
     }
 
-    return this._receiveSettings;
+    // This method can be called in two main ways:
+    // - it can get receive settings for a specific participant (or "base")
+    // - it can get *all* receive settings
+    switch (typeof id) {
+      // Case: getting receive settings for a single participant
+      case 'string':
+        // Ask call machine to get receive settings for the participant.
+        // Centralizing this nontrivial fetching logic in the call machine,
+        // rather than attempting to duplicate it here, avoids the problem of
+        // daily-js and the call machine getting out of sync.
+        return new Promise((resolve) => {
+          const k = (msg) => {
+            resolve(msg.receiveSettings);
+          };
+          this.sendMessageToCallMachine(
+            {
+              action: DAILY_METHOD_GET_SINGLE_PARTICIPANT_RECEIVE_SETTINGS,
+              id,
+              showInheritedValues,
+            },
+            k
+          );
+        });
+      // Case: getting all receive settings
+      case 'undefined':
+        return this._receiveSettings;
+      default:
+        throw new Error(
+          'first argument to getReceiveSettings() must be a participant id (or "base"), or there should be no arguments'
+        );
+    }
   }
 
   async updateReceiveSettings(receiveSettings) {
@@ -3105,8 +3137,9 @@ function validateReceiveSettings(
     if (videoReceiveSettings.layer !== undefined) {
       if (
         !(
-          Number.isInteger(videoReceiveSettings.layer) &&
-          videoReceiveSettings.layer >= 0
+          (Number.isInteger(videoReceiveSettings.layer) &&
+            videoReceiveSettings.layer >= 0) ||
+          videoReceiveSettings.layer === 'inherit'
         )
       ) {
         return false;
@@ -3147,11 +3180,17 @@ function validateReceiveSettings(
 }
 
 function receiveSettingsValidationHelpMsg({ allowAllParticipantsKey }) {
-  return `receiveSettings must be of the form { [<remote participant id> | ${DAILY_RECEIVE_SETTINGS_BASE_KEY}${
-    allowAllParticipantsKey
-      ? ` | "${DAILY_RECEIVE_SETTINGS_ALL_PARTICIPANTS_KEY}"`
-      : ''
-  }]: { [video: { layer: <non-negative integer> }], [screenVideo: { layer: <non-negative integer> }] }}}`;
+  return (
+    `receiveSettings must be of the form { [<remote participant id> | ${DAILY_RECEIVE_SETTINGS_BASE_KEY}${
+      allowAllParticipantsKey
+        ? ` | "${DAILY_RECEIVE_SETTINGS_ALL_PARTICIPANTS_KEY}"`
+        : ''
+    }]: ` +
+    '{ ' +
+    '[video: [{ layer: [<non-negative integer> | "inherit"] } | "inherit"]], ' +
+    '[screenVideo: [{ layer: [<non-negative integer> | "inherit"] } | "inherit"]] ' +
+    '}}}'
+  );
 }
 
 function validateReactNativeConfig(config) {
