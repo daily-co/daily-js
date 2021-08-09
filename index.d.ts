@@ -436,7 +436,6 @@ export interface DailySingleParticipantReceiveSettings {
 
 export interface DailyReceiveSettings {
   [participantId: string]: DailySingleParticipantReceiveSettings;
-  base?: DailySingleParticipantReceiveSettings;
 }
 
 export interface DailyVideoReceiveSettingsUpdates {
@@ -444,16 +443,14 @@ export interface DailyVideoReceiveSettingsUpdates {
 }
 
 export interface DailySingleParticipantReceiveSettingsUpdates {
-  video: DailyVideoReceiveSettingsUpdates | 'inherit';
-  screenVideo: DailyVideoReceiveSettingsUpdates | 'inherit';
+  video?: DailyVideoReceiveSettingsUpdates | 'inherit';
+  screenVideo?: DailyVideoReceiveSettingsUpdates | 'inherit';
 }
 
 export interface DailyReceiveSettingsUpdates {
   [participantId: string]:
     | DailySingleParticipantReceiveSettingsUpdates
     | 'inherit';
-  base?: DailySingleParticipantReceiveSettings;
-  '*'?: DailySingleParticipantReceiveSettingsUpdates | 'inherit';
 }
 
 export interface DailyEventObjectNoPayload {
@@ -775,7 +772,7 @@ export interface DailyCall {
   setLocalVideo(enabled: boolean): DailyCall;
   getReceiveSettings(
     id: string,
-    { showInheritedValues: boolean }
+    options: { showInheritedValues: boolean }
   ): Promise<DailySingleParticipantReceiveSettings>;
   getReceiveSettings(): Promise<DailyReceiveSettings>;
   updateReceiveSettings(
