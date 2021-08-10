@@ -739,7 +739,7 @@ export default class DailyIframe extends EventEmitter {
 
     if (properties.activeSpeakerMode !== undefined) {
       if (this._callObjectMode) {
-        console.error('activeSpeakerMode is not available in callObject mode');
+        console.error('activeSpeakerMode is not available in call object mode');
       } else {
         this._activeSpeakerMode = !!properties.activeSpeakerMode;
       }
