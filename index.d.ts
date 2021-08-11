@@ -771,7 +771,13 @@ export interface DailyCall {
   load(properties?: DailyLoadOptions): Promise<void>;
   startScreenShare(captureOptions?: DailyScreenCaptureOptions): void;
   stopScreenShare(): void;
-  startRecording(): void;
+  startRecording(options: {
+    rtmpUrl: string;
+    width?: number;
+    height?: number;
+    backgroundColor?: string;
+    layout?: DailyStreamingLayoutConfig;
+  }): void;
   stopRecording(): void;
   startLiveStreaming(options: {
     rtmpUrl: string;
