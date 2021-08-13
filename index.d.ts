@@ -778,6 +778,7 @@ export interface DailyCall {
     backgroundColor?: string;
     layout?: DailyStreamingLayoutConfig;
   }): void;
+  updateRecording(options: { layout?: DailyStreamingLayoutConfig }): void;
   stopRecording(): void;
   startLiveStreaming(options: {
     rtmpUrl: string;
