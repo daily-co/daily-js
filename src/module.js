@@ -1740,23 +1740,16 @@ export default class DailyIframe extends EventEmitter {
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_SCREENSHARE });
   }
 
-  startRecording({
-    rtmpUrl,
-    width = 1920,
-    height = 1080,
-    backgroundColor = '#ff000000',
-    layout = { preset: 'default' },
+  startRecording(properties = {
+    width: 1920,
+    height: 1080,
+    backgroundColor: '#ff000000',
+    layout: { preset: 'default' },
   }) {
     // TODO: Should we allow starting a cloud-mp4 recording in RN?
     methodNotSupportedInReactNative();
-    this.sendMessageToCallMachine({
-      action: DAILY_METHOD_START_RECORDING,
-      rtmpUrl,
-      width,
-      height,
-      backgroundColor,
-      layout,
-    });
+    properties.action = DAILY_METHOD_START_RECORDING;
+    this.sendMessageToCallMachine(properties);
   }
 
   updateRecording({ layout = { preset: 'default' }}) {

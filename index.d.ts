@@ -772,7 +772,6 @@ export interface DailyCall {
   startScreenShare(captureOptions?: DailyScreenCaptureOptions): void;
   stopScreenShare(): void;
   startRecording(options: {
-    rtmpUrl: string;
     width?: number;
     height?: number;
     backgroundColor?: string;
