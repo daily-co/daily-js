@@ -78,6 +78,9 @@ export const DAILY_EVENT_WAITING_PARTICIPANT_REMOVED =
 export const DAILY_EVENT_TRACK_STARTED = 'track-started';
 export const DAILY_EVENT_TRACK_STOPPED = 'track-stopped';
 
+export const DAILY_EVENT_TRANSCRIPTION_STARTED = 'transcription-started';
+export const DAILY_EVENT_TRANSCRIPTION_STOPPED = 'transcription-stopped';
+
 export const DAILY_EVENT_RECORDING_STARTED = 'recording-started';
 export const DAILY_EVENT_RECORDING_STOPPED = 'recording-stopped';
 export const DAILY_EVENT_RECORDING_STATS = 'recording-stats';
@@ -87,6 +90,7 @@ export const DAILY_EVENT_RECORDING_UPLOAD_COMPLETED =
 export const DAILY_EVENT_RECORDING_DATA = 'recording-data';
 export const DAILY_EVENT_APP_MSG = 'app-message';
 export const DAILY_EVENT_INPUT_EVENT = 'input-event';
+
 export const DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED =
   'local-screen-share-started';
 export const DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED =
@@ -169,6 +173,8 @@ export const DAILY_METHOD_UPDATE_LIVE_STREAMING =
   'daily-method-update-live-streaming';
 export const DAILY_METHOD_STOP_LIVE_STREAMING =
   'daily-method-stop-live-streaming';
+export const DAILY_METHOD_START_TRANSCRIPTION = 'daily-method-start-transcription';
+export const DAILY_METHOD_STOP_TRANSCRIPTION = 'daily-method-stop-transcription';
 export const DAILY_METHOD_PREAUTH = 'daily-method-preauth';
 export const DAILY_METHOD_REQUEST_ACCESS = 'daily-method-request-access';
 export const DAILY_METHOD_UPDATE_WAITING_PARTICIPANT =

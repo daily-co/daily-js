@@ -50,6 +50,8 @@ export type DailyEvent =
   | 'recording-error'
   | 'recording-upload-completed'
   | 'recording-data'
+  | 'transcription-started'
+  | 'transcription-stopped'
   | 'app-message'
   | 'local-screen-share-started'
   | 'local-screen-share-stopped'
@@ -840,6 +842,8 @@ export interface DailyCall {
   startLiveStreaming(options: DailyLiveStreamingOptions): void;
   updateLiveStreaming(options: { layout?: DailyStreamingLayoutConfig }): void;
   stopLiveStreaming(): void;
+  startTranscription(): void; // acb: I think we'll want to explicitly set options from the beginning, tktk
+  stopTranscription(): void;
   getNetworkStats(): Promise<DailyNetworkStats>;
   getActiveSpeaker(): { peerId?: string };
   setActiveSpeakerMode(enabled: boolean): DailyCall;
