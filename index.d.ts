@@ -735,6 +735,17 @@ export type DailyAccessRequest = {
   name: string;
 };
 
+export interface DailyStreamingOptions {
+  width?: number;
+  height?: number;
+  backgroundColor?: string;
+  layout?: DailyStreamingLayoutConfig;
+}
+
+export interface DailyLiveStreamingOptions extends DailyStreamingOptions {
+  rtmpUrl: string;
+}
+
 export interface DailyCall {
   iframe(): HTMLIFrameElement | null;
   join(properties?: DailyCallOptions): Promise<DailyParticipantsObject | void>;
@@ -815,21 +826,10 @@ export interface DailyCall {
   load(properties?: DailyLoadOptions): Promise<void>;
   startScreenShare(captureOptions?: DailyScreenCaptureOptions): void;
   stopScreenShare(): void;
-  startRecording(options?: {
-    width?: number;
-    height?: number;
-    backgroundColor?: string;
-    layout?: DailyStreamingLayoutConfig;
-  }): void;
+  startRecording(options?: DailyStreamingOptions): void;
   updateRecording(options: { layout?: DailyStreamingLayoutConfig }): void;
   stopRecording(): void;
-  startLiveStreaming(options: {
-    rtmpUrl: string;
-    width?: number;
-    height?: number;
-    backgroundColor?: string;
-    layout?: DailyStreamingLayoutConfig;
-  }): void;
+  startLiveStreaming(options: DailyLiveStreamingOptions): void;
   updateLiveStreaming(options: { layout?: DailyStreamingLayoutConfig }): void;
   stopLiveStreaming(): void;
   getNetworkStats(): Promise<DailyNetworkStats>;
