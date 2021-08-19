@@ -99,6 +99,7 @@ import {
   DAILY_METHOD_START_SCREENSHARE,
   DAILY_METHOD_STOP_SCREENSHARE,
   DAILY_METHOD_START_RECORDING,
+  DAILY_METHOD_UPDATE_RECORDING,
   DAILY_METHOD_STOP_RECORDING,
   DAILY_METHOD_LOAD_CSS,
   DAILY_METHOD_SET_BANDWIDTH,
@@ -1869,12 +1870,26 @@ export default class DailyIframe extends EventEmitter {
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_SCREENSHARE });
   }
 
-  startRecording() {
+  startRecording(properties = {
+    width: 1920,
+    height: 1080,
+    backgroundColor: '#ff000000',
+    layout: { preset: 'default' },
+  }) {
+    // TODO: Should we allow starting a cloud-mp4 recording in RN?
     methodNotSupportedInReactNative();
-    this.sendMessageToCallMachine({ action: DAILY_METHOD_START_RECORDING });
+    properties.action = DAILY_METHOD_START_RECORDING;
+    this.sendMessageToCallMachine(properties);
+  }
+
+  updateRecording({ layout = { preset: 'default' }}) {
+    this.sendMessageToCallMachine({action: DAILY_METHOD_UPDATE_RECORDING,
+      layout,
+    })
   }
 
   stopRecording() {
+    // TODO-CB: Return recording path if cloud-mp4?
     methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_RECORDING });
   }
