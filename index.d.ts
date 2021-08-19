@@ -815,7 +815,7 @@ export interface DailyCall {
   load(properties?: DailyLoadOptions): Promise<void>;
   startScreenShare(captureOptions?: DailyScreenCaptureOptions): void;
   stopScreenShare(): void;
-  startRecording(options: {
+  startRecording(options?: {
     width?: number;
     height?: number;
     backgroundColor?: string;
