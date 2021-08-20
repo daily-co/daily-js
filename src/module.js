@@ -1889,7 +1889,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   stopRecording() {
-    // TODO-CB: Return recording path if cloud-mp4?
     methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_RECORDING });
   }
