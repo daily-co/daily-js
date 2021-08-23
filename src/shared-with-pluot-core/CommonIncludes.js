@@ -80,6 +80,7 @@ export const DAILY_EVENT_TRACK_STOPPED = 'track-stopped';
 
 export const DAILY_EVENT_TRANSCRIPTION_STARTED = 'transcription-started';
 export const DAILY_EVENT_TRANSCRIPTION_STOPPED = 'transcription-stopped';
+export const DAILY_EVENT_TRANSCRIPTION_ERROR = 'transcription-error';
 
 export const DAILY_EVENT_RECORDING_STARTED = 'recording-started';
 export const DAILY_EVENT_RECORDING_STOPPED = 'recording-stopped';
