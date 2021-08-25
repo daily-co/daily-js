@@ -842,7 +842,7 @@ export interface DailyCall {
   startLiveStreaming(options: DailyLiveStreamingOptions): void;
   updateLiveStreaming(options: { layout?: DailyStreamingLayoutConfig }): void;
   stopLiveStreaming(): void;
-  startTranscription(): void; // acb: I think we'll want to explicitly set options from the beginning, tktk
+  startTranscription(): void;
   stopTranscription(): void;
   getNetworkStats(): Promise<DailyNetworkStats>;
   getActiveSpeaker(): { peerId?: string };
