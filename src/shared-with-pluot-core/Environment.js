@@ -222,19 +222,6 @@ export function isSupportedIOSEnvironment() {
   return isIOS() && isUserMediaAccessible();
 }
 
-export function getDailyJsVersion() {
-  let major = 0,
-    minor = 0,
-    patch = 0;
-  if (typeof _dailyConfig !== 'undefined' && _dailyConfig.dailyJsVersion) {
-    const versionParts = _dailyConfig.dailyJsVersion.split('.');
-    major = parseInt(versionParts[0], 10);
-    minor = parseInt(versionParts[1], 10);
-    patch = parseInt(versionParts[2], 10);
-  }
-  return { major, minor, patch };
-}
-
 function isDisplayMediaAccessible() {
   return !!(
     navigator &&
@@ -298,4 +285,62 @@ function getEdgeVersion() {
     }
   }
   return { major, minor };
+}
+
+//--------------------------------
+// daily-js version helpers
+
+// Daily supports the last 6 months of versions.
+// This variable should be updated as part of each release as needed
+// and should match the oldest version that is exactly 6 months or less
+// at the time of each release
+const OLDEST_SUPPORTED_DAILY_JS_VERSION = {
+  major: 0,
+  minor: 19,
+  patch: 0,
+};
+
+export function getDailyJsVersion() {
+  let major = 0,
+    minor = 0,
+    patch = 0;
+  if (typeof _dailyConfig !== 'undefined' && _dailyConfig.dailyJsVersion) {
+    const versionParts = _dailyConfig.dailyJsVersion.split('.');
+    major = parseInt(versionParts[0], 10);
+    minor = parseInt(versionParts[1], 10);
+    patch = parseInt(versionParts[2], 10);
+  }
+  return { major, minor, patch };
+}
+
+export function isThisDailyJsVersionAtLeastThat(thisV, thatV) {
+  if (thisV.major != thatV.major) {
+    return thisV.major > thatV.major;
+  }
+  if (thisV.minor != thatV.minor) {
+    return thisV.minor > thatV.minor;
+  }
+  return thisV.patch >= thatV.patch;
+}
+
+export function isThisDailyJsVersionEqualToThat(thisV, thatV) {
+  return (
+    thisV.major === thatV.major &&
+    thisV.minor === thatV.minor &&
+    thisV.patch === thatV.patch
+  );
+}
+
+export function isCurrentDailyJsSupported() {
+  return isThisDailyJsVersionAtLeastThat(
+    getDailyJsVersion(),
+    OLDEST_SUPPORTED_DAILY_JS_VERSION
+  );
+}
+
+export function isCurrentDailyJsOldest() {
+  return isThisDailyJsVersionEqualToThat(
+    getDailyJsVersion(),
+    OLDEST_SUPPORTED_DAILY_JS_VERSION
+  );
 }
