@@ -78,7 +78,8 @@ export type DailyEvent =
   | 'waiting-participant-updated'
   | 'waiting-participant-removed'
   | 'theme-updated'
-  | 'receive-settings-updated';
+  | 'receive-settings-updated'
+  | 'show-local-video-changed';
 
 export type DailyMeetingState =
   | 'new'
@@ -628,6 +629,11 @@ export interface DailyEventObjectReceiveSettingsUpdated {
   receiveSettings: DailyReceiveSettings;
 }
 
+export interface DailyEventObjectShowLocalVideoChanged {
+  action: Extract<DailyEvent, 'show-local-video-changed'>;
+  show: boolean;
+}
+
 export type DailyEventObject<
   T extends DailyEvent = any
 > = T extends DailyEventObjectAppMessage['action']
@@ -672,6 +678,8 @@ export type DailyEventObject<
   ? DailyEventObjectThemeUpdated
   : T extends DailyEventObjectReceiveSettingsUpdated['action']
   ? DailyEventObjectReceiveSettingsUpdated
+  : T extends DailyEventObjectShowLocalVideoChanged['action']
+  ? DailyEventObjectShowLocalVideoChanged
   : any;
 
 export interface DailyFaceInfo {

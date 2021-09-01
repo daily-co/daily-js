@@ -2630,6 +2630,14 @@ export default class DailyIframe extends EventEmitter {
         if (this._callObjectMode) return;
         const { show } = msg;
         this._showLocalVideo = show;
+        try {
+          this.emit(msg.action, {
+            action: msg.action,
+            show,
+          });
+        } catch (e) {
+          console.log('could not emit', msg);
+        }
         break;
       case DAILY_EVENT_ACTIVE_SPEAKER_MODE_CHANGE:
         const { enabled } = msg;
