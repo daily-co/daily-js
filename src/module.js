@@ -82,6 +82,7 @@ import {
   DAILY_EVENT_WAITING_PARTICIPANT_REMOVED,
   DAILY_EVENT_WAITING_PARTICIPANT_UPDATED,
   DAILY_EVENT_RECEIVE_SETTINGS_UPDATED,
+  DAILY_EVENT_MEDIA_INGEST_ERROR,
 
   // internals
   //
@@ -2698,6 +2699,7 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_LIVE_STREAMING_STOPPED:
       case DAILY_EVENT_LIVE_STREAMING_ERROR:
       case DAILY_EVENT_LANG_UPDATED:
+      case DAILY_EVENT_MEDIA_INGEST_ERROR:
         try {
           this.emit(msg.action, msg);
         } catch (e) {

@@ -112,6 +112,8 @@ export const DAILY_EVENT_RECEIVE_SETTINGS_UPDATED = 'receive-settings-updated';
 
 export const DAILY_EVENT_ERROR = 'error';
 
+export const DAILY_EVENT_MEDIA_INGEST_ERROR = 'media-ingest-error';
+
 //
 // internal
 //
