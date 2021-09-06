@@ -1891,20 +1891,10 @@ export default class DailyIframe extends EventEmitter {
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_RECORDING });
   }
 
-  startLiveStreaming({
-    rtmpUrl,
-    width = 1920,
-    height = 1080,
-    backgroundColor = '#ff000000',
-    layout = { preset: 'default' },
-  }) {
+  startLiveStreaming(args = {}) {
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_START_LIVE_STREAMING,
-      rtmpUrl,
-      width,
-      height,
-      backgroundColor,
-      layout,
+      ...args,
     });
   }
 
