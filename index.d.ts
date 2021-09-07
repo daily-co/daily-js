@@ -104,6 +104,8 @@ export type DailyFatalErrorType =
   | 'exp-room'
   | 'exp-token';
 
+export type DailyNetworkTopology = 'sfu' | 'peer';
+
 export interface DailyParticipantsObject {
   local: DailyParticipant;
   [id: string]: DailyParticipant;
@@ -869,8 +871,9 @@ export interface DailyCall {
     includeRoomConfigDefaults: boolean;
   }): Promise<DailyPendingRoomInfo | DailyRoomInfo | null>;
   geo(): Promise<{ current: string }>;
+  getNetworkTopology(): Promise<{ topology: DailyNetworkTopology; error?: string }>;
   setNetworkTopology(options: {
-    topology: 'sfu' | 'peer';
+    topology: DailyNetworkTopology;
   }): Promise<{ workerId?: string; error?: string }>;
   setPlayNewParticipantSound(sound: boolean | number): void;
   on<T extends DailyEvent>(
