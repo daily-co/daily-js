@@ -871,7 +871,10 @@ export interface DailyCall {
     includeRoomConfigDefaults: boolean;
   }): Promise<DailyPendingRoomInfo | DailyRoomInfo | null>;
   geo(): Promise<{ current: string }>;
-  getNetworkTopology(): Promise<{ topology: DailyNetworkTopology; error?: string }>;
+  getNetworkTopology(): Promise<{
+    topology: DailyNetworkTopology | 'none';
+    error?: string;
+  }>;
   setNetworkTopology(options: {
     topology: DailyNetworkTopology;
   }): Promise<{ workerId?: string; error?: string }>;
