@@ -2245,7 +2245,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async getNetworkTopology() {
-    methodNotSupportedInReactNative();
     return new Promise(async (resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
