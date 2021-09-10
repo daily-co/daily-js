@@ -563,6 +563,9 @@ export interface DailyEventObjectRecordingStarted {
   action: Extract<DailyEvent, 'recording-started'>;
   local?: boolean;
   recordingId?: string;
+  startedBy?: string;
+  type?: string;
+  layout?: DailyStreamingLayoutConfig;
 }
 
 export interface DailyEventObjectMouseEvent {
@@ -658,6 +661,11 @@ export interface DailyEventObjectShowLocalVideoChanged {
 export interface DailyEventObjectInputSettingsUpdated {
   action: Extract<DailyEvent, 'input-settings-updated'>;
   inputSettings: DailyInputSettings;
+}
+
+export interface DailyEventObjectLiveStreamingStarted {
+  action: Extract<DailyEvent, 'live-streaming-started'>;
+  layout: DailyStreamingLayoutConfig;
 }
 
 export type DailyEventObject<
