@@ -124,6 +124,7 @@ import {
   DAILY_METHOD_REGISTER_INPUT_HANDLER,
   DAILY_METHOD_DETECT_ALL_FACES,
   DAILY_METHOD_ROOM,
+  DAILY_METHOD_GET_NETWORK_TOPOLOGY,
   DAILY_METHOD_SET_NETWORK_TOPOLOGY,
   DAILY_METHOD_SET_PLAY_DING,
   DAILY_METHOD_SET_SUBSCRIBE_TO_TRACKS_AUTOMATICALLY,
@@ -2238,6 +2239,22 @@ export default class DailyIframe extends EventEmitter {
       };
       this.sendMessageToCallMachine(
         { action: DAILY_METHOD_SET_NETWORK_TOPOLOGY, opts },
+        k
+      );
+    });
+  }
+
+  async getNetworkTopology() {
+    return new Promise(async (resolve, reject) => {
+      let k = (msg) => {
+        if (msg.error) {
+          reject({ error: msg.error });
+        } else {
+          resolve({ topology: msg.topology });
+        }
+      };
+      this.sendMessageToCallMachine(
+        { action: DAILY_METHOD_GET_NETWORK_TOPOLOGY },
         k
       );
     });
