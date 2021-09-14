@@ -1879,22 +1879,20 @@ export default class DailyIframe extends EventEmitter {
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_SCREENSHARE });
   }
 
-  startRecording(properties = {
-    width: 1920,
-    height: 1080,
-    backgroundColor: '#ff000000',
-    layout: { preset: 'default' },
-  }) {
+  startRecording(args = {}) {
     // TODO: Should we allow starting a cloud-mp4 recording in RN?
     methodNotSupportedInReactNative();
-    properties.action = DAILY_METHOD_START_RECORDING;
-    this.sendMessageToCallMachine(properties);
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_START_RECORDING,
+      ...args,
+    });
   }
 
-  updateRecording({ layout = { preset: 'default' }}) {
-    this.sendMessageToCallMachine({action: DAILY_METHOD_UPDATE_RECORDING,
+  updateRecording({ layout = { preset: 'default' } }) {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_UPDATE_RECORDING,
       layout,
-    })
+    });
   }
 
   stopRecording() {
@@ -1902,20 +1900,10 @@ export default class DailyIframe extends EventEmitter {
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_RECORDING });
   }
 
-  startLiveStreaming({
-    rtmpUrl,
-    width = 1920,
-    height = 1080,
-    backgroundColor = '#ff000000',
-    layout = { preset: 'default' },
-  }) {
+  startLiveStreaming(args = {}) {
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_START_LIVE_STREAMING,
-      rtmpUrl,
-      width,
-      height,
-      backgroundColor,
-      layout,
+      ...args,
     });
   }
 
