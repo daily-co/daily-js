@@ -81,6 +81,7 @@ export type DailyEvent =
   | 'waiting-participant-removed'
   | 'theme-updated'
   | 'receive-settings-updated'
+  | 'input-settings-updated'
   | 'show-local-video-changed';
 
 export type DailyMeetingState =
@@ -202,6 +203,7 @@ export interface DailyCallOptions {
   theme?: DailyThemeConfig;
   layoutConfig?: DailyLayoutConfig;
   receiveSettings?: DailyReceiveSettings;
+  inputSettings?: DailyInputSettings;
 }
 
 export interface DailyLoadOptions extends DailyCallOptions {
@@ -458,6 +460,17 @@ export interface DailyReceiveSettingsUpdates {
     | 'inherit';
 }
 
+export interface DailyInputSettings {
+  video?: DailyInputVideoSettings;
+}
+
+export interface DailyInputVideoSettings {
+  processor?: DailyInputVideoProcessorSettings;
+}
+export interface DailyInputVideoProcessorSettings {
+  type: 'none' | 'background-blur' | 'background-image' | 'custom';
+  config: {};
+}
 export interface DailyEventObjectNoPayload {
   action: Extract<
     DailyEvent,
@@ -637,6 +650,10 @@ export interface DailyEventObjectShowLocalVideoChanged {
   action: Extract<DailyEvent, 'show-local-video-changed'>;
   show: boolean;
 }
+export interface DailyEventObjectInputSettingsUpdated {
+  action: Extract<DailyEvent, 'input-settings-updated'>;
+  inputSettings: DailyInputSettings;
+}
 
 export type DailyEventObject<
   T extends DailyEvent = any
@@ -684,6 +701,8 @@ export type DailyEventObject<
   ? DailyEventObjectReceiveSettingsUpdated
   : T extends DailyEventObjectShowLocalVideoChanged['action']
   ? DailyEventObjectShowLocalVideoChanged
+  : T extends DailyEventObjectInputSettingsUpdated['action']
+  ? DailyEventObjectInputSettingsUpdated
   : any;
 
 export interface DailyFaceInfo {
@@ -812,6 +831,10 @@ export interface DailyCall {
   updateReceiveSettings(
     receiveSettings: DailyReceiveSettingsUpdates
   ): Promise<DailyReceiveSettings>;
+  updateInputSettings(
+    inputSettings: DailyInputSettings
+  ): Promise<DailyInputSettings>;
+  getInputSettings(): Promise<DailyInputSettings>;
   setBandwidth(bw: {
     kbs?: number | 'NO_CAP' | null;
     trackConstraints?: MediaTrackConstraints;

@@ -86,6 +86,8 @@ import {
   DAILY_EVENT_WAITING_PARTICIPANT_UPDATED,
   DAILY_EVENT_RECEIVE_SETTINGS_UPDATED,
   DAILY_EVENT_MEDIA_INGEST_ERROR,
+  DAILY_EVENT_INPUT_SETTINGS_UPDATED,
+  DAILY_EVENT_NONFATAL_ERROR,
 
   // internals
   //
@@ -144,6 +146,8 @@ import {
   DAILY_METHOD_UPDATE_WAITING_PARTICIPANTS,
   DAILY_METHOD_GET_SINGLE_PARTICIPANT_RECEIVE_SETTINGS,
   DAILY_METHOD_UPDATE_RECEIVE_SETTINGS,
+  DAILY_JS_VIDEO_PROCESSOR_TYPES as VIDEO_PROCESSOR_TYPES,
+  DAILY_METHOD_UPDATE_INPUT_SETTINGS,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -251,6 +255,8 @@ export {
   DAILY_EVENT_WAITING_PARTICIPANT_REMOVED,
   DAILY_EVENT_WAITING_PARTICIPANT_UPDATED,
   DAILY_EVENT_RECEIVE_SETTINGS_UPDATED,
+  DAILY_EVENT_INPUT_SETTINGS_UPDATED,
+  DAILY_EVENT_NONFATAL_ERROR,
 };
 
 // Audio modes for React Native: whether we should configure audio for video
@@ -485,6 +491,10 @@ const FRAME_PROPS = {
     help: receiveSettingsValidationHelpMsg({
       allowAllParticipantsKey: false,
     }),
+  },
+  inputSettings: {
+    validate: (inputSettings) => validateInputSettings(inputSettings),
+    help: inputSettingsValidationHelpMsg(),
   },
   // used internally
   layout: {
@@ -771,6 +781,12 @@ export default class DailyIframe extends EventEmitter {
       // easier to update defaults in the future, eliminating the worry of
       // daily-js getting out of sync with the call machine.
       this._receiveSettings = {};
+    }
+
+    this._inputSettings = {};
+    if (properties.inputSettings) {
+      // #Question: Do I need the call-object check here?
+      this._inputSettings = properties.inputSettings;
     }
 
     this.validateProperties(properties);
@@ -1250,6 +1266,41 @@ export default class DailyIframe extends EventEmitter {
         {
           action: DAILY_METHOD_UPDATE_RECEIVE_SETTINGS,
           receiveSettings,
+        },
+        k
+      );
+    });
+  }
+
+  // Input Settings Getter
+  // { video: { processor } }
+  // In the future:
+  // { video: {...}, audio: {...}, screenVideo: {...}, screenAudio: {...} }
+  getInputSettings() {
+    return this._inputSettings;
+  }
+
+  async updateInputSettings(inputSettings) {
+    //#Question: Do I need the call-object mode check for input-settings?
+    if (!validateInputSettings(inputSettings)) {
+      throw new Error(inputSettingsValidationHelpMsg());
+    }
+
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      throw new Error(
+        'updateInputSettings() is only allowed when joined. To specify input settings earlier, use the inputSettings config property.'
+      );
+    }
+
+    // Ask call machine to update input settings, then await callback.
+    return new Promise((resolve) => {
+      const k = (msg) => {
+        resolve({ inputSettings: msg.inputSettings });
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_UPDATE_INPUT_SETTINGS,
+          inputSettings,
         },
         k
       );
@@ -2704,6 +2755,23 @@ export default class DailyIframe extends EventEmitter {
           }
         }
         break;
+      case DAILY_EVENT_INPUT_SETTINGS_UPDATED:
+        // NOTE: doing equality check here rather than before sending message in
+        // the first place from call machine, to simplify handling initial
+        // input settings
+        if (!deepEqual(this._inputSettings, msg.inputSettings)) {
+          this._inputSettings = msg.inputSettings;
+          try {
+            this.emit(msg.action, {
+              action: msg.action,
+              inputSettings: msg.inputSettings,
+            });
+          } catch (e) {
+            console.log('could not emit', msg, e);
+          }
+        }
+        break;
+
       case DAILY_EVENT_RECORDING_STARTED:
       case DAILY_EVENT_RECORDING_STOPPED:
       case DAILY_EVENT_RECORDING_STATS:
@@ -2722,6 +2790,7 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_LIVE_STREAMING_STARTED:
       case DAILY_EVENT_LIVE_STREAMING_STOPPED:
       case DAILY_EVENT_LIVE_STREAMING_ERROR:
+      case DAILY_EVENT_NONFATAL_ERROR:
       case DAILY_EVENT_LANG_UPDATED:
       case DAILY_EVENT_MEDIA_INGEST_ERROR:
         try {
@@ -2942,6 +3011,7 @@ export default class DailyIframe extends EventEmitter {
     this._didPreAuth = false;
     this._accessState = { access: DAILY_ACCESS_UNKNOWN };
     this._receiveSettings = {};
+    this._inputSettings = {};
     resetPreloadCache(this._preloadCache);
   }
 
@@ -3225,6 +3295,39 @@ function validateReceiveSettings(
     }
   }
   return true;
+}
+
+// Since currently videoProcessor is the only inputSetting. I wrote this code to reject
+// everything else. I feel it is the safe approach. This will need changes as more
+// functionality is added to inputSettings in the future.
+function validateInputSettings(settings) {
+  if (typeof settings !== 'object') return false;
+  if (!(settings.video && typeof settings.video === 'object')) return false;
+  if (!validateVideoProcessor(settings.video.processor)) return false;
+  return true;
+}
+
+function validateVideoProcessor(p) {
+  if (!p) return false;
+  if (typeof p !== 'object') return false;
+  if (Object.keys(p).length === 0) return false; // lodash isEmpty did not work well with github workflow for some reason
+  if (p.type && !validateVideoProcessorType(p.type)) return false;
+  if (p.publish !== undefined && typeof p.publish !== 'boolean') return false;
+  // Only doing a simple check of the config object here. If an invalid config object is sent,
+  // the code will essentially behave as a No-Op. Implementing a more elaborate config check
+  // did not seem worth the messiness.
+  if (p.config !== undefined && typeof p.config !== 'object') return false;
+  return true;
+}
+
+function validateVideoProcessorType(type) {
+  if (typeof type !== 'string') return false;
+  return Object.values(VIDEO_PROCESSOR_TYPES).includes(type);
+}
+
+function inputSettingsValidationHelpMsg() {
+  let processorOpts = Object.values(VIDEO_PROCESSOR_TYPES).join(' | ');
+  return `inputSettings must be of the form: { video: { processor: [ ${processorOpts} ] }, publish?: boolean, config?: {} }`;
 }
 
 function receiveSettingsValidationHelpMsg({ allowAllParticipantsKey }) {
