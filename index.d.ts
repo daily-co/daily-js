@@ -52,6 +52,7 @@ export type DailyEvent =
   | 'recording-data'
   | 'transcription-started'
   | 'transcription-stopped'
+  | 'transcription-error'
   | 'app-message'
   | 'local-screen-share-started'
   | 'local-screen-share-stopped'
