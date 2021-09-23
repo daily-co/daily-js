@@ -1290,12 +1290,6 @@ export default class DailyIframe extends EventEmitter {
       throw new Error(inputSettingsValidationHelpMsg());
     }
 
-    if (this._meetingState !== DAILY_STATE_JOINED) {
-      throw new Error(
-        'updateInputSettings() is only allowed when joined. To specify input settings earlier, use the inputSettings config property.'
-      );
-    }
-
     // Ask call machine to update input settings, then await callback.
     return new Promise((resolve) => {
       const k = (msg) => {

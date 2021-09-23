@@ -474,7 +474,7 @@ export interface DailyInputVideoSettings {
 }
 export interface DailyInputVideoProcessorSettings {
   type: 'none' | 'background-blur' | 'background-image' | 'custom';
-  config: {};
+  config?: {};
 }
 export interface DailyEventObjectNoPayload {
   action: Extract<
