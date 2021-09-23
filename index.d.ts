@@ -199,8 +199,8 @@ export interface DailyCallOptions {
   cssText?: string;
   dailyConfig?: DailyAdvancedConfig;
   subscribeToTracksAutomatically?: boolean;
-  videoSource?: string | MediaStreamTrack;
-  audioSource?: string | MediaStreamTrack;
+  videoSource?: string | MediaStreamTrack | boolean;
+  audioSource?: string | MediaStreamTrack | boolean;
   theme?: DailyThemeConfig;
   layoutConfig?: DailyLayoutConfig;
   receiveSettings?: DailyReceiveSettings;
