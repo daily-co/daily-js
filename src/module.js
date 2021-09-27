@@ -155,6 +155,7 @@ import {
   getUserAgent,
   isScreenSharingSupported,
   isSfuSupported,
+  isVideoProcessingSupported,
 } from './shared-with-pluot-core/Environment.js';
 import WebMessageChannel from './shared-with-pluot-core/script-message-channels/WebMessageChannel';
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
@@ -596,6 +597,7 @@ export default class DailyIframe extends EventEmitter {
         version: null,
         supportsScreenShare: false,
         supportsSfu: true,
+        supportsVideoProcessing: false,
       };
     }
     const browser = Bowser.getParser(getUserAgent());
@@ -606,6 +608,7 @@ export default class DailyIframe extends EventEmitter {
       version: browser.getBrowserVersion(),
       supportsScreenShare: !!isScreenSharingSupported(),
       supportsSfu: !!isSfuSupported(),
+      supportsVideoProcessing: isVideoProcessingSupported(),
     };
   }
 

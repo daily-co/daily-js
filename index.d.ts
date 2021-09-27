@@ -120,6 +120,7 @@ export interface DailyBrowserInfo {
   version: string;
   supportsScreenShare: boolean;
   supportsSfu: boolean;
+  supportsVideoProcessing: boolean;
 }
 
 export interface DailyThemeColors {
