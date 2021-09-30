@@ -47,6 +47,14 @@ export function isScreenSharingSupported() {
   return isDisplayMediaAccessible() && canUnifiedPlan();
 }
 
+const supportedBrowsersForVideoProcessors = ['Chrome', 'Firefox'];
+
+export function isVideoProcessingSupported() {
+  if (isReactNative()) return false;
+  if (browserMobile_p()) return false;
+  return supportedBrowsersForVideoProcessors.includes(getBrowserName());
+}
+
 export function isSfuSupported() {
   if (isReactNative()) return true;
   return browserVideoSupported_p();
@@ -83,6 +91,24 @@ export function browserCanUnifiedPlan(browserName, browserVersion) {
 
 export function browserVideoSupported_p() {
   return isUserMediaAccessible() && !browserNeedsUpgrade();
+}
+
+export function isAndroidApp() {
+  return getUserAgent().match(/DailyAnd\//);
+}
+
+export function isAndroidWeb() {
+  return getUserAgent().match(/Linux; Android/);
+}
+
+export function browserMobile_p() {
+  const userAgent = getUserAgent();
+  if (userAgent.match(/Mobi/) || userAgent.match(/Android/)) {
+    return true;
+  }
+  if (isAndroidApp()) {
+    return true;
+  }
 }
 
 export function browserNeedsUpgrade() {
