@@ -603,7 +603,7 @@ export interface DailyEventObjectTouchEvent {
 
 export interface DailyEventObjectNetworkQualityEvent {
   action: Extract<DailyEvent, 'network-quality-change'>;
-  threshold: string;
+  threshold: 'good' | 'low' | 'very-low';
   quality: number;
 }
 
