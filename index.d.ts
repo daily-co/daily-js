@@ -383,6 +383,7 @@ export interface DailyRoomInfo {
     enable_knocking?: boolean;
     enable_network_ui?: boolean;
     enable_prejoin_ui?: boolean;
+    enable_video_processing_ui?: boolean;
     start_video_off?: boolean;
     start_audio_off?: boolean;
     owner_only_broadcast?: boolean;
@@ -410,6 +411,7 @@ export interface DailyRoomInfo {
     max_live_streams?: number;
     enable_network_ui?: boolean;
     enable_prejoin_ui?: boolean;
+    enable_video_processing_ui?: boolean;
   };
   tokenConfig: {
     eject_at_token_exp?: boolean;
