@@ -25,6 +25,7 @@ export type DailyLanguage =
   | 'no'
   | 'pl'
   | 'pt'
+  | 'ru'
   | 'sv'
   | 'tr';
 
@@ -749,9 +750,7 @@ export interface DailyStreamingActiveParticipantLayoutConfig {
   preset: 'active-participant';
 }
 
-export type DailyStreamingPortraitLayoutVariant =
-  | 'vertical'
-  | 'inset';
+export type DailyStreamingPortraitLayoutVariant = 'vertical' | 'inset';
 
 export interface DailyStreamingPortraitLayoutConfig {
   preset: 'portrait';

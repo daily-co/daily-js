@@ -331,13 +331,14 @@ const FRAME_PROPS = {
         'no',
         'pl',
         'pt',
+        'ru',
         'sv',
         'tr',
         'user',
       ].includes(lang);
     },
     help:
-      'language not supported. Options are: de, en-us, en, es, fi, fr, it, jp, ka, nl, no, pl, pt, sv, tr, user',
+      'language not supported. Options are: de, en-us, en, es, fi, fr, it, jp, ka, nl, no, pl, pt, ru, sv, tr, user',
   },
   userName: true, // ignored if there's a token
   activeSpeakerMode: true,
