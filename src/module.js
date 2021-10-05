@@ -371,6 +371,12 @@ const FRAME_PROPS = {
       return true;
     },
   },
+  userName: {
+    validate: (s, callObject) => {
+      callObject._preloadCache.userName = s;
+      return true;
+    },
+  },
   theme: {
     validate: (o) => {
       const validColors = [
