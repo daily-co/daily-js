@@ -473,7 +473,6 @@ export interface DailyInputVideoSettings {
   processor?: DailyInputVideoProcessorSettings;
 }
 export interface DailyInputVideoProcessorSettings {
-  // type: 'none' | 'background-blur' | 'background-image' | 'custom';
   type: 'none' | 'background-blur';
   config?: {};
 }
