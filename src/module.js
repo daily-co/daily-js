@@ -1354,6 +1354,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setUserName(name, options) {
+    this.properties.userName = name;
     return new Promise(async (resolve) => {
       const k = (msg) => {
         delete msg.action;
