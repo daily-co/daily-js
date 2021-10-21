@@ -386,6 +386,7 @@ export interface DailyRoomInfo {
     enable_network_ui?: boolean;
     enable_prejoin_ui?: boolean;
     enable_video_processing_ui?: boolean;
+    experimental_optimize_large_calls?: boolean;
     start_video_off?: boolean;
     start_audio_off?: boolean;
     owner_only_broadcast?: boolean;
