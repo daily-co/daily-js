@@ -3311,11 +3311,36 @@ function validateVideoProcessor(p) {
   if (Object.keys(p).length === 0) return false; // lodash isEmpty did not work well with github workflow for some reason
   if (p.type && !validateVideoProcessorType(p.type)) return false;
   if (p.publish !== undefined && typeof p.publish !== 'boolean') return false;
-  // Only doing a simple check of the config object here. If an invalid config object is sent,
-  // the code will essentially behave as a No-Op. Implementing a more elaborate config check
-  // did not seem worth the messiness.
-  if (p.config !== undefined && typeof p.config !== 'object') return false;
+  if (p.config) {
+    if (typeof p.config !== 'object') return false;
+    if (!validateVideoProcessorConfig(p.type, p.config)) return false;
+  }
   return true;
+}
+
+function validateVideoProcessorConfig(type, config) {
+  let keys = Object.keys(config);
+  if (keys.length === 0) return true;
+  const configErrMsg =
+    'invalid object in inputSettings -> video -> processor -> config';
+  switch (type) {
+    case VIDEO_PROCESSOR_TYPES.BGBLUR:
+      if (keys.length > 1 || keys[0] !== 'strength') {
+        throw new Error(configErrMsg);
+      }
+      if (
+        typeof config.strength !== 'number' ||
+        config.strength <= 0 ||
+        config.strength > 1 ||
+        isNaN(config.strength)
+      ) {
+        throw new Error(
+          `${configErrMsg}; expected: {0 < strength <= 1}, got: ${config.strength}`
+        );
+      }
+    default:
+      return true;
+  }
 }
 
 function validateVideoProcessorType(type) {
