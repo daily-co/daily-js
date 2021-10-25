@@ -207,6 +207,7 @@ export interface DailyCallOptions {
   layoutConfig?: DailyLayoutConfig;
   receiveSettings?: DailyReceiveSettings;
   inputSettings?: DailyInputSettings;
+  userName?: string;
 }
 
 export interface DailyLoadOptions extends DailyCallOptions {
@@ -938,6 +939,7 @@ export interface DailyCall {
   ): DailyCall;
   properties: {
     dailyConfig?: DailyAdvancedConfig;
+    userName?: string;
   };
 }
 
