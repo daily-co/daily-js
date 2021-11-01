@@ -633,9 +633,9 @@ export interface DailyEventObjectActiveSpeakerModeChange {
   enabled: boolean;
 }
 
-export interface DailyEventObjectAppMessage<Data = any> {
+export interface DailyEventObjectAppMessage {
   action: Extract<DailyEvent, 'app-message'>;
-  data: Data;
+  data: any;
   fromId: string;
 }
 
