@@ -18,6 +18,7 @@
     "ie >= 11"
   ],
   "scripts": {
+    "dev": "NODE_ENV=development npx webpack-dev-server --progress -c webpack.config.js",
     "build": "npm run build-main && npm run build-module",
     "build-dev": "NODE_ENV=development npm run build",
     "build-main": "webpack",
