@@ -801,6 +801,14 @@ export interface DailyLiveStreamingOptions extends DailyStreamingOptions {
   rtmpUrl: string;
 }
 
+export interface DailyRemoteMediaPlayerOptions {
+  url: string;
+}
+
+export interface DailyRemoteMediaPlayerControlOptions {
+  remoteMediaPlayerID: string;
+}
+
 export interface DailyCall {
   iframe(): HTMLIFrameElement | null;
   join(properties?: DailyCallOptions): Promise<DailyParticipantsObject | void>;
@@ -891,6 +899,10 @@ export interface DailyCall {
   startLiveStreaming(options: DailyLiveStreamingOptions): void;
   updateLiveStreaming(options: { layout?: DailyStreamingLayoutConfig }): void;
   stopLiveStreaming(): void;
+  startRemoteMediaPlayer(options: DailyRemoteMediaPlayerOptions): void;
+  stopRemoteMediaPlayer(options: DailyRemoteMediaPlayerControlOptions): void;
+  playRemoteMediaPlayer(options: DailyRemoteMediaPlayerControlOptions): void;
+  pauseRemoteMediaPlayer(options: DailyRemoteMediaPlayerControlOptions): void;
   startTranscription(): void;
   stopTranscription(): void;
   getNetworkStats(): Promise<DailyNetworkStats>;

@@ -179,8 +179,18 @@ export const DAILY_METHOD_UPDATE_LIVE_STREAMING =
   'daily-method-update-live-streaming';
 export const DAILY_METHOD_STOP_LIVE_STREAMING =
   'daily-method-stop-live-streaming';
-export const DAILY_METHOD_START_TRANSCRIPTION = 'daily-method-start-transcription';
-export const DAILY_METHOD_STOP_TRANSCRIPTION = 'daily-method-stop-transcription';
+export const DAILY_METHOD_START_REMOTE_MEDIA_PLAYER =
+  'daily-method-start-remote-media-player';
+export const DAILY_METHOD_STOP_REMOTE_MEDIA_PLAYER =
+  'daily-method-stop-remote-media-player';
+export const DAILY_METHOD_PLAY_REMOTE_MEDIA_PLAYER =
+  'daily-method-play-remote-media-player';
+export const DAILY_METHOD_PAUSE_REMOTE_MEDIA_PLAYER =
+  'daily-method-pause-remote-media-player';
+export const DAILY_METHOD_START_TRANSCRIPTION =
+  'daily-method-start-transcription';
+export const DAILY_METHOD_STOP_TRANSCRIPTION =
+  'daily-method-stop-transcription';
 export const DAILY_METHOD_PREAUTH = 'daily-method-preauth';
 export const DAILY_METHOD_REQUEST_ACCESS = 'daily-method-request-access';
 export const DAILY_METHOD_UPDATE_WAITING_PARTICIPANT =

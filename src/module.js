@@ -148,6 +148,10 @@ import {
   DAILY_METHOD_UPDATE_RECEIVE_SETTINGS,
   DAILY_JS_VIDEO_PROCESSOR_TYPES as VIDEO_PROCESSOR_TYPES,
   DAILY_METHOD_UPDATE_INPUT_SETTINGS,
+  DAILY_METHOD_START_REMOTE_MEDIA_PLAYER,
+  DAILY_METHOD_STOP_REMOTE_MEDIA_PLAYER,
+  DAILY_METHOD_PLAY_REMOTE_MEDIA_PLAYER,
+  DAILY_METHOD_PAUSE_REMOTE_MEDIA_PLAYER,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -1967,6 +1971,72 @@ export default class DailyIframe extends EventEmitter {
 
   stopLiveStreaming() {
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_LIVE_STREAMING });
+  }
+
+  async startRemoteMediaPlayer(args = {}) {
+    // TODO: validate input
+    return new Promise(async (resolve, reject) => {
+      let k = (msg) => {
+        if (msg.error) {
+          reject({ error: msg.error });
+        } else {
+          resolve({ remoteMediaPlayerID: msg.remoteMediaPlayerID });
+        }
+      };
+      console.log('startRemoveMediaPlayr args = ' + args);
+      this.sendMessageToCallMachine(
+        { action: DAILY_METHOD_START_REMOTE_MEDIA_PLAYER, ...args },
+        k
+      );
+    });
+  }
+
+  async stopRemoteMediaPlayer(args = {}) {
+    return new Promise(async (resolve, reject) => {
+      let k = (msg) => {
+        if (msg.error) {
+          reject({ error: msg.error });
+        } else {
+          resolve({ success: 'success' });
+        }
+      };
+      this.sendMessageToCallMachine(
+        { action: DAILY_METHOD_STOP_REMOTE_MEDIA_PLAYER, ...args },
+        k
+      );
+    });
+  }
+
+  async playRemoteMediaPlayer(args = {}) {
+    return new Promise(async (resolve, reject) => {
+      let k = (msg) => {
+        if (msg.error) {
+          reject({ error: msg.error });
+        } else {
+          resolve({ success: 'success' });
+        }
+      };
+      this.sendMessageToCallMachine(
+        { action: DAILY_METHOD_PLAY_REMOTE_MEDIA_PLAYER, ...args },
+        k
+      );
+    });
+  }
+
+  async pauseRemoteMediaPlayer(args = {}) {
+    return new Promise(async (resolve, reject) => {
+      let k = (msg) => {
+        if (msg.error) {
+          reject({ error: msg.error });
+        } else {
+          resolve({ success: 'success' });
+        }
+      };
+      this.sendMessageToCallMachine(
+        { action: DAILY_METHOD_PAUSE_REMOTE_MEDIA_PLAYER, ...args },
+        k
+      );
+    });
   }
 
   startTranscription() {
