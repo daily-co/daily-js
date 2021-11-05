@@ -42,6 +42,9 @@ const bundle = {
       },
     ],
   },
+  devServer: {
+    port: process.env.WEBPACK_PORT || 8081,
+  },
 };
 
 module.exports = [bundle];
