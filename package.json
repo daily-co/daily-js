@@ -45,7 +45,8 @@
     "rollup-plugin-node-resolve": "^4.2.4",
     "rollup-plugin-terser": "^4.0.4",
     "webpack": "^4.41.5",
-    "webpack-cli": "^3.3.11"
+    "webpack-cli": "^3.3.4",
+    "webpack-dev-server": "^3.11.0"
   },
   "dependencies": {
     "@babel/runtime": "^7.12.5",
