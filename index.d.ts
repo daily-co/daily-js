@@ -76,6 +76,9 @@ export type DailyEvent =
   | 'live-streaming-stopped'
   | 'live-streaming-error'
   | 'lang-updated'
+  | 'remote-media-player-started'
+  | 'remote-media-player-stopped'
+  | 'remote-media-player-paused'
   | 'access-state-updated'
   | 'meeting-session-updated'
   | 'waiting-participant-added'
@@ -670,6 +673,18 @@ export interface DailyEventObjectLiveStreamingStarted {
   layout?: DailyStreamingLayoutConfig;
 }
 
+export interface DailyEventObjectRemoteMediaPlayerUpdate {
+  action: Extract<
+    DailyEvent,
+    | 'remote-media-player-started'
+    | 'remote-media-player-stopped'
+    | 'remote-media-player-paused'    
+  >;
+  remoteMediaPlayerID?: string;
+  updatedBy?: string;
+  errorMsg?: (string | DailyRemoteMediaPlayerStopReason);
+}
+
 export type DailyEventObject<
   T extends DailyEvent = any
 > = T extends DailyEventObjectAppMessage['action']
@@ -696,6 +711,8 @@ export type DailyEventObject<
   ? DailyEventObjectTrack
   : T extends DailyEventObjectRecordingStarted['action']
   ? DailyEventObjectRecordingStarted
+  : T extends DailyEventObjectRemoteMediaPlayerUpdate['action']
+  ? DailyEventObjectRemoteMediaPlayerUpdate
   : T extends DailyEventObjectMouseEvent['action']
   ? DailyEventObjectMouseEvent
   : T extends DailyEventObjectTouchEvent['action']
@@ -775,6 +792,23 @@ export type DailyStreamingLayoutConfig =
   | DailyStreamingSingleParticipantLayoutConfig
   | DailyStreamingActiveParticipantLayoutConfig
   | DailyStreamingPortraitLayoutConfig;
+
+export interface DailyRemoteMediaPlayerEOS {
+  errorMsg: 'EOS';
+}
+
+export interface DailyRemoteMediaError {
+  errorMsg: 'media-error';
+}
+
+export interface DailyRemoteMediaPlayerPeerStopped {
+  errorMsg: 'stopped-by-peer';
+}
+
+export type DailyRemoteMediaPlayerStopReason =
+  | DailyRemoteMediaPlayerEOS
+  | DailyRemoteMediaError
+  | DailyRemoteMediaPlayerPeerStopped;
 
 export type DailyAccess = 'unknown' | SpecifiedDailyAccess;
 

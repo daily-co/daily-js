@@ -92,6 +92,13 @@ export const DAILY_EVENT_RECORDING_DATA = 'recording-data';
 export const DAILY_EVENT_APP_MSG = 'app-message';
 export const DAILY_EVENT_INPUT_EVENT = 'input-event';
 
+export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_STARTED =
+  'remote-media-player-started';
+export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_PAUSED =
+  'remote-media-player-paused';
+export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_STOPPED =
+  'remote-media-player-stopped';
+
 export const DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED =
   'local-screen-share-started';
 export const DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED =
