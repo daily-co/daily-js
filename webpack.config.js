@@ -43,7 +43,7 @@ const bundle = {
     ],
   },
   devServer: {
-    port: process.env.WEBPACK_PORT || 8081,
+    port: process.env.PORT || 8081,
   },
 };
 
