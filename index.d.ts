@@ -250,6 +250,7 @@ export interface DailyTrackState {
     byBandwidth?: boolean;
   };
   track?: MediaStreamTrack;
+  persistentTrack?: MediaStreamTrack;
 }
 
 export interface DailyParticipant {
