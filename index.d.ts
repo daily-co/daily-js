@@ -78,7 +78,7 @@ export type DailyEvent =
   | 'lang-updated'
   | 'remote-media-player-started'
   | 'remote-media-player-stopped'
-  | 'remote-media-player-paused'
+  | 'remote-media-player-state-change'
   | 'access-state-updated'
   | 'meeting-session-updated'
   | 'waiting-participant-added'
@@ -678,11 +678,13 @@ export interface DailyEventObjectRemoteMediaPlayerUpdate {
     DailyEvent,
     | 'remote-media-player-started'
     | 'remote-media-player-stopped'
-    | 'remote-media-player-paused'    
+    | 'remote-media-player-state-change'
   >;
-  remoteMediaPlayerID?: string;
-  updatedBy?: string;
-  errorMsg?: (string | DailyRemoteMediaPlayerStopReason);
+  remoteMediaPlayerID: string;
+  updatedBy: string;
+  oldState?: string;
+  newState?: string;
+  errorMsg?: DailyRemoteMediaPlayerStopReason;
 }
 
 export type DailyEventObject<
@@ -797,17 +799,12 @@ export interface DailyRemoteMediaPlayerEOS {
   errorMsg: 'EOS';
 }
 
-export interface DailyRemoteMediaError {
-  errorMsg: 'media-error';
-}
-
 export interface DailyRemoteMediaPlayerPeerStopped {
   errorMsg: 'stopped-by-peer';
 }
 
 export type DailyRemoteMediaPlayerStopReason =
   | DailyRemoteMediaPlayerEOS
-  | DailyRemoteMediaError
   | DailyRemoteMediaPlayerPeerStopped;
 
 export type DailyAccess = 'unknown' | SpecifiedDailyAccess;

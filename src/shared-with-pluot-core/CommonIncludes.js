@@ -94,8 +94,8 @@ export const DAILY_EVENT_INPUT_EVENT = 'input-event';
 
 export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_STARTED =
   'remote-media-player-started';
-export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_PAUSED =
-  'remote-media-player-paused';
+export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_STATE_CHANGE =
+  'remote-media-player-state-change';
 export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_STOPPED =
   'remote-media-player-stopped';
 
