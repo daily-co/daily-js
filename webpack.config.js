@@ -42,6 +42,9 @@ const bundle = {
       },
     ],
   },
+  devServer: {
+    port: process.env.PORT || 8081,
+  },
 };
 
 module.exports = [bundle];
