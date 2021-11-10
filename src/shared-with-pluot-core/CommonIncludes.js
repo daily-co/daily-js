@@ -98,6 +98,8 @@ export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_STATE_CHANGE =
   'remote-media-player-state-change';
 export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_STOPPED =
   'remote-media-player-stopped';
+export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_ERROR =
+  'remote-media-player-error';
 
 export const DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED =
   'local-screen-share-started';
@@ -127,8 +129,6 @@ export const DAILY_EVENT_NONFATAL_ERROR = 'nonfatal-error';
 export const DAILY_INPUT_SETTINGS_ERROR_TYPE = 'input-settings-error';
 export const DAILY_VIDEO_PROCESSOR_ERROR_TYPE = 'video-processor-error';
 export const DAILY_EVENT_ERROR = 'error';
-
-export const DAILY_EVENT_MEDIA_INGEST_ERROR = 'media-ingest-error';
 
 //
 // internal

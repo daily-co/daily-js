@@ -59,6 +59,7 @@ import {
   DAILY_EVENT_REMOTE_MEDIA_PLAYER_STARTED,
   DAILY_EVENT_REMOTE_MEDIA_PLAYER_STATE_CHANGE,
   DAILY_EVENT_REMOTE_MEDIA_PLAYER_STOPPED,
+  DAILY_EVENT_REMOTE_MEDIA_PLAYER_ERROR,
   DAILY_EVENT_TRANSCRIPTION_STARTED,
   DAILY_EVENT_TRANSCRIPTION_STOPPED,
   DAILY_EVENT_TRANSCRIPTION_ERROR,
@@ -88,7 +89,6 @@ import {
   DAILY_EVENT_WAITING_PARTICIPANT_REMOVED,
   DAILY_EVENT_WAITING_PARTICIPANT_UPDATED,
   DAILY_EVENT_RECEIVE_SETTINGS_UPDATED,
-  DAILY_EVENT_MEDIA_INGEST_ERROR,
   DAILY_EVENT_INPUT_SETTINGS_UPDATED,
   DAILY_EVENT_NONFATAL_ERROR,
 
@@ -1984,12 +1984,11 @@ export default class DailyIframe extends EventEmitter {
     return new Promise(async (resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
-          reject({ error: msg.error });
+          reject({ error: msg.error, errorMsg: msg.errorMsg });
         } else {
           resolve({ remoteMediaPlayerID: msg.remoteMediaPlayerID });
         }
       };
-      console.log('startRemoveMediaPlayr args = ' + args);
       this.sendMessageToCallMachine(
         { action: DAILY_METHOD_START_REMOTE_MEDIA_PLAYER, ...args },
         k
@@ -2001,7 +2000,7 @@ export default class DailyIframe extends EventEmitter {
     return new Promise(async (resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
-          reject({ error: msg.error });
+          reject({ error: msg.error, errorMsg: msg.errorMsg });
         } else {
           resolve({ success: 'success' });
         }
@@ -2017,7 +2016,7 @@ export default class DailyIframe extends EventEmitter {
     return new Promise(async (resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
-          reject({ error: msg.error });
+          reject({ error: msg.error, errorMsg: msg.errorMsg });
         } else {
           resolve({ success: 'success' });
         }
@@ -2033,7 +2032,7 @@ export default class DailyIframe extends EventEmitter {
     return new Promise(async (resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
-          reject({ error: msg.error });
+          reject({ error: msg.error, errorMsg: msg.errorMsg });
         } else {
           resolve({ success: 'success' });
         }
@@ -2855,6 +2854,7 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_REMOTE_MEDIA_PLAYER_STARTED:
       case DAILY_EVENT_REMOTE_MEDIA_PLAYER_STATE_CHANGE:
       case DAILY_EVENT_REMOTE_MEDIA_PLAYER_STOPPED:
+      case DAILY_EVENT_REMOTE_MEDIA_PLAYER_ERROR:
       case DAILY_EVENT_TRANSCRIPTION_STARTED:
       case DAILY_EVENT_TRANSCRIPTION_STOPPED:
       case DAILY_EVENT_TRANSCRIPTION_ERROR:
@@ -2870,7 +2870,6 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_LIVE_STREAMING_ERROR:
       case DAILY_EVENT_NONFATAL_ERROR:
       case DAILY_EVENT_LANG_UPDATED:
-      case DAILY_EVENT_MEDIA_INGEST_ERROR:
         try {
           this.emit(msg.action, msg);
         } catch (e) {
