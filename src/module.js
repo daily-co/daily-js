@@ -2939,6 +2939,46 @@ export default class DailyIframe extends EventEmitter {
     }
   }
 
+  maybeEventCustomTrackStopped(prevTrack, thisTrack, prevP) {
+    if (!prevTrack) {
+      return;
+    }
+    if (
+      (prevTrack && prevTrack.readyState === 'ended') ||
+      (prevTrack && !thisTrack) ||
+      (prevTrack && prevTrack.id !== thisTrack.id)
+    ) {
+      try {
+        console.log(' emit track-stopped event');
+        this.emit(DAILY_EVENT_TRACK_STOPPED, {
+          action: DAILY_EVENT_TRACK_STOPPED,
+          track: prevTrack,
+          participant: prevP,
+        });
+      } catch (e) {
+        console.log('could not emit', e);
+      }
+    }
+  }
+
+  maybeEventCustomTrackStarted(prevTrack, thisTrack, thisP) {
+    if (
+      (thisTrack && !prevTrack) ||
+      (thisTrack && prevTrack.readyState === 'ended') ||
+      (thisTrack && thisTrack.id !== prevTrack.id)
+    ) {
+      try {
+        this.emit(DAILY_EVENT_TRACK_STARTED, {
+          action: DAILY_EVENT_TRACK_STARTED,
+          track: thisTrack,
+          participant: thisP,
+        });
+      } catch (e) {
+        console.log('could not emit', e);
+      }
+    }
+  }
+
   maybeEventTrackStarted(prevP, thisP, key) {
     if (
       (thisP[key] && !(prevP && prevP[key])) ||
@@ -2968,10 +3008,10 @@ export default class DailyIframe extends EventEmitter {
       if (Participant.isPredefinedTrack(trackKey)) {
         continue;
       }
-      this.maybeEventTrackStopped(
-        prevP.tracks[trackKey],
-        thisP ? thisP.tracks[trackKey] : null,
-        'track'
+      this.maybeEventCustomTrackStopped(
+        prevP.tracks[trackKey].track,
+        thisP ? thisP.tracks[trackKey].track : null,
+        prevP
       );
     }
   }
@@ -2987,10 +3027,10 @@ export default class DailyIframe extends EventEmitter {
       if (Participant.isPredefinedTrack(trackKey)) {
         continue;
       }
-      this.maybeEventTrackStarted(
-        prevP ? prevP.tracks[trackKey] : null,
-        thisP.tracks[trackKey],
-        'track'
+      this.maybeEventCustomTrackStarted(
+        prevP ? prevP.tracks[trackKey].track : null,
+        thisP.tracks[trackKey].track,
+        thisP
       );
     }
   }
