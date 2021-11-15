@@ -7,7 +7,7 @@ const mode = process.env.NODE_ENV || 'production';
 
 const bundle = {
   mode: mode,
-  devtool: mode === 'development' ? 'inline-source-map' : false,
+  devtool: mode === 'development' ? 'eval-source-map' : false,
   entry: './src/main.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
