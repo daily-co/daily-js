@@ -2967,7 +2967,7 @@ export default class DailyIframe extends EventEmitter {
           participant: prevP,
         });
       } catch (e) {
-        console.log('could not emit', e);
+        console.log('maybeEventCustomTrackStopped: could not emit', e);
       }
     }
   }
@@ -2985,7 +2985,7 @@ export default class DailyIframe extends EventEmitter {
           participant: thisP,
         });
       } catch (e) {
-        console.log('could not emit', e);
+        console.log('maybeEventCustomTrackStarted: could not emit', e);
       }
     }
   }
