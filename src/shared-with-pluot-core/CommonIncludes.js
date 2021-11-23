@@ -98,8 +98,7 @@ export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_UPDATED =
   'remote-media-player-updated';
 export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_STOPPED =
   'remote-media-player-stopped';
-export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_ERROR =
-  'remote-media-player-error';
+export const DAILY_REMOTE_MEDIA_PLAYER_ERROR_TYPE = 'remote-media-player';
 
 export const DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED =
   'local-screen-share-started';
