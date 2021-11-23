@@ -57,7 +57,7 @@ import {
   DAILY_EVENT_RECORDING_STARTED,
   DAILY_EVENT_RECORDING_STOPPED,
   DAILY_EVENT_REMOTE_MEDIA_PLAYER_STARTED,
-  DAILY_EVENT_REMOTE_MEDIA_PLAYER_STATE_CHANGE,
+  DAILY_EVENT_REMOTE_MEDIA_PLAYER_UPDATED,
   DAILY_EVENT_REMOTE_MEDIA_PLAYER_STOPPED,
   DAILY_EVENT_REMOTE_MEDIA_PLAYER_ERROR,
   DAILY_EVENT_TRANSCRIPTION_STARTED,
@@ -153,8 +153,8 @@ import {
   DAILY_METHOD_UPDATE_INPUT_SETTINGS,
   DAILY_METHOD_START_REMOTE_MEDIA_PLAYER,
   DAILY_METHOD_STOP_REMOTE_MEDIA_PLAYER,
-  DAILY_METHOD_PLAY_REMOTE_MEDIA_PLAYER,
-  DAILY_METHOD_PAUSE_REMOTE_MEDIA_PLAYER,
+  DAILY_METHOD_UPDATE_REMOTE_MEDIA_PLAYER,
+  DAILY_JS_REMOTE_PLAYER_STATE,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -239,7 +239,7 @@ export {
   DAILY_EVENT_RECORDING_ERROR,
   DAILY_EVENT_RECORDING_UPLOAD_COMPLETED,
   DAILY_EVENT_REMOTE_MEDIA_PLAYER_STARTED,
-  DAILY_EVENT_REMOTE_MEDIA_PLAYER_STATE_CHANGE,
+  DAILY_EVENT_REMOTE_MEDIA_PLAYER_UPDATED,
   DAILY_EVENT_REMOTE_MEDIA_PLAYER_STOPPED,
   DAILY_EVENT_TRANSCRIPTION_STARTED,
   DAILY_EVENT_TRANSCRIPTION_STOPPED,
@@ -1979,66 +1979,79 @@ export default class DailyIframe extends EventEmitter {
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_LIVE_STREAMING });
   }
 
-  async startRemoteMediaPlayer(args = {}) {
-    // TODO: validate input
+  async startRemoteMediaPlayer(
+    url,
+    remoteMediaPlayerSettings = {
+      state: DAILY_JS_REMOTE_PLAYER_STATE.PLAYER_STATE_PLAY,
+    }
+  ) {
+    if (!validateRemotePlayerStartSettings(url, remoteMediaPlayerSettings)) {
+      throw new Error(remoteStartValidationHelpMsg());
+    }
+
     return new Promise(async (resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
           reject({ error: msg.error, errorMsg: msg.errorMsg });
         } else {
-          resolve({ remoteMediaPlayerID: msg.remoteMediaPlayerID });
+          resolve({
+            remoteMediaPlayerID: msg.remoteMediaPlayerID,
+            remoteMediaPlayerSettings: remoteMediaPlayerSettings,
+          });
         }
       };
       this.sendMessageToCallMachine(
-        { action: DAILY_METHOD_START_REMOTE_MEDIA_PLAYER, ...args },
+        {
+          action: DAILY_METHOD_START_REMOTE_MEDIA_PLAYER,
+          url: url,
+          remoteMediaPlayerSettings: remoteMediaPlayerSettings,
+        },
         k
       );
     });
   }
 
-  async stopRemoteMediaPlayer(args = {}) {
+  async stopRemoteMediaPlayer(remoteMediaPlayerID) {
+    if (typeof remoteMediaPlayerID !== 'string')
+      throw new Error(' remotePlayerID must be of type string');
+
     return new Promise(async (resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
           reject({ error: msg.error, errorMsg: msg.errorMsg });
         } else {
-          resolve({ success: 'success' });
+          resolve({ remoteMediaPlayerID: remoteMediaPlayerID });
         }
       };
       this.sendMessageToCallMachine(
-        { action: DAILY_METHOD_STOP_REMOTE_MEDIA_PLAYER, ...args },
+        { action: DAILY_METHOD_STOP_REMOTE_MEDIA_PLAYER, remoteMediaPlayerID },
         k
       );
     });
   }
 
-  async playRemoteMediaPlayer(args = {}) {
+  async updateRemoteMediaPlayer(
+    remoteMediaPlayerID,
+    remoteMediaPlayerSettings
+  ) {
+    // TODO: validate the input
     return new Promise(async (resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
           reject({ error: msg.error, errorMsg: msg.errorMsg });
         } else {
-          resolve({ success: 'success' });
+          resolve({
+            remoteMediaPlayerID: msg.remoteMediaPlayerID,
+            remoteMediaPlayerSettings: remoteMediaPlayerSettings,
+          });
         }
       };
       this.sendMessageToCallMachine(
-        { action: DAILY_METHOD_PLAY_REMOTE_MEDIA_PLAYER, ...args },
-        k
-      );
-    });
-  }
-
-  async pauseRemoteMediaPlayer(args = {}) {
-    return new Promise(async (resolve, reject) => {
-      let k = (msg) => {
-        if (msg.error) {
-          reject({ error: msg.error, errorMsg: msg.errorMsg });
-        } else {
-          resolve({ success: 'success' });
-        }
-      };
-      this.sendMessageToCallMachine(
-        { action: DAILY_METHOD_PAUSE_REMOTE_MEDIA_PLAYER, ...args },
+        {
+          action: DAILY_METHOD_UPDATE_REMOTE_MEDIA_PLAYER,
+          remoteMediaPlayerID,
+          remoteMediaPlayerSettings,
+        },
         k
       );
     });
@@ -2852,7 +2865,7 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_RECORDING_ERROR:
       case DAILY_EVENT_RECORDING_UPLOAD_COMPLETED:
       case DAILY_EVENT_REMOTE_MEDIA_PLAYER_STARTED:
-      case DAILY_EVENT_REMOTE_MEDIA_PLAYER_STATE_CHANGE:
+      case DAILY_EVENT_REMOTE_MEDIA_PLAYER_UPDATED:
       case DAILY_EVENT_REMOTE_MEDIA_PLAYER_STOPPED:
       case DAILY_EVENT_REMOTE_MEDIA_PLAYER_ERROR:
       case DAILY_EVENT_TRANSCRIPTION_STARTED:
@@ -3513,4 +3526,19 @@ function validateConfigPropType(prop, propType) {
       // );
       return false;
   }
+}
+
+function remoteStartValidationHelpMsg() {
+  return `remotePlayerStartSettings must be of the form: { url: "playback url", remoteMediaPlayerSettings?: {state: "play"|"pause"} }`;
+}
+
+function validateRemotePlayerStartSettings(url, startSettings) {
+  // TODO: add protocol check as well http://, https://. file://..
+
+  if (typeof url !== 'string') return false;
+  if (typeof startSettings !== 'object') return false;
+
+  return Object.values(DAILY_JS_REMOTE_PLAYER_STATE).includes(
+    startSettings.state
+  );
 }

@@ -94,8 +94,8 @@ export const DAILY_EVENT_INPUT_EVENT = 'input-event';
 
 export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_STARTED =
   'remote-media-player-started';
-export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_STATE_CHANGE =
-  'remote-media-player-state-change';
+export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_UPDATED =
+  'remote-media-player-updated';
 export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_STOPPED =
   'remote-media-player-stopped';
 export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_ERROR =
@@ -190,10 +190,8 @@ export const DAILY_METHOD_START_REMOTE_MEDIA_PLAYER =
   'daily-method-start-remote-media-player';
 export const DAILY_METHOD_STOP_REMOTE_MEDIA_PLAYER =
   'daily-method-stop-remote-media-player';
-export const DAILY_METHOD_PLAY_REMOTE_MEDIA_PLAYER =
-  'daily-method-play-remote-media-player';
-export const DAILY_METHOD_PAUSE_REMOTE_MEDIA_PLAYER =
-  'daily-method-pause-remote-media-player';
+export const DAILY_METHOD_UPDATE_REMOTE_MEDIA_PLAYER =
+  'daily-method-update-remote-media-player';
 export const DAILY_METHOD_START_TRANSCRIPTION =
   'daily-method-start-transcription';
 export const DAILY_METHOD_STOP_TRANSCRIPTION =
@@ -231,4 +229,9 @@ export const DAILY_JS_VIDEO_PROCESSOR_TYPES = {
   BGBLUR: 'background-blur',
   // BGIMAGE: 'background-image',
   // CUSTOM: 'custom',
+};
+
+export const DAILY_JS_REMOTE_PLAYER_STATE = {
+  PLAYER_STATE_PLAY: 'play',
+  PLAYER_STATE_PAUSE: 'pause',
 };
