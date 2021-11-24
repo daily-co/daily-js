@@ -153,7 +153,7 @@ import {
   DAILY_METHOD_START_REMOTE_MEDIA_PLAYER,
   DAILY_METHOD_STOP_REMOTE_MEDIA_PLAYER,
   DAILY_METHOD_UPDATE_REMOTE_MEDIA_PLAYER,
-  DAILY_JS_REMOTE_PLAYER_STATE,
+  DAILY_JS_REMOTE_MEDIA_PLAYER_STATE,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -1981,10 +1981,13 @@ export default class DailyIframe extends EventEmitter {
   async startRemoteMediaPlayer(
     url,
     remoteMediaPlayerSettings = {
-      state: DAILY_JS_REMOTE_PLAYER_STATE.PLAYER_STATE_PLAY,
+      state: DAILY_JS_REMOTE_MEDIA_PLAYER_STATE.PLAYER_STATE_PLAY,
     }
   ) {
-    if (!validateRemotePlayerStartSettings(url, remoteMediaPlayerSettings)) {
+    if (!validateRemotePlayerUrl(url)) {
+      throw new Error(remoteStartValidationHelpMsg());
+    }
+    if (!validateRemotePlayerSettings(remoteMediaPlayerSettings)) {
       throw new Error(remoteStartValidationHelpMsg());
     }
 
@@ -2033,7 +2036,9 @@ export default class DailyIframe extends EventEmitter {
     remoteMediaPlayerID,
     remoteMediaPlayerSettings
   ) {
-    // TODO: validate the input
+    if (!validateRemotePlayerSettings(remoteMediaPlayerSettings)) {
+      throw new Error(remoteStartValidationHelpMsg());
+    }
     return new Promise(async (resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
@@ -3530,13 +3535,19 @@ function remoteStartValidationHelpMsg() {
   return `remotePlayerStartSettings must be of the form: { url: "playback url", remoteMediaPlayerSettings?: {state: "play"|"pause"} }`;
 }
 
-function validateRemotePlayerStartSettings(url, startSettings) {
+function validateRemotePlayerUrl(url) {
   // TODO: add protocol check as well http://, https://. file://..
+  if (typeof url !== 'string') {
+    return false;
+  } else {
+    return true;
+  }
+}
 
-  if (typeof url !== 'string') return false;
+function validateRemotePlayerSettings(startSettings) {
   if (typeof startSettings !== 'object') return false;
 
-  return Object.values(DAILY_JS_REMOTE_PLAYER_STATE).includes(
+  return Object.values(DAILY_JS_REMOTE_MEDIA_PLAYER_STATE).includes(
     startSettings.state
   );
 }

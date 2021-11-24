@@ -230,7 +230,7 @@ export const DAILY_JS_VIDEO_PROCESSOR_TYPES = {
   // CUSTOM: 'custom',
 };
 
-export const DAILY_JS_REMOTE_PLAYER_STATE = {
+export const DAILY_JS_REMOTE_MEDIA_PLAYER_STATE = {
   PLAYER_STATE_PLAY: 'play',
   PLAYER_STATE_PAUSE: 'pause',
 };
