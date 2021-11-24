@@ -575,8 +575,8 @@ const PARTICIPANT_PROPS = {
               'video',
               'screenAudio',
               'screenVideo',
-              'rmp-audio',
-              'rmp-video',
+              'rmpAudio',
+              'rmpVideo',
             ].includes(s) && validPrimitiveValues.includes(subs[s])
           )
         ) {
