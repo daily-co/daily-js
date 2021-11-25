@@ -679,9 +679,9 @@ export interface DailyEventObjectRemoteMediaPlayerUpdate {
     | 'remote-media-player-started'
     | 'remote-media-player-updated'
   >;
-  remoteMediaPlayerID: string;
+  session_id: string;
   updatedBy: string;
-  remoteMediaPlayerSettings: DailyRemoteMediaPlayerSettings
+  playerState: DailyRemoteMediaPlayerState;
 }
 
 export interface DailyEventObjectRemoteMediaPlayerStopped {
@@ -689,7 +689,7 @@ export interface DailyEventObjectRemoteMediaPlayerStopped {
     DailyEvent,
     | 'remote-media-player-stopped'
   >;
-  remoteMediaPlayerID: string;
+  session_id: string;
   updatedBy: string;
   reason: DailyRemoteMediaPlayerStopReason;
 }
@@ -804,11 +804,12 @@ export type DailyStreamingLayoutConfig =
   | DailyStreamingActiveParticipantLayoutConfig
   | DailyStreamingPortraitLayoutConfig;
 
-export type DailyRemotePlayerPlay = 'play'
-export type DailyRemotePlayerPause = 'pause'
-export type DailyRemotePlayerStop = 'stop'
-export type DailyRemotePlayerError = 'error'
-export type DailyRemotePlayerBuffering = 'buffering'
+export type DailyRemotePlayerUpdatePlay = 'play'
+export type DailyRemotePlayerUpdatePause = 'pause'
+
+export type DailyRemotePlayerStatePlaying = 'playing'
+export type DailyRemotePlayerStatePaused = 'paused'
+export type DailyRemotePlayerStateBuffering = 'buffering'
 
 export type DailyRemoteMediaPlayerEOS = 'EOS';
 export type DailyRemoteMediaPlayerPeerStopped = 'stopped-by-peer'
@@ -844,16 +845,18 @@ export interface DailyLiveStreamingOptions extends DailyStreamingOptions {
 }
 
 export interface DailyRemoteMediaPlayerSettings {
-  state: DailyRemotePlayerPlay | DailyRemotePlayerPause;
+  state: DailyRemotePlayerUpdatePlay | DailyRemotePlayerUpdatePause;
+  // other fields like position, enocding-settings
 }
 
-export interface DailyRemoteMediaPlayerUpdate {
-  remoteMediaPlayerID: string,
-  remoteMediaPlayerSettings: DailyRemoteMediaPlayerSettings
+export interface DailyRemoteMediaPlayerState {
+  state: DailyRemotePlayerStatePlaying | DailyRemotePlayerStatePaused | DailyRemotePlayerStateBuffering;
+  // other fields like seeked position, playlist-item-position etc....
 }
 
-export interface DailyRemoteMediaPlayerStop {
-  remoteMediaPlayerID: string
+export interface DailyRemoteMediaPlayerUpdateStatus {
+  session_id: string;
+  playerState: DailyRemoteMediaPlayerState;
 }
 
 export interface DailyCall {
@@ -947,10 +950,10 @@ export interface DailyCall {
   updateLiveStreaming(options: { layout?: DailyStreamingLayoutConfig }): void;
   stopLiveStreaming(): void;
   startRemoteMediaPlayer(url:string, remoteMediaPlayerSettings?: DailyRemoteMediaPlayerSettings): 
-    Promise<DailyRemoteMediaPlayerUpdate>;
-  stopRemoteMediaPlayer(remoteMediaPlayerID: string): Promise<DailyRemoteMediaPlayerStop>;
-  updateRemoteMediaPlayer(remoteMediaPlayerID: string, remoteMediaPlayerSettings: DailyRemoteMediaPlayerSettings):
-    Promise<DailyRemoteMediaPlayerUpdate>;
+    Promise<DailyRemoteMediaPlayerUpdateStatus>;
+  stopRemoteMediaPlayer(session_id: string): Promise<void>;
+  updateRemoteMediaPlayer(session_id: string, remoteMediaPlayerSettings: DailyRemoteMediaPlayerSettings):
+    Promise<DailyRemoteMediaPlayerUpdateStatus>;
   startTranscription(): void;
   stopTranscription(): void;
   getNetworkStats(): Promise<DailyNetworkStats>;

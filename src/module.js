@@ -1998,7 +1998,7 @@ export default class DailyIframe extends EventEmitter {
         } else {
           resolve({
             session_id: msg.session_id,
-            remoteMediaPlayerSettings: remoteMediaPlayerSettings,
+            playerState: msg.playerState,
           });
         }
       };
@@ -2022,7 +2022,7 @@ export default class DailyIframe extends EventEmitter {
         if (msg.error) {
           reject({ error: msg.error, errorMsg: msg.errorMsg });
         } else {
-          resolve({ session_id: session_id });
+          resolve();
         }
       };
       this.sendMessageToCallMachine(
@@ -2043,15 +2043,15 @@ export default class DailyIframe extends EventEmitter {
         } else {
           resolve({
             session_id: msg.session_id,
-            remoteMediaPlayerSettings: remoteMediaPlayerSettings,
+            playerState: msg.playerState,
           });
         }
       };
       this.sendMessageToCallMachine(
         {
           action: DAILY_METHOD_UPDATE_REMOTE_MEDIA_PLAYER,
-          session_id,
-          remoteMediaPlayerSettings,
+          session_id: session_id,
+          remoteMediaPlayerSettings: remoteMediaPlayerSettings,
         },
         k
       );
