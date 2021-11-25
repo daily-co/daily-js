@@ -1997,7 +1997,7 @@ export default class DailyIframe extends EventEmitter {
           reject({ error: msg.error, errorMsg: msg.errorMsg });
         } else {
           resolve({
-            remoteMediaPlayerID: msg.remoteMediaPlayerID,
+            session_id: msg.session_id,
             remoteMediaPlayerSettings: remoteMediaPlayerSettings,
           });
         }
@@ -2013,8 +2013,8 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  async stopRemoteMediaPlayer(remoteMediaPlayerID) {
-    if (typeof remoteMediaPlayerID !== 'string')
+  async stopRemoteMediaPlayer(session_id) {
+    if (typeof session_id !== 'string')
       throw new Error(' remotePlayerID must be of type string');
 
     return new Promise(async (resolve, reject) => {
@@ -2022,20 +2022,17 @@ export default class DailyIframe extends EventEmitter {
         if (msg.error) {
           reject({ error: msg.error, errorMsg: msg.errorMsg });
         } else {
-          resolve({ remoteMediaPlayerID: remoteMediaPlayerID });
+          resolve({ session_id: session_id });
         }
       };
       this.sendMessageToCallMachine(
-        { action: DAILY_METHOD_STOP_REMOTE_MEDIA_PLAYER, remoteMediaPlayerID },
+        { action: DAILY_METHOD_STOP_REMOTE_MEDIA_PLAYER, session_id },
         k
       );
     });
   }
 
-  async updateRemoteMediaPlayer(
-    remoteMediaPlayerID,
-    remoteMediaPlayerSettings
-  ) {
+  async updateRemoteMediaPlayer(session_id, remoteMediaPlayerSettings) {
     if (!validateRemotePlayerSettings(remoteMediaPlayerSettings)) {
       throw new Error(remoteStartValidationHelpMsg());
     }
@@ -2045,7 +2042,7 @@ export default class DailyIframe extends EventEmitter {
           reject({ error: msg.error, errorMsg: msg.errorMsg });
         } else {
           resolve({
-            remoteMediaPlayerID: msg.remoteMediaPlayerID,
+            session_id: msg.session_id,
             remoteMediaPlayerSettings: remoteMediaPlayerSettings,
           });
         }
@@ -2053,7 +2050,7 @@ export default class DailyIframe extends EventEmitter {
       this.sendMessageToCallMachine(
         {
           action: DAILY_METHOD_UPDATE_REMOTE_MEDIA_PLAYER,
-          remoteMediaPlayerID,
+          session_id,
           remoteMediaPlayerSettings,
         },
         k
