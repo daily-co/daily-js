@@ -50,6 +50,7 @@ export function addCustomTracks(p) {
       if (track && trackInfo && trackInfo.state === 'playable') {
         p.tracks[trackEntryKey].track = track;
       }
+      trackInfo.persistentTrack = track;
     }
   } catch (e) {
     console.error(e);
