@@ -155,6 +155,8 @@ import {
   DAILY_METHOD_UPDATE_REMOTE_MEDIA_PLAYER,
   DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING,
   DAILY_JS_REMOTE_MEDIA_PLAYER_STATE,
+  DAILY_PRESELECTED_BG_IMAGE_URLS_LENGTH,
+  DAILY_SUPPORTED_BG_IMG_TYPES,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -168,7 +170,11 @@ import {
 import WebMessageChannel from './shared-with-pluot-core/script-message-channels/WebMessageChannel';
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
 import CallObjectLoader from './CallObjectLoader';
-import { callObjectBundleUrl, randomStringId } from './utils.js';
+import {
+  callObjectBundleUrl,
+  randomStringId,
+  validateHttpUrl,
+} from './utils.js';
 import * as Participant from './Participant';
 
 // meeting states
@@ -1320,7 +1326,8 @@ export default class DailyIframe extends EventEmitter {
   async updateInputSettings(inputSettings) {
     //#Question: Do I need the call-object mode check for input-settings?
     if (!validateInputSettings(inputSettings)) {
-      throw new Error(inputSettingsValidationHelpMsg());
+      console.error(inputSettingsValidationHelpMsg());
+      return;
     }
 
     // Ask call machine to update input settings, then await callback.
@@ -3559,7 +3566,8 @@ function validateVideoProcessorConfig(type, config) {
   switch (type) {
     case VIDEO_PROCESSOR_TYPES.BGBLUR:
       if (keys.length > 1 || keys[0] !== 'strength') {
-        throw new Error(configErrMsg);
+        console.error(configErrMsg);
+        return false;
       }
       if (
         typeof config.strength !== 'number' ||
@@ -3567,18 +3575,73 @@ function validateVideoProcessorConfig(type, config) {
         config.strength > 1 ||
         isNaN(config.strength)
       ) {
-        throw new Error(
+        console.error(
           `${configErrMsg}; expected: {0 < strength <= 1}, got: ${config.strength}`
         );
+        return false;
       }
+      return true;
+    case VIDEO_PROCESSOR_TYPES.BGIMAGE:
+      if (config.source !== undefined) {
+        if (!validateAndTagBgImageSource(config)) return false;
+      }
+      return true;
     default:
       return true;
   }
 }
 
+function validateAndTagBgImageSource(config) {
+  if (config.source === 'default') {
+    config.type = 'default';
+    return true;
+  }
+  if (validateHttpUrl(config.source)) {
+    config.type = 'url';
+    if (!validateBgImageFileType(config.source)) {
+      console.error(
+        `invalid image type; supported types: [${DAILY_SUPPORTED_BG_IMG_TYPES.join(
+          ', '
+        )}]`
+      );
+      return false;
+    }
+    return true;
+  }
+  if (validateImageSelection(config.source)) {
+    config.type = 'daily-preselect';
+    return true;
+  } else {
+    console.error(
+      `invalid image selection; must be an int, > 0, <= ${DAILY_PRESELECTED_BG_IMAGE_URLS_LENGTH}`
+    );
+    return false;
+  }
+}
+
+function validateBgImageFileType(url) {
+  // ignore query params
+  const parsedUrl = new URL(url);
+  const fileType = parsedUrl.pathname.split('.').at(-1).toLowerCase().trim();
+  return DAILY_SUPPORTED_BG_IMG_TYPES.includes(fileType);
+}
+
+function validateImageSelection(selectImg) {
+  let imgNum = Number(selectImg);
+  if (isNaN(imgNum)) return false;
+  if (!Number.isInteger(imgNum)) return false;
+  if (imgNum <= 0) return false;
+  if (imgNum > DAILY_PRESELECTED_BG_IMAGE_URLS_LENGTH) return false;
+  return true;
+}
+
 function validateVideoProcessorType(type) {
   if (typeof type !== 'string') return false;
-  return Object.values(VIDEO_PROCESSOR_TYPES).includes(type);
+  if (!Object.values(VIDEO_PROCESSOR_TYPES).includes(type)) {
+    console.error('inputSettings video processor type invalid');
+    return false;
+  }
+  return true;
 }
 
 function inputSettingsValidationHelpMsg() {
