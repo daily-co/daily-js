@@ -2960,8 +2960,17 @@ export default class DailyIframe extends EventEmitter {
     }
   }
 
-  maybeEventCustomTrackStopped(prevTrack, thisTrack, prevP) {
+  maybeEventCustomTrackStopped(prevTrack, thisTrack, prevP, thisP) {
     if (!prevTrack) {
+      return;
+    }
+    // TODO: Take care when track is actually interrupted due to network
+    if (
+      thisP &&
+      thisP.remoteMediaPlayerUpdateStatus &&
+      (thisP.remoteMediaPlayerUpdateStatus.state == 'playing' ||
+        thisP.remoteMediaPlayerUpdateStatus.state == 'paused')
+    ) {
       return;
     }
     if (
@@ -3031,7 +3040,8 @@ export default class DailyIframe extends EventEmitter {
       this.maybeEventCustomTrackStopped(
         prevP.tracks[trackKey].track,
         thisP ? thisP.tracks[trackKey].track : null,
-        prevP
+        prevP,
+        thisP
       );
     }
   }
