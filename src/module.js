@@ -1533,8 +1533,11 @@ export default class DailyIframe extends EventEmitter {
       this._preloadCache.outputDeviceId = outputDeviceId;
     }
 
-    // if we're in callObject mode and not joined yet, don't do anything
-    if (this._callObjectMode && this._meetingState !== DAILY_STATE_JOINED) {
+    // if we're in callObject mode and neither joined nor pre-authed yet, don't do anything
+    if (
+      this._callObjectMode &&
+      ![DAILY_STATE_LOADED, DAILY_STATE_JOINED].includes(this._meetingState)
+    ) {
       return this;
     }
 
