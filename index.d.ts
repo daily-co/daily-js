@@ -679,7 +679,6 @@ export interface DailyEventObjectRemoteMediaPlayerUpdate {
     | 'remote-media-player-started'
     | 'remote-media-player-updated'
   >;
-  session_id: string;
   updatedBy: string;
   playerState: DailyRemoteMediaPlayerState;
 }
@@ -804,8 +803,8 @@ export type DailyStreamingLayoutConfig =
   | DailyStreamingActiveParticipantLayoutConfig
   | DailyStreamingPortraitLayoutConfig;
 
-export type DailyRemotePlayerUpdatePlay = 'play'
-export type DailyRemotePlayerUpdatePause = 'pause'
+export type DailyRemotePlayerSettingPlay = 'play'
+export type DailyRemotePlayerSettingPause = 'pause'
 
 export type DailyRemotePlayerStatePlaying = 'playing'
 export type DailyRemotePlayerStatePaused = 'paused'
@@ -845,18 +844,14 @@ export interface DailyLiveStreamingOptions extends DailyStreamingOptions {
 }
 
 export interface DailyRemoteMediaPlayerSettings {
-  state: DailyRemotePlayerUpdatePlay | DailyRemotePlayerUpdatePause;
+  state: DailyRemotePlayerSettingPlay | DailyRemotePlayerSettingPause;
   // other fields like position, enocding-settings
 }
 
 export interface DailyRemoteMediaPlayerState {
-  state: DailyRemotePlayerStatePlaying | DailyRemotePlayerStatePaused | DailyRemotePlayerStateBuffering;
-  // other fields like seeked position, playlist-item-position etc....
-}
-
-export interface DailyRemoteMediaPlayerUpdateStatus {
   session_id: string;
-  playerState: DailyRemoteMediaPlayerState;
+  state: DailyRemotePlayerStatePlaying | DailyRemotePlayerStatePaused | DailyRemotePlayerStateBuffering;
+  settings: DailyRemoteMediaPlayerSettings;
 }
 
 export interface DailyCall {
@@ -950,10 +945,10 @@ export interface DailyCall {
   updateLiveStreaming(options: { layout?: DailyStreamingLayoutConfig }): void;
   stopLiveStreaming(): void;
   startRemoteMediaPlayer(url:string, remoteMediaPlayerSettings?: DailyRemoteMediaPlayerSettings): 
-    Promise<DailyRemoteMediaPlayerUpdateStatus>;
+    Promise<DailyRemoteMediaPlayerState>;
   stopRemoteMediaPlayer(session_id: string): Promise<void>;
   updateRemoteMediaPlayer(session_id: string, remoteMediaPlayerSettings: DailyRemoteMediaPlayerSettings):
-    Promise<DailyRemoteMediaPlayerUpdateStatus>;
+    Promise<DailyRemoteMediaPlayerState>;
   startTranscription(): void;
   stopTranscription(): void;
   getNetworkStats(): Promise<DailyNetworkStats>;

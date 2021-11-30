@@ -153,7 +153,7 @@ import {
   DAILY_METHOD_START_REMOTE_MEDIA_PLAYER,
   DAILY_METHOD_STOP_REMOTE_MEDIA_PLAYER,
   DAILY_METHOD_UPDATE_REMOTE_MEDIA_PLAYER,
-  DAILY_JS_REMOTE_MEDIA_PLAYER_STATE,
+  DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -1981,7 +1981,7 @@ export default class DailyIframe extends EventEmitter {
   async startRemoteMediaPlayer(
     url,
     remoteMediaPlayerSettings = {
-      state: DAILY_JS_REMOTE_MEDIA_PLAYER_STATE.PLAYER_STATE_PLAY,
+      state: DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING.PLAY,
     }
   ) {
     if (!validateRemotePlayerUrl(url)) {
@@ -1998,7 +1998,8 @@ export default class DailyIframe extends EventEmitter {
         } else {
           resolve({
             session_id: msg.session_id,
-            playerState: msg.playerState,
+            state: msg.state,
+            settings: msg.settings,
           });
         }
       };
@@ -2006,7 +2007,7 @@ export default class DailyIframe extends EventEmitter {
         {
           action: DAILY_METHOD_START_REMOTE_MEDIA_PLAYER,
           url: url,
-          remoteMediaPlayerSettings: remoteMediaPlayerSettings,
+          settings: remoteMediaPlayerSettings,
         },
         k
       );
@@ -2043,7 +2044,8 @@ export default class DailyIframe extends EventEmitter {
         } else {
           resolve({
             session_id: msg.session_id,
-            playerState: msg.playerState,
+            state: msg.state,
+            settings: msg.settings,
           });
         }
       };
@@ -2051,7 +2053,7 @@ export default class DailyIframe extends EventEmitter {
         {
           action: DAILY_METHOD_UPDATE_REMOTE_MEDIA_PLAYER,
           session_id: session_id,
-          remoteMediaPlayerSettings: remoteMediaPlayerSettings,
+          settings: remoteMediaPlayerSettings,
         },
         k
       );
@@ -2962,7 +2964,6 @@ export default class DailyIframe extends EventEmitter {
       (prevTrack && prevTrack.id !== thisTrack.id)
     ) {
       try {
-        console.log(' emit track-stopped event');
         this.emit(DAILY_EVENT_TRACK_STOPPED, {
           action: DAILY_EVENT_TRACK_STOPPED,
           track: prevTrack,
@@ -3544,7 +3545,7 @@ function validateRemotePlayerUrl(url) {
 function validateRemotePlayerSettings(startSettings) {
   if (typeof startSettings !== 'object') return false;
 
-  return Object.values(DAILY_JS_REMOTE_MEDIA_PLAYER_STATE).includes(
+  return Object.values(DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING).includes(
     startSettings.state
   );
 }
