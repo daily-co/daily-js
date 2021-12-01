@@ -1985,10 +1985,10 @@ export default class DailyIframe extends EventEmitter {
     }
   ) {
     if (!validateRemotePlayerUrl(url)) {
-      throw new Error(remoteStartValidationHelpMsg());
+      throw new Error(remoteMediaPlayerStartValidationHelpMsg());
     }
     if (!validateRemotePlayerSettings(remoteMediaPlayerSettings)) {
-      throw new Error(remoteStartValidationHelpMsg());
+      throw new Error(remoteMediaPlayerStartValidationHelpMsg());
     }
 
     return new Promise(async (resolve, reject) => {
@@ -2035,7 +2035,7 @@ export default class DailyIframe extends EventEmitter {
 
   async updateRemoteMediaPlayer(session_id, remoteMediaPlayerSettings) {
     if (!validateRemotePlayerSettings(remoteMediaPlayerSettings)) {
-      throw new Error(remoteStartValidationHelpMsg());
+      throw new Error(remoteMediaPlayerStartValidationHelpMsg());
     }
     return new Promise(async (resolve, reject) => {
       let k = (msg) => {
@@ -3529,17 +3529,16 @@ function validateConfigPropType(prop, propType) {
   }
 }
 
-function remoteStartValidationHelpMsg() {
-  return `remotePlayerStartSettings must be of the form: { url: "playback url", remoteMediaPlayerSettings?: {state: "play"|"pause"} }`;
+function remoteMediaPlayerStartValidationHelpMsg() {
+  return `startRemoteMediaPlayer arguments must be of the form: { url: "playback url", remoteMediaPlayerSettings?: {state: "play"|"pause"} }`;
 }
 
 function validateRemotePlayerUrl(url) {
   // TODO: add protocol check as well http://, https://. file://..
   if (typeof url !== 'string') {
     return false;
-  } else {
-    return true;
   }
+  return true;
 }
 
 function validateRemotePlayerSettings(startSettings) {
