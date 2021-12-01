@@ -154,6 +154,7 @@ import {
   DAILY_METHOD_STOP_REMOTE_MEDIA_PLAYER,
   DAILY_METHOD_UPDATE_REMOTE_MEDIA_PLAYER,
   DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING,
+  DAILY_JS_REMOTE_MEDIA_PLAYER_STATE,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -2964,12 +2965,15 @@ export default class DailyIframe extends EventEmitter {
     if (!prevTrack) {
       return;
     }
-    // TODO: Take care when track is actually interrupted due to network
+    // TODO: This check will return even when the rmp track was stopped due to a network interrupt.
+    //We should revisit this to take care of this scenario and trigger a `track-stopped` event.
     if (
       thisP &&
-      thisP.remoteMediaPlayerUpdateStatus &&
-      (thisP.remoteMediaPlayerUpdateStatus.state == 'playing' ||
-        thisP.remoteMediaPlayerUpdateStatus.state == 'paused')
+      thisP.remoteMediaPlayerState &&
+      (thisP.remoteMediaPlayerState.state ==
+        DAILY_JS_REMOTE_MEDIA_PLAYER_STATE.PLAYING ||
+        thisP.remoteMediaPlayerState.state ==
+          DAILY_JS_REMOTE_MEDIA_PLAYER_STATE.PAUSED)
     ) {
       return;
     }

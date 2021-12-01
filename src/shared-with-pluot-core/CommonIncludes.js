@@ -235,6 +235,13 @@ export const DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING = {
   PAUSE: 'pause',
 };
 
+export const DAILY_JS_REMOTE_MEDIA_PLAYER_STATE = {
+  PLAYING: 'playing',
+  PAUSED: 'paused',
+  BUFFERING: 'buffering',
+  STOPPED: 'stopped',
+};
+
 export const PARTICIPANT_TYPE = {
   REMOTE_MEDIA_PLAYER: 'remote-media-player',
 };
