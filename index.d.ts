@@ -803,12 +803,12 @@ export type DailyStreamingLayoutConfig =
   | DailyStreamingActiveParticipantLayoutConfig
   | DailyStreamingPortraitLayoutConfig;
 
-export type DailyRemotePlayerSettingPlay = 'play'
-export type DailyRemotePlayerSettingPause = 'pause'
+export type DailyRemoteMediaPlayerSettingPlay = 'play'
+export type DailyRemoteMediaPlayerSettingPause = 'pause'
 
-export type DailyRemotePlayerStatePlaying = 'playing'
-export type DailyRemotePlayerStatePaused = 'paused'
-export type DailyRemotePlayerStateBuffering = 'buffering'
+export type DailyRemoteMediaPlayerStatePlaying = 'playing'
+export type DailyRemoteMediaPlayerStatePaused = 'paused'
+export type DailyRemoteMediaPlayerStateBuffering = 'buffering'
 
 export type DailyRemoteMediaPlayerEOS = 'EOS';
 export type DailyRemoteMediaPlayerPeerStopped = 'stopped-by-peer'
@@ -844,13 +844,13 @@ export interface DailyLiveStreamingOptions extends DailyStreamingOptions {
 }
 
 export interface DailyRemoteMediaPlayerSettings {
-  state: DailyRemotePlayerSettingPlay | DailyRemotePlayerSettingPause;
+  state: DailyRemoteMediaPlayerSettingPlay | DailyRemoteMediaPlayerSettingPause;
   // other fields like position, enocding-settings
 }
 
 export interface DailyRemoteMediaPlayerState {
   session_id: string;
-  state: DailyRemotePlayerStatePlaying | DailyRemotePlayerStatePaused | DailyRemotePlayerStateBuffering;
+  state: DailyRemoteMediaPlayerStatePlaying | DailyRemoteMediaPlayerStatePaused | DailyRemoteMediaPlayerStateBuffering;
   settings: DailyRemoteMediaPlayerSettings;
 }
 
