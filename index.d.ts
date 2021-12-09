@@ -384,6 +384,7 @@ export interface DailyRoomInfo {
     exp?: number;
     max_participants?: number;
     enable_screenshare?: boolean;
+    enable_advanced_chat?: boolean;
     enable_chat?: boolean;
     enable_knocking?: boolean;
     enable_network_ui?: boolean;
