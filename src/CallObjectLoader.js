@@ -175,7 +175,15 @@ class LoadAttempt {
 
   async start() {
     // console.log("[LoadAttempt] starting...");
-    const url = callObjectBundleUrl(this._meetingOrBaseUrl);
+    let url;
+    try {
+      url = callObjectBundleUrl(this._meetingOrBaseUrl);
+    } catch (e) {
+      this._failureCallback(
+        `Failed to get call object bundle URL ${url}: ${e}`
+      );
+      return;
+    }
     const loadedFromIOSCache = await this._tryLoadFromIOSCache(url);
     !loadedFromIOSCache && this._loadFromNetwork(url);
   }
