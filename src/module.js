@@ -3618,6 +3618,10 @@ function validateRemotePlayerUrl(url) {
 function validateRemotePlayerSettings(startSettings) {
   if (typeof startSettings !== 'object') return false;
 
+  // validate widht range [64,1920] height[64,720]
+  // scaleResolutionDownBy range [2,8]
+  // order of scaling should be proper, increasing order
+  // empty object
   return Object.values(DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING).includes(
     startSettings.state
   );
