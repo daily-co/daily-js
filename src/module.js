@@ -277,6 +277,15 @@ const NATIVE_AUDIO_MODE_VIDEO_CALL = 'video';
 const NATIVE_AUDIO_MODE_VOICE_CALL = 'voice';
 const NATIVE_AUDIO_MODE_IDLE = 'idle';
 
+const MAX_RMP_WIDTH = 1920;
+const MIN_RMP_WIDTH = 128;
+const MAX_RMP_HEIGHT = 1080;
+const MIN_RMP_HEIGHT = 128;
+const MAX_RMP_FPS = 30;
+const MIN_RMP_FPS = 1;
+const MAX_SIMULCAST_LAYERS = 3;
+const MAX_SCALE_RESOLUTION_BY = 8;
+
 //
 //
 //
@@ -2003,7 +2012,10 @@ export default class DailyIframe extends EventEmitter {
     if (!validateRemotePlayerUrl(url)) {
       throw new Error(remoteMediaPlayerStartValidationHelpMsg());
     }
-    if (!validateRemotePlayerSettings(settings)) {
+    if (!validateRemotePlayerStateSettings(settings)) {
+      throw new Error(remoteMediaPlayerStartValidationHelpMsg());
+    }
+    if (!validateRemotePlayerEncodingSettings(settings)) {
       throw new Error(remoteMediaPlayerStartValidationHelpMsg());
     }
 
@@ -2052,9 +2064,10 @@ export default class DailyIframe extends EventEmitter {
   async updateRemoteMediaPlayer({ session_id, settings }) {
     // TODO: Add check of the current_state === desired state
     // And resolve() from here itself.
-    if (!validateRemotePlayerSettings(settings)) {
-      throw new Error(remoteMediaPlayerStartValidationHelpMsg());
+    if (!validateRemotePlayerStateSettings(settings)) {
+      throw new Error(remoteMediaPlayerUpdateValidationHelpMsg());
     }
+
     return new Promise(async (resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
@@ -3604,7 +3617,11 @@ function validateConfigPropType(prop, propType) {
 }
 
 function remoteMediaPlayerStartValidationHelpMsg() {
-  return `startRemoteMediaPlayer arguments must be of the form: { url: "playback url", remoteMediaPlayerSettings?: {state: "play"|"pause"} }`;
+  return `startRemoteMediaPlayer arguments must be of the form: { url: "playback url", remoteMediaPlayerSettings?: {state: "play"|"pause", trackConstraints?: {}, simulcastEncodings?: [{}] } }`;
+}
+
+function remoteMediaPlayerUpdateValidationHelpMsg() {
+  return `updateRemoteMediaPlayer arguments must be of the form: { url: "playback url", remoteMediaPlayerSettings?: {state: "play"|"pause"} }`;
 }
 
 function validateRemotePlayerUrl(url) {
@@ -3615,14 +3632,64 @@ function validateRemotePlayerUrl(url) {
   return true;
 }
 
-function validateRemotePlayerSettings(startSettings) {
-  if (typeof startSettings !== 'object') return false;
+function validateRemotePlayerStateSettings(playerSettings) {
+  if (typeof playerSettings !== 'object') return false;
 
-  // validate widht range [64,1920] height[64,720]
-  // scaleResolutionDownBy range [2,8]
-  // order of scaling should be proper, increasing order
-  // empty object
   return Object.values(DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING).includes(
-    startSettings.state
+    playerSettings.state
   );
+}
+
+function validateRemotePlayerEncodingSettings(playerSettings) {
+  if (playerSettings.trackConstraints) {
+    // trackConstraints is object
+    if (!(playerSettings.trackConstraints instanceof Object)) {
+      return false;
+    }
+    // trackConstraints limits
+    if (
+      playerSettings.trackConstraints.width > MAX_RMP_WIDTH ||
+      playerSettings.trackConstraints.height > MAX_RMP_HEIGHT ||
+      playerSettings.trackConstraints.frameRate > MAX_RMP_FPS ||
+      playerSettings.trackConstraints.height < MIN_RMP_HEIGHT ||
+      playerSettings.trackConstraints.width < MIN_RMP_WIDTH ||
+      playerSettings.trackConstraints.frameRate < MIN_RMP_FPS
+    ) {
+      return false;
+    }
+  }
+  // validate simulcastEncodings
+  if (playerSettings.simulcastEncodings) {
+    if (!(playerSettings.simulcastEncodings instanceof Array)) {
+      return false;
+    }
+    // max 3 layers
+    if (
+      playerSettings.simulcastEncodings.length > MAX_SIMULCAST_LAYERS ||
+      playerSettings.simulcastEncodings.length <= 0
+    ) {
+      return false;
+    }
+    playerSettings.simulcastEncodings.every((layer) => {
+      // maxBitrate is mandatory
+      if (!layer.maxBitrate) {
+        return false;
+      }
+      // scale resolution range
+      if (
+        layer.scaleResolutionDownBy < 0 ||
+        layer.scaleResolutionDownBy > MAX_SCALE_RESOLUTION_BY
+      ) {
+        return false;
+      }
+      // maxFrameRate
+      if (
+        layer.maxFramerate < MIN_RMP_FPS ||
+        layer.maxFramerate > MAX_RMP_FPS
+      ) {
+        return false;
+      }
+    });
+  }
+  return true;
 }
