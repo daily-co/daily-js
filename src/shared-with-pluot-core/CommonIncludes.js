@@ -92,6 +92,14 @@ export const DAILY_EVENT_RECORDING_DATA = 'recording-data';
 export const DAILY_EVENT_APP_MSG = 'app-message';
 export const DAILY_EVENT_INPUT_EVENT = 'input-event';
 
+export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_STARTED =
+  'remote-media-player-started';
+export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_UPDATED =
+  'remote-media-player-updated';
+export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_STOPPED =
+  'remote-media-player-stopped';
+export const DAILY_REMOTE_MEDIA_PLAYER_ERROR_TYPE = 'remote-media-player';
+
 export const DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED =
   'local-screen-share-started';
 export const DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED =
@@ -120,8 +128,6 @@ export const DAILY_EVENT_NONFATAL_ERROR = 'nonfatal-error';
 export const DAILY_INPUT_SETTINGS_ERROR_TYPE = 'input-settings-error';
 export const DAILY_VIDEO_PROCESSOR_ERROR_TYPE = 'video-processor-error';
 export const DAILY_EVENT_ERROR = 'error';
-
-export const DAILY_EVENT_MEDIA_INGEST_ERROR = 'media-ingest-error';
 
 //
 // internal
@@ -179,8 +185,16 @@ export const DAILY_METHOD_UPDATE_LIVE_STREAMING =
   'daily-method-update-live-streaming';
 export const DAILY_METHOD_STOP_LIVE_STREAMING =
   'daily-method-stop-live-streaming';
-export const DAILY_METHOD_START_TRANSCRIPTION = 'daily-method-start-transcription';
-export const DAILY_METHOD_STOP_TRANSCRIPTION = 'daily-method-stop-transcription';
+export const DAILY_METHOD_START_REMOTE_MEDIA_PLAYER =
+  'daily-method-start-remote-media-player';
+export const DAILY_METHOD_STOP_REMOTE_MEDIA_PLAYER =
+  'daily-method-stop-remote-media-player';
+export const DAILY_METHOD_UPDATE_REMOTE_MEDIA_PLAYER =
+  'daily-method-update-remote-media-player';
+export const DAILY_METHOD_START_TRANSCRIPTION =
+  'daily-method-start-transcription';
+export const DAILY_METHOD_STOP_TRANSCRIPTION =
+  'daily-method-stop-transcription';
 export const DAILY_METHOD_PREAUTH = 'daily-method-preauth';
 export const DAILY_METHOD_REQUEST_ACCESS = 'daily-method-request-access';
 export const DAILY_METHOD_UPDATE_WAITING_PARTICIPANT =
@@ -214,4 +228,9 @@ export const DAILY_JS_VIDEO_PROCESSOR_TYPES = {
   BGBLUR: 'background-blur',
   // BGIMAGE: 'background-image',
   // CUSTOM: 'custom',
+};
+
+export const DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING = {
+  PLAY: 'play',
+  PAUSE: 'pause',
 };

@@ -56,6 +56,9 @@ import {
   DAILY_EVENT_TRACK_STOPPED,
   DAILY_EVENT_RECORDING_STARTED,
   DAILY_EVENT_RECORDING_STOPPED,
+  DAILY_EVENT_REMOTE_MEDIA_PLAYER_STARTED,
+  DAILY_EVENT_REMOTE_MEDIA_PLAYER_UPDATED,
+  DAILY_EVENT_REMOTE_MEDIA_PLAYER_STOPPED,
   DAILY_EVENT_TRANSCRIPTION_STARTED,
   DAILY_EVENT_TRANSCRIPTION_STOPPED,
   DAILY_EVENT_TRANSCRIPTION_ERROR,
@@ -85,7 +88,6 @@ import {
   DAILY_EVENT_WAITING_PARTICIPANT_REMOVED,
   DAILY_EVENT_WAITING_PARTICIPANT_UPDATED,
   DAILY_EVENT_RECEIVE_SETTINGS_UPDATED,
-  DAILY_EVENT_MEDIA_INGEST_ERROR,
   DAILY_EVENT_INPUT_SETTINGS_UPDATED,
   DAILY_EVENT_NONFATAL_ERROR,
 
@@ -148,6 +150,10 @@ import {
   DAILY_METHOD_UPDATE_RECEIVE_SETTINGS,
   DAILY_JS_VIDEO_PROCESSOR_TYPES as VIDEO_PROCESSOR_TYPES,
   DAILY_METHOD_UPDATE_INPUT_SETTINGS,
+  DAILY_METHOD_START_REMOTE_MEDIA_PLAYER,
+  DAILY_METHOD_STOP_REMOTE_MEDIA_PLAYER,
+  DAILY_METHOD_UPDATE_REMOTE_MEDIA_PLAYER,
+  DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -231,6 +237,9 @@ export {
   DAILY_EVENT_RECORDING_STATS,
   DAILY_EVENT_RECORDING_ERROR,
   DAILY_EVENT_RECORDING_UPLOAD_COMPLETED,
+  DAILY_EVENT_REMOTE_MEDIA_PLAYER_STARTED,
+  DAILY_EVENT_REMOTE_MEDIA_PLAYER_UPDATED,
+  DAILY_EVENT_REMOTE_MEDIA_PLAYER_STOPPED,
   DAILY_EVENT_TRANSCRIPTION_STARTED,
   DAILY_EVENT_TRANSCRIPTION_STOPPED,
   DAILY_EVENT_TRANSCRIPTION_ERROR,
@@ -1969,6 +1978,88 @@ export default class DailyIframe extends EventEmitter {
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_LIVE_STREAMING });
   }
 
+  async startRemoteMediaPlayer(
+    url,
+    remoteMediaPlayerSettings = {
+      state: DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING.PLAY,
+    }
+  ) {
+    if (!validateRemotePlayerUrl(url)) {
+      throw new Error(remoteMediaPlayerStartValidationHelpMsg());
+    }
+    if (!validateRemotePlayerSettings(remoteMediaPlayerSettings)) {
+      throw new Error(remoteMediaPlayerStartValidationHelpMsg());
+    }
+
+    return new Promise(async (resolve, reject) => {
+      let k = (msg) => {
+        if (msg.error) {
+          reject({ error: msg.error, errorMsg: msg.errorMsg });
+        } else {
+          resolve({
+            session_id: msg.session_id,
+            state: msg.state,
+            settings: msg.settings,
+          });
+        }
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_START_REMOTE_MEDIA_PLAYER,
+          url: url,
+          settings: remoteMediaPlayerSettings,
+        },
+        k
+      );
+    });
+  }
+
+  async stopRemoteMediaPlayer(session_id) {
+    if (typeof session_id !== 'string')
+      throw new Error(' remotePlayerID must be of type string');
+
+    return new Promise(async (resolve, reject) => {
+      let k = (msg) => {
+        if (msg.error) {
+          reject({ error: msg.error, errorMsg: msg.errorMsg });
+        } else {
+          resolve();
+        }
+      };
+      this.sendMessageToCallMachine(
+        { action: DAILY_METHOD_STOP_REMOTE_MEDIA_PLAYER, session_id },
+        k
+      );
+    });
+  }
+
+  async updateRemoteMediaPlayer(session_id, remoteMediaPlayerSettings) {
+    if (!validateRemotePlayerSettings(remoteMediaPlayerSettings)) {
+      throw new Error(remoteMediaPlayerStartValidationHelpMsg());
+    }
+    return new Promise(async (resolve, reject) => {
+      let k = (msg) => {
+        if (msg.error) {
+          reject({ error: msg.error, errorMsg: msg.errorMsg });
+        } else {
+          resolve({
+            session_id: msg.session_id,
+            state: msg.state,
+            settings: msg.settings,
+          });
+        }
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_UPDATE_REMOTE_MEDIA_PLAYER,
+          session_id: session_id,
+          settings: remoteMediaPlayerSettings,
+        },
+        k
+      );
+    });
+  }
+
   startTranscription() {
     this.sendMessageToCallMachine({ action: DAILY_METHOD_START_TRANSCRIPTION });
   }
@@ -2776,6 +2867,9 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_RECORDING_STATS:
       case DAILY_EVENT_RECORDING_ERROR:
       case DAILY_EVENT_RECORDING_UPLOAD_COMPLETED:
+      case DAILY_EVENT_REMOTE_MEDIA_PLAYER_STARTED:
+      case DAILY_EVENT_REMOTE_MEDIA_PLAYER_UPDATED:
+      case DAILY_EVENT_REMOTE_MEDIA_PLAYER_STOPPED:
       case DAILY_EVENT_TRANSCRIPTION_STARTED:
       case DAILY_EVENT_TRANSCRIPTION_STOPPED:
       case DAILY_EVENT_TRANSCRIPTION_ERROR:
@@ -2791,7 +2885,6 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_LIVE_STREAMING_ERROR:
       case DAILY_EVENT_NONFATAL_ERROR:
       case DAILY_EVENT_LANG_UPDATED:
-      case DAILY_EVENT_MEDIA_INGEST_ERROR:
         try {
           this.emit(msg.action, msg);
         } catch (e) {
@@ -2861,6 +2954,45 @@ export default class DailyIframe extends EventEmitter {
     }
   }
 
+  maybeEventCustomTrackStopped(prevTrack, thisTrack, prevP) {
+    if (!prevTrack) {
+      return;
+    }
+    if (
+      (prevTrack && prevTrack.readyState === 'ended') ||
+      (prevTrack && !thisTrack) ||
+      (prevTrack && prevTrack.id !== thisTrack.id)
+    ) {
+      try {
+        this.emit(DAILY_EVENT_TRACK_STOPPED, {
+          action: DAILY_EVENT_TRACK_STOPPED,
+          track: prevTrack,
+          participant: prevP,
+        });
+      } catch (e) {
+        console.log('maybeEventCustomTrackStopped: could not emit', e);
+      }
+    }
+  }
+
+  maybeEventCustomTrackStarted(prevTrack, thisTrack, thisP) {
+    if (
+      (thisTrack && !prevTrack) ||
+      (thisTrack && prevTrack.readyState === 'ended') ||
+      (thisTrack && thisTrack.id !== prevTrack.id)
+    ) {
+      try {
+        this.emit(DAILY_EVENT_TRACK_STARTED, {
+          action: DAILY_EVENT_TRACK_STARTED,
+          track: thisTrack,
+          participant: thisP,
+        });
+      } catch (e) {
+        console.log('maybeEventCustomTrackStarted: could not emit', e);
+      }
+    }
+  }
+
   maybeEventTrackStarted(prevP, thisP, key) {
     if (
       (thisP[key] && !(prevP && prevP[key])) ||
@@ -2890,10 +3022,10 @@ export default class DailyIframe extends EventEmitter {
       if (Participant.isPredefinedTrack(trackKey)) {
         continue;
       }
-      this.maybeEventTrackStopped(
-        prevP.tracks[trackKey],
-        thisP ? thisP.tracks[trackKey] : null,
-        'track'
+      this.maybeEventCustomTrackStopped(
+        prevP.tracks[trackKey].track,
+        thisP ? thisP.tracks[trackKey].track : null,
+        prevP
       );
     }
   }
@@ -2909,10 +3041,10 @@ export default class DailyIframe extends EventEmitter {
       if (Participant.isPredefinedTrack(trackKey)) {
         continue;
       }
-      this.maybeEventTrackStarted(
-        prevP ? prevP.tracks[trackKey] : null,
-        thisP.tracks[trackKey],
-        'track'
+      this.maybeEventCustomTrackStarted(
+        prevP ? prevP.tracks[trackKey].track : null,
+        thisP.tracks[trackKey].track,
+        thisP
       );
     }
   }
@@ -3395,4 +3527,24 @@ function validateConfigPropType(prop, propType) {
       // );
       return false;
   }
+}
+
+function remoteMediaPlayerStartValidationHelpMsg() {
+  return `startRemoteMediaPlayer arguments must be of the form: { url: "playback url", remoteMediaPlayerSettings?: {state: "play"|"pause"} }`;
+}
+
+function validateRemotePlayerUrl(url) {
+  // TODO: add protocol check as well http://, https://. file://..
+  if (typeof url !== 'string') {
+    return false;
+  }
+  return true;
+}
+
+function validateRemotePlayerSettings(startSettings) {
+  if (typeof startSettings !== 'object') return false;
+
+  return Object.values(DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING).includes(
+    startSettings.state
+  );
 }
