@@ -154,6 +154,7 @@ import {
   DAILY_METHOD_STOP_REMOTE_MEDIA_PLAYER,
   DAILY_METHOD_UPDATE_REMOTE_MEDIA_PLAYER,
   DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING,
+  DAILY_JS_REMOTE_MEDIA_PLAYER_STATE,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -818,6 +819,7 @@ export default class DailyIframe extends EventEmitter {
     this._accessState = { access: DAILY_ACCESS_UNKNOWN };
     this._nativeInCallAudioMode = NATIVE_AUDIO_MODE_VIDEO_CALL;
     this._participants = {};
+    this._rmpPlayerState = {};
     this._waitingParticipants = {};
     this._inputEventsOn = {}; // need to cache these until loaded
     this._network = { threshold: 'good', quality: 100 };
@@ -2040,6 +2042,8 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async updateRemoteMediaPlayer(session_id, remoteMediaPlayerSettings) {
+    // TODO: Add check of the current_state === desired state
+    // And resolve() from here itself.
     if (!validateRemotePlayerSettings(remoteMediaPlayerSettings)) {
       throw new Error(remoteMediaPlayerStartValidationHelpMsg());
     }
@@ -2867,15 +2871,38 @@ export default class DailyIframe extends EventEmitter {
           }
         }
         break;
+      case DAILY_EVENT_REMOTE_MEDIA_PLAYER_STARTED:
+        {
+          let participantId = msg.playerState.session_id;
+          this._rmpPlayerState[participantId] = msg.playerState;
+          this.emitDailyJSEvent(msg);
+        }
+        break;
+
+      case DAILY_EVENT_REMOTE_MEDIA_PLAYER_STOPPED:
+        delete this._rmpPlayerState[msg.session_id];
+        this.emitDailyJSEvent(msg);
+        break;
+
+      case DAILY_EVENT_REMOTE_MEDIA_PLAYER_UPDATED:
+        {
+          let participantId = msg.playerState.session_id;
+          let rmpPlayerState = this._rmpPlayerState[participantId];
+          if (
+            !rmpPlayerState ||
+            !this.compareEqualForRMPUpdateEvent(rmpPlayerState, msg.playerState)
+          ) {
+            this._rmpPlayerState[participantId] = msg.playerState;
+            this.emitDailyJSEvent(msg);
+          }
+        }
+        break;
 
       case DAILY_EVENT_RECORDING_STARTED:
       case DAILY_EVENT_RECORDING_STOPPED:
       case DAILY_EVENT_RECORDING_STATS:
       case DAILY_EVENT_RECORDING_ERROR:
       case DAILY_EVENT_RECORDING_UPLOAD_COMPLETED:
-      case DAILY_EVENT_REMOTE_MEDIA_PLAYER_STARTED:
-      case DAILY_EVENT_REMOTE_MEDIA_PLAYER_UPDATED:
-      case DAILY_EVENT_REMOTE_MEDIA_PLAYER_STOPPED:
       case DAILY_EVENT_TRANSCRIPTION_STARTED:
       case DAILY_EVENT_TRANSCRIPTION_STOPPED:
       case DAILY_EVENT_TRANSCRIPTION_ERROR:
@@ -2960,8 +2987,20 @@ export default class DailyIframe extends EventEmitter {
     }
   }
 
-  maybeEventCustomTrackStopped(prevTrack, thisTrack, prevP) {
+  maybeEventCustomTrackStopped(prevTrack, thisTrack, prevP, thisP) {
     if (!prevTrack) {
+      return;
+    }
+    // TODO: This check will return even when the rmp track was stopped due to a network interrupt.
+    //We should revisit this to take care of this scenario and trigger a `track-stopped` event.
+    if (
+      thisP &&
+      thisP.remoteMediaPlayerState &&
+      (thisP.remoteMediaPlayerState.state ==
+        DAILY_JS_REMOTE_MEDIA_PLAYER_STATE.PLAYING ||
+        thisP.remoteMediaPlayerState.state ==
+          DAILY_JS_REMOTE_MEDIA_PLAYER_STATE.PAUSED)
+    ) {
       return;
     }
     if (
@@ -3031,7 +3070,8 @@ export default class DailyIframe extends EventEmitter {
       this.maybeEventCustomTrackStopped(
         prevP.tracks[trackKey].track,
         thisP ? thisP.tracks[trackKey].track : null,
-        prevP
+        prevP,
+        thisP
       );
     }
   }
@@ -3052,6 +3092,23 @@ export default class DailyIframe extends EventEmitter {
         thisP.tracks[trackKey].track,
         thisP
       );
+    }
+  }
+
+  compareEqualForRMPUpdateEvent(a, b) {
+    if (a.state === b.state) {
+      return true;
+    }
+    return false;
+  }
+
+  emitDailyJSEvent(msg) {
+    {
+      try {
+        this.emit(msg.action, msg);
+      } catch (e) {
+        console.log('could not emit', msg, e);
+      }
     }
   }
 
