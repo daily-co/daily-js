@@ -43,12 +43,15 @@ export function addCustomTracks(p) {
         console.error('unknown type for custom track');
         continue;
       }
-      const track = p.local
-        ? getLocalCustomTrack(state, trackEntryKey, kind)
-        : getRemoteCustomTrack(state, p.session_id, trackEntryKey, kind);
       const trackInfo = p.tracks[trackEntryKey];
-      if (track && trackInfo && trackInfo.state === 'playable') {
-        p.tracks[trackEntryKey].track = track;
+      if (trackInfo) {
+        const track = p.local
+          ? getLocalCustomTrack(state, trackEntryKey, kind)
+          : getRemoteCustomTrack(state, p.session_id, trackEntryKey, kind);
+        if (trackInfo.state === 'playable') {
+          p.tracks[trackEntryKey].track = track;
+        }
+        trackInfo.persistentTrack = track;
       }
     }
   } catch (e) {

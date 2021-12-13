@@ -569,8 +569,14 @@ const PARTICIPANT_PROPS = {
       for (const s in subs) {
         if (
           !(
-            ['audio', 'video', 'screenAudio', 'screenVideo'].includes(s) &&
-            validPrimitiveValues.includes(subs[s])
+            [
+              'audio',
+              'video',
+              'screenAudio',
+              'screenVideo',
+              'rmpAudio',
+              'rmpVideo',
+            ].includes(s) && validPrimitiveValues.includes(subs[s])
           )
         ) {
           return false;
