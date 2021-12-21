@@ -1323,7 +1323,9 @@ export default class DailyIframe extends EventEmitter {
   // In the future:
   // { video: {...}, audio: {...}, screenVideo: {...}, screenAudio: {...} }
   getInputSettings() {
-    return this._inputSettings;
+    return new Promise((resolve) => {
+      resolve(this._inputSettings);
+    });
   }
 
   async updateInputSettings(inputSettings) {
