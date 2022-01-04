@@ -598,6 +598,12 @@ export interface DailyEventObjectRecordingStarted {
   layout?: DailyStreamingLayoutConfig;
 }
 
+export interface DailyEventObjectRecordingData {
+  action: Extract<DailyEvent, 'recording-data'>;
+  data: Uint8Array;
+  finished: boolean;
+}
+
 export interface DailyEventObjectMouseEvent {
   action: Extract<
     DailyEvent,
@@ -743,6 +749,8 @@ export type DailyEventObject<
   ? DailyEventObjectTrack
   : T extends DailyEventObjectRecordingStarted['action']
   ? DailyEventObjectRecordingStarted
+  : T extends DailyEventObjectRecordingData['action']
+  ? DailyEventObjectRecordingData
   : T extends DailyEventObjectRemoteMediaPlayerUpdate['action']
   ? DailyEventObjectRemoteMediaPlayerUpdate
   : T extends DailyEventObjectRemoteMediaPlayerStopped['action']
