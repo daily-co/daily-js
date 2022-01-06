@@ -846,6 +846,16 @@ export interface DailyRemoteMediaPlayerSettings {
   // other fields like position, enocding-settings
 }
 
+export interface DailyRemoteMediaPlayerStartOptions {
+  url: string;
+  settings?: DailyRemoteMediaPlayerSettings;
+}
+
+export interface DailyRemoteMediaPlayerUpdateOptions {
+  session_id: string;
+  settings: DailyRemoteMediaPlayerSettings;
+}
+
 export interface DailyRemoteMediaPlayerState {
   session_id: string;
   state:
@@ -946,13 +956,11 @@ export interface DailyCall {
   updateLiveStreaming(options: { layout?: DailyStreamingLayoutConfig }): void;
   stopLiveStreaming(): void;
   startRemoteMediaPlayer(
-    url: string,
-    remoteMediaPlayerSettings?: DailyRemoteMediaPlayerSettings
+    options: DailyRemoteMediaPlayerStartOptions
   ): Promise<DailyRemoteMediaPlayerState>;
   stopRemoteMediaPlayer(session_id: string): Promise<void>;
   updateRemoteMediaPlayer(
-    session_id: string,
-    remoteMediaPlayerSettings: DailyRemoteMediaPlayerSettings
+    options: DailyRemoteMediaPlayerUpdateOptions
   ): Promise<DailyRemoteMediaPlayerState>;
   startTranscription(): void;
   stopTranscription(): void;
