@@ -286,6 +286,13 @@ const MIN_RMP_FPS = 1;
 const MAX_SIMULCAST_LAYERS = 3;
 const MAX_SCALE_RESOLUTION_BY = 8;
 
+const validTrackConstrainsKeys = ['width', 'height', 'frameRate'];
+const validSimulcastEncodingKeys = [
+  'maxBitrate',
+  'maxFramerate',
+  'scaleResolutionDownBy',
+];
+
 //
 //
 //
@@ -2007,16 +2014,15 @@ export default class DailyIframe extends EventEmitter {
     url,
     settings = {
       state: DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING.PLAY,
-    },
-  }) {
-    if (!validateRemotePlayerUrl(url)) {
-      throw new Error(remoteMediaPlayerStartValidationHelpMsg());
     }
-    if (!validateRemotePlayerStateSettings(settings)) {
-      throw new Error(remoteMediaPlayerStartValidationHelpMsg());
-    }
-    if (!validateRemotePlayerEncodingSettings(settings)) {
-      throw new Error(remoteMediaPlayerStartValidationHelpMsg());
+  ) {
+    try {
+      validateRemotePlayerUrl(url);
+      validateRemotePlayerStateSettings(settings);
+      validateRemotePlayerEncodingSettings(settings);
+    } catch (e) {
+      console.error(remoteMediaPlayerStartValidationHelpMsg());
+      throw e;
     }
 
     return new Promise(async (resolve, reject) => {
@@ -2064,8 +2070,11 @@ export default class DailyIframe extends EventEmitter {
   async updateRemoteMediaPlayer({ session_id, settings }) {
     // TODO: Add check of the current_state === desired state
     // And resolve() from here itself.
-    if (!validateRemotePlayerStateSettings(settings)) {
-      throw new Error(remoteMediaPlayerUpdateValidationHelpMsg());
+    try {
+      validateRemotePlayerStateSettings(settings);
+    } catch (e) {
+      console.error(remoteMediaPlayerUpdateValidationHelpMsg());
+      throw e;
     }
 
     return new Promise(async (resolve, reject) => {
@@ -3617,79 +3626,128 @@ function validateConfigPropType(prop, propType) {
 }
 
 function remoteMediaPlayerStartValidationHelpMsg() {
-  return `startRemoteMediaPlayer arguments must be of the form: { url: "playback url", remoteMediaPlayerSettings?: {state: "play"|"pause", trackConstraints?: {}, simulcastEncodings?: [{}] } }`;
+  return `startRemoteMediaPlayer arguments must be of the form: 
+  url: "playback url", 
+  { remoteMediaPlayerSettings?: 
+  {state: "play"|"pause", trackConstraints?: {}, simulcastEncodings?: [{}] } }`;
 }
 
 function remoteMediaPlayerUpdateValidationHelpMsg() {
-  return `updateRemoteMediaPlayer arguments must be of the form: { url: "playback url", remoteMediaPlayerSettings?: {state: "play"|"pause"} }`;
+  return `updateRemoteMediaPlayer arguments must be of the form: 
+  session_id: "participant session", 
+  { remoteMediaPlayerSettings?: {state: "play"|"pause"} }`;
 }
 
 function validateRemotePlayerUrl(url) {
   // TODO: add protocol check as well http://, https://. file://..
   if (typeof url !== 'string') {
-    return false;
+    throw new Error(`url parameter must be "string" type`);
   }
-  return true;
 }
 
 function validateRemotePlayerStateSettings(playerSettings) {
-  if (typeof playerSettings !== 'object') return false;
+  if (typeof playerSettings !== 'object') {
+    throw new Error(`RemoteMediaPlayerSettings: must be "object" type`);
+  }
 
-  return Object.values(DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING).includes(
-    playerSettings.state
-  );
+  if (
+    !Object.values(DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING).includes(
+      playerSettings.state
+    )
+  ) {
+    throw new Error(
+      `Invalid value for RemoteMediaPlayerSettings.state, valid values are: ` +
+        JSON.stringify(DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING)
+    );
+  }
 }
 
 function validateRemotePlayerEncodingSettings(playerSettings) {
   if (playerSettings.trackConstraints) {
     // trackConstraints is object
     if (!(playerSettings.trackConstraints instanceof Object)) {
-      return false;
+      throw new Error(`trackConstraints: must be "object" type `);
+    }
+
+    // Check Type
+    for (let prop in playerSettings.trackConstraints) {
+      if (typeof playerSettings.trackConstraints[prop] !== 'number') {
+        throw new Error(`trackConstraints[${prop}] must be "number"`);
+      }
+      if (!validTrackConstrainsKeys.includes(prop)) {
+        throw new Error(
+          `Invalid key trackConstraints[${prop}], valid keys are:` +
+            JSON.stringify(validTrackConstrainsKeys)
+        );
+      }
     }
     // trackConstraints limits
     if (
-      playerSettings.trackConstraints.width > MAX_RMP_WIDTH ||
-      playerSettings.trackConstraints.height > MAX_RMP_HEIGHT ||
-      playerSettings.trackConstraints.frameRate > MAX_RMP_FPS ||
-      playerSettings.trackConstraints.height < MIN_RMP_HEIGHT ||
-      playerSettings.trackConstraints.width < MIN_RMP_WIDTH ||
-      playerSettings.trackConstraints.frameRate < MIN_RMP_FPS
+      (playerSettings.trackConstraints.width &&
+        playerSettings.trackConstraints.width > MAX_RMP_WIDTH) ||
+      (playerSettings.trackConstraints.height &&
+        playerSettings.trackConstraints.height > MAX_RMP_HEIGHT) ||
+      (playerSettings.trackConstraints.frameRate &&
+        playerSettings.trackConstraints.frameRate > MAX_RMP_FPS) ||
+      (playerSettings.trackConstraints.height &&
+        playerSettings.trackConstraints.height < MIN_RMP_HEIGHT) ||
+      (playerSettings.trackConstraints.width &&
+        playerSettings.trackConstraints.width < MIN_RMP_WIDTH) ||
+      (playerSettings.trackConstraints.frameRate &&
+        playerSettings.trackConstraints.frameRate < MIN_RMP_FPS)
     ) {
-      return false;
+      throw new Error(
+        `Invalid value for trackConstraints width | height | frameRate`
+      );
     }
   }
   // validate simulcastEncodings
   if (playerSettings.simulcastEncodings) {
     if (!(playerSettings.simulcastEncodings instanceof Array)) {
-      return false;
+      throw new Error(`simulcastEncodings must be "Array"`);
     }
     // max 3 layers
     if (
       playerSettings.simulcastEncodings.length > MAX_SIMULCAST_LAYERS ||
       playerSettings.simulcastEncodings.length <= 0
     ) {
-      return false;
+      throw new Error(
+        `Invalid number of layers in "simulcastEncodings", must be between 1 to 3 layers`
+      );
     }
     playerSettings.simulcastEncodings.every((layer) => {
+      for (let prop in layer) {
+        if (!validSimulcastEncodingKeys.includes(prop)) {
+          throw new Error(
+            `Invalid key ${prop}, valid keys are:` +
+              JSON.stringify(validSimulcastEncodingKeys)
+          );
+        }
+        if (typeof layer[prop] !== 'number') {
+          throw new Error(`simulcastEncodings[].${prop} must be "number"`);
+        }
+      }
       // maxBitrate is mandatory
       if (!layer.maxBitrate) {
-        return false;
+        throw new Error(`simulcastEncodings[].maxBitrate is not specified`);
       }
       // scale resolution range
       if (
-        layer.scaleResolutionDownBy < 0 ||
-        layer.scaleResolutionDownBy > MAX_SCALE_RESOLUTION_BY
+        layer.scaleResolutionDownBy &&
+        (layer.scaleResolutionDownBy <= 0 ||
+          layer.scaleResolutionDownBy > MAX_SCALE_RESOLUTION_BY)
       ) {
-        return false;
+        throw new Error(
+          `Invalid value for simulcastEncodings[].scaleResolutionDownBy`
+        );
       }
       // maxFrameRate
       if (
-        layer.maxFramerate < MIN_RMP_FPS ||
-        layer.maxFramerate > MAX_RMP_FPS
+        layer.maxFramerate &&
+        (layer.maxFramerate < MIN_RMP_FPS || layer.maxFramerate > MAX_RMP_FPS)
       ) {
-        return false;
+        throw new Error(`Invalid value for simulcastEncodings[].maxFramerate`);
       }
     });
   }
-  return true;
 }
