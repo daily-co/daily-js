@@ -64,6 +64,7 @@ export type DailyEvent =
   | 'fullscreen'
   | 'exited-fullscreen'
   | 'error'
+  | 'nonfatal-error'
   | 'click'
   | 'mousedown'
   | 'mouseup'
@@ -109,6 +110,11 @@ export type DailyFatalErrorType =
   | 'nbf-token'
   | 'exp-room'
   | 'exp-token';
+
+export type DailyNonFatalErrorType =
+  | 'input-settings-error'
+  | 'screen-share-error'
+  | 'video-processor-error';
 
 export type DailyNetworkTopology = 'sfu' | 'peer';
 
@@ -524,6 +530,12 @@ export interface DailyEventObjectFatalError {
   };
 }
 
+export interface DailyEventObjectNonFatalError {
+  action: Extract<DailyEvent, 'nonfatal-error'>;
+  type: DailyNonFatalErrorType;
+  errorMsg: string;
+}
+
 export interface DailyEventObjectGenericError {
   action: Extract<DailyEvent, 'load-attempt-failed' | 'live-streaming-error'>;
   errorMsg: string;
@@ -702,6 +714,8 @@ export type DailyEventObject<
   ? DailyEventObjectCameraError
   : T extends DailyEventObjectFatalError['action']
   ? DailyEventObjectFatalError
+  : T extends DailyEventObjectNonFatalError['action']
+  ? DailyEventObjectNonFatalError
   : T extends DailyEventObjectGenericError['action']
   ? DailyEventObjectGenericError
   : T extends DailyEventObjectParticipants['action']
