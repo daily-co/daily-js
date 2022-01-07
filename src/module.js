@@ -1992,16 +1992,16 @@ export default class DailyIframe extends EventEmitter {
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_LIVE_STREAMING });
   }
 
-  async startRemoteMediaPlayer(
+  async startRemoteMediaPlayer({
     url,
-    remoteMediaPlayerSettings = {
+    settings = {
       state: DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING.PLAY,
-    }
-  ) {
+    },
+  }) {
     if (!validateRemotePlayerUrl(url)) {
       throw new Error(remoteMediaPlayerStartValidationHelpMsg());
     }
-    if (!validateRemotePlayerSettings(remoteMediaPlayerSettings)) {
+    if (!validateRemotePlayerSettings(settings)) {
       throw new Error(remoteMediaPlayerStartValidationHelpMsg());
     }
 
@@ -2021,7 +2021,7 @@ export default class DailyIframe extends EventEmitter {
         {
           action: DAILY_METHOD_START_REMOTE_MEDIA_PLAYER,
           url: url,
-          settings: remoteMediaPlayerSettings,
+          settings: settings,
         },
         k
       );
@@ -2047,10 +2047,10 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  async updateRemoteMediaPlayer(session_id, remoteMediaPlayerSettings) {
+  async updateRemoteMediaPlayer({ session_id, settings }) {
     // TODO: Add check of the current_state === desired state
     // And resolve() from here itself.
-    if (!validateRemotePlayerSettings(remoteMediaPlayerSettings)) {
+    if (!validateRemotePlayerSettings(settings)) {
       throw new Error(remoteMediaPlayerStartValidationHelpMsg());
     }
     return new Promise(async (resolve, reject) => {
@@ -2069,7 +2069,7 @@ export default class DailyIframe extends EventEmitter {
         {
           action: DAILY_METHOD_UPDATE_REMOTE_MEDIA_PLAYER,
           session_id: session_id,
-          settings: remoteMediaPlayerSettings,
+          settings: settings,
         },
         k
       );
