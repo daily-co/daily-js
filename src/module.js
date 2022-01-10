@@ -773,7 +773,7 @@ export default class DailyIframe extends EventEmitter {
 
   constructor(iframeish, properties = {}) {
     super();
-    properties.dailyJsVersion = __dailyJsVersion__;
+    properties.dailyJsVersion = DailyIframe.version();
     this._iframe = iframeish;
     this._callObjectMode = properties.layout === 'none' && !this._iframe;
     this._preloadCache = initializePreloadCache();
@@ -2021,8 +2021,8 @@ export default class DailyIframe extends EventEmitter {
     url,
     settings = {
       state: DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING.PLAY,
-    }
-  ) {
+    },
+  }) {
     try {
       validateRemotePlayerUrl(url);
       validateRemotePlayerStateSettings(settings);
