@@ -285,13 +285,20 @@ const MAX_RMP_FPS = 30;
 const MIN_RMP_FPS = 1;
 const MAX_SIMULCAST_LAYERS = 3;
 const MAX_SCALE_RESOLUTION_BY = 8;
+const MAX_LAYER_BITRATE = 2500000;
+const MIN_LAYER_BITRATE = 100000;
 
-const validTrackConstrainsKeys = ['width', 'height', 'frameRate'];
-const validSimulcastEncodingKeys = [
-  'maxBitrate',
-  'maxFramerate',
-  'scaleResolutionDownBy',
-];
+const trackConstraintsValidRanges = {
+  width: { min: MIN_RMP_WIDTH, max: MAX_RMP_WIDTH },
+  height: { min: MIN_RMP_HEIGHT, max: MAX_RMP_HEIGHT },
+  frameRate: { min: MIN_RMP_FPS, max: MAX_RMP_FPS },
+};
+
+const simulcastEncodingsValidRanges = {
+  maxBitrate: { min: MIN_LAYER_BITRATE, max: MAX_LAYER_BITRATE },
+  maxFramerate: { min: MIN_RMP_FPS, max: MAX_RMP_FPS },
+  scaleResolutionDownBy: { min: 1, max: MAX_SCALE_RESOLUTION_BY },
+};
 
 //
 //
@@ -2021,6 +2028,7 @@ export default class DailyIframe extends EventEmitter {
       validateRemotePlayerStateSettings(settings);
       validateRemotePlayerEncodingSettings(settings);
     } catch (e) {
+      console.error(`invalid argument Error: ${e}`);
       console.error(remoteMediaPlayerStartValidationHelpMsg());
       throw e;
     }
@@ -3662,43 +3670,42 @@ function validateRemotePlayerStateSettings(playerSettings) {
   }
 }
 
+function isValueInRange(val, min, max) {
+  if (typeof val !== 'number' || val < min || val > max) {
+    return false;
+  }
+  return true;
+}
+
 function validateRemotePlayerEncodingSettings(playerSettings) {
   if (playerSettings.trackConstraints) {
     // trackConstraints is object
     if (!(playerSettings.trackConstraints instanceof Object)) {
       throw new Error(`trackConstraints: must be "object" type `);
     }
+    // trackConstraints Object is empty
+    if (Object.keys(playerSettings.trackConstraints).length <= 0) {
+      throw new Error(`trackConstraints: Object is empty`);
+    }
 
-    // Check Type
     for (let prop in playerSettings.trackConstraints) {
+      // property must be number
       if (typeof playerSettings.trackConstraints[prop] !== 'number') {
         throw new Error(`trackConstraints[${prop}] must be "number"`);
       }
-      if (!validTrackConstrainsKeys.includes(prop)) {
+      // property must be from valid properties
+      if (!trackConstraintsValidRanges.hasOwnProperty(prop)) {
         throw new Error(
           `Invalid key trackConstraints[${prop}], valid keys are:` +
-            JSON.stringify(validTrackConstrainsKeys)
+            Object.keys(trackConstraintsValidRanges)
         );
       }
-    }
-    // trackConstraints limits
-    if (
-      (playerSettings.trackConstraints.width &&
-        playerSettings.trackConstraints.width > MAX_RMP_WIDTH) ||
-      (playerSettings.trackConstraints.height &&
-        playerSettings.trackConstraints.height > MAX_RMP_HEIGHT) ||
-      (playerSettings.trackConstraints.frameRate &&
-        playerSettings.trackConstraints.frameRate > MAX_RMP_FPS) ||
-      (playerSettings.trackConstraints.height &&
-        playerSettings.trackConstraints.height < MIN_RMP_HEIGHT) ||
-      (playerSettings.trackConstraints.width &&
-        playerSettings.trackConstraints.width < MIN_RMP_WIDTH) ||
-      (playerSettings.trackConstraints.frameRate &&
-        playerSettings.trackConstraints.frameRate < MIN_RMP_FPS)
-    ) {
-      throw new Error(
-        `Invalid value for trackConstraints width | height | frameRate`
-      );
+      // property must be within range
+      let { min, max } = trackConstraintsValidRanges[prop];
+      if (!isValueInRange(playerSettings.trackConstraints[prop], min, max)) {
+        throw new Error(`trackConstraints[${prop}] value not in range. valid range:\
+        ${min} to ${max}`);
+      }
     }
   }
   // validate simulcastEncodings
@@ -3708,45 +3715,40 @@ function validateRemotePlayerEncodingSettings(playerSettings) {
     }
     // max 3 layers
     if (
-      playerSettings.simulcastEncodings.length > MAX_SIMULCAST_LAYERS ||
-      playerSettings.simulcastEncodings.length <= 0
+      !isValueInRange(
+        playerSettings.simulcastEncodings.length,
+        0,
+        MAX_SIMULCAST_LAYERS
+      )
     ) {
       throw new Error(
-        `Invalid number of layers in "simulcastEncodings", must be between 1 to 3 layers`
+        `"simulcastEncodings" not in range. valid range 1 to 3 layers`
       );
     }
+    // check value within each simulcast layer
     playerSettings.simulcastEncodings.every((layer) => {
       for (let prop in layer) {
-        if (!validSimulcastEncodingKeys.includes(prop)) {
+        // check property is valid
+        if (!simulcastEncodingsValidRanges.hasOwnProperty(prop)) {
           throw new Error(
             `Invalid key ${prop}, valid keys are:` +
-              JSON.stringify(validSimulcastEncodingKeys)
+              Object.keys(simulcastEncodingsValidRanges)
           );
         }
+        // property must be number
         if (typeof layer[prop] !== 'number') {
           throw new Error(`simulcastEncodings[].${prop} must be "number"`);
         }
+        // property must be within range
+        let { min, max } = simulcastEncodingsValidRanges[prop];
+        if (!isValueInRange(layer[prop], min, max)) {
+          throw new Error(`simulcastEncodings[].${prop} value not in range. valid range:\
+        ${min} to ${max}`);
+        }
       }
       // maxBitrate is mandatory
-      if (!layer.maxBitrate) {
+      if (!layer.hasOwnProperty('maxBitrate')) {
         throw new Error(`simulcastEncodings[].maxBitrate is not specified`);
-      }
-      // scale resolution range
-      if (
-        layer.scaleResolutionDownBy &&
-        (layer.scaleResolutionDownBy <= 0 ||
-          layer.scaleResolutionDownBy > MAX_SCALE_RESOLUTION_BY)
-      ) {
-        throw new Error(
-          `Invalid value for simulcastEncodings[].scaleResolutionDownBy`
-        );
-      }
-      // maxFrameRate
-      if (
-        layer.maxFramerate &&
-        (layer.maxFramerate < MIN_RMP_FPS || layer.maxFramerate > MAX_RMP_FPS)
-      ) {
-        throw new Error(`Invalid value for simulcastEncodings[].maxFramerate`);
       }
     });
   }
