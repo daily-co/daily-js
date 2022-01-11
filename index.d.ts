@@ -128,6 +128,7 @@ export interface DailyBrowserInfo {
   mobile: boolean;
   name: string;
   version: string;
+  supportsFullscreen: boolean;
   supportsScreenShare: boolean;
   supportsSfu: boolean;
   supportsVideoProcessing: boolean;

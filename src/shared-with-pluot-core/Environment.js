@@ -47,6 +47,13 @@ export function isScreenSharingSupported() {
   return isDisplayMediaAccessible() && canUnifiedPlan();
 }
 
+export function isFullscreenSupported() {
+  if (isReactNative()) return false;
+  if (!document) return false;
+  const iframe = document.createElement('iframe');
+  return !!iframe.requestFullscreen || !!iframe.webkitRequestFullscreen;
+}
+
 const supportedBrowsersForVideoProcessors = ['Chrome', 'Firefox'];
 
 export function isVideoProcessingSupported() {
