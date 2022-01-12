@@ -2322,7 +2322,11 @@ export default class DailyIframe extends EventEmitter {
 
   async requestFullscreen() {
     methodNotSupportedInReactNative();
-    if (!this._iframe || document.fullscreenElement) {
+    if (
+      !this._iframe ||
+      document.fullscreenElement ||
+      !isFullscreenSupported()
+    ) {
       return;
     }
     try {
