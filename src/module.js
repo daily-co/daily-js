@@ -2023,6 +2023,9 @@ export default class DailyIframe extends EventEmitter {
       state: DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING.PLAY,
     },
   }) {
+    console.warn(
+      '(beta) remote-media-player is currently in pre-beta, things might break!'
+    );
     try {
       validateRemotePlayerUrl(url);
       validateRemotePlayerStateSettings(settings);
@@ -2040,8 +2043,10 @@ export default class DailyIframe extends EventEmitter {
         } else {
           resolve({
             session_id: msg.session_id,
-            state: msg.state,
-            settings: msg.settings,
+            remoteMediaPlayerState: {
+              state: msg.state,
+              settings: msg.settings,
+            },
           });
         }
       };
@@ -2092,8 +2097,10 @@ export default class DailyIframe extends EventEmitter {
         } else {
           resolve({
             session_id: msg.session_id,
-            state: msg.state,
-            settings: msg.settings,
+            remoteMediaPlayerState: {
+              state: msg.state,
+              settings: msg.settings,
+            },
           });
         }
       };
@@ -2914,7 +2921,7 @@ export default class DailyIframe extends EventEmitter {
         break;
       case DAILY_EVENT_REMOTE_MEDIA_PLAYER_STARTED:
         {
-          let participantId = msg.playerState.session_id;
+          let participantId = msg.session_id;
           this._rmpPlayerState[participantId] = msg.playerState;
           this.emitDailyJSEvent(msg);
         }
@@ -2927,7 +2934,7 @@ export default class DailyIframe extends EventEmitter {
 
       case DAILY_EVENT_REMOTE_MEDIA_PLAYER_UPDATED:
         {
-          let participantId = msg.playerState.session_id;
+          let participantId = msg.session_id;
           let rmpPlayerState = this._rmpPlayerState[participantId];
           if (
             !rmpPlayerState ||
@@ -3635,15 +3642,15 @@ function validateConfigPropType(prop, propType) {
 
 function remoteMediaPlayerStartValidationHelpMsg() {
   return `startRemoteMediaPlayer arguments must be of the form: 
-  url: "playback url", 
-  { remoteMediaPlayerSettings?: 
+  { url: "playback url", 
+  settings?: 
   {state: "play"|"pause", trackConstraints?: {}, simulcastEncodings?: [{}] } }`;
 }
 
 function remoteMediaPlayerUpdateValidationHelpMsg() {
   return `updateRemoteMediaPlayer arguments must be of the form: 
   session_id: "participant session", 
-  { remoteMediaPlayerSettings?: {state: "play"|"pause"} }`;
+  { settings?: {state: "play"|"pause"} }`;
 }
 
 function validateRemotePlayerUrl(url) {

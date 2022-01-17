@@ -695,7 +695,8 @@ export interface DailyEventObjectRemoteMediaPlayerUpdate {
     'remote-media-player-started' | 'remote-media-player-updated'
   >;
   updatedBy: string;
-  playerState: DailyRemoteMediaPlayerState;
+  session_id: string;
+  remoteMediaPlayerState: DailyRemoteMediaPlayerState;
 }
 
 export interface DailyEventObjectRemoteMediaPlayerStopped {
@@ -863,9 +864,9 @@ export interface RemoteMediaPlayerTrackConstraints {
 }
 
 export interface RemoteMediaPlayerSimulcastEncoding {
-  maxBitrate: number
-  maxFramerate?: number
-  scaleResolutionDownBy?: number
+  maxBitrate: number;
+  maxFramerate?: number;
+  scaleResolutionDownBy?: number;
 }
 
 export interface DailyRemoteMediaPlayerSettings {
@@ -885,12 +886,16 @@ export interface DailyRemoteMediaPlayerUpdateOptions {
 }
 
 export interface DailyRemoteMediaPlayerState {
-  session_id: string;
   state:
     | DailyRemoteMediaPlayerStatePlaying
     | DailyRemoteMediaPlayerStatePaused
     | DailyRemoteMediaPlayerStateBuffering;
   settings: DailyRemoteMediaPlayerSettings;
+}
+
+export interface DailyRemoteMediaPlayerInfo {
+  session_id: string;
+  remoteMediaPlayerState: DailyRemoteMediaPlayerState;
 }
 
 export interface DailyCall {
@@ -985,11 +990,11 @@ export interface DailyCall {
   stopLiveStreaming(): void;
   startRemoteMediaPlayer(
     options: DailyRemoteMediaPlayerStartOptions
-  ): Promise<DailyRemoteMediaPlayerState>;
+  ): Promise<DailyRemoteMediaPlayerInfo>;
   stopRemoteMediaPlayer(session_id: string): Promise<void>;
   updateRemoteMediaPlayer(
     options: DailyRemoteMediaPlayerUpdateOptions
-  ): Promise<DailyRemoteMediaPlayerState>;
+  ): Promise<DailyRemoteMediaPlayerInfo>;
   startTranscription(): void;
   stopTranscription(): void;
   getNetworkStats(): Promise<DailyNetworkStats>;
