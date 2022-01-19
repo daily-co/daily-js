@@ -126,6 +126,7 @@ export const DAILY_EVENT_RECEIVE_SETTINGS_UPDATED = 'receive-settings-updated';
 export const DAILY_EVENT_INPUT_SETTINGS_UPDATED = 'input-settings-updated';
 export const DAILY_EVENT_NONFATAL_ERROR = 'nonfatal-error';
 export const DAILY_INPUT_SETTINGS_ERROR_TYPE = 'input-settings-error';
+export const DAILY_SCREEN_SHARE_ERROR_TYPE = 'screen-share-error';
 export const DAILY_VIDEO_PROCESSOR_ERROR_TYPE = 'video-processor-error';
 export const DAILY_EVENT_ERROR = 'error';
 
