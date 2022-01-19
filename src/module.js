@@ -2137,7 +2137,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async enumerateDevices() {
-    methodNotSupportedInReactNative();
     if (this._callObjectMode) {
       let raw = await navigator.mediaDevices.enumerateDevices();
       return { devices: raw.map((d) => JSON.parse(JSON.stringify(d))) };
