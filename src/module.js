@@ -277,10 +277,6 @@ const NATIVE_AUDIO_MODE_VIDEO_CALL = 'video';
 const NATIVE_AUDIO_MODE_VOICE_CALL = 'voice';
 const NATIVE_AUDIO_MODE_IDLE = 'idle';
 
-const MAX_RMP_WIDTH = 1920;
-const MIN_RMP_WIDTH = 128;
-const MAX_RMP_HEIGHT = 1080;
-const MIN_RMP_HEIGHT = 128;
 const MAX_RMP_FPS = 30;
 const MIN_RMP_FPS = 1;
 const MAX_SIMULCAST_LAYERS = 3;
@@ -288,18 +284,13 @@ const MAX_SCALE_RESOLUTION_BY = 8;
 const MAX_LAYER_BITRATE = 2500000;
 const MIN_LAYER_BITRATE = 100000;
 
-const trackConstraintsValidRanges = {
-  width: { min: MIN_RMP_WIDTH, max: MAX_RMP_WIDTH },
-  height: { min: MIN_RMP_HEIGHT, max: MAX_RMP_HEIGHT },
-  frameRate: { min: MIN_RMP_FPS, max: MAX_RMP_FPS },
-};
-
 const simulcastEncodingsValidRanges = {
   maxBitrate: { min: MIN_LAYER_BITRATE, max: MAX_LAYER_BITRATE },
   maxFramerate: { min: MIN_RMP_FPS, max: MAX_RMP_FPS },
   scaleResolutionDownBy: { min: 1, max: MAX_SCALE_RESOLUTION_BY },
 };
 
+const startRmpSettingsValidKeys = ['state', 'simulcastEncodings'];
 //
 //
 //
@@ -3644,7 +3635,7 @@ function remoteMediaPlayerStartValidationHelpMsg() {
   return `startRemoteMediaPlayer arguments must be of the form: 
   { url: "playback url", 
   settings?: 
-  {state: "play"|"pause", trackConstraints?: {}, simulcastEncodings?: [{}] } }`;
+  {state: "play"|"pause", simulcastEncodings?: [{}] } }`;
 }
 
 function remoteMediaPlayerUpdateValidationHelpMsg() {
@@ -3666,6 +3657,7 @@ function validateRemotePlayerStateSettings(playerSettings) {
   }
 
   if (
+    !playerSettings.state ||
     !Object.values(DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING).includes(
       playerSettings.state
     )
@@ -3685,34 +3677,11 @@ function isValueInRange(val, min, max) {
 }
 
 function validateRemotePlayerEncodingSettings(playerSettings) {
-  if (playerSettings.trackConstraints) {
-    // trackConstraints is object
-    if (!(playerSettings.trackConstraints instanceof Object)) {
-      throw new Error(`trackConstraints: must be "object" type `);
-    }
-    // trackConstraints Object is empty
-    if (Object.keys(playerSettings.trackConstraints).length <= 0) {
-      throw new Error(`trackConstraints: Object is empty`);
-    }
-
-    for (let prop in playerSettings.trackConstraints) {
-      // property must be number
-      if (typeof playerSettings.trackConstraints[prop] !== 'number') {
-        throw new Error(`trackConstraints[${prop}] must be "number"`);
-      }
-      // property must be from valid properties
-      if (!trackConstraintsValidRanges.hasOwnProperty(prop)) {
-        throw new Error(
-          `Invalid key trackConstraints[${prop}], valid keys are:` +
-            Object.keys(trackConstraintsValidRanges)
-        );
-      }
-      // property must be within range
-      let { min, max } = trackConstraintsValidRanges[prop];
-      if (!isValueInRange(playerSettings.trackConstraints[prop], min, max)) {
-        throw new Error(`trackConstraints[${prop}] value not in range. valid range:\
-        ${min} to ${max}`);
-      }
+  for (let prop in playerSettings) {
+    if (!startRmpSettingsValidKeys.includes(prop)) {
+      throw new Error(
+        `Invalid key ${prop}, valid keys are: ${startRmpSettingsValidKeys}`
+      );
     }
   }
   // validate simulcastEncodings

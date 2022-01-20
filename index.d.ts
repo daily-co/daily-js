@@ -857,12 +857,6 @@ export interface DailyLiveStreamingOptions extends DailyStreamingOptions {
   rtmpUrl: string;
 }
 
-export interface RemoteMediaPlayerTrackConstraints {
-  width?: number;
-  height?: number;
-  frameRate?: number;
-}
-
 export interface RemoteMediaPlayerSimulcastEncoding {
   maxBitrate: number;
   maxFramerate?: number;
@@ -871,7 +865,6 @@ export interface RemoteMediaPlayerSimulcastEncoding {
 
 export interface DailyRemoteMediaPlayerSettings {
   state: DailyRemoteMediaPlayerSettingPlay | DailyRemoteMediaPlayerSettingPause;
-  trackConstraints?: RemoteMediaPlayerTrackConstraints;
   simulcastEncodings?: RemoteMediaPlayerSimulcastEncoding[];
 }
 

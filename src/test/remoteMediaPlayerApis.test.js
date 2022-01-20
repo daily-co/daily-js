@@ -20,7 +20,6 @@ const validateFunc = DailyIframe.__get__(
 it('Track constraints must be Object Type', () => {
   const validateTcIsObject = {
     state: 'play',
-    trackConstraints: 'INVALID_STRING',
     simulcastEncodings: [{}],
   };
 
