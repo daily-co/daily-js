@@ -1956,8 +1956,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   startRecording(args = {}) {
-    // TODO: Should we allow starting a cloud-mp4 recording in RN?
-    methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_START_RECORDING,
       ...args,
@@ -1972,7 +1970,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   stopRecording() {
-    methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_RECORDING });
   }
 
