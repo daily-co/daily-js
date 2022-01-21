@@ -2014,9 +2014,6 @@ export default class DailyIframe extends EventEmitter {
       state: DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING.PLAY,
     },
   }) {
-    console.warn(
-      '(beta) remote-media-player is currently in pre-beta, things might break!'
-    );
     try {
       validateRemotePlayerUrl(url);
       validateRemotePlayerStateSettings(settings);
@@ -2077,6 +2074,7 @@ export default class DailyIframe extends EventEmitter {
     try {
       validateRemotePlayerStateSettings(settings);
     } catch (e) {
+      console.error(`invalid argument Error: ${e}`);
       console.error(remoteMediaPlayerUpdateValidationHelpMsg());
       throw e;
     }
