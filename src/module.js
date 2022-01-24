@@ -277,6 +277,20 @@ const NATIVE_AUDIO_MODE_VIDEO_CALL = 'video';
 const NATIVE_AUDIO_MODE_VOICE_CALL = 'voice';
 const NATIVE_AUDIO_MODE_IDLE = 'idle';
 
+const MAX_RMP_FPS = 30;
+const MIN_RMP_FPS = 1;
+const MAX_SIMULCAST_LAYERS = 3;
+const MAX_SCALE_RESOLUTION_BY = 8;
+const MAX_LAYER_BITRATE = 2500000;
+const MIN_LAYER_BITRATE = 100000;
+
+const simulcastEncodingsValidRanges = {
+  maxBitrate: { min: MIN_LAYER_BITRATE, max: MAX_LAYER_BITRATE },
+  maxFramerate: { min: MIN_RMP_FPS, max: MAX_RMP_FPS },
+  scaleResolutionDownBy: { min: 1, max: MAX_SCALE_RESOLUTION_BY },
+};
+
+const startRmpSettingsValidKeys = ['state', 'simulcastEncodings'];
 //
 //
 //
@@ -750,7 +764,7 @@ export default class DailyIframe extends EventEmitter {
 
   constructor(iframeish, properties = {}) {
     super();
-    properties.dailyJsVersion = __dailyJsVersion__;
+    properties.dailyJsVersion = DailyIframe.version();
     this._iframe = iframeish;
     this._callObjectMode = properties.layout === 'none' && !this._iframe;
     this._preloadCache = initializePreloadCache();
@@ -1997,11 +2011,14 @@ export default class DailyIframe extends EventEmitter {
       state: DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING.PLAY,
     },
   }) {
-    if (!validateRemotePlayerUrl(url)) {
-      throw new Error(remoteMediaPlayerStartValidationHelpMsg());
-    }
-    if (!validateRemotePlayerSettings(settings)) {
-      throw new Error(remoteMediaPlayerStartValidationHelpMsg());
+    try {
+      validateRemotePlayerUrl(url);
+      validateRemotePlayerStateSettings(settings);
+      validateRemotePlayerEncodingSettings(settings);
+    } catch (e) {
+      console.error(`invalid argument Error: ${e}`);
+      console.error(remoteMediaPlayerStartValidationHelpMsg());
+      throw e;
     }
 
     return new Promise(async (resolve, reject) => {
@@ -2011,8 +2028,10 @@ export default class DailyIframe extends EventEmitter {
         } else {
           resolve({
             session_id: msg.session_id,
-            state: msg.state,
-            settings: msg.settings,
+            remoteMediaPlayerState: {
+              state: msg.state,
+              settings: msg.settings,
+            },
           });
         }
       };
@@ -2049,9 +2068,14 @@ export default class DailyIframe extends EventEmitter {
   async updateRemoteMediaPlayer({ session_id, settings }) {
     // TODO: Add check of the current_state === desired state
     // And resolve() from here itself.
-    if (!validateRemotePlayerSettings(settings)) {
-      throw new Error(remoteMediaPlayerStartValidationHelpMsg());
+    try {
+      validateRemotePlayerStateSettings(settings);
+    } catch (e) {
+      console.error(`invalid argument Error: ${e}`);
+      console.error(remoteMediaPlayerUpdateValidationHelpMsg());
+      throw e;
     }
+
     return new Promise(async (resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
@@ -2059,8 +2083,10 @@ export default class DailyIframe extends EventEmitter {
         } else {
           resolve({
             session_id: msg.session_id,
-            state: msg.state,
-            settings: msg.settings,
+            remoteMediaPlayerState: {
+              state: msg.state,
+              settings: msg.settings,
+            },
           });
         }
       };
@@ -2881,7 +2907,7 @@ export default class DailyIframe extends EventEmitter {
         break;
       case DAILY_EVENT_REMOTE_MEDIA_PLAYER_STARTED:
         {
-          let participantId = msg.playerState.session_id;
+          let participantId = msg.session_id;
           this._rmpPlayerState[participantId] = msg.playerState;
           this.emitDailyJSEvent(msg);
         }
@@ -2894,7 +2920,7 @@ export default class DailyIframe extends EventEmitter {
 
       case DAILY_EVENT_REMOTE_MEDIA_PLAYER_UPDATED:
         {
-          let participantId = msg.playerState.session_id;
+          let participantId = msg.session_id;
           let rmpPlayerState = this._rmpPlayerState[participantId];
           if (
             !rmpPlayerState ||
@@ -3601,21 +3627,100 @@ function validateConfigPropType(prop, propType) {
 }
 
 function remoteMediaPlayerStartValidationHelpMsg() {
-  return `startRemoteMediaPlayer arguments must be of the form: { url: "playback url", remoteMediaPlayerSettings?: {state: "play"|"pause"} }`;
+  return `startRemoteMediaPlayer arguments must be of the form: 
+  { url: "playback url", 
+  settings?: 
+  {state: "play"|"pause", simulcastEncodings?: [{}] } }`;
+}
+
+function remoteMediaPlayerUpdateValidationHelpMsg() {
+  return `updateRemoteMediaPlayer arguments must be of the form: 
+  session_id: "participant session", 
+  { settings?: {state: "play"|"pause"} }`;
 }
 
 function validateRemotePlayerUrl(url) {
   // TODO: add protocol check as well http://, https://. file://..
   if (typeof url !== 'string') {
+    throw new Error(`url parameter must be "string" type`);
+  }
+}
+
+function validateRemotePlayerStateSettings(playerSettings) {
+  if (typeof playerSettings !== 'object') {
+    throw new Error(`RemoteMediaPlayerSettings: must be "object" type`);
+  }
+
+  if (
+    !playerSettings.state ||
+    !Object.values(DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING).includes(
+      playerSettings.state
+    )
+  ) {
+    throw new Error(
+      `Invalid value for RemoteMediaPlayerSettings.state, valid values are: ` +
+        JSON.stringify(DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING)
+    );
+  }
+}
+
+function isValueInRange(val, min, max) {
+  if (typeof val !== 'number' || val < min || val > max) {
     return false;
   }
   return true;
 }
 
-function validateRemotePlayerSettings(startSettings) {
-  if (typeof startSettings !== 'object') return false;
-
-  return Object.values(DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING).includes(
-    startSettings.state
-  );
+function validateRemotePlayerEncodingSettings(playerSettings) {
+  for (let prop in playerSettings) {
+    if (!startRmpSettingsValidKeys.includes(prop)) {
+      throw new Error(
+        `Invalid key ${prop}, valid keys are: ${startRmpSettingsValidKeys}`
+      );
+    }
+  }
+  // validate simulcastEncodings
+  if (playerSettings.simulcastEncodings) {
+    if (!(playerSettings.simulcastEncodings instanceof Array)) {
+      throw new Error(`simulcastEncodings must be "Array"`);
+    }
+    // max 3 layers
+    if (
+      !isValueInRange(
+        playerSettings.simulcastEncodings.length,
+        0,
+        MAX_SIMULCAST_LAYERS
+      )
+    ) {
+      throw new Error(
+        `"simulcastEncodings" not in range. valid range 1 to 3 layers`
+      );
+    }
+    // check value within each simulcast layer
+    playerSettings.simulcastEncodings.every((layer) => {
+      for (let prop in layer) {
+        // check property is valid
+        if (!simulcastEncodingsValidRanges.hasOwnProperty(prop)) {
+          throw new Error(
+            `Invalid key ${prop}, valid keys are:` +
+              Object.keys(simulcastEncodingsValidRanges)
+          );
+        }
+        // property must be number
+        if (typeof layer[prop] !== 'number') {
+          throw new Error(`simulcastEncodings[].${prop} must be "number"`);
+        }
+        // property must be within range
+        let { min, max } = simulcastEncodingsValidRanges[prop];
+        if (!isValueInRange(layer[prop], min, max)) {
+          throw new Error(`simulcastEncodings[].${prop} value not in range. valid range:\
+        ${min} to ${max}`);
+        }
+      }
+      // maxBitrate is mandatory
+      if (!layer.hasOwnProperty('maxBitrate')) {
+        throw new Error(`simulcastEncodings[].maxBitrate is not specified`);
+      }
+    });
+  }
 }
