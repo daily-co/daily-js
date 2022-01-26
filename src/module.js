@@ -2924,9 +2924,13 @@ export default class DailyIframe extends EventEmitter {
           let rmpPlayerState = this._rmpPlayerState[participantId];
           if (
             !rmpPlayerState ||
-            !this.compareEqualForRMPUpdateEvent(rmpPlayerState, msg.playerState)
+            !this.compareEqualForRMPUpdateEvent(
+              rmpPlayerState,
+              msg.remoteMediaPlayerState.state
+            )
           ) {
-            this._rmpPlayerState[participantId] = msg.playerState;
+            this._rmpPlayerState[participantId] =
+              msg.remoteMediaPlayerState.state;
             this.emitDailyJSEvent(msg);
           }
         }
