@@ -2926,11 +2926,10 @@ export default class DailyIframe extends EventEmitter {
             !rmpPlayerState ||
             !this.compareEqualForRMPUpdateEvent(
               rmpPlayerState,
-              msg.remoteMediaPlayerState.state
+              msg.remoteMediaPlayerState
             )
           ) {
-            this._rmpPlayerState[participantId] =
-              msg.remoteMediaPlayerState.state;
+            this._rmpPlayerState[participantId] = msg.remoteMediaPlayerState;
             this.emitDailyJSEvent(msg);
           }
         }
