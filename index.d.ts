@@ -114,7 +114,8 @@ export type DailyFatalErrorType =
 export type DailyNonFatalErrorType =
   | 'input-settings-error'
   | 'screen-share-error'
-  | 'video-processor-error';
+  | 'video-processor-error'
+  | 'remote-media-player-error';
 
 export type DailyNetworkTopology = 'sfu' | 'peer';
 
