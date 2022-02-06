@@ -44,3 +44,12 @@ export function callObjectBundleUrl(meetingOrBaseUrl) {
     return `${baseUrl}/static/call-machine-object-bundle.js`;
   }
 }
+
+export function validateHttpUrl(string) {
+  try {
+    let url = new URL(string);
+  } catch (_) {
+    return false;
+  }
+  return true;
+}
