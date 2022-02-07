@@ -494,7 +494,7 @@ export interface DailyInputVideoSettings {
   processor?: DailyInputVideoProcessorSettings;
 }
 export interface DailyInputVideoProcessorSettings {
-  type: 'none' | 'background-blur';
+  type: 'none' | 'background-blur' | 'background-image';
   config?: {};
 }
 export interface DailyEventObjectNoPayload {
