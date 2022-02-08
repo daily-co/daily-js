@@ -1423,7 +1423,7 @@ export default class DailyIframe extends EventEmitter {
           reject(e);
         }
       } else {
-        //even if is already loaded, needs to validate the properties, so the dailyConfig properties can be inserted inside window._dailyConfig
+        // even if is already loaded, needs to validate the properties, so the dailyConfig properties can be inserted inside window._dailyConfig
         this.validateProperties(properties);
       }
       this.sendMessageToCallMachine(
