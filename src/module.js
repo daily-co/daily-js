@@ -337,9 +337,6 @@ const FRAME_PROPS = {
       window._dailyConfig.experimentalGetUserMediaConstraintsModify =
         config.experimentalGetUserMediaConstraintsModify;
       delete config.experimentalGetUserMediaConstraintsModify;
-      window._dailyConfig.getUserMediaConstraints =
-        config.getUserMediaConstraints;
-      delete config.getUserMediaConstraints;
       return true;
     },
   },
@@ -1431,9 +1428,6 @@ export default class DailyIframe extends EventEmitter {
         } catch (e) {
           reject(e);
         }
-      } else {
-        // even if is already loaded, needs to validate the properties, so the dailyConfig properties can be inserted inside window._dailyConfig
-        this.validateProperties(properties);
       }
       this.sendMessageToCallMachine(
         {
