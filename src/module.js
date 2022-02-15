@@ -1326,16 +1326,20 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async updateInputSettings(inputSettings) {
-    //#Question: Do I need the call-object mode check for input-settings?
-    if (!validateInputSettings(inputSettings)) {
-      console.error(inputSettingsValidationHelpMsg());
-      return;
-    }
-
     // Ask call machine to update input settings, then await callback.
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
+      if (!validateInputSettings(inputSettings)) {
+        console.error(inputSettingsValidationHelpMsg());
+        reject(inputSettingsValidationHelpMsg());
+        return;
+      }
+
       const k = (msg) => {
-        resolve({ inputSettings: msg.inputSettings });
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve({ inputSettings: msg.inputSettings });
+        }
       };
       this.sendMessageToCallMachine(
         {
@@ -3548,6 +3552,7 @@ function validateInputSettings(settings) {
 }
 
 function validateVideoProcessor(p) {
+  const VALID_PROCESSOR_KEYS = ['type', `config`, 'publish'];
   if (!p) return false;
   if (typeof p !== 'object') return false;
   if (Object.keys(p).length === 0) return false; // lodash isEmpty did not work well with github workflow for some reason
@@ -3557,6 +3562,13 @@ function validateVideoProcessor(p) {
     if (typeof p.config !== 'object') return false;
     if (!validateVideoProcessorConfig(p.type, p.config)) return false;
   }
+  // scrub invalid keys in processor object
+  Object.keys(p)
+    .filter((k) => !VALID_PROCESSOR_KEYS.includes(k))
+    .forEach((k) => {
+      console.warn(`invalid key inputSettings -> video -> processor : ${k}`);
+      delete p[k];
+    });
   return true;
 }
 
