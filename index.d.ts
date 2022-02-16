@@ -260,7 +260,14 @@ export interface DailyTrackState {
     byRemoteRequest?: boolean;
     byBandwidth?: boolean;
   };
+  // guaranteed-playable reference to the track
+  // (it's only present when state === 'playable')
   track?: MediaStreamTrack;
+  // not-guaranteed-playable reference to the track
+  // (it may be present when state !== 'playable')
+  // useful, for instance, for avoiding Safari's remote-track-unmute-in-background-tab bug
+  // (see https://github.com/daily-demos/call-object-react/blob/c81b21262dead2aacbd5a2f534d0fee8530acfe4/src/components/Tile/Tile.js#L53-L60)
+  persistentTrack?: MediaStreamTrack;
 }
 
 export interface DailyParticipant {
