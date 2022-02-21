@@ -588,23 +588,31 @@ const PARTICIPANT_PROPS = {
       ) {
         return true;
       }
-      for (const s in subs) {
-        if (
-          !(
-            [
-              'audio',
-              'video',
-              'screenAudio',
-              'screenVideo',
-              'rmpAudio',
-              'rmpVideo',
-            ].includes(s) && validPrimitiveValues.includes(subs[s])
-          )
-        ) {
-          return false;
+      const knownTracks = [
+        'audio',
+        'video',
+        'screenAudio',
+        'screenVideo',
+        'rmpAudio',
+        'rmpVideo',
+      ];
+      const validateTrackSubs = (subs, custom = false) => {
+        for (const s in subs) {
+          if (s === 'custom') {
+            if (!validateTrackSubs(subs[s], true)) {
+              return false;
+            }
+          } else {
+            const isUnexpectedTrackType = !custom && !knownTracks.includes(s);
+            const isUnexpectedValue = !validPrimitiveValues.includes(subs[s]);
+            if (isUnexpectedTrackType || isUnexpectedValue) {
+              return false;
+            }
+          }
         }
-      }
-      return true;
+        return true;
+      };
+      return validateTrackSubs(subs);
     },
     help:
       'setSubscribedTracks cannot be used when setSubscribeToTracksAutomatically is enabled, and should be of the form: ' +
@@ -3115,7 +3123,7 @@ export default class DailyIframe extends EventEmitter {
       }
       this.maybeEventCustomTrackStopped(
         prevP.tracks[trackKey].track,
-        thisP ? thisP.tracks[trackKey].track : null,
+        thisP && thisP.tracks[trackKey] ? thisP.tracks[trackKey].track : null,
         prevP,
         thisP
       );
@@ -3134,7 +3142,7 @@ export default class DailyIframe extends EventEmitter {
         continue;
       }
       this.maybeEventCustomTrackStarted(
-        prevP ? prevP.tracks[trackKey].track : null,
+        prevP && prevP.tracks[trackKey] ? prevP.tracks[trackKey].track : null,
         thisP.tracks[trackKey].track,
         thisP
       );

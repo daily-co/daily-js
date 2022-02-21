@@ -103,7 +103,29 @@ const _getSubscriptionToTrack = (subscriber, subscribeeId, mediaTag) => {
     return sTracks ? mapToTrueFalseStaged(sTracks.ALL) : true;
   }
 
-  return mapToTrueFalseStaged(sTracks[subscribeeId][mediaTag]);
+  // TODO there is some other alternative, because if we remove the name custom from the beginning of the mediaTag,
+  // we are not able to know here if It is or not a custom track
+  const isCustomTrack =
+    [
+      'cam-audio',
+      'cam-video',
+      'screen-video',
+      'screen-audio',
+      'rmpAudio',
+      'rmpVideo',
+    ].indexOf(mediaTag) === -1;
+
+  let result;
+  if (isCustomTrack && sTracks[subscribeeId]['custom']) {
+    // We are removing the custom prefix which we add to the custom media tracks inside of SoupSFU betaStartCustomTrack
+    result =
+      sTracks[subscribeeId]['custom'] === true // In this case, the user is subscribing to accept all custom tracks
+        ? true
+        : mapToTrueFalseStaged(sTracks[subscribeeId]['custom'][mediaTag]);
+  } else {
+    result = mapToTrueFalseStaged(sTracks[subscribeeId][mediaTag]);
+  }
+  return result;
 };
 
 const _getRemoteStreamEntry = (state, participantId, type, kind) => {
