@@ -115,7 +115,7 @@ const _getSubscriptionToTrack = (subscriber, subscribeeId, mediaTag) => {
 
   let result;
   if (isCustomTrack && sTracks[subscribeeId]['custom']) {
-    result = [true, 'staged'].includes(sTracks[subscribeeId]['custom']) // In this case, the user is subscribing to accept all custom tracks
+    result = [true, 'staged'].includes(sTracks[subscribeeId]['custom'])
       ? mapToTrueFalseStaged(sTracks[subscribeeId]['custom'])
       : mapToTrueFalseStaged(sTracks[subscribeeId]['custom'][mediaTag]);
   } else {
