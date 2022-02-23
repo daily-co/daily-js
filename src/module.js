@@ -599,7 +599,8 @@ const PARTICIPANT_PROPS = {
       const validateTrackSubs = (subs, custom = false) => {
         for (const s in subs) {
           if (s === 'custom') {
-            if (!validateTrackSubs(subs[s], true)) {
+            const containsValidValue = validPrimitiveValues.includes(subs[s]);
+            if (!containsValidValue && !validateTrackSubs(subs[s], true)) {
               return false;
             }
           } else {
