@@ -230,6 +230,7 @@ export interface DailyAdvancedConfig {
   experimentalGetUserMediaConstraintsModify?: (
     constraints: MediaStreamConstraints
   ) => void;
+  userMediaVideoConstraints?: boolean | MediaTrackConstraints;
   fastConnect?: boolean;
   preferH264ForCam?: boolean;
   preferH264ForScreenSharing?: boolean;
