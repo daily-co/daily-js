@@ -222,6 +222,19 @@ export function isSupportedIOSEnvironment() {
   return isIOS() && isUserMediaAccessible();
 }
 
+export function getDailyJsVersion() {
+  let major = 0,
+    minor = 0,
+    patch = 0;
+  if (typeof _dailyConfig !== 'undefined' && _dailyConfig.dailyJsVersion) {
+    const versionParts = _dailyConfig.dailyJsVersion.split('.');
+    major = parseInt(versionParts[0], 10);
+    minor = parseInt(versionParts[1], 10);
+    patch = parseInt(versionParts[2], 10);
+  }
+  return { major, minor, patch };
+}
+
 function isDisplayMediaAccessible() {
   return !!(
     navigator &&

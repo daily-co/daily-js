@@ -155,6 +155,8 @@ import {
   DAILY_METHOD_UPDATE_REMOTE_MEDIA_PLAYER,
   DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING,
   DAILY_JS_REMOTE_MEDIA_PLAYER_STATE,
+  DAILY_PRESELECTED_BG_IMAGE_URLS_LENGTH,
+  DAILY_SUPPORTED_BG_IMG_TYPES,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -168,7 +170,11 @@ import {
 import WebMessageChannel from './shared-with-pluot-core/script-message-channels/WebMessageChannel';
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
 import CallObjectLoader from './CallObjectLoader';
-import { callObjectBundleUrl, randomStringId } from './utils.js';
+import {
+  callObjectBundleUrl,
+  randomStringId,
+  validateHttpUrl,
+} from './utils.js';
 import * as Participant from './Participant';
 
 // meeting states
@@ -331,6 +337,9 @@ const FRAME_PROPS = {
       window._dailyConfig.experimentalGetUserMediaConstraintsModify =
         config.experimentalGetUserMediaConstraintsModify;
       delete config.experimentalGetUserMediaConstraintsModify;
+      window._dailyConfig.userMediaVideoConstraints =
+        config.userMediaVideoConstraints;
+      delete config.userMediaVideoConstraints;
       return true;
     },
   },
@@ -582,23 +591,32 @@ const PARTICIPANT_PROPS = {
       ) {
         return true;
       }
-      for (const s in subs) {
-        if (
-          !(
-            [
-              'audio',
-              'video',
-              'screenAudio',
-              'screenVideo',
-              'rmpAudio',
-              'rmpVideo',
-            ].includes(s) && validPrimitiveValues.includes(subs[s])
-          )
-        ) {
-          return false;
+      const knownTracks = [
+        'audio',
+        'video',
+        'screenAudio',
+        'screenVideo',
+        'rmpAudio',
+        'rmpVideo',
+      ];
+      const validateTrackSubs = (subs, custom = false) => {
+        for (const s in subs) {
+          if (s === 'custom') {
+            const containsValidValue = validPrimitiveValues.includes(subs[s]);
+            if (!containsValidValue && !validateTrackSubs(subs[s], true)) {
+              return false;
+            }
+          } else {
+            const isUnexpectedTrackType = !custom && !knownTracks.includes(s);
+            const isUnexpectedValue = !validPrimitiveValues.includes(subs[s]);
+            if (isUnexpectedTrackType || isUnexpectedValue) {
+              return false;
+            }
+          }
         }
-      }
-      return true;
+        return true;
+      };
+      return validateTrackSubs(subs);
     },
     help:
       'setSubscribedTracks cannot be used when setSubscribeToTracksAutomatically is enabled, and should be of the form: ' +
@@ -1314,19 +1332,26 @@ export default class DailyIframe extends EventEmitter {
   // In the future:
   // { video: {...}, audio: {...}, screenVideo: {...}, screenAudio: {...} }
   getInputSettings() {
-    return this._inputSettings;
+    return new Promise((resolve) => {
+      resolve(this._inputSettings);
+    });
   }
 
   async updateInputSettings(inputSettings) {
-    //#Question: Do I need the call-object mode check for input-settings?
-    if (!validateInputSettings(inputSettings)) {
-      throw new Error(inputSettingsValidationHelpMsg());
-    }
-
     // Ask call machine to update input settings, then await callback.
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
+      if (!validateInputSettings(inputSettings)) {
+        console.error(inputSettingsValidationHelpMsg());
+        reject(inputSettingsValidationHelpMsg());
+        return;
+      }
+
       const k = (msg) => {
-        resolve({ inputSettings: msg.inputSettings });
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve({ inputSettings: msg.inputSettings });
+        }
       };
       this.sendMessageToCallMachine(
         {
@@ -1419,6 +1444,9 @@ export default class DailyIframe extends EventEmitter {
         } catch (e) {
           reject(e);
         }
+      } else {
+        // even if is already loaded, needs to validate the properties, so the dailyConfig properties can be inserted inside window._dailyConfig
+        this.validateProperties(properties);
       }
       this.sendMessageToCallMachine(
         {
@@ -2924,9 +2952,12 @@ export default class DailyIframe extends EventEmitter {
           let rmpPlayerState = this._rmpPlayerState[participantId];
           if (
             !rmpPlayerState ||
-            !this.compareEqualForRMPUpdateEvent(rmpPlayerState, msg.playerState)
+            !this.compareEqualForRMPUpdateEvent(
+              rmpPlayerState,
+              msg.remoteMediaPlayerState
+            )
           ) {
-            this._rmpPlayerState[participantId] = msg.playerState;
+            this._rmpPlayerState[participantId] = msg.remoteMediaPlayerState;
             this.emitDailyJSEvent(msg);
           }
         }
@@ -3103,7 +3134,7 @@ export default class DailyIframe extends EventEmitter {
       }
       this.maybeEventCustomTrackStopped(
         prevP.tracks[trackKey].track,
-        thisP ? thisP.tracks[trackKey].track : null,
+        thisP && thisP.tracks[trackKey] ? thisP.tracks[trackKey].track : null,
         prevP,
         thisP
       );
@@ -3122,7 +3153,7 @@ export default class DailyIframe extends EventEmitter {
         continue;
       }
       this.maybeEventCustomTrackStarted(
-        prevP ? prevP.tracks[trackKey].track : null,
+        prevP && prevP.tracks[trackKey] ? prevP.tracks[trackKey].track : null,
         thisP.tracks[trackKey].track,
         thisP
       );
@@ -3536,6 +3567,7 @@ function validateInputSettings(settings) {
 }
 
 function validateVideoProcessor(p) {
+  const VALID_PROCESSOR_KEYS = ['type', `config`, 'publish'];
   if (!p) return false;
   if (typeof p !== 'object') return false;
   if (Object.keys(p).length === 0) return false; // lodash isEmpty did not work well with github workflow for some reason
@@ -3545,6 +3577,13 @@ function validateVideoProcessor(p) {
     if (typeof p.config !== 'object') return false;
     if (!validateVideoProcessorConfig(p.type, p.config)) return false;
   }
+  // scrub invalid keys in processor object
+  Object.keys(p)
+    .filter((k) => !VALID_PROCESSOR_KEYS.includes(k))
+    .forEach((k) => {
+      console.warn(`invalid key inputSettings -> video -> processor : ${k}`);
+      delete p[k];
+    });
   return true;
 }
 
@@ -3556,7 +3595,8 @@ function validateVideoProcessorConfig(type, config) {
   switch (type) {
     case VIDEO_PROCESSOR_TYPES.BGBLUR:
       if (keys.length > 1 || keys[0] !== 'strength') {
-        throw new Error(configErrMsg);
+        console.error(configErrMsg);
+        return false;
       }
       if (
         typeof config.strength !== 'number' ||
@@ -3564,18 +3604,73 @@ function validateVideoProcessorConfig(type, config) {
         config.strength > 1 ||
         isNaN(config.strength)
       ) {
-        throw new Error(
+        console.error(
           `${configErrMsg}; expected: {0 < strength <= 1}, got: ${config.strength}`
         );
+        return false;
       }
+      return true;
+    case VIDEO_PROCESSOR_TYPES.BGIMAGE:
+      if (config.source !== undefined) {
+        if (!validateAndTagBgImageSource(config)) return false;
+      }
+      return true;
     default:
       return true;
   }
 }
 
+function validateAndTagBgImageSource(config) {
+  if (config.source === 'default') {
+    config.type = 'default';
+    return true;
+  }
+  if (validateHttpUrl(config.source)) {
+    config.type = 'url';
+    if (!validateBgImageFileType(config.source)) {
+      console.error(
+        `invalid image type; supported types: [${DAILY_SUPPORTED_BG_IMG_TYPES.join(
+          ', '
+        )}]`
+      );
+      return false;
+    }
+    return true;
+  }
+  if (validateImageSelection(config.source)) {
+    config.type = 'daily-preselect';
+    return true;
+  } else {
+    console.error(
+      `invalid image selection; must be an int, > 0, <= ${DAILY_PRESELECTED_BG_IMAGE_URLS_LENGTH}`
+    );
+    return false;
+  }
+}
+
+function validateBgImageFileType(url) {
+  // ignore query params
+  const parsedUrl = new URL(url);
+  const fileType = parsedUrl.pathname.split('.').at(-1).toLowerCase().trim();
+  return DAILY_SUPPORTED_BG_IMG_TYPES.includes(fileType);
+}
+
+function validateImageSelection(selectImg) {
+  let imgNum = Number(selectImg);
+  if (isNaN(imgNum)) return false;
+  if (!Number.isInteger(imgNum)) return false;
+  if (imgNum <= 0) return false;
+  if (imgNum > DAILY_PRESELECTED_BG_IMAGE_URLS_LENGTH) return false;
+  return true;
+}
+
 function validateVideoProcessorType(type) {
   if (typeof type !== 'string') return false;
-  return Object.values(VIDEO_PROCESSOR_TYPES).includes(type);
+  if (!Object.values(VIDEO_PROCESSOR_TYPES).includes(type)) {
+    console.error('inputSettings video processor type invalid');
+    return false;
+  }
+  return true;
 }
 
 function inputSettingsValidationHelpMsg() {

@@ -98,7 +98,7 @@ export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_UPDATED =
   'remote-media-player-updated';
 export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_STOPPED =
   'remote-media-player-stopped';
-export const DAILY_REMOTE_MEDIA_PLAYER_ERROR_TYPE = 'remote-media-player';
+export const DAILY_REMOTE_MEDIA_PLAYER_ERROR_TYPE = 'remote-media-player-error';
 
 export const DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED =
   'local-screen-share-started';
@@ -227,7 +227,7 @@ export const DAILY_JS_NETWORK_THRESHOLDS = {
 export const DAILY_JS_VIDEO_PROCESSOR_TYPES = {
   NONE: 'none',
   BGBLUR: 'background-blur',
-  // BGIMAGE: 'background-image',
+  BGIMAGE: 'background-image',
   // CUSTOM: 'custom',
 };
 
@@ -246,3 +246,7 @@ export const DAILY_JS_REMOTE_MEDIA_PLAYER_STATE = {
 export const PARTICIPANT_TYPE = {
   REMOTE_MEDIA_PLAYER: 'remote-media-player',
 };
+
+export const DAILY_PRESELECTED_BG_IMAGE_URLS_LENGTH = 10;
+
+export const DAILY_SUPPORTED_BG_IMG_TYPES = ['jpg', 'png', 'jpeg'];

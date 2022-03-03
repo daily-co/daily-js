@@ -114,7 +114,8 @@ export type DailyFatalErrorType =
 export type DailyNonFatalErrorType =
   | 'input-settings-error'
   | 'screen-share-error'
-  | 'video-processor-error';
+  | 'video-processor-error'
+  | 'remote-media-player-error';
 
 export type DailyNetworkTopology = 'sfu' | 'peer';
 
@@ -229,6 +230,7 @@ export interface DailyAdvancedConfig {
   experimentalGetUserMediaConstraintsModify?: (
     constraints: MediaStreamConstraints
   ) => void;
+  userMediaVideoConstraints?: boolean | MediaTrackConstraints;
   fastConnect?: boolean;
   preferH264ForCam?: boolean;
   preferH264ForScreenSharing?: boolean;
@@ -259,7 +261,14 @@ export interface DailyTrackState {
     byRemoteRequest?: boolean;
     byBandwidth?: boolean;
   };
+  // guaranteed-playable reference to the track
+  // (it's only present when state === 'playable')
   track?: MediaStreamTrack;
+  // not-guaranteed-playable reference to the track
+  // (it may be present when state !== 'playable')
+  // useful, for instance, for avoiding Safari's remote-track-unmute-in-background-tab bug
+  // (see https://github.com/daily-demos/call-object-react/blob/c81b21262dead2aacbd5a2f534d0fee8530acfe4/src/components/Tile/Tile.js#L53-L60)
+  persistentTrack?: MediaStreamTrack;
 }
 
 export interface DailyParticipant {
@@ -489,7 +498,7 @@ export interface DailyInputVideoSettings {
   processor?: DailyInputVideoProcessorSettings;
 }
 export interface DailyInputVideoProcessorSettings {
-  type: 'none' | 'background-blur';
+  type: 'none' | 'background-blur' | 'background-image';
   config?: {};
 }
 export interface DailyEventObjectNoPayload {
@@ -588,6 +597,12 @@ export interface DailyEventObjectRecordingStarted {
   startedBy?: string;
   type?: string;
   layout?: DailyStreamingLayoutConfig;
+}
+
+export interface DailyEventObjectRecordingData {
+  action: Extract<DailyEvent, 'recording-data'>;
+  data: Uint8Array;
+  finished: boolean;
 }
 
 export interface DailyEventObjectMouseEvent {
@@ -707,61 +722,62 @@ export interface DailyEventObjectRemoteMediaPlayerStopped {
   reason: DailyRemoteMediaPlayerStopReason;
 }
 
-export type DailyEventObject<
-  T extends DailyEvent = any
-> = T extends DailyEventObjectAppMessage['action']
-  ? DailyEventObjectAppMessage
-  : T extends DailyEventObjectNoPayload['action']
-  ? DailyEventObjectNoPayload
-  : T extends DailyEventObjectCameraError['action']
-  ? DailyEventObjectCameraError
-  : T extends DailyEventObjectFatalError['action']
-  ? DailyEventObjectFatalError
-  : T extends DailyEventObjectNonFatalError['action']
-  ? DailyEventObjectNonFatalError
-  : T extends DailyEventObjectGenericError['action']
-  ? DailyEventObjectGenericError
-  : T extends DailyEventObjectParticipants['action']
-  ? DailyEventObjectParticipants
-  : T extends DailyEventObjectParticipant['action']
-  ? DailyEventObjectParticipant
-  : T extends DailyEventObjectWaitingParticipant['action']
-  ? DailyEventObjectWaitingParticipant
-  : T extends DailyEventObjectAccessState['action']
-  ? DailyEventObjectAccessState
-  : T extends DailyEventObjectMeetingSessionUpdated['action']
-  ? DailyEventObjectMeetingSessionUpdated
-  : T extends DailyEventObjectTrack['action']
-  ? DailyEventObjectTrack
-  : T extends DailyEventObjectRecordingStarted['action']
-  ? DailyEventObjectRecordingStarted
-  : T extends DailyEventObjectRemoteMediaPlayerUpdate['action']
-  ? DailyEventObjectRemoteMediaPlayerUpdate
-  : T extends DailyEventObjectRemoteMediaPlayerStopped['action']
-  ? DailyEventObjectRemoteMediaPlayerStopped
-  : T extends DailyEventObjectMouseEvent['action']
-  ? DailyEventObjectMouseEvent
-  : T extends DailyEventObjectTouchEvent['action']
-  ? DailyEventObjectTouchEvent
-  : T extends DailyEventObjectNetworkQualityEvent['action']
-  ? DailyEventObjectNetworkQualityEvent
-  : T extends DailyEventObjectNetworkConnectionEvent['action']
-  ? DailyEventObjectNetworkConnectionEvent
-  : T extends DailyEventObjectActiveSpeakerChange['action']
-  ? DailyEventObjectActiveSpeakerChange
-  : T extends DailyEventObjectActiveSpeakerModeChange['action']
-  ? DailyEventObjectActiveSpeakerModeChange
-  : T extends DailyEventObjectLangUpdated['action']
-  ? DailyEventObjectLangUpdated
-  : T extends DailyEventObjectThemeUpdated['action']
-  ? DailyEventObjectThemeUpdated
-  : T extends DailyEventObjectReceiveSettingsUpdated['action']
-  ? DailyEventObjectReceiveSettingsUpdated
-  : T extends DailyEventObjectShowLocalVideoChanged['action']
-  ? DailyEventObjectShowLocalVideoChanged
-  : T extends DailyEventObjectInputSettingsUpdated['action']
-  ? DailyEventObjectInputSettingsUpdated
-  : any;
+export type DailyEventObject<T extends DailyEvent = any> =
+  T extends DailyEventObjectAppMessage['action']
+    ? DailyEventObjectAppMessage
+    : T extends DailyEventObjectNoPayload['action']
+    ? DailyEventObjectNoPayload
+    : T extends DailyEventObjectCameraError['action']
+    ? DailyEventObjectCameraError
+    : T extends DailyEventObjectFatalError['action']
+    ? DailyEventObjectFatalError
+    : T extends DailyEventObjectNonFatalError['action']
+    ? DailyEventObjectNonFatalError
+    : T extends DailyEventObjectGenericError['action']
+    ? DailyEventObjectGenericError
+    : T extends DailyEventObjectParticipants['action']
+    ? DailyEventObjectParticipants
+    : T extends DailyEventObjectParticipant['action']
+    ? DailyEventObjectParticipant
+    : T extends DailyEventObjectWaitingParticipant['action']
+    ? DailyEventObjectWaitingParticipant
+    : T extends DailyEventObjectAccessState['action']
+    ? DailyEventObjectAccessState
+    : T extends DailyEventObjectMeetingSessionUpdated['action']
+    ? DailyEventObjectMeetingSessionUpdated
+    : T extends DailyEventObjectTrack['action']
+    ? DailyEventObjectTrack
+    : T extends DailyEventObjectRecordingStarted['action']
+    ? DailyEventObjectRecordingStarted
+    : T extends DailyEventObjectRecordingData['action']
+    ? DailyEventObjectRecordingData
+    : T extends DailyEventObjectRemoteMediaPlayerUpdate['action']
+    ? DailyEventObjectRemoteMediaPlayerUpdate
+    : T extends DailyEventObjectRemoteMediaPlayerStopped['action']
+    ? DailyEventObjectRemoteMediaPlayerStopped
+    : T extends DailyEventObjectMouseEvent['action']
+    ? DailyEventObjectMouseEvent
+    : T extends DailyEventObjectTouchEvent['action']
+    ? DailyEventObjectTouchEvent
+    : T extends DailyEventObjectNetworkQualityEvent['action']
+    ? DailyEventObjectNetworkQualityEvent
+    : T extends DailyEventObjectNetworkConnectionEvent['action']
+    ? DailyEventObjectNetworkConnectionEvent
+    : T extends DailyEventObjectActiveSpeakerChange['action']
+    ? DailyEventObjectActiveSpeakerChange
+    : T extends DailyEventObjectActiveSpeakerModeChange['action']
+    ? DailyEventObjectActiveSpeakerModeChange
+    : T extends DailyEventObjectLangUpdated['action']
+    ? DailyEventObjectLangUpdated
+    : T extends DailyEventObjectThemeUpdated['action']
+    ? DailyEventObjectThemeUpdated
+    : T extends DailyEventObjectReceiveSettingsUpdated['action']
+    ? DailyEventObjectReceiveSettingsUpdated
+    : T extends DailyEventObjectShowLocalVideoChanged['action']
+    ? DailyEventObjectShowLocalVideoChanged
+    : T extends DailyEventObjectInputSettingsUpdated['action']
+    ? DailyEventObjectInputSettingsUpdated
+    : any;
 
 export interface DailyFaceInfo {
   score: number;

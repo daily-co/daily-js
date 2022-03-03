@@ -103,7 +103,25 @@ const _getSubscriptionToTrack = (subscriber, subscribeeId, mediaTag) => {
     return sTracks ? mapToTrueFalseStaged(sTracks.ALL) : true;
   }
 
-  return mapToTrueFalseStaged(sTracks[subscribeeId][mediaTag]);
+  const isCustomTrack =
+    [
+      'cam-audio',
+      'cam-video',
+      'screen-video',
+      'screen-audio',
+      'rmpAudio',
+      'rmpVideo',
+    ].indexOf(mediaTag) === -1;
+
+  let result;
+  if (isCustomTrack && sTracks[subscribeeId]['custom']) {
+    result = [true, 'staged'].includes(sTracks[subscribeeId]['custom'])
+      ? mapToTrueFalseStaged(sTracks[subscribeeId]['custom'])
+      : mapToTrueFalseStaged(sTracks[subscribeeId]['custom'][mediaTag]);
+  } else {
+    result = mapToTrueFalseStaged(sTracks[subscribeeId][mediaTag]);
+  }
+  return result;
 };
 
 const _getRemoteStreamEntry = (state, participantId, type, kind) => {
