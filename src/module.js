@@ -371,8 +371,7 @@ const FRAME_PROPS = {
         'user',
       ].includes(lang);
     },
-    help:
-      'language not supported. Options are: de, en-us, en, es, fi, fr, it, jp, ka, nl, no, pl, pt, ru, sv, tr, user',
+    help: 'language not supported. Options are: de, en-us, en, es, fi, fr, it, jp, ka, nl, no, pl, pt, ru, sv, tr, user',
   },
   userName: true, // ignored if there's a token
   activeSpeakerMode: true,
@@ -467,8 +466,7 @@ const FRAME_PROPS = {
       }
       return containsValidColors(o.colors);
     },
-    help:
-      'unsupported theme configuration. Check error logs for detailed info.',
+    help: 'unsupported theme configuration. Check error logs for detailed info.',
   },
   layoutConfig: {
     validate: (layoutConfig) => {
@@ -1434,7 +1432,9 @@ export default class DailyIframe extends EventEmitter {
   startCamera(properties = {}) {
     // Validate mode.
     if (!this._callObjectMode) {
-      throw new Error('startCamera() currently only supported in call object mode');
+      throw new Error(
+        'startCamera() currently only supported in call object mode'
+      );
     }
 
     return new Promise(async (resolve, reject) => {
@@ -3313,12 +3313,8 @@ export default class DailyIframe extends EventEmitter {
       this.properties.reactNativeConfig &&
       this.properties.reactNativeConfig.androidInCallNotification
     ) {
-      ({
-        title,
-        subtitle,
-        iconName,
-        disableForCustomOverride,
-      } = this.properties.reactNativeConfig.androidInCallNotification);
+      ({ title, subtitle, iconName, disableForCustomOverride } =
+        this.properties.reactNativeConfig.androidInCallNotification);
     }
     if (disableForCustomOverride) {
       showNotification = false;
