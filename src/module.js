@@ -1432,6 +1432,11 @@ export default class DailyIframe extends EventEmitter {
   }
 
   startCamera(properties = {}) {
+    // Validate mode.
+    if (!this._callObjectMode) {
+      throw new Error('startCamera() currently only supported in call object mode');
+    }
+
     return new Promise(async (resolve, reject) => {
       let k = (msg) => {
         delete msg.action;
