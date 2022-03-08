@@ -1437,6 +1437,16 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
+    // Validate meeting state: startCamera() is only allowed if you haven't
+    // already joined (or aren't in the process of joining).
+    if (
+      [DAILY_STATE_JOINING, DAILY_STATE_JOINED].includes(this._meetingState)
+    ) {
+      throw new Error(
+        'startCamera() not supported after joining a meeting: did you mean to use setLocalAudio() and/or setLocalVideo() instead?'
+      );
+    }
+
     return new Promise(async (resolve, reject) => {
       let k = (msg) => {
         delete msg.action;
