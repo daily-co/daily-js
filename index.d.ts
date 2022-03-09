@@ -405,6 +405,7 @@ export interface DailyRoomInfo {
     enable_knocking?: boolean;
     enable_network_ui?: boolean;
     enable_people_ui?: boolean;
+    enable_pip_ui?: boolean;
     enable_prejoin_ui?: boolean;
     enable_video_processing_ui?: boolean;
     experimental_optimize_large_calls?: boolean;
@@ -436,6 +437,7 @@ export interface DailyRoomInfo {
     enable_advanced_chat?: boolean;
     enable_network_ui?: boolean;
     enable_people_ui?: boolean;
+    enable_pip_ui?: boolean;
     enable_prejoin_ui?: boolean;
     enable_video_processing_ui?: boolean;
   };
