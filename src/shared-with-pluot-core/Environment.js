@@ -73,7 +73,7 @@ export function canUnifiedPlan() {
 
 export function browserCanUnifiedPlan(browserName, browserVersion) {
   if (!(browserName && browserVersion)) {
-    return false;
+    return true;
   }
   switch (browserName) {
     case 'Chrome':
@@ -93,7 +93,7 @@ export function browserCanUnifiedPlan(browserName, browserVersion) {
     case 'Firefox':
       return browserVersion.major >= 67;
   }
-  return false;
+  return true;
 }
 
 export function browserVideoSupported_p() {
