@@ -455,6 +455,7 @@ export interface DailyRoomInfo {
     start_video_off?: boolean;
     start_audio_off?: boolean;
     enable_recording?: string;
+    enable_recording_ui?: boolean;
     start_cloud_recording?: boolean;
     close_tab_on_exit?: boolean;
     redirect_on_meeting_exit?: string;
