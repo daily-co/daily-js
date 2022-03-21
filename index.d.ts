@@ -449,6 +449,7 @@ export interface DailyRoomInfo {
     is_owner?: boolean;
     user_name?: string;
     user_id?: string;
+    enable_prejoin_ui?: boolean;
     enable_screenshare?: boolean;
     start_video_off?: boolean;
     start_audio_off?: boolean;
