@@ -157,6 +157,7 @@ import {
   DAILY_JS_REMOTE_MEDIA_PLAYER_STATE,
   DAILY_PRESELECTED_BG_IMAGE_URLS_LENGTH,
   DAILY_SUPPORTED_BG_IMG_TYPES,
+  DAILY_METHOD_SET_CUSTOM_TRAY_BUTTONS,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -314,7 +315,18 @@ const reactNativeConfigType = {
   },
 };
 
+const customTrayButtonType = {
+  iconPath: 'string',
+  id: 'string',
+  label: 'string',
+  tooltip: 'string',
+}
+
 const FRAME_PROPS = {
+  customTrayButtons: {
+    validate: validateCustomTrayButtons,
+    help: `customTrayButtons should be an Array of Objects of the type ${JSON.stringify(customTrayButtonType)}`,
+  },
   url: {
     validate: (url) => typeof url === 'string',
     help: 'url should be a string',
@@ -808,6 +820,18 @@ export default class DailyIframe extends EventEmitter {
       }
     } else {
       this._showParticipantsBar = true;
+    }
+
+    if (properties.customTrayButtons !== undefined) {
+      if (this._callObjectMode) {
+        console.error(
+          'customTrayButtons is not available in call object mode'
+        );
+      } else {
+        this._customTrayButtons = properties.customTrayButtons;
+      }
+    } else {
+      this._customTrayButtons = [];
     }
 
     if (properties.activeSpeakerMode !== undefined) {
@@ -2326,6 +2350,41 @@ export default class DailyIframe extends EventEmitter {
     return this._showParticipantsBar;
   }
 
+  customTrayButtons() {
+    methodNotSupportedInReactNative();
+    if (this._callObjectMode) {
+      console.error('customTrayButtons is not available in callObject mode');
+      return this;
+    }
+    return this._customTrayButtons;
+  }
+
+  setCustomTrayButtons(btns) {
+    methodNotSupportedInReactNative();
+    if (!validateCustomTrayButtons(btns)) {
+      console.error(`setCustomTrayButtons only accepts an Array of Objects of the type ${JSON.stringify(customTrayButtonType)}`);
+      return this;
+    }
+    if (this._callObjectMode) {
+      console.error(
+        'setCustomTrayButtons is not available in callObject mode'
+      );
+      return this;
+    }
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      console.error(
+        'the meeting must be joined before calling setCustomTrayButtons'
+      );
+      return this;
+    }
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_SET_CUSTOM_TRAY_BUTTONS,
+      btns,
+    });
+    this._customTrayButtons = btns;
+    return this;
+  }
+
   theme() {
     if (this._callObjectMode) {
       console.error('theme is not available in callObject mode');
@@ -3716,6 +3775,26 @@ function receiveSettingsValidationHelpMsg({ allowAllParticipantsKey }) {
     '[screenVideo: [{ layer: [<non-negative integer> | "inherit"] } | "inherit"]] ' +
     '}}}'
   );
+}
+
+function validateCustomTrayButtons(btns) {
+  if (!Array.isArray(btns)) {
+    console.error(
+      `customTrayButtons should be an Array.`
+    );
+    return false;
+  }
+
+  for (const [key, value] of Object.entries(customTrayButtonType)) {
+    if (btns.some((btn) => typeof btn[key] !== customTrayButtonType[key])) {
+      console.error(
+        `customTrayButton ${key} should be a ${value}.`
+      );
+      return false;
+    }
+  }
+
+  return true;
 }
 
 function validateReactNativeConfig(config) {

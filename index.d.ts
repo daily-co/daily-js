@@ -197,6 +197,13 @@ export interface DailyLayoutConfig {
   grid?: DailyGridLayoutConfig;
 }
 
+export interface DailyCustomTrayButton {
+  iconPath: string;
+  id: string;
+  label: string;
+  tooltip: string;
+}
+
 export interface DailyCallOptions {
   url?: string;
   token?: string;
@@ -208,6 +215,7 @@ export interface DailyCallOptions {
   showFullscreenButton?: boolean;
   iframeStyle?: Partial<CSSStyleDeclaration>;
   customLayout?: boolean;
+  customTrayButtons?: DailyCustomTrayButton[];
   bodyClass?: string;
   cssFile?: string;
   cssText?: string;
