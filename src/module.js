@@ -3041,7 +3041,10 @@ export default class DailyIframe extends EventEmitter {
           }
         }
         break;
-
+      // TODO: Replace with const, add checks?
+      case 'custom-button-click':
+        this.emitDailyJSEvent(msg);
+        break;
       case DAILY_EVENT_RECORDING_STARTED:
       case DAILY_EVENT_RECORDING_STOPPED:
       case DAILY_EVENT_RECORDING_STATS:

@@ -88,7 +88,8 @@ export type DailyEvent =
   | 'theme-updated'
   | 'receive-settings-updated'
   | 'input-settings-updated'
-  | 'show-local-video-changed';
+  | 'show-local-video-changed'
+  | 'custom-button-click';
 
 export type DailyMeetingState =
   | 'new'
@@ -737,63 +738,69 @@ export interface DailyEventObjectRemoteMediaPlayerStopped {
   reason: DailyRemoteMediaPlayerStopReason;
 }
 
-export type DailyEventObject<
-  T extends DailyEvent = any
-> = T extends DailyEventObjectAppMessage['action']
-  ? DailyEventObjectAppMessage
-  : T extends DailyEventObjectNoPayload['action']
-  ? DailyEventObjectNoPayload
-  : T extends DailyEventObjectCameraError['action']
-  ? DailyEventObjectCameraError
-  : T extends DailyEventObjectFatalError['action']
-  ? DailyEventObjectFatalError
-  : T extends DailyEventObjectNonFatalError['action']
-  ? DailyEventObjectNonFatalError
-  : T extends DailyEventObjectGenericError['action']
-  ? DailyEventObjectGenericError
-  : T extends DailyEventObjectParticipants['action']
-  ? DailyEventObjectParticipants
-  : T extends DailyEventObjectParticipant['action']
-  ? DailyEventObjectParticipant
-  : T extends DailyEventObjectWaitingParticipant['action']
-  ? DailyEventObjectWaitingParticipant
-  : T extends DailyEventObjectAccessState['action']
-  ? DailyEventObjectAccessState
-  : T extends DailyEventObjectMeetingSessionUpdated['action']
-  ? DailyEventObjectMeetingSessionUpdated
-  : T extends DailyEventObjectTrack['action']
-  ? DailyEventObjectTrack
-  : T extends DailyEventObjectRecordingStarted['action']
-  ? DailyEventObjectRecordingStarted
-  : T extends DailyEventObjectRecordingData['action']
-  ? DailyEventObjectRecordingData
-  : T extends DailyEventObjectRemoteMediaPlayerUpdate['action']
-  ? DailyEventObjectRemoteMediaPlayerUpdate
-  : T extends DailyEventObjectRemoteMediaPlayerStopped['action']
-  ? DailyEventObjectRemoteMediaPlayerStopped
-  : T extends DailyEventObjectMouseEvent['action']
-  ? DailyEventObjectMouseEvent
-  : T extends DailyEventObjectTouchEvent['action']
-  ? DailyEventObjectTouchEvent
-  : T extends DailyEventObjectNetworkQualityEvent['action']
-  ? DailyEventObjectNetworkQualityEvent
-  : T extends DailyEventObjectNetworkConnectionEvent['action']
-  ? DailyEventObjectNetworkConnectionEvent
-  : T extends DailyEventObjectActiveSpeakerChange['action']
-  ? DailyEventObjectActiveSpeakerChange
-  : T extends DailyEventObjectActiveSpeakerModeChange['action']
-  ? DailyEventObjectActiveSpeakerModeChange
-  : T extends DailyEventObjectLangUpdated['action']
-  ? DailyEventObjectLangUpdated
-  : T extends DailyEventObjectThemeUpdated['action']
-  ? DailyEventObjectThemeUpdated
-  : T extends DailyEventObjectReceiveSettingsUpdated['action']
-  ? DailyEventObjectReceiveSettingsUpdated
-  : T extends DailyEventObjectShowLocalVideoChanged['action']
-  ? DailyEventObjectShowLocalVideoChanged
-  : T extends DailyEventObjectInputSettingsUpdated['action']
-  ? DailyEventObjectInputSettingsUpdated
-  : any;
+export interface DailyEventObjectCustomButtonClick {
+  action: Extract<DailyEvent, 'custom-button-click'>;
+  button_id: string;
+}
+
+export type DailyEventObject<T extends DailyEvent = any> =
+  T extends DailyEventObjectAppMessage['action']
+    ? DailyEventObjectAppMessage
+    : T extends DailyEventObjectNoPayload['action']
+    ? DailyEventObjectNoPayload
+    : T extends DailyEventObjectCameraError['action']
+    ? DailyEventObjectCameraError
+    : T extends DailyEventObjectFatalError['action']
+    ? DailyEventObjectFatalError
+    : T extends DailyEventObjectNonFatalError['action']
+    ? DailyEventObjectNonFatalError
+    : T extends DailyEventObjectGenericError['action']
+    ? DailyEventObjectGenericError
+    : T extends DailyEventObjectParticipants['action']
+    ? DailyEventObjectParticipants
+    : T extends DailyEventObjectParticipant['action']
+    ? DailyEventObjectParticipant
+    : T extends DailyEventObjectWaitingParticipant['action']
+    ? DailyEventObjectWaitingParticipant
+    : T extends DailyEventObjectAccessState['action']
+    ? DailyEventObjectAccessState
+    : T extends DailyEventObjectMeetingSessionUpdated['action']
+    ? DailyEventObjectMeetingSessionUpdated
+    : T extends DailyEventObjectTrack['action']
+    ? DailyEventObjectTrack
+    : T extends DailyEventObjectRecordingStarted['action']
+    ? DailyEventObjectRecordingStarted
+    : T extends DailyEventObjectRecordingData['action']
+    ? DailyEventObjectRecordingData
+    : T extends DailyEventObjectRemoteMediaPlayerUpdate['action']
+    ? DailyEventObjectRemoteMediaPlayerUpdate
+    : T extends DailyEventObjectRemoteMediaPlayerStopped['action']
+    ? DailyEventObjectRemoteMediaPlayerStopped
+    : T extends DailyEventObjectMouseEvent['action']
+    ? DailyEventObjectMouseEvent
+    : T extends DailyEventObjectTouchEvent['action']
+    ? DailyEventObjectTouchEvent
+    : T extends DailyEventObjectNetworkQualityEvent['action']
+    ? DailyEventObjectNetworkQualityEvent
+    : T extends DailyEventObjectNetworkConnectionEvent['action']
+    ? DailyEventObjectNetworkConnectionEvent
+    : T extends DailyEventObjectActiveSpeakerChange['action']
+    ? DailyEventObjectActiveSpeakerChange
+    : T extends DailyEventObjectActiveSpeakerModeChange['action']
+    ? DailyEventObjectActiveSpeakerModeChange
+    : T extends DailyEventObjectLangUpdated['action']
+    ? DailyEventObjectLangUpdated
+    : T extends DailyEventObjectThemeUpdated['action']
+    ? DailyEventObjectThemeUpdated
+    : T extends DailyEventObjectReceiveSettingsUpdated['action']
+    ? DailyEventObjectReceiveSettingsUpdated
+    : T extends DailyEventObjectShowLocalVideoChanged['action']
+    ? DailyEventObjectShowLocalVideoChanged
+    : T extends DailyEventObjectInputSettingsUpdated['action']
+    ? DailyEventObjectInputSettingsUpdated
+    : T extends DailyEventObjectCustomButtonClick['action']
+    ? DailyEventObjectCustomButtonClick
+    : any;
 
 export interface DailyFaceInfo {
   score: number;
