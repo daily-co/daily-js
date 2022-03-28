@@ -131,6 +131,8 @@ export const DAILY_SCREEN_SHARE_ERROR_TYPE = 'screen-share-error';
 export const DAILY_VIDEO_PROCESSOR_ERROR_TYPE = 'video-processor-error';
 export const DAILY_EVENT_ERROR = 'error';
 
+export const DAILY_EVENT_CUSTOM_BUTTON_CLICK = 'custom-button-click';
+
 //
 // internal
 //

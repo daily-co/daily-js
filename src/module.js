@@ -158,6 +158,7 @@ import {
   DAILY_PRESELECTED_BG_IMAGE_URLS_LENGTH,
   DAILY_SUPPORTED_BG_IMG_TYPES,
   DAILY_METHOD_SET_CUSTOM_TRAY_BUTTONS,
+  DAILY_EVENT_CUSTOM_BUTTON_CLICK,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -3041,8 +3042,7 @@ export default class DailyIframe extends EventEmitter {
           }
         }
         break;
-      // TODO: Replace with const, add checks?
-      case 'custom-button-click':
+      case DAILY_EVENT_CUSTOM_BUTTON_CLICK:
         this.emitDailyJSEvent(msg);
         break;
       case DAILY_EVENT_RECORDING_STARTED:
