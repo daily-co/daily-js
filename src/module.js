@@ -316,17 +316,20 @@ const reactNativeConfigType = {
   },
 };
 
-const customTrayButtonType = {
-  iconPath: 'string',
-  id: 'string',
-  label: 'string',
-  tooltip: 'string',
-}
+const customTrayButtonsType = {
+  id: {
+    iconPath: 'string',
+    label: 'string',
+    tooltip: 'string',
+  },
+};
 
 const FRAME_PROPS = {
   customTrayButtons: {
     validate: validateCustomTrayButtons,
-    help: `customTrayButtons should be an Array of Objects of the type ${JSON.stringify(customTrayButtonType)}`,
+    help: `customTrayButtons should be a dictionary of the type ${JSON.stringify(
+      customTrayButtonsType
+    )}`,
   },
   url: {
     validate: (url) => typeof url === 'string',
@@ -825,9 +828,7 @@ export default class DailyIframe extends EventEmitter {
 
     if (properties.customTrayButtons !== undefined) {
       if (this._callObjectMode) {
-        console.error(
-          'customTrayButtons is not available in call object mode'
-        );
+        console.error('customTrayButtons is not available in call object mode');
       } else {
         this._customTrayButtons = properties.customTrayButtons;
       }
@@ -2362,13 +2363,15 @@ export default class DailyIframe extends EventEmitter {
 
   setCustomTrayButtons(btns) {
     methodNotSupportedInReactNative();
-    if (!validateCustomTrayButtons(btns)) {
-      console.error(`setCustomTrayButtons only accepts an Array of Objects of the type ${JSON.stringify(customTrayButtonType)}`);
+    if (this._callObjectMode) {
+      console.error('setCustomTrayButtons is not available in callObject mode');
       return this;
     }
-    if (this._callObjectMode) {
+    if (!validateCustomTrayButtons(btns)) {
       console.error(
-        'setCustomTrayButtons is not available in callObject mode'
+        `setCustomTrayButtons only accepts a dictionary of the type ${JSON.stringify(
+          customTrayButtonsType
+        )}`
       );
       return this;
     }
@@ -3781,19 +3784,34 @@ function receiveSettingsValidationHelpMsg({ allowAllParticipantsKey }) {
 }
 
 function validateCustomTrayButtons(btns) {
-  if (!Array.isArray(btns)) {
+  if (
+    (btns &&
+      Object.keys(btns).length === 0 &&
+      Object.getPrototypeOf(btns) === Object.prototype) ||
+    Array.isArray(btns)
+  ) {
     console.error(
-      `customTrayButtons should be an Array.`
+      `customTrayButtons should be an Object of the type ${JSON.stringify(
+        customTrayButtonsType
+      )}.`
     );
     return false;
   }
 
-  for (const [key, value] of Object.entries(customTrayButtonType)) {
-    if (btns.some((btn) => typeof btn[key] !== customTrayButtonType[key])) {
-      console.error(
-        `customTrayButton ${key} should be a ${value}.`
-      );
-      return false;
+  if (btns) {
+    for (const [btnsKey] of Object.entries(btns)) {
+      for (const [btnKey, btnValue] of Object.entries(btns[btnsKey])) {
+        if (btnKey === 'iconPath' && !validateHttpUrl(btnValue)) {
+          console.error(`customTrayButton ${btnKey} should be a url.`);
+          return false;
+        }
+        if (typeof btnValue !== customTrayButtonsType.id[btnKey]) {
+          console.error(
+            `customTrayButton ${btnKey} should be a ${customTrayButtonsType.id[btnKey]}.`
+          );
+          return false;
+        }
+      }
     }
   }
 

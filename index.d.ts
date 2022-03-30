@@ -200,9 +200,12 @@ export interface DailyLayoutConfig {
 
 export interface DailyCustomTrayButton {
   iconPath: string;
-  id: string;
   label: string;
   tooltip: string;
+}
+
+export interface DailyCustomTrayButtons {
+  [id: string] : DailyCustomTrayButton
 }
 
 export interface DailyCallOptions {
@@ -216,7 +219,7 @@ export interface DailyCallOptions {
   showFullscreenButton?: boolean;
   iframeStyle?: Partial<CSSStyleDeclaration>;
   customLayout?: boolean;
-  customTrayButtons?: DailyCustomTrayButton[];
+  customTrayButtons?: DailyCustomTrayButtons;
   bodyClass?: string;
   cssFile?: string;
   cssText?: string;
