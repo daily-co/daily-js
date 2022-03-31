@@ -833,7 +833,7 @@ export default class DailyIframe extends EventEmitter {
         this._customTrayButtons = properties.customTrayButtons;
       }
     } else {
-      this._customTrayButtons = [];
+      this._customTrayButtons = {};
     }
 
     if (properties.activeSpeakerMode !== undefined) {
@@ -2367,17 +2367,17 @@ export default class DailyIframe extends EventEmitter {
       console.error('setCustomTrayButtons is not available in callObject mode');
       return this;
     }
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      console.error(
+        'the meeting must be joined before calling setCustomTrayButtons'
+      );
+      return this;
+    }
     if (!validateCustomTrayButtons(btns)) {
       console.error(
         `setCustomTrayButtons only accepts a dictionary of the type ${JSON.stringify(
           customTrayButtonsType
         )}`
-      );
-      return this;
-    }
-    if (this._meetingState !== DAILY_STATE_JOINED) {
-      console.error(
-        'the meeting must be joined before calling setCustomTrayButtons'
       );
       return this;
     }
@@ -3784,12 +3784,7 @@ function receiveSettingsValidationHelpMsg({ allowAllParticipantsKey }) {
 }
 
 function validateCustomTrayButtons(btns) {
-  if (
-    (btns &&
-      Object.keys(btns).length === 0 &&
-      Object.getPrototypeOf(btns) === Object.prototype) ||
-    Array.isArray(btns)
-  ) {
+  if ((btns && typeof btns !== 'object') || Array.isArray(btns)) {
     console.error(
       `customTrayButtons should be an Object of the type ${JSON.stringify(
         customTrayButtonsType
