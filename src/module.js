@@ -1986,11 +1986,16 @@ export default class DailyIframe extends EventEmitter {
         // nothing to do, here, just resolve
         resolve();
       } else {
+        this._leftCallback = () => {
+          if (this._meetingState !== DAILY_STATE_ERROR) {
+            this.updateMeetingState(DAILY_STATE_LEFT);
+          }
+          this.resetMeetingDependentVars();
+          resolve();
+        };
         // TODO: the possibility that the iframe call machine is not yet loaded
         // is never handled here...
-        this.sendMessageToCallMachine({ action: DAILY_METHOD_LEAVE }, () => {
-          resolve();
-        });
+        this.sendMessageToCallMachine({ action: DAILY_METHOD_LEAVE });
       }
     });
   }
@@ -2818,10 +2823,10 @@ export default class DailyIframe extends EventEmitter {
         }
         break;
       case DAILY_EVENT_LEFT_MEETING:
-        if (this._meetingState !== DAILY_STATE_ERROR) {
-          this.updateMeetingState(DAILY_STATE_LEFT);
+        if (this._leftCallback) {
+          this._leftCallback();
+          this._leftCallback = null;
         }
-        this.resetMeetingDependentVars();
         try {
           this.emit(msg.action, msg);
         } catch (e) {
