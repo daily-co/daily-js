@@ -3578,12 +3578,22 @@ function validateInputSettings(settings) {
 }
 
 function validateVideoProcessor(p) {
+  // publish has been deprecated. It hasnt been removed from VALID_PROCESSOR_KEYS
+  // so as to not throw an error for any active users; Added a warning about the
+  // deprecation below.
   const VALID_PROCESSOR_KEYS = ['type', `config`, 'publish'];
   if (!p) return false;
   if (typeof p !== 'object') return false;
   if (Object.keys(p).length === 0) return false; // lodash isEmpty did not work well with github workflow for some reason
   if (p.type && !validateVideoProcessorType(p.type)) return false;
   if (p.publish !== undefined && typeof p.publish !== 'boolean') return false;
+  // publish flag has been deprecated
+  if (typeof p.publish === 'boolean') {
+    console.warn(
+      'inputSettings.video.processor: publish key has been deprecated; it will be ignored'
+    );
+  }
+
   if (p.config) {
     if (typeof p.config !== 'object') return false;
     if (!validateVideoProcessorConfig(p.type, p.config)) return false;
@@ -3686,7 +3696,7 @@ function validateVideoProcessorType(type) {
 
 function inputSettingsValidationHelpMsg() {
   let processorOpts = Object.values(VIDEO_PROCESSOR_TYPES).join(' | ');
-  return `inputSettings must be of the form: { video: { processor: [ ${processorOpts} ] }, publish?: boolean, config?: {} }`;
+  return `inputSettings must be of the form: { video: { processor: [ ${processorOpts} ] }, config?: {} }`;
 }
 
 function receiveSettingsValidationHelpMsg({ allowAllParticipantsKey }) {
