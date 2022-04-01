@@ -2389,6 +2389,61 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
+  updateCustomTrayButtons(btns) {
+    methodNotSupportedInReactNative();
+    if (this._callObjectMode) {
+      console.error(
+        'updateCustomTrayButtons is not available in callObject mode'
+      );
+      return this;
+    }
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      console.error(
+        'the meeting must be joined before calling updateCustomTrayButtons'
+      );
+      return this;
+    }
+    if (!validateCustomTrayButtons(btns)) {
+      console.error(
+        `updateCustomTrayButtons only accepts a dictionary of the type ${JSON.stringify(
+          customTrayButtonsType
+        )}`
+      );
+      return this;
+    }
+    const updatedBtns = Object.assign(this._customTrayButtons, btns);
+    this.setCustomTrayButtons(updatedBtns);
+    return this;
+  }
+
+  removeCustomTrayButton(id) {
+    methodNotSupportedInReactNative();
+    if (this._callObjectMode) {
+      console.error(
+        'removeCustomTrayButton is not available in callObject mode'
+      );
+      return this;
+    }
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      console.error(
+        'the meeting must be joined before calling removeCustomTrayButton'
+      );
+      return this;
+    }
+    if (typeof id !== 'string') {
+      console.error(
+        'removeCustomTrayButton only accepts a string of the button id'
+      );
+      return this;
+    }
+    if (this._customTrayButtons[id]) {
+      const updatedBtns = { ...this._customTrayButtons };
+      delete updatedBtns[id];
+      this.setCustomTrayButtons(updatedBtns);
+    }
+    return this;
+  }
+
   theme() {
     if (this._callObjectMode) {
       console.error('theme is not available in callObject mode');
