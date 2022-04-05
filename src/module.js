@@ -2113,10 +2113,13 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  updateLiveStreaming({ layout = { preset: 'default' } }) {
+  // TODO: DISCUSS Should we remove the default value for layout ? if user only wants to update rtmpURL
+  // they also need to pass the previously set preset. If we remove it is change in the API behaviour
+  updateLiveStreaming({ layout = { preset: 'default' }, rtmpUrl = null }) {
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_UPDATE_LIVE_STREAMING,
       layout,
+      rtmpUrl,
     });
   }
 

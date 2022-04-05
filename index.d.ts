@@ -911,7 +911,7 @@ export interface DailyStreamingOptions {
 }
 
 export interface DailyLiveStreamingOptions extends DailyStreamingOptions {
-  rtmpUrl: string;
+  rtmpUrl: string | [string];
 }
 
 export interface RemoteMediaPlayerSimulcastEncoding {
@@ -1039,7 +1039,10 @@ export interface DailyCall {
   updateRecording(options: { layout?: DailyStreamingLayoutConfig }): void;
   stopRecording(): void;
   startLiveStreaming(options: DailyLiveStreamingOptions): void;
-  updateLiveStreaming(options: { layout?: DailyStreamingLayoutConfig }): void;
+  updateLiveStreaming(options: {
+    layout?: DailyStreamingLayoutConfig;
+    rtmpUrl?: string | [string];
+  }): void;
   stopLiveStreaming(): void;
   startRemoteMediaPlayer(
     options: DailyRemoteMediaPlayerStartOptions
