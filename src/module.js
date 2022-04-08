@@ -157,7 +157,7 @@ import {
   DAILY_JS_REMOTE_MEDIA_PLAYER_STATE,
   DAILY_PRESELECTED_BG_IMAGE_URLS_LENGTH,
   DAILY_SUPPORTED_BG_IMG_TYPES,
-  DAILY_METHOD_SET_CUSTOM_TRAY_BUTTONS,
+  DAILY_METHOD_UPDATE_CUSTOM_TRAY_BUTTONS,
   DAILY_EVENT_CUSTOM_BUTTON_CLICK,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
@@ -2361,40 +2361,10 @@ export default class DailyIframe extends EventEmitter {
     return this._customTrayButtons;
   }
 
-  setCustomTrayButtons(btns) {
-    methodNotSupportedInReactNative();
-    if (this._callObjectMode) {
-      console.error('setCustomTrayButtons is not available in callObject mode');
-      return this;
-    }
-    if (this._meetingState !== DAILY_STATE_JOINED) {
-      console.error(
-        'the meeting must be joined before calling setCustomTrayButtons'
-      );
-      return this;
-    }
-    if (!validateCustomTrayButtons(btns)) {
-      console.error(
-        `setCustomTrayButtons only accepts a dictionary of the type ${JSON.stringify(
-          customTrayButtonsType
-        )}`
-      );
-      return this;
-    }
-    this.sendMessageToCallMachine({
-      action: DAILY_METHOD_SET_CUSTOM_TRAY_BUTTONS,
-      btns,
-    });
-    this._customTrayButtons = btns;
-    return this;
-  }
-
   updateCustomTrayButtons(btns) {
     methodNotSupportedInReactNative();
     if (this._callObjectMode) {
-      console.error(
-        'updateCustomTrayButtons is not available in callObject mode'
-      );
+      console.error('updateCustomTrayButtons is not available in callObject mode');
       return this;
     }
     if (this._meetingState !== DAILY_STATE_JOINED) {
@@ -2411,36 +2381,11 @@ export default class DailyIframe extends EventEmitter {
       );
       return this;
     }
-    const updatedBtns = Object.assign(this._customTrayButtons, btns);
-    this.setCustomTrayButtons(updatedBtns);
-    return this;
-  }
-
-  removeCustomTrayButton(id) {
-    methodNotSupportedInReactNative();
-    if (this._callObjectMode) {
-      console.error(
-        'removeCustomTrayButton is not available in callObject mode'
-      );
-      return this;
-    }
-    if (this._meetingState !== DAILY_STATE_JOINED) {
-      console.error(
-        'the meeting must be joined before calling removeCustomTrayButton'
-      );
-      return this;
-    }
-    if (typeof id !== 'string') {
-      console.error(
-        'removeCustomTrayButton only accepts a string of the button id'
-      );
-      return this;
-    }
-    if (this._customTrayButtons[id]) {
-      const updatedBtns = { ...this._customTrayButtons };
-      delete updatedBtns[id];
-      this.setCustomTrayButtons(updatedBtns);
-    }
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_UPDATE_CUSTOM_TRAY_BUTTONS,
+      btns,
+    });
+    this._customTrayButtons = btns;
     return this;
   }
 
