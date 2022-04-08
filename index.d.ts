@@ -981,6 +981,10 @@ export interface DailyCall {
     inputSettings: DailyInputSettings
   ): Promise<DailyInputSettings>;
   getInputSettings(): Promise<DailyInputSettings>;
+  updateCustomTrayButtons(
+    customTrayButtons: DailyCustomTrayButtons
+  ): DailyCall;
+  customTrayButtons(): DailyCustomTrayButtons;
   setBandwidth(bw: {
     kbs?: number | 'NO_CAP' | null;
     trackConstraints?: MediaTrackConstraints;
