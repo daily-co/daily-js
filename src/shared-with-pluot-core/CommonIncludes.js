@@ -66,6 +66,9 @@ export const DAILY_EVENT_PARTICIPANT_JOINED = 'participant-joined';
 export const DAILY_EVENT_PARTICIPANT_UPDATED = 'participant-updated';
 export const DAILY_EVENT_PARTICIPANT_LEFT = 'participant-left';
 
+export const DAILY_EVENT_PARTICIPANT_COUNTS_UPDATED =
+  'participant-counts-updated';
+
 export const DAILY_EVENT_ACCESS_STATE_UPDATED = 'access-state-updated';
 
 export const DAILY_EVENT_MEETING_SESSION_UPDATED = 'meeting-session-updated';

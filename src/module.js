@@ -52,6 +52,7 @@ import {
   DAILY_EVENT_PARTICIPANT_JOINED,
   DAILY_EVENT_PARTICIPANT_UPDATED,
   DAILY_EVENT_PARTICIPANT_LEFT,
+  DAILY_EVENT_PARTICIPANT_COUNTS_UPDATED,
   DAILY_EVENT_TRACK_STARTED,
   DAILY_EVENT_TRACK_STOPPED,
   DAILY_EVENT_RECORDING_STARTED,
@@ -242,6 +243,7 @@ export {
   DAILY_EVENT_PARTICIPANT_JOINED,
   DAILY_EVENT_PARTICIPANT_UPDATED,
   DAILY_EVENT_PARTICIPANT_LEFT,
+  DAILY_EVENT_PARTICIPANT_COUNTS_UPDATED,
   DAILY_EVENT_TRACK_STARTED,
   DAILY_EVENT_TRACK_STOPPED,
   DAILY_EVENT_RECORDING_STARTED,
@@ -293,6 +295,8 @@ const MAX_SIMULCAST_LAYERS = 3;
 const MAX_SCALE_RESOLUTION_BY = 8;
 const MAX_LAYER_BITRATE = 2500000;
 const MIN_LAYER_BITRATE = 100000;
+
+const EMPTY_PARTICIPANT_COUNTS = { present: 0, hidden: 0 };
 
 const simulcastEncodingsValidRanges = {
   maxBitrate: { min: MIN_LAYER_BITRATE, max: MAX_LAYER_BITRATE },
@@ -879,6 +883,7 @@ export default class DailyIframe extends EventEmitter {
     this._accessState = { access: DAILY_ACCESS_UNKNOWN };
     this._nativeInCallAudioMode = NATIVE_AUDIO_MODE_VIDEO_CALL;
     this._participants = {};
+    this._participantCounts = EMPTY_PARTICIPANT_COUNTS;
     this._rmpPlayerState = {};
     this._waitingParticipants = {};
     this._inputEventsOn = {}; // need to cache these until loaded
@@ -1038,6 +1043,10 @@ export default class DailyIframe extends EventEmitter {
 
   participants() {
     return this._participants;
+  }
+
+  participantCounts() {
+    return this._participantCounts;
   }
 
   waitingParticipants() {
@@ -2882,6 +2891,16 @@ export default class DailyIframe extends EventEmitter {
           }
         }
         break;
+      case DAILY_EVENT_PARTICIPANT_COUNTS_UPDATED:
+        if (!deepEqual(this._participantCounts, msg.participantCounts)) {
+          this._participantCounts = msg.participantCounts;
+          try {
+            this.emit(msg.action, msg);
+          } catch (e) {
+            console.log('could not emit', msg, e);
+          }
+        }
+        break;
       case DAILY_EVENT_ACCESS_STATE_UPDATED:
         let newAccessState = {
           access: msg.access,
@@ -3393,6 +3412,7 @@ export default class DailyIframe extends EventEmitter {
   // were being reset properly on leave() but not when leaving via prebuilt ui.
   resetMeetingDependentVars() {
     this._participants = {};
+    this._participantCounts = EMPTY_PARTICIPANT_COUNTS;
     this._waitingParticipants = {};
     this._activeSpeaker = {};
     this._activeSpeakerMode = false;
