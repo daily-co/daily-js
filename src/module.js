@@ -2519,7 +2519,13 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async room({ includeRoomConfigDefaults = true } = {}) {
-    if (this._meetingState === DAILY_STATE_JOINED || this._didPreAuth) {
+    // The call machine bundle is loaded and it's already given us an access
+    // state (which is based on room info), so we know it can be queried for
+    // room info.
+    if (
+      this._accessState.access !== DAILY_ACCESS_UNKNOWN &&
+      !this.needsLoad()
+    ) {
       // We've succesfully join()ed or preAuth()ed, so we should have room info.
       return new Promise((resolve, _) => {
         let k = (msg) => {
