@@ -291,12 +291,21 @@ function getEdgeVersion() {
 // daily-js version helpers
 
 // Daily supports the last 6 months of versions.
-// This variable should be updated as part of each release as needed
-// and should match the oldest version that is exactly 6 months or less
-// at the time of each release
+// These variable should be updated as part of each release as needed.
+
+// OLDEST should match the oldest version that is exactly 6 months or
+// less at the time of each release.
 const OLDEST_SUPPORTED_DAILY_JS_VERSION = {
   major: 0,
   minor: 19,
+  patch: 0,
+};
+
+// NEARING should be a version roughly 1 month out from being unsupported
+// to give customers ample time to upgrade.
+const NEARING_EOS_DAILY_JS_VERSION = {
+  major: 0,
+  minor: 21,
   patch: 0,
 };
 
@@ -323,12 +332,14 @@ export function isThisDailyJsVersionAtLeastThat(thisV, thatV) {
   return thisV.patch >= thatV.patch;
 }
 
-export function isThisDailyJsVersionEqualToThat(thisV, thatV) {
-  return (
-    thisV.major === thatV.major &&
-    thisV.minor === thatV.minor &&
-    thisV.patch === thatV.patch
-  );
+export function isThisDailyJsVersionNewerThanThat(thisV, thatV) {
+  if (thisV.major != thatV.major) {
+    return thisV.major > thatV.major;
+  }
+  if (thisV.minor != thatV.minor) {
+    return thisV.minor > thatV.minor;
+  }
+  return thisV.patch > thatV.patch;
 }
 
 export function isCurrentDailyJsSupported() {
@@ -338,9 +349,9 @@ export function isCurrentDailyJsSupported() {
   );
 }
 
-export function isCurrentDailyJsOldest() {
-  return isThisDailyJsVersionEqualToThat(
+export function isCurrentDailyJsNearEndOfSupport() {
+  return !isThisDailyJsVersionNewerThanThat(
     getDailyJsVersion(),
-    OLDEST_SUPPORTED_DAILY_JS_VERSION
+    NEARING_EOS_DAILY_JS_VERSION
   );
 }
