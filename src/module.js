@@ -3742,8 +3742,24 @@ function validateAndTagBgImageSource(config) {
 function validateBgImageFileType(url) {
   // ignore query params
   const parsedUrl = new URL(url);
-  const fileType = parsedUrl.pathname.split('.').at(-1).toLowerCase().trim();
-  return DAILY_SUPPORTED_BG_IMG_TYPES.includes(fileType);
+  const pathName = parsedUrl.pathname;
+
+  if (parsedUrl.protocol === 'data:') {
+    try {
+      const blobContentType = pathName.substring(
+        pathName.indexOf(':') + 1,
+        pathName.indexOf(';')
+      );
+      const blobExtension = blobContentType.split('/')[1];
+      return DAILY_SUPPORTED_BG_IMG_TYPES.includes(blobExtension);
+    } catch (e) {
+      console.error('failed to deduce blob content type', e);
+      return false;
+    }
+  }
+
+  const urlFileType = pathName.split('.').at(-1).toLowerCase().trim();
+  return DAILY_SUPPORTED_BG_IMG_TYPES.includes(urlFileType);
 }
 
 function validateImageSelection(selectImg) {
