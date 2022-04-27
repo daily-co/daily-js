@@ -1682,6 +1682,43 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
+  async setOutputDeviceAsync({ outputDeviceId }) {
+    methodNotSupportedInReactNative();
+    // cache this for use later
+    if (outputDeviceId) {
+      this._preloadCache.outputDeviceId = outputDeviceId;
+    }
+
+    return new Promise((resolve) => {
+      let k = (msg) => {
+        delete msg.action;
+        delete msg.callbackStamp;
+
+        // if we're in callObject mode and neither joined nor pre-authed yet, don't do anything
+        if (
+          (this._callObjectMode &&
+            !(this._meetingState === DAILY_STATE_JOINED || this._didPreAuth)) ||
+          msg.returnPreloadCache
+        ) {
+          resolve({
+            speaker: { deviceId: this._preloadCache.outputDeviceId },
+          });
+          return;
+        }
+
+        resolve(msg);
+      };
+
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_SET_OUTPUT_DEVICE,
+          outputDeviceId,
+        },
+        k
+      );
+    });
+  }
+
   async getInputDevices() {
     if (this._callObjectMode && this.needsLoad()) {
       return {
