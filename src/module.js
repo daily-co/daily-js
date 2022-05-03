@@ -159,6 +159,8 @@ import {
   DAILY_SUPPORTED_BG_IMG_TYPES,
   DAILY_METHOD_UPDATE_CUSTOM_TRAY_BUTTONS,
   DAILY_EVENT_CUSTOM_BUTTON_CLICK,
+  DAILY_METHOD_SET_CAMERA,
+  DAILY_EVENT_AVAILABLE_DEVICES_UPDATED,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -950,6 +952,16 @@ export default class DailyIframe extends EventEmitter {
       nativeUtils.addAppActiveStateChangeListener(
         this.handleNativeAppActiveStateChange
       );
+
+      if (navigator && navigator.mediaDevices) {
+        navigator.mediaDevices.ondevicechange = async () => {
+          const devicesInfo = await this.enumerateDevices();
+          this.emit(DAILY_EVENT_AVAILABLE_DEVICES_UPDATED, {
+            action: DAILY_EVENT_AVAILABLE_DEVICES_UPDATED,
+            availableDevices: devicesInfo.devices,
+          });
+        };
+      }
     }
 
     this._messageChannel.addListenerForMessagesFromCallMachine(
@@ -1500,6 +1512,31 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
+  setCamera(cameraDeviceId) {
+    methodOnlySupportedInReactNative();
+    if (this.needsLoad()) {
+      throw new Error(
+        'Before you can invoke setCamera, first you need to invoke one of these methods: join, startCamera, or preAuth'
+      );
+    }
+    return new Promise((resolve, _) => {
+      let k = (msg) => {
+        resolve({ device: msg.device });
+      };
+      this.sendMessageToCallMachine(
+        { action: DAILY_METHOD_SET_CAMERA, cameraDeviceId },
+        k
+      );
+    });
+  }
+
+  async setAudioDevice(deviceId) {
+    methodOnlySupportedInReactNative();
+    this.nativeUtils().setAudioDevice(deviceId);
+    const currentAudioDevice = await this.nativeUtils().getAudioDevice();
+    return { deviceId: currentAudioDevice };
+  }
+
   cycleCamera() {
     return new Promise((resolve, _) => {
       let k = (msg) => {
@@ -1637,7 +1674,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async getInputDevices() {
-    methodNotSupportedInReactNative();
     if (this._callObjectMode && this.needsLoad()) {
       return {
         camera: { deviceId: this._preloadCache.videoDeviceId },
@@ -2364,7 +2400,9 @@ export default class DailyIframe extends EventEmitter {
   updateCustomTrayButtons(btns) {
     methodNotSupportedInReactNative();
     if (this._callObjectMode) {
-      console.error('updateCustomTrayButtons is not available in callObject mode');
+      console.error(
+        'updateCustomTrayButtons is not available in callObject mode'
+      );
       return this;
     }
     if (this._meetingState !== DAILY_STATE_JOINED) {

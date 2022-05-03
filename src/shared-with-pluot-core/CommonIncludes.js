@@ -59,6 +59,8 @@ export const DAILY_EVENT_CAMERA_ERROR = 'camera-error';
 export const DAILY_EVENT_JOINING_MEETING = 'joining-meeting';
 export const DAILY_EVENT_JOINED_MEETING = 'joined-meeting';
 export const DAILY_EVENT_LEFT_MEETING = 'left-meeting';
+export const DAILY_EVENT_AVAILABLE_DEVICES_UPDATED =
+  'available-devices-updated';
 
 export const DAILY_EVENT_PARTICIPANT_JOINED = 'participant-joined';
 export const DAILY_EVENT_PARTICIPANT_UPDATED = 'participant-updated';
@@ -141,7 +143,8 @@ export const MAX_APP_MSG_SIZE = 1024 * 4;
 
 export const IFRAME_MESSAGE_MARKER = 'iframe-call-message';
 
-export const DAILY_METHOD_UPDATE_CUSTOM_TRAY_BUTTONS = 'update-custom-tray-buttons';
+export const DAILY_METHOD_UPDATE_CUSTOM_TRAY_BUTTONS =
+  'update-custom-tray-buttons';
 export const DAILY_METHOD_SET_THEME = 'set-theme';
 export const DAILY_METHOD_START_CAMERA = 'start-camera';
 export const DAILY_METHOD_SET_INPUT_DEVICES = 'set-input-devices';
@@ -163,6 +166,7 @@ export const DAILY_METHOD_SET_BANDWIDTH = 'set-bandwidth';
 export const DAILY_METHOD_GET_CALC_STATS = 'get-calc-stats';
 export const DAILY_METHOD_ENUMERATE_DEVICES = 'enumerate-devices';
 export const DAILY_METHOD_CYCLE_CAMERA = 'cycle-camera';
+export const DAILY_METHOD_SET_CAMERA = 'set-camera';
 export const DAILY_METHOD_CYCLE_MIC = 'cycle-mic';
 export const DAILY_METHOD_GET_CAMERA_FACING_MODE = 'get-camera-facing-mode';
 export const DAILY_METHOD_APP_MSG = 'app-msg';

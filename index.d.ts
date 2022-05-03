@@ -205,7 +205,7 @@ export interface DailyCustomTrayButton {
 }
 
 export interface DailyCustomTrayButtons {
-  [id: string] : DailyCustomTrayButton
+  [id: string]: DailyCustomTrayButton;
 }
 
 export interface DailyCallOptions {
@@ -982,9 +982,7 @@ export interface DailyCall {
     inputSettings: DailyInputSettings
   ): Promise<DailyInputSettings>;
   getInputSettings(): Promise<DailyInputSettings>;
-  updateCustomTrayButtons(
-    customTrayButtons: DailyCustomTrayButtons
-  ): DailyCall;
+  updateCustomTrayButtons(customTrayButtons: DailyCustomTrayButtons): DailyCall;
   customTrayButtons(): DailyCustomTrayButtons;
   setBandwidth(bw: {
     kbs?: number | 'NO_CAP' | null;
