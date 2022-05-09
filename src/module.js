@@ -2113,11 +2113,10 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  updateLiveStreaming({ layout = null, rtmpUrl = null }) {
+  updateLiveStreaming({ layout = { preset: 'default' } }) {
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_UPDATE_LIVE_STREAMING,
       layout,
-      rtmpUrl,
     });
   }
 
