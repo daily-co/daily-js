@@ -2586,7 +2586,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async geo() {
-    // should a client send whoami info here?
     return new Promise(async (resolve, _) => {
       try {
         let url = 'https://gs.daily.co/_ks_/x-swsl/:';
