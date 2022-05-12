@@ -959,16 +959,13 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
-    // add available device change listener in call object mode, which includes RN
-    // (in iframe mode, Prebuilt's call object will send this event up to us)
+    // add available device change listener in call object mode (including RN)
+    // note: in iframe mode, Prebuilt's internal call object will handle this
     if (this._callObjectMode && navigator && navigator.mediaDevices) {
-      navigator.mediaDevices.ondevicechange = async () => {
-        const devicesInfo = await this.enumerateDevices();
-        this.emit(DAILY_EVENT_AVAILABLE_DEVICES_UPDATED, {
-          action: DAILY_EVENT_AVAILABLE_DEVICES_UPDATED,
-          availableDevices: devicesInfo.devices,
-        });
-      };
+      navigator.mediaDevices.addEventListener(
+        'devicechange',
+        this.handleDeviceChange
+      );
     }
 
     this._messageChannel.addListenerForMessagesFromCallMachine(
@@ -1009,6 +1006,12 @@ export default class DailyIframe extends EventEmitter {
         this.handleNativeAppActiveStateChange
       );
     }
+
+    // tear down available device change listener
+    navigator.mediaDevices.removeEventListener(
+      'devicechange',
+      this.handleDeviceChange
+    );
 
     this.resetMeetingDependentVars();
   }
@@ -3499,6 +3502,17 @@ export default class DailyIframe extends EventEmitter {
       isPreparingToJoin
     );
   }
+
+  // Handler for navigator.mediaDevices devicechange event
+  handleDeviceChange = async () => {
+    // Here we invoke our own enumerateDevices() rather than rely on the event
+    // payload to let our own method be the source of truth
+    const devicesInfo = await this.enumerateDevices();
+    this.emit(DAILY_EVENT_AVAILABLE_DEVICES_UPDATED, {
+      action: DAILY_EVENT_AVAILABLE_DEVICES_UPDATED,
+      availableDevices: devicesInfo.devices,
+    });
+  };
 
   handleNativeAppActiveStateChange = (isActive) => {
     // If automatic video device management is disabled, bail
