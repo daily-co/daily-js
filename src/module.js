@@ -1658,27 +1658,10 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setOutputDevice({ outputDeviceId }) {
-    methodNotSupportedInReactNative();
-    // cache this for use later
-    if (outputDeviceId) {
-      this._preloadCache.outputDeviceId = outputDeviceId;
-    }
-
-    // if we're in callObject mode and neither joined nor pre-authed yet, don't do anything
-    if (
-      this._callObjectMode &&
-      !(this._meetingState === DAILY_STATE_JOINED || this._didPreAuth)
-    ) {
-      console.warn(
-        'setOutputDevice() not supported before preAuth() or join()'
-      );
-      return this;
-    }
-
-    this.sendMessageToCallMachine({
-      action: DAILY_METHOD_SET_OUTPUT_DEVICE,
-      outputDeviceId,
-    });
+    console.warn(
+      'setOutputDevice() is deprecated: instead use setOutputDeviceAsync(), which returns a Promise'
+    );
+    this.setOutputDeviceAsync({ outputDeviceId });
     return this;
   }
 
@@ -1689,17 +1672,19 @@ export default class DailyIframe extends EventEmitter {
       this._preloadCache.outputDeviceId = outputDeviceId;
     }
 
+    // if we're in callObject mode and not loaded yet, don't do anything
+    if (this._callObjectMode && this.needsLoad()) {
+      return {
+        speaker: { deviceId: this._preloadCache.outputDeviceId },
+      };
+    }
+
     return new Promise((resolve) => {
       let k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
 
-        // if we're in callObject mode and neither joined nor pre-authed yet, don't do anything
-        if (
-          (this._callObjectMode &&
-            !(this._meetingState === DAILY_STATE_JOINED || this._didPreAuth)) ||
-          msg.returnPreloadCache
-        ) {
+        if (msg.returnPreloadCache) {
           resolve({
             speaker: { deviceId: this._preloadCache.outputDeviceId },
           });
