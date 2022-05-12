@@ -959,13 +959,11 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
-    // add available device change listener in call object mode (including RN)
-    // note: in iframe mode, Prebuilt's internal call object will handle this
-    if (this._callObjectMode && navigator && navigator.mediaDevices) {
-      navigator.mediaDevices.addEventListener(
-        'devicechange',
-        this.handleDeviceChange
-      );
+    // start available device change listener in call object mode (including RN).
+    // note: in iframe mode, Prebuilt's internal call object will handle this,
+    // and the events it sends will propagate up appropriately.
+    if (this._callObjectMode) {
+      this.startListeningForDeviceChanges();
     }
 
     this._messageChannel.addListenerForMessagesFromCallMachine(
@@ -1008,10 +1006,7 @@ export default class DailyIframe extends EventEmitter {
     }
 
     // tear down available device change listener
-    navigator.mediaDevices.removeEventListener(
-      'devicechange',
-      this.handleDeviceChange
-    );
+    this.stopListeningForDeviceChanges();
 
     this.resetMeetingDependentVars();
   }
@@ -3503,15 +3498,41 @@ export default class DailyIframe extends EventEmitter {
     );
   }
 
-  // Handler for navigator.mediaDevices devicechange event
-  handleDeviceChange = async () => {
-    // Here we invoke our own enumerateDevices() rather than rely on the event
-    // payload to let our own method be the source of truth
-    const devicesInfo = await this.enumerateDevices();
-    this.emit(DAILY_EVENT_AVAILABLE_DEVICES_UPDATED, {
-      action: DAILY_EVENT_AVAILABLE_DEVICES_UPDATED,
-      availableDevices: devicesInfo.devices,
-    });
+  // Here we rely on polling rather than the 'devicechange' event: https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/devicechange_event.
+  // The reason for this choice is that polling is sadly the only non-branching
+  // way to do the right thing on all the platforms we care about:
+  // - Desktop web and iOS web
+  //    (where we actually *could* use
+  //     mediaDevices.addEventListener('devicechange',...)
+  // - React Native
+  //    (where we'd be forced to use mediaDevices.ondevicechange, which
+  //     monopolizes the event and puts us at risk of our handler being
+  //     overwritten)
+  // - Android web
+  //     (where the 'devicechange' event is simply not available)
+  // If we wanted to, here's where we could optimize and implement specialized
+  // logic per platform or, if all platforms eventually catch up to desktop web,
+  // switch to using the 'devicechange' event.
+  startListeningForDeviceChanges = () => {
+    if (this._deviceChangeInterval) return;
+    this._deviceChangeInterval = setInterval(async () => {
+      const devicesInfo = await this.enumerateDevices();
+      const devicesJSON = JSON.stringify(devicesInfo);
+      if (this._lastDevicesJSON && devicesJSON !== this._lastDevicesJSON) {
+        this.emit(DAILY_EVENT_AVAILABLE_DEVICES_UPDATED, {
+          action: DAILY_EVENT_AVAILABLE_DEVICES_UPDATED,
+          availableDevices: devicesInfo.devices,
+        });
+      }
+      this._lastDevicesJSON = devicesJSON;
+    }, 3000);
+  };
+
+  stopListeningForDeviceChanges = () => {
+    if (!this._deviceChangeInterval) return;
+    clearInterval(this._deviceChangeInterval);
+    this._deviceChangeInterval = null;
+    this._lastDevicesJSON = null;
   };
 
   handleNativeAppActiveStateChange = (isActive) => {
