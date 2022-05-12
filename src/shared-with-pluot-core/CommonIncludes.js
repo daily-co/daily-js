@@ -138,7 +138,6 @@ export const DAILY_EVENT_ERROR = 'error';
 
 export const DAILY_EVENT_CUSTOM_BUTTON_CLICK = 'custom-button-click';
 
-export const DAILY_EVENT_NEW_DEVICE_DETECTED = 'new-device-detected';
 //
 // internal
 //
