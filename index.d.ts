@@ -241,20 +241,21 @@ export interface DailyLoadOptions extends DailyCallOptions {
 }
 
 export interface DailyAdvancedConfig {
+  camSimulcastEncodings?: any[];
+  disableSimulcast?: boolean;
   experimentalChromeVideoMuteLightOff?: boolean;
   experimentalGetUserMediaConstraintsModify?: (
     constraints: MediaStreamConstraints
   ) => void;
-  userMediaVideoConstraints?: boolean | MediaTrackConstraints;
   fastConnect?: boolean;
+  h264Profile?: string;
+  noAutoDefaultDeviceChange?: boolean;
+  preferH264?: boolean;
   preferH264ForCam?: boolean;
   preferH264ForScreenSharing?: boolean;
-  preferH264?: boolean;
-  disableSimulcast?: boolean;
-  h264Profile?: string;
-  camSimulcastEncodings?: any[];
   screenSimulcastEncodings?: any[];
   useDevicePreferenceCookies?: boolean;
+  userMediaVideoConstraints?: boolean | MediaTrackConstraints;
 }
 
 export interface DailyTrackState {
