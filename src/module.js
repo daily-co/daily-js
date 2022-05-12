@@ -957,16 +957,18 @@ export default class DailyIframe extends EventEmitter {
       nativeUtils.addAppActiveStateChangeListener(
         this.handleNativeAppActiveStateChange
       );
+    }
 
-      if (navigator && navigator.mediaDevices) {
-        navigator.mediaDevices.ondevicechange = async () => {
-          const devicesInfo = await this.enumerateDevices();
-          this.emit(DAILY_EVENT_AVAILABLE_DEVICES_UPDATED, {
-            action: DAILY_EVENT_AVAILABLE_DEVICES_UPDATED,
-            availableDevices: devicesInfo.devices,
-          });
-        };
-      }
+    // add available device change listener in call object mode, which includes RN
+    // (in iframe mode, Prebuilt's call object will send this event up to us)
+    if (this._callObjectMode && navigator && navigator.mediaDevices) {
+      navigator.mediaDevices.ondevicechange = async () => {
+        const devicesInfo = await this.enumerateDevices();
+        this.emit(DAILY_EVENT_AVAILABLE_DEVICES_UPDATED, {
+          action: DAILY_EVENT_AVAILABLE_DEVICES_UPDATED,
+          availableDevices: devicesInfo.devices,
+        });
+      };
     }
 
     this._messageChannel.addListenerForMessagesFromCallMachine(

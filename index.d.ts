@@ -87,6 +87,7 @@ export type DailyEvent =
   | 'waiting-participant-updated'
   | 'waiting-participant-removed'
   | 'theme-updated'
+  | 'available-devices-updated'
   | 'receive-settings-updated'
   | 'input-settings-updated'
   | 'show-local-video-changed'
@@ -721,6 +722,11 @@ export interface DailyEventObjectReceiveSettingsUpdated {
   receiveSettings: DailyReceiveSettings;
 }
 
+export interface DailyEventObjectAvailableDevicesUpdated {
+  action: Extract<DailyEvent, 'available-devices-updated'>;
+  availableDevices: MediaDeviceInfo[];
+}
+
 export interface DailyEventObjectShowLocalVideoChanged {
   action: Extract<DailyEvent, 'show-local-video-changed'>;
   show: boolean;
@@ -810,6 +816,8 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectThemeUpdated
     : T extends DailyEventObjectReceiveSettingsUpdated['action']
     ? DailyEventObjectReceiveSettingsUpdated
+    : T extends DailyEventObjectAvailableDevicesUpdated['action']
+    ? DailyEventObjectAvailableDevicesUpdated
     : T extends DailyEventObjectShowLocalVideoChanged['action']
     ? DailyEventObjectShowLocalVideoChanged
     : T extends DailyEventObjectInputSettingsUpdated['action']
