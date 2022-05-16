@@ -1006,7 +1006,9 @@ export default class DailyIframe extends EventEmitter {
     }
 
     // tear down available device change listener
-    this.stopListeningForDeviceChanges();
+    if (this._callObjectMode) {
+      this.stopListeningForDeviceChanges();
+    }
 
     this.resetMeetingDependentVars();
   }
