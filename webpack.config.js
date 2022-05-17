@@ -5,9 +5,13 @@ const webpack = require('webpack');
 const version = require('./package-lock.json').version;
 const mode = process.env.NODE_ENV || 'production';
 
+// whether to build with React Native Hermes support (only necessary in dev; prod already supports it)
+const RN = !!process.env.RN;
+
 const bundle = {
   mode: mode,
-  devtool: mode === 'development' ? 'eval-source-map' : false,
+  devtool:
+    mode === 'development' ? (RN ? 'source-map' : 'eval-source-map') : false,
   entry: './src/main.js',
   output: {
     path: path.resolve(__dirname, 'dist'),

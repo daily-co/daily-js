@@ -23,6 +23,7 @@
     "build-dev": "NODE_ENV=development npm run build",
     "build-main": "webpack",
     "build-main-dev": "NODE_ENV=development npm run build-main",
+    "build-main-dev-rn": "RN=t npm run build-main-dev",
     "build-module": "rollup -c",
     "build-module-dev": "NODE_ENV=development npm run build-module",
     "tag": "scripts/tag",
