@@ -135,6 +135,8 @@ import {
   DAILY_METHOD_SET_SUBSCRIBE_TO_TRACKS_AUTOMATICALLY,
   DAILY_METHOD_START_LIVE_STREAMING,
   DAILY_METHOD_UPDATE_LIVE_STREAMING,
+  DAILY_METHOD_UPDATE_LIVE_STREAMING_ENDPOINTS,
+  UPDATE_LIVE_STREAMING_ENDPOINTS_OP,
   DAILY_METHOD_STOP_LIVE_STREAMING,
   DAILY_METHOD_START_TRANSCRIPTION,
   DAILY_METHOD_STOP_TRANSCRIPTION,
@@ -2119,6 +2121,22 @@ export default class DailyIframe extends EventEmitter {
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_UPDATE_LIVE_STREAMING,
       layout,
+    });
+  }
+
+  addLiveStreamingEndpoints({ endpoints }) {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_UPDATE_LIVE_STREAMING_ENDPOINTS,
+      endpointsOp: UPDATE_LIVE_STREAMING_ENDPOINTS_OP.ADD_ENDPOINTS,
+      endpoints,
+    });
+  }
+
+  removeLiveStreamingEndpoints({ endpoints }) {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_UPDATE_LIVE_STREAMING_ENDPOINTS,
+      endpointsOp: UPDATE_LIVE_STREAMING_ENDPOINTS_OP.REMOVE_ENDPOINTS,
+      endpoints,
     });
   }
 

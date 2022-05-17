@@ -195,6 +195,8 @@ export const DAILY_METHOD_START_LIVE_STREAMING =
   'daily-method-start-live-streaming';
 export const DAILY_METHOD_UPDATE_LIVE_STREAMING =
   'daily-method-update-live-streaming';
+export const DAILY_METHOD_UPDATE_LIVE_STREAMING_ENDPOINTS =
+  'daily-method-update-live-streaming-endpoints';
 export const DAILY_METHOD_STOP_LIVE_STREAMING =
   'daily-method-stop-live-streaming';
 export const DAILY_METHOD_START_REMOTE_MEDIA_PLAYER =
@@ -261,3 +263,8 @@ export const PARTICIPANT_TYPE = {
 export const DAILY_PRESELECTED_BG_IMAGE_URLS_LENGTH = 10;
 
 export const DAILY_SUPPORTED_BG_IMG_TYPES = ['jpg', 'png', 'jpeg'];
+
+export const UPDATE_LIVE_STREAMING_ENDPOINTS_OP = {
+  ADD_ENDPOINTS: 'add-endpoints',
+  REMOVE_ENDPOINTS: 'remove-endpoints',
+};
