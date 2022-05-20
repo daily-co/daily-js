@@ -3971,9 +3971,14 @@ function validateCustomTrayButtons(btns) {
           console.error(`customTrayButton ${btnKey} should be a url.`);
           return false;
         }
-        if (typeof btnValue !== customTrayButtonsType.id[btnKey]) {
+        const expectedKey = customTrayButtonsType.id[btnKey];
+        if (!expectedKey) {
+          console.error(`customTrayButton does not support key ${btnKey}`);
+          return false;
+        }
+        if (typeof btnValue !== expectedKey) {
           console.error(
-            `customTrayButton ${btnKey} should be a ${customTrayButtonsType.id[btnKey]}.`
+            `customTrayButton ${btnKey} should be a ${expectedKey}.`
           );
           return false;
         }
