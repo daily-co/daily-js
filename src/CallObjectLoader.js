@@ -49,7 +49,6 @@ export default class CallObjectLoader {
     // Start a new load
     this._currentLoad = new LoadOperation(
       meetingOrBaseUrl,
-      callFrameId,
       () => {
         successCallback(false); // false = "this load() wasn't a no-op"
       },
@@ -80,12 +79,11 @@ const LOAD_ATTEMPT_DELAY = 3 * 1000;
 class LoadOperation {
   // Here failureCallback takes the same parameters as CallObjectLoader.load,
   // and successCallback takes no parameters.
-  constructor(meetingOrBaseUrl, callFrameId, successCallback, failureCallback) {
+  constructor(meetingOrBaseUrl, successCallback, failureCallback) {
     this._attemptsRemaining = LOAD_ATTEMPTS;
     this._currentAttempt = null;
 
     this._meetingOrBaseUrl = meetingOrBaseUrl;
-    this._callFrameId = callFrameId;
     this._successCallback = successCallback;
     this._failureCallback = failureCallback;
   }
@@ -119,7 +117,6 @@ class LoadOperation {
         }
         this._currentAttempt = new LoadAttempt(
           this._meetingOrBaseUrl,
-          this._callFrameId,
           this._successCallback,
           retryOrFailureCallback
         );
@@ -129,7 +126,6 @@ class LoadOperation {
 
     this._currentAttempt = new LoadAttempt(
       this._meetingOrBaseUrl,
-      this._callFrameId,
       this._successCallback,
       retryOrFailureCallback
     );
@@ -154,20 +150,14 @@ class LoadAttemptAbortedError extends Error {}
 const LOAD_ATTEMPT_NETWORK_TIMEOUT = 20 * 1000;
 
 class LoadAttempt {
-  constructor(meetingOrBaseUrl, callFrameId, successCallback, failureCallback) {
+  constructor(meetingOrBaseUrl, successCallback, failureCallback) {
     this._loadAttemptImpl = isReactNative()
       ? new LoadAttempt_ReactNative(
           meetingOrBaseUrl,
-          callFrameId,
           successCallback,
           failureCallback
         )
-      : new LoadAttempt_Web(
-          meetingOrBaseUrl,
-          callFrameId,
-          successCallback,
-          failureCallback
-        );
+      : new LoadAttempt_Web(meetingOrBaseUrl, successCallback, failureCallback);
   }
 
   async start() {
@@ -190,7 +180,7 @@ class LoadAttempt {
 class LoadAttempt_ReactNative {
   // Here successCallback takes no parameters, and failureCallback takes a
   // single error message parameter.
-  constructor(meetingOrBaseUrl, callFrameId, successCallback, failureCallback) {
+  constructor(meetingOrBaseUrl, successCallback, failureCallback) {
     this.cancelled = false;
     this.succeeded = false;
 
@@ -203,7 +193,6 @@ class LoadAttempt_ReactNative {
     this._refetchHeaders = null;
 
     this._meetingOrBaseUrl = meetingOrBaseUrl;
-    this._callFrameId = callFrameId;
     this._successCallback = successCallback;
     this._failureCallback = failureCallback;
   }
@@ -366,14 +355,13 @@ class LoadAttempt_ReactNative {
 }
 
 class LoadAttempt_Web {
-  constructor(meetingOrBaseUrl, callFrameId, successCallback, failureCallback) {
+  constructor(meetingOrBaseUrl, successCallback, failureCallback) {
     this.cancelled = false;
     this.succeeded = false;
 
     this._networkTimeout = null;
 
     this._meetingOrBaseUrl = meetingOrBaseUrl;
-    this._callFrameId = callFrameId;
     this._successCallback = successCallback;
     this._failureCallback = failureCallback;
 
