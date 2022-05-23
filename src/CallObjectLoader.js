@@ -1,4 +1,5 @@
-import { callObjectBundleUrl } from './utils';
+import { isReactNative } from './shared-with-pluot-core/Environment';
+import { callObjectBundleUrl, randomStringId } from './utils';
 
 function prepareDailyConfig(callFrameId) {
   // Add a global callFrameId so we can have both iframes and one
@@ -153,6 +154,40 @@ class LoadAttemptAbortedError extends Error {}
 const LOAD_ATTEMPT_NETWORK_TIMEOUT = 20 * 1000;
 
 class LoadAttempt {
+  constructor(meetingOrBaseUrl, callFrameId, successCallback, failureCallback) {
+    this._loadAttemptImpl = isReactNative()
+      ? new LoadAttempt_ReactNative(
+          meetingOrBaseUrl,
+          callFrameId,
+          successCallback,
+          failureCallback
+        )
+      : new LoadAttempt_Web(
+          meetingOrBaseUrl,
+          callFrameId,
+          successCallback,
+          failureCallback
+        );
+  }
+
+  async start() {
+    return this._loadAttemptImpl.start();
+  }
+
+  cancel() {
+    this._loadAttemptImpl.cancel();
+  }
+
+  get cancelled() {
+    return this._loadAttemptImpl.cancelled;
+  }
+
+  get succeeded() {
+    return this._loadAttemptImpl.succeeded;
+  }
+}
+
+class LoadAttempt_ReactNative {
   // Here successCallback takes no parameters, and failureCallback takes a
   // single error message parameter.
   constructor(meetingOrBaseUrl, callFrameId, successCallback, failureCallback) {
@@ -174,13 +209,13 @@ class LoadAttempt {
   }
 
   async start() {
-    // console.log("[LoadAttempt] starting...");
+    // console.log("[LoadAttempt_ReactNative] starting...");
     let url;
     try {
       url = callObjectBundleUrl(this._meetingOrBaseUrl);
     } catch (e) {
       this._failureCallback(
-        `Failed to get call object bundle URL ${url}: ${e}`
+        `Failed to get call object bundle for URL ${this._meetingOrBaseUrl}: ${e}`
       );
       return;
     }
@@ -204,11 +239,11 @@ class LoadAttempt {
    * load attempt is needed.
    */
   async _tryLoadFromIOSCache(url) {
-    // console.log("[LoadAttempt] trying to load from iOS cache...");
+    // console.log("[LoadAttempt_ReactNative] trying to load from iOS cache...");
 
     // Bail if we're not running in iOS
     if (!this._iosCache) {
-      // console.log("[LoadAttempt] not iOS, so not checking iOS cache");
+      // console.log("[LoadAttempt_ReactNative] not iOS, so not checking iOS cache");
       return false;
     }
 
@@ -223,7 +258,7 @@ class LoadAttempt {
 
       // If cache miss, report failure (network load needed)
       if (!cacheResponse) {
-        // console.log("[LoadAttempt] iOS cache miss");
+        // console.log("[LoadAttempt_ReactNative] iOS cache miss");
         return false;
       }
 
@@ -231,7 +266,7 @@ class LoadAttempt {
       // failure (network load needed)
       if (!cacheResponse.code) {
         // console.log(
-        //   "[LoadAttempt] iOS cache expired, setting refetch headers",
+        //   "[LoadAttempt_ReactNative] iOS cache expired, setting refetch headers",
         //   cacheResponse.refetchHeaders
         // );
         this._refetchHeaders = cacheResponse.refetchHeaders;
@@ -240,14 +275,14 @@ class LoadAttempt {
 
       // Cache is fresh, so run code and success callback, and report work
       // complete (no network load needed)
-      // console.log("[LoadAttempt] iOS cache hit");
+      // console.log("[LoadAttempt_ReactNative] iOS cache hit");
       Function('"use strict";' + cacheResponse.code)();
       this.succeeded = true;
       this._successCallback();
       return true;
     } catch (e) {
       // Report failure
-      // console.log("[LoadAttempt] failure running bundle from iOS cache", e);
+      // console.log("[LoadAttempt_ReactNative] failure running bundle from iOS cache", e);
       return false;
     }
   }
@@ -257,7 +292,7 @@ class LoadAttempt {
    * @param {string} url The url of the call object bundle to load.
    */
   async _loadFromNetwork(url) {
-    // console.log("[LoadAttempt] trying to load from network...");
+    // console.log("[LoadAttempt_ReactNative] trying to load from network...");
     this._networkTimeout = setTimeout(() => {
       this._networkTimedOut = true;
       this._failureCallback(
@@ -289,7 +324,7 @@ class LoadAttempt {
 
       // Since code ran successfully (no errors thrown), cache it and call
       // success callback
-      // console.log("[LoadAttempt] succeeded...");
+      // console.log("[LoadAttempt_ReactNative] succeeded...");
       this._iosCache && this._iosCache.set(url, code, response.headers);
       this.succeeded = true;
       this._successCallback();
@@ -304,7 +339,7 @@ class LoadAttempt {
         this.cancelled ||
         this._networkTimedOut
       ) {
-        // console.log("[LoadAttempt] cancelled or timed out");
+        // console.log("[LoadAttempt_ReactNative] cancelled or timed out");
         return;
       }
 
@@ -327,5 +362,124 @@ class LoadAttempt {
     }
 
     throw new Error(`Received ${response.status} response`);
+  }
+}
+
+class LoadAttempt_Web {
+  constructor(meetingOrBaseUrl, callFrameId, successCallback, failureCallback) {
+    this.cancelled = false;
+    this.succeeded = false;
+
+    this._networkTimeout = null;
+
+    this._meetingOrBaseUrl = meetingOrBaseUrl;
+    this._callFrameId = callFrameId;
+    this._successCallback = successCallback;
+    this._failureCallback = failureCallback;
+
+    // Keep track of active (non-cancelled, non-timed-out) load attempts, which
+    // tells the call machine whether to run in case it's downloaded. It should
+    // avoid running if, say, all load attempts have been cancelled.
+    this._attemptId = randomStringId();
+    if (typeof window._dailyCallMachineLoadWaitlist !== 'object') {
+      window._dailyCallMachineLoadWaitlist = new Set();
+    }
+  }
+
+  async start() {
+    // Get call machine bundle URL
+    let url;
+    try {
+      url = callObjectBundleUrl(this._meetingOrBaseUrl);
+    } catch (e) {
+      this._failureCallback(
+        `Failed to get call object bundle for URL ${this._meetingOrBaseUrl}: ${e}`
+      );
+      return;
+    }
+
+    // Sanity check that we're running in a DOM/web context
+    if (typeof document !== 'object') {
+      this._failureCallback(
+        `Call object bundle must be loaded in a DOM/web context`
+      );
+      return;
+    }
+
+    this._load(url);
+  }
+
+  cancel() {
+    // console.log('[LoadAttempt_Web] cancelled');
+    this._withdrawFromCallMachineLoadWaitlist();
+    clearTimeout(this._networkTimeout);
+    this.cancelled = true;
+  }
+
+  _load(url) {
+    // console.log('[LoadAttempt_Web] trying to load...');
+    this._signUpForCallMachineLoadWaitlist();
+
+    // Start a timeout, after which we'll consider this attempt a failure
+    this._networkTimeout = setTimeout(() => {
+      if (this.cancelled) {
+        // console.log(
+        //   '[LoadAttempt_Web] skipping handling timeout, already cancelled'
+        // );
+        return;
+      }
+      // console.log('[LoadAttempt_Web] timed out');
+      this._withdrawFromCallMachineLoadWaitlist();
+      this._failureCallback(
+        `Timed out (>${LOAD_ATTEMPT_NETWORK_TIMEOUT} ms) when loading call object bundle ${url}`
+      );
+    }, LOAD_ATTEMPT_NETWORK_TIMEOUT);
+
+    // Create a script tag to download the call machine bundle
+    const head = document.getElementsByTagName('head')[0],
+      script = document.createElement('script');
+
+    // On load, consider this attempt a success
+    script.onload = async () => {
+      if (this.cancelled) {
+        // console.log(
+        //   '[LoadAttempt_Web] skipping handling success, already cancelled'
+        // );
+        return;
+      }
+      // console.log('[LoadAttempt_Web] succeeded');
+      this._withdrawFromCallMachineLoadWaitlist();
+      clearTimeout(this._networkTimeout);
+      this.succeeded = true;
+      this._successCallback();
+    };
+
+    // On error, consider this attempt a failure
+    script.onerror = async (e) => {
+      if (this.cancelled) {
+        // console.log(
+        //   '[LoadAttempt_Web] skipping handling error, already cancelled'
+        // );
+        return;
+      }
+      // console.log('[LoadAttempt_Web] failed');
+      this._withdrawFromCallMachineLoadWaitlist();
+      clearTimeout(this._networkTimeout);
+      this._failureCallback(
+        `Failed to load call object bundle ${e.target.src}`
+      );
+    };
+
+    // Start the download
+    script.src = url;
+    head.appendChild(script);
+  }
+
+  _signUpForCallMachineLoadWaitlist() {
+    window._dailyCallMachineLoadWaitlist.add(this._attemptId);
+  }
+
+  _withdrawFromCallMachineLoadWaitlist() {
+    window._dailyCallMachineLoadWaitlist.delete(this._attemptId);
   }
 }
