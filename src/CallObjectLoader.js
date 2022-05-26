@@ -76,6 +76,12 @@ export default class CallObjectLoader {
 const LOAD_ATTEMPTS = 3;
 const LOAD_ATTEMPT_DELAY = 3 * 1000;
 
+/**
+ * Represents a call machine bundle load.
+ *
+ * Since a load may fail, it may need to retry a few times. It delegates each
+ * attempt to the LoadAttempt class.
+ */
 class LoadOperation {
   // Here failureCallback takes the same parameters as CallObjectLoader.load,
   // and successCallback takes no parameters.
@@ -149,6 +155,27 @@ class LoadAttemptAbortedError extends Error {}
 
 const LOAD_ATTEMPT_NETWORK_TIMEOUT = 20 * 1000;
 
+/**
+ * Represents a single call machine bundle load attempt.
+ *
+ * The LoadOperation does the heavy lifting in terms of coordinating different
+ * LoadAttempts (i.e. kicking off retries and handling interruptions by, say, a
+ * user calling leave()). It will ask each LoadAttempt to start() and, if
+ * necessary, cancel().
+ *
+ * The LoadAttempt itself only needs to concern itself with obeying those
+ * requests, invoking the success or failure callbacks at the end of an attempt,
+ * and setting its cancelled and succeeded flags as appropriate.
+ *
+ * Since we support running both on Web and React Native and there are slightly
+ * different constraints on each, there are two different implementations of
+ * LoadAttempt:
+ * - On Web, we use an HTMLScriptElement to load the bundle in order
+ * to allow our users to set a CSP (Content Security Policy) without
+ * 'unsafe-eval'. The alternative would be using fetch() + Function()/eval().
+ * - On React Native, we use fetch() + Function(). There is no HTMLScriptElement
+ * in React Native and also no CSP consideration to contend with.
+ */
 class LoadAttempt {
   constructor(meetingOrBaseUrl, successCallback, failureCallback) {
     this._loadAttemptImpl = isReactNative()
@@ -177,6 +204,9 @@ class LoadAttempt {
   }
 }
 
+/**
+ * Represents a single call machine bundle load attempt in React Native.
+ */
 class LoadAttempt_ReactNative {
   // Here successCallback takes no parameters, and failureCallback takes a
   // single error message parameter.
@@ -354,27 +384,51 @@ class LoadAttempt_ReactNative {
   }
 }
 
+/**
+ * Represents a single call machine bundle load attempt on Web.
+ *
+ * While this attempt is active - that is, it hasn't been cancelled or hasn't
+ * timed out - it signs itself up to be on a global "call machine load
+ * waitlist", which represents the set of load attempts that want the call
+ * machine to finish loading.
+ *
+ * Because...
+ * a) ..."finishing loading" is something that happens on the call machine
+ *    bundle side (i.e. not in this code) once it's been downloaded and is
+ *    executing, and...
+ * b) ...we actually *can't* stop the call machine bundle from running after an
+ *    attempt has been cancelled or timed out, if the bundle finishes
+ *    downloading (HTMLScriptElement doesn't have a cancel() method)...
+ * ...we need a way of telling the call machine bundle "hey someone's still
+ * interested in you loading".
+ *
+ * Note that there really shouldn't be more than one active load attempt at a
+ * time. But this load attempt doesn't know that! Hence the waitlist being a
+ * Set() and each attempt being responsible only for adding/removing itself from
+ * the waitlist. This approach - as opposed to a global boolean or counter -
+ * felt like the most bulletproof (i.e. future- and race-condition-proof) way
+ * of implementing this synchronization.
+ */
 class LoadAttempt_Web {
   constructor(meetingOrBaseUrl, successCallback, failureCallback) {
     this.cancelled = false;
     this.succeeded = false;
 
-    this._networkTimeout = null;
-
     this._meetingOrBaseUrl = meetingOrBaseUrl;
     this._successCallback = successCallback;
     this._failureCallback = failureCallback;
 
-    // Keep track of active (non-cancelled, non-timed-out) load attempts, which
-    // tells the call machine whether to run in case it's downloaded. It should
-    // avoid running if, say, all load attempts have been cancelled.
     this._attemptId = randomStringId();
-    if (typeof window._dailyCallMachineLoadWaitlist !== 'object') {
-      window._dailyCallMachineLoadWaitlist = new Set();
-    }
+    this._networkTimeout = null;
+    this._scriptElement = null;
   }
 
   async start() {
+    // Initialize global state tracking active load attempts
+    if (!window._dailyCallMachineLoadWaitlist) {
+      window._dailyCallMachineLoadWaitlist = new Set();
+    }
+
     // Get call machine bundle URL
     let url;
     try {
@@ -394,30 +448,23 @@ class LoadAttempt_Web {
       return;
     }
 
-    this._load(url);
+    this._startLoading(url);
   }
 
   cancel() {
     // console.log('[LoadAttempt_Web] cancelled');
-    this._withdrawFromCallMachineLoadWaitlist();
-    clearTimeout(this._networkTimeout);
+    this._stopLoading();
     this.cancelled = true;
   }
 
-  _load(url) {
+  _startLoading(url) {
     // console.log('[LoadAttempt_Web] trying to load...');
     this._signUpForCallMachineLoadWaitlist();
 
     // Start a timeout, after which we'll consider this attempt a failure
     this._networkTimeout = setTimeout(() => {
-      if (this.cancelled) {
-        // console.log(
-        //   '[LoadAttempt_Web] skipping handling timeout, already cancelled'
-        // );
-        return;
-      }
       // console.log('[LoadAttempt_Web] timed out');
-      this._withdrawFromCallMachineLoadWaitlist();
+      this._stopLoading();
       this._failureCallback(
         `Timed out (>${LOAD_ATTEMPT_NETWORK_TIMEOUT} ms) when loading call object bundle ${url}`
       );
@@ -426,33 +473,20 @@ class LoadAttempt_Web {
     // Create a script tag to download the call machine bundle
     const head = document.getElementsByTagName('head')[0],
       script = document.createElement('script');
+    this._scriptElement = script;
 
     // On load, consider this attempt a success
     script.onload = async () => {
-      if (this.cancelled) {
-        // console.log(
-        //   '[LoadAttempt_Web] skipping handling success, already cancelled'
-        // );
-        return;
-      }
       // console.log('[LoadAttempt_Web] succeeded');
-      this._withdrawFromCallMachineLoadWaitlist();
-      clearTimeout(this._networkTimeout);
+      this._stopLoading();
       this.succeeded = true;
       this._successCallback();
     };
 
     // On error, consider this attempt a failure
     script.onerror = async (e) => {
-      if (this.cancelled) {
-        // console.log(
-        //   '[LoadAttempt_Web] skipping handling error, already cancelled'
-        // );
-        return;
-      }
       // console.log('[LoadAttempt_Web] failed');
-      this._withdrawFromCallMachineLoadWaitlist();
-      clearTimeout(this._networkTimeout);
+      this._stopLoading();
       this._failureCallback(
         `Failed to load call object bundle ${e.target.src}`
       );
@@ -461,6 +495,15 @@ class LoadAttempt_Web {
     // Start the download
     script.src = url;
     head.appendChild(script);
+  }
+
+  _stopLoading() {
+    this._withdrawFromCallMachineLoadWaitlist();
+    clearTimeout(this._networkTimeout);
+    if (this._scriptElement) {
+      this._scriptElement.onload = null;
+      this._scriptElement.onerror = null;
+    }
   }
 
   _signUpForCallMachineLoadWaitlist() {
