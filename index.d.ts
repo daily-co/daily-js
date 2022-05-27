@@ -310,6 +310,8 @@ export interface DailyParticipant {
     video: DailyTrackState;
     screenAudio: DailyTrackState;
     screenVideo: DailyTrackState;
+    rmpAudio?: DailyTrackState;
+    rmpVideo?: DailyTrackState;
   };
 
   // user/session info
