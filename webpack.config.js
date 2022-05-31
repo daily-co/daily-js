@@ -20,12 +20,16 @@ const bundle = {
     libraryTarget: 'umd',
     globalObject: 'this',
   },
+  node: {
+    global: false,
+  },
   plugins: [
     new webpack.DefinePlugin({
       'process.env': {
         NODE_ENV: JSON.stringify(mode),
       },
       __dailyJsVersion__: JSON.stringify(version),
+      global: 'window',
     }),
   ],
   module: {
