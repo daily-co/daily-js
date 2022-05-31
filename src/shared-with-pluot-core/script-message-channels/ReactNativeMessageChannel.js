@@ -2,13 +2,6 @@ import ScriptMessageChannel from './ScriptMessageChannel';
 import { EventEmitter } from 'events';
 import { randomStringId } from '../../utils';
 
-// This file is imported by both daily-js and the call machine. Make sure we
-// only instantiate each emitter once.
-global.callMachineToDailyJsEmitter =
-  global.callMachineToDailyJsEmitter || new EventEmitter();
-global.dailyJsToCallMachineEmitter =
-  global.dailyJsToCallMachineEmitter || new EventEmitter();
-
 /**
  * A two-way message channel between daily-js and the call machine (pluot-core),
  * when running in a React Native context.
@@ -16,6 +9,14 @@ global.dailyJsToCallMachineEmitter =
 export default class ReactNativeMessageChannel extends ScriptMessageChannel {
   constructor() {
     super();
+
+    // A ReactNativeMessageChannel is constructed both in daily-js and the call
+    // machine. Make sure we only instantiate emitters once.
+    global.callMachineToDailyJsEmitter =
+      global.callMachineToDailyJsEmitter || new EventEmitter();
+    global.dailyJsToCallMachineEmitter =
+      global.dailyJsToCallMachineEmitter || new EventEmitter();
+
     this._wrappedListeners = {}; // Mapping between listeners and wrapped listeners
     this._messageCallbacks = {};
   }
