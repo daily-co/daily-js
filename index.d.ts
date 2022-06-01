@@ -1068,7 +1068,7 @@ export interface DailyCall {
   updateRemoteMediaPlayer(
     options: DailyRemoteMediaPlayerUpdateOptions
   ): Promise<DailyRemoteMediaPlayerInfo>;
-  startTranscription(): void;
+  startTranscription(options?: { language?: string; model?: string }): void;
   stopTranscription(): void;
   getNetworkStats(): Promise<DailyNetworkStats>;
   getActiveSpeaker(): { peerId?: string };
