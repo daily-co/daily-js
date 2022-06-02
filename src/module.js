@@ -2240,8 +2240,11 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  startTranscription() {
-    this.sendMessageToCallMachine({ action: DAILY_METHOD_START_TRANSCRIPTION });
+  startTranscription(args) {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_START_TRANSCRIPTION,
+      ...args,
+    });
   }
 
   stopTranscription() {

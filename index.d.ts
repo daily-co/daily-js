@@ -962,6 +962,11 @@ export interface DailyRemoteMediaPlayerInfo {
   remoteMediaPlayerState: DailyRemoteMediaPlayerState;
 }
 
+export interface DailyTranscriptionDeepgramOptions {
+  language?: string;
+  model?: string;
+}
+
 export interface DailyCall {
   iframe(): HTMLIFrameElement | null;
   join(properties?: DailyCallOptions): Promise<DailyParticipantsObject | void>;
@@ -1068,7 +1073,7 @@ export interface DailyCall {
   updateRemoteMediaPlayer(
     options: DailyRemoteMediaPlayerUpdateOptions
   ): Promise<DailyRemoteMediaPlayerInfo>;
-  startTranscription(): void;
+  startTranscription(options?: DailyTranscriptionDeepgramOptions): void;
   stopTranscription(): void;
   getNetworkStats(): Promise<DailyNetworkStats>;
   getActiveSpeaker(): { peerId?: string };
