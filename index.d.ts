@@ -742,6 +742,18 @@ export interface DailyEventObjectLiveStreamingStarted {
   layout?: DailyStreamingLayoutConfig;
 }
 
+export interface DailyEventObjectTranscriptionStarted {
+  action: Extract<DailyEvent, 'transcription-started'>;
+  language: string;
+  model: string;
+  startedBy: string;
+}
+
+export interface DailyEventObjectTranscriptionStopped {
+  action: Extract<DailyEvent, 'transcription-started'>;
+  stoppedBy: string;
+}
+
 export interface DailyEventObjectRemoteMediaPlayerUpdate {
   action: Extract<
     DailyEvent,
