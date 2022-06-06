@@ -750,8 +750,8 @@ export interface DailyEventObjectTranscriptionStarted {
 }
 
 export interface DailyEventObjectTranscriptionStopped {
-  action: Extract<DailyEvent, 'transcription-started'>;
-  stoppedBy: string;
+  action: Extract<DailyEvent, 'transcription-stopped'>;
+  updatedBy: string;
 }
 
 export interface DailyEventObjectRemoteMediaPlayerUpdate {
