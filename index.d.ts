@@ -1049,15 +1049,15 @@ export interface DailyCall {
   cycleCamera(): Promise<{ device?: MediaDeviceInfo | null }>;
   cycleMic(): Promise<{ device?: MediaDeviceInfo | null }>;
   setInputDevices(devices: {
-    audioDeviceId?: string | false;
+    audioDeviceId?: string | false | null;
     audioSource?: MediaStreamTrack | false;
-    videoDeviceId?: string | false;
+    videoDeviceId?: string | false | null;
     videoSource?: MediaStreamTrack | false;
   }): DailyCall;
   setInputDevicesAsync(devices: {
-    audioDeviceId?: string | false;
+    audioDeviceId?: string | false | null;
     audioSource?: MediaStreamTrack | false;
-    videoDeviceId?: string | false;
+    videoDeviceId?: string | false | null;
     videoSource?: MediaStreamTrack | false;
   }): Promise<DailyDeviceInfos>;
   setOutputDevice(audioDevice: { outputDeviceId?: string }): DailyCall;
