@@ -360,10 +360,10 @@ const FRAME_PROPS = {
       }
       window._dailyConfig.experimentalGetUserMediaConstraintsModify =
         config.experimentalGetUserMediaConstraintsModify;
-      delete config.experimentalGetUserMediaConstraintsModify;
       window._dailyConfig.userMediaVideoConstraints =
         config.userMediaVideoConstraints;
-      delete config.userMediaVideoConstraints;
+      window._dailyConfig.userMediaAudioConstraints =
+        config.userMediaAudioConstraints;
       return true;
     },
   },
@@ -398,6 +398,7 @@ const FRAME_PROPS = {
     help: 'language not supported. Options are: de, en-us, en, es, fi, fr, it, jp, ka, nl, no, pl, pt, ru, sv, tr, user',
   },
   userName: true, // ignored if there's a token
+  micAudioMusicMode: true,
   activeSpeakerMode: true,
   showLeaveButton: true,
   showLocalVideo: true,

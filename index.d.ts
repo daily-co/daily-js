@@ -234,6 +234,7 @@ export interface DailyCallOptions {
   receiveSettings?: DailyReceiveSettings;
   inputSettings?: DailyInputSettings;
   userName?: string;
+  micAudioMusicMode?: boolean;
 }
 
 export interface DailyLoadOptions extends DailyCallOptions {
@@ -255,6 +256,7 @@ export interface DailyAdvancedConfig {
   preferH264ForScreenSharing?: boolean;
   screenSimulcastEncodings?: any[];
   useDevicePreferenceCookies?: boolean;
+  userMediaAudioConstraints?: boolean | MediaTrackConstraints;
   userMediaVideoConstraints?: boolean | MediaTrackConstraints;
 }
 
@@ -1135,6 +1137,7 @@ export interface DailyCall {
   properties: {
     dailyConfig?: DailyAdvancedConfig;
     userName?: string;
+    micAudioMusicMode?: boolean;
   };
 }
 
