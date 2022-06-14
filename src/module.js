@@ -398,7 +398,6 @@ const FRAME_PROPS = {
     help: 'language not supported. Options are: de, en-us, en, es, fi, fr, it, jp, ka, nl, no, pl, pt, ru, sv, tr, user',
   },
   userName: true, // ignored if there's a token
-  micAudioMusicMode: true,
   activeSpeakerMode: true,
   showLeaveButton: true,
   showLocalVideo: true,
