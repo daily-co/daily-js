@@ -249,12 +249,14 @@ export interface DailyAdvancedConfig {
   ) => void;
   fastConnect?: boolean;
   h264Profile?: string;
+  micAudioMode?: 'music' | 'speech';
   noAutoDefaultDeviceChange?: boolean;
   preferH264?: boolean;
   preferH264ForCam?: boolean;
   preferH264ForScreenSharing?: boolean;
   screenSimulcastEncodings?: any[];
   useDevicePreferenceCookies?: boolean;
+  userMediaAudioConstraints?: boolean | MediaTrackConstraints;
   userMediaVideoConstraints?: boolean | MediaTrackConstraints;
 }
 

@@ -360,10 +360,10 @@ const FRAME_PROPS = {
       }
       window._dailyConfig.experimentalGetUserMediaConstraintsModify =
         config.experimentalGetUserMediaConstraintsModify;
-      delete config.experimentalGetUserMediaConstraintsModify;
       window._dailyConfig.userMediaVideoConstraints =
         config.userMediaVideoConstraints;
-      delete config.userMediaVideoConstraints;
+      window._dailyConfig.userMediaAudioConstraints =
+        config.userMediaAudioConstraints;
       return true;
     },
   },
