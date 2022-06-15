@@ -1,13 +1,14 @@
 import { isReactNative } from './shared-with-pluot-core/Environment';
 import { callObjectBundleUrl, randomStringId } from './utils';
 
-function prepareDailyConfig(callFrameId) {
+function prepareDailyConfig(callFrameId, avoidEval) {
   // Add a global callFrameId so we can have both iframes and one
   // call object mode calls live at the same time
   if (!window._dailyConfig) {
     window._dailyConfig = {};
   }
   window._dailyConfig.callFrameId = callFrameId;
+  window._dailyConfig.avoidEval = avoidEval;
 }
 
 export default class CallObjectLoader {
@@ -29,19 +30,28 @@ export default class CallObjectLoader {
    *  to load the bundle from.
    * @param callFrameId A string identifying this "call frame", to distinguish it
    *  from other iframe-based calls for message channel purposes.
+   * @param avoidEval Whether to use the new eval-less loading mechanism on web
+   *  (LoadAttempt_Web) instead of the legacy loading mechanism
+   *  (LoadAttempt_ReactNative).
    * @param successCallback Callback function that takes a wasNoOp argument
    *  (true if call object script was ever loaded once before).
    * @param failureCallback Callback function that takes an error message and a
    *   boolean indicating whether an automatic retry is slated to occur.
    */
-  load(meetingOrBaseUrl, callFrameId, successCallback, failureCallback) {
+  load(
+    meetingOrBaseUrl,
+    callFrameId,
+    avoidEval,
+    successCallback,
+    failureCallback
+  ) {
     if (this.loaded) {
       window._dailyCallObjectSetup(callFrameId);
       successCallback(true); // true = "this load() was a no-op"
       return;
     }
 
-    prepareDailyConfig(callFrameId);
+    prepareDailyConfig(callFrameId, avoidEval);
 
     // Cancel current load, if any
     this._currentLoad && this._currentLoad.cancel();
@@ -178,13 +188,18 @@ const LOAD_ATTEMPT_NETWORK_TIMEOUT = 20 * 1000;
  */
 class LoadAttempt {
   constructor(meetingOrBaseUrl, successCallback, failureCallback) {
-    this._loadAttemptImpl = isReactNative()
-      ? new LoadAttempt_ReactNative(
-          meetingOrBaseUrl,
-          successCallback,
-          failureCallback
-        )
-      : new LoadAttempt_Web(meetingOrBaseUrl, successCallback, failureCallback);
+    this._loadAttemptImpl =
+      isReactNative() || !_dailyConfig.avoidEval
+        ? new LoadAttempt_ReactNative(
+            meetingOrBaseUrl,
+            successCallback,
+            failureCallback
+          )
+        : new LoadAttempt_Web(
+            meetingOrBaseUrl,
+            successCallback,
+            failureCallback
+          );
   }
 
   async start() {
@@ -206,6 +221,8 @@ class LoadAttempt {
 
 /**
  * Represents a single call machine bundle load attempt in React Native.
+ *
+ * NOTE: this is also the legacy web code path, when avoidEval is not set.
  */
 class LoadAttempt_ReactNative {
   // Here successCallback takes no parameters, and failureCallback takes a
