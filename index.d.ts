@@ -258,6 +258,7 @@ export interface DailyAdvancedConfig {
   useDevicePreferenceCookies?: boolean;
   userMediaAudioConstraints?: boolean | MediaTrackConstraints;
   userMediaVideoConstraints?: boolean | MediaTrackConstraints;
+  avoidEval?: boolean;
 }
 
 export interface DailyTrackState {

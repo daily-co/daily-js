@@ -1855,6 +1855,7 @@ export default class DailyIframe extends EventEmitter {
         this._callObjectLoader.load(
           this.properties.url || this.properties.baseUrl,
           this._callFrameId,
+          this.properties.dailyConfig && this.properties.dailyConfig.avoidEval,
           (wasNoOp) => {
             this.updateMeetingState(DAILY_STATE_LOADED);
             // Only need to emit event if load was a no-op, since the loaded
