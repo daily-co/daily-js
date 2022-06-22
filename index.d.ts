@@ -461,6 +461,7 @@ export interface DailyRoomInfo {
     webhook_meeting_end?: any;
     max_live_streams?: number;
     enable_advanced_chat?: boolean;
+    enable_chat?: boolean;
     enable_network_ui?: boolean;
     enable_people_ui?: boolean;
     enable_pip_ui?: boolean;
