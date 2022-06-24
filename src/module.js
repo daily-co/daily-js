@@ -1675,6 +1675,8 @@ export default class DailyIframe extends EventEmitter {
     // if we're in callObject mode and not loaded yet, don't do anything
     if (this._callObjectMode && this.needsLoad()) {
       return {
+        camera: { deviceId: this._preloadCache.videoDeviceId },
+        mic: { deviceId: this._preloadCache.audioDeviceId },
         speaker: { deviceId: this._preloadCache.outputDeviceId },
       };
     }
@@ -1686,6 +1688,8 @@ export default class DailyIframe extends EventEmitter {
 
         if (msg.returnPreloadCache) {
           resolve({
+            camera: { deviceId: this._preloadCache.videoDeviceId },
+            mic: { deviceId: this._preloadCache.audioDeviceId },
             speaker: { deviceId: this._preloadCache.outputDeviceId },
           });
           return;
