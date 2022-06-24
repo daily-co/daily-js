@@ -202,6 +202,7 @@ export interface DailyLayoutConfig {
 
 export interface DailyCustomTrayButton {
   iconPath: string;
+  iconPathDarkMode?: string;
   label: string;
   tooltip: string;
 }

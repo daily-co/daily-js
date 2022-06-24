@@ -327,6 +327,7 @@ const reactNativeConfigType = {
 const customTrayButtonsType = {
   id: {
     iconPath: 'string',
+    iconPathDarkMode: 'string',
     label: 'string',
     tooltip: 'string',
   },
@@ -3972,6 +3973,10 @@ function validateCustomTrayButtons(btns) {
     for (const [btnsKey] of Object.entries(btns)) {
       for (const [btnKey, btnValue] of Object.entries(btns[btnsKey])) {
         if (btnKey === 'iconPath' && !validateHttpUrl(btnValue)) {
+          console.error(`customTrayButton ${btnKey} should be a url.`);
+          return false;
+        }
+        if (btnKey === 'iconPathDarkMode' && !validateHttpUrl(btnValue)) {
           console.error(`customTrayButton ${btnKey} should be a url.`);
           return false;
         }
