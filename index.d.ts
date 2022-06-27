@@ -419,6 +419,13 @@ export interface DailyPendingRoomInfo {
   roomUrlPendingJoin: string;
 }
 
+export interface DailyRecordingsBucket {
+  allow_api_access: boolean;
+  assume_role_arn: string;
+  bucket_name: string;
+  bucket_region: string;
+}
+
 export interface DailyRoomInfo {
   id: string;
   name: string;
@@ -449,6 +456,7 @@ export interface DailyRoomInfo {
     sfu_switchover?: number;
     signaling_impl?: string;
     geo?: string;
+    recordings_bucket?: DailyRecordingsBucket;
   };
   domainConfig: {
     hide_daily_branding?: boolean;
@@ -468,6 +476,7 @@ export interface DailyRoomInfo {
     enable_pip_ui?: boolean;
     enable_prejoin_ui?: boolean;
     enable_video_processing_ui?: boolean;
+    recordings_bucket?: DailyRecordingsBucket;
   };
   tokenConfig: {
     eject_at_token_exp?: boolean;
