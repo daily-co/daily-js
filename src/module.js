@@ -1663,28 +1663,54 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setOutputDevice({ outputDeviceId }) {
+    console.warn(
+      'setOutputDevice() is deprecated: instead use setOutputDeviceAsync(), which returns a Promise'
+    );
+    this.setOutputDeviceAsync({ outputDeviceId });
+    return this;
+  }
+
+  async setOutputDeviceAsync({ outputDeviceId }) {
     methodNotSupportedInReactNative();
     // cache this for use later
     if (outputDeviceId) {
       this._preloadCache.outputDeviceId = outputDeviceId;
     }
 
-    // if we're in callObject mode and neither joined nor pre-authed yet, don't do anything
-    if (
-      this._callObjectMode &&
-      !(this._meetingState === DAILY_STATE_JOINED || this._didPreAuth)
-    ) {
-      console.warn(
-        'setOutputDevice() not supported before preAuth() or join()'
-      );
-      return this;
+    // if we're in callObject mode and not loaded yet, don't do anything
+    if (this._callObjectMode && this.needsLoad()) {
+      return {
+        camera: { deviceId: this._preloadCache.videoDeviceId },
+        mic: { deviceId: this._preloadCache.audioDeviceId },
+        speaker: { deviceId: this._preloadCache.outputDeviceId },
+      };
     }
 
-    this.sendMessageToCallMachine({
-      action: DAILY_METHOD_SET_OUTPUT_DEVICE,
-      outputDeviceId,
+    return new Promise((resolve) => {
+      let k = (msg) => {
+        delete msg.action;
+        delete msg.callbackStamp;
+
+        if (msg.returnPreloadCache) {
+          resolve({
+            camera: { deviceId: this._preloadCache.videoDeviceId },
+            mic: { deviceId: this._preloadCache.audioDeviceId },
+            speaker: { deviceId: this._preloadCache.outputDeviceId },
+          });
+          return;
+        }
+
+        resolve(msg);
+      };
+
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_SET_OUTPUT_DEVICE,
+          outputDeviceId,
+        },
+        k
+      );
     });
-    return this;
   }
 
   async getInputDevices() {
