@@ -260,6 +260,7 @@ export interface DailyAdvancedConfig {
   userMediaAudioConstraints?: boolean | MediaTrackConstraints;
   userMediaVideoConstraints?: boolean | MediaTrackConstraints;
   avoidEval?: boolean;
+  callObjectBundleUrlOverride?: string;
 }
 
 export interface DailyTrackState {

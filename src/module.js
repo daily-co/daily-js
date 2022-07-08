@@ -365,6 +365,8 @@ const FRAME_PROPS = {
         config.userMediaVideoConstraints;
       window._dailyConfig.userMediaAudioConstraints =
         config.userMediaAudioConstraints;
+      window._dailyConfig.callObjectBundleUrlOverride =
+        config.callObjectBundleUrlOverride;
       return true;
     },
   },

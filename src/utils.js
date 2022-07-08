@@ -9,6 +9,11 @@ export function notImplementedError() {
 }
 
 export function callObjectBundleUrl(meetingOrBaseUrl) {
+  // ADVANCED: if a custom bundle URL override is specified, use that.
+  if (window._dailyConfig && window._dailyConfig.callObjectBundleUrlOverride) {
+    return window._dailyConfig.callObjectBundleUrlOverride;
+  }
+
   // Take the provided URL, which is either a meeting URL (like
   // https://somecompany.daily.co/hello) or a base URL (like
   // https://somecompany.daily.co), and make it a base URL.
