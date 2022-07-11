@@ -19,35 +19,36 @@ export function callObjectBundleUrl(meetingOrBaseUrl) {
   // https://somecompany.daily.co), and make it a base URL.
   let baseUrl = meetingOrBaseUrl ? new URL(meetingOrBaseUrl).origin : null;
 
-  // Production:
-  // - no url provided                  --> load bundle from c.daily.co (CDN)
-  // - x.daily.co url provided          --> load bundle from c.daily.co (CDN)
-  // - x.staging.daily.co url provided  --> see dev/staging logic
-  if (
-    process.env.NODE_ENV === 'production' &&
-    (!baseUrl || baseUrl.match(/https:\/\/[^.]+\.daily\.co/))
-  ) {
-    if (!isSfuSupported()) {
-      return `https://c.daily.co/static/call-machine-object-nosfu-bundle.js`;
-    } else {
-      return `https://c.daily.co/static/call-machine-object-bundle.js`;
-    }
+  function bundleUrlFromBaseUrl(url) {
+    return `${url}/static/call-machine-object${
+      isSfuSupported() ? '' : '-nosfu'
+    }-bundle.js`;
   }
 
-  // Dev/staging:
-  // - no url provided  --> error
-  // - url provided     --> load bundle from url
+  function cdnBundleUrl({ isStaging = false } = {}) {
+    const cdnBaseUrl = `https://c${isStaging ? '.staging' : ''}.daily.co`;
+    return bundleUrlFromBaseUrl(cdnBaseUrl);
+  }
+
+  // 1. No URL      --> load bundle from prod CDN
+  // 2. Prod URL    --> load bundle from prod CDN
+  // 3. Staging URL --> load bundle from staging CDN
+  // 4. Other URL   --> load bundle from web app (same origin as meetingOrBaseUrl)
+  // -----
+  // 1.
   if (!baseUrl) {
-    console.warn(
-      'No baseUrl provided for call object bundle. Defaulting to production CDN...'
-    );
-    baseUrl = 'https://c.daily.co';
+    return cdnBundleUrl();
   }
-  if (!isSfuSupported()) {
-    return `${baseUrl}/static/call-machine-object-nosfu-bundle.js`;
-  } else {
-    return `${baseUrl}/static/call-machine-object-bundle.js`;
+  // 2.
+  if (baseUrl.match(/https:\/\/[^.]+\.daily\.co/)) {
+    return cdnBundleUrl();
   }
+  // 3.
+  if (baseUrl.match(/https:\/\/[^.]+\.staging\.daily\.co/)) {
+    return cdnBundleUrl({ isStaging: true });
+  }
+  // 4.
+  return bundleUrlFromBaseUrl(baseUrl);
 }
 
 export function validateHttpUrl(string) {
