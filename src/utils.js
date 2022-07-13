@@ -32,8 +32,9 @@ export function callObjectBundleUrl(meetingOrBaseUrl) {
 
   // 1. No URL      --> load bundle from prod CDN
   // 2. Prod URL    --> load bundle from prod CDN
-  // 3. Staging URL --> load bundle from staging CDN
-  // 4. Other URL   --> load bundle from web app (same origin as meetingOrBaseUrl)
+  // 3. Preview URL --> load bundle from preview web app
+  // 4. Staging URL --> load bundle from staging CDN
+  // 5. Other URL   --> load bundle from web app (same origin as meetingOrBaseUrl)
   // -----
   // 1.
   if (!baseUrl) {
@@ -44,10 +45,14 @@ export function callObjectBundleUrl(meetingOrBaseUrl) {
     return cdnBundleUrl();
   }
   // 3.
+  if (baseUrl.match(/https:\/\/preview-[^.]+\.staging\.daily\.co/)) {
+    return bundleUrlFromBaseUrl(baseUrl);
+  }
+  // 4.
   if (baseUrl.match(/https:\/\/[^.]+\.staging\.daily\.co/)) {
     return cdnBundleUrl({ isStaging: true });
   }
-  // 4.
+  // 5.
   return bundleUrlFromBaseUrl(baseUrl);
 }
 
