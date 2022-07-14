@@ -957,6 +957,7 @@ export interface DailyStreamingOptions {
   width?: number;
   height?: number;
   fps?: number;
+  minIdleTimeOut?: number;
   backgroundColor?: string;
   layout?: DailyStreamingLayoutConfig;
 }
