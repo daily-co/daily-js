@@ -22,7 +22,9 @@ export default [
       babel({
         exclude: 'node_modules/**',
         babelHelpers: 'runtime',
-        presets: ['@babel/preset-env'],
+        presets: [
+          ['@babel/preset-env', { exclude: ['transform-regenerator'] }],
+        ],
         plugins: [
           '@babel/plugin-transform-runtime',
           '@babel/plugin-proposal-class-properties',

@@ -40,7 +40,9 @@ const bundle = {
         use: {
           loader: 'babel-loader',
           options: {
-            presets: ['@babel/preset-env'],
+            presets: [
+              ['@babel/preset-env', { exclude: ['transform-regenerator'] }],
+            ],
             plugins: [
               '@babel/plugin-transform-runtime',
               '@babel/plugin-proposal-class-properties',
