@@ -256,7 +256,7 @@ export const DAILY_JS_REMOTE_MEDIA_PLAYER_STATE = {
   STOPPED: 'stopped',
 };
 
-export const PARTICIPANT_TYPE = {
+export const DAILY_PARTICIPANT_TYPE = {
   REMOTE_MEDIA_PLAYER: 'remote-media-player',
 };
 

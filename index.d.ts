@@ -310,6 +310,8 @@ export interface DailyParticipant {
     video: DailyTrackState;
     screenAudio: DailyTrackState;
     screenVideo: DailyTrackState;
+    rmpAudio?: DailyTrackState;
+    rmpVideo?: DailyTrackState;
   };
 
   // user/session info
@@ -321,6 +323,7 @@ export interface DailyParticipant {
   local: boolean;
   owner: boolean;
   record: boolean;
+  participantType?: string;
 
   // video element info (iframe-based calls using standard UI only)
   cam_info: {} | DailyVideoElementInfo;
