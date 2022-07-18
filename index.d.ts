@@ -1083,6 +1083,7 @@ export interface DailyCall {
     name: string,
     options?: { thisMeetingOnly?: boolean }
   ): Promise<{ userName: string }>;
+  setUserData(data: any): Promise<{ userData: any }>;
   startCamera(properties?: DailyCallOptions): Promise<DailyDeviceInfos>;
   cycleCamera(): Promise<{ device?: MediaDeviceInfo | null }>;
   cycleMic(): Promise<{ device?: MediaDeviceInfo | null }>;
@@ -1176,6 +1177,7 @@ export interface DailyCall {
   properties: {
     dailyConfig?: DailyAdvancedConfig;
     userName?: string;
+    userData?: any;
   };
 }
 

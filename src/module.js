@@ -145,6 +145,7 @@ import {
   DAILY_UI_EXIT_FULLSCREEN,
   DAILY_METHOD_GET_CAMERA_FACING_MODE,
   DAILY_METHOD_SET_USER_NAME,
+  DAILY_METHOD_SET_USER_DATA,
   DAILY_METHOD_PREAUTH,
   DAILY_METHOD_REQUEST_ACCESS,
   DAILY_METHOD_UPDATE_WAITING_PARTICIPANT,
@@ -165,6 +166,7 @@ import {
   DAILY_METHOD_SET_CAMERA,
   DAILY_EVENT_AVAILABLE_DEVICES_UPDATED,
   DAILY_EVENT_SELECTED_DEVICES_UPDATED,
+  MAX_USER_DATA_SIZE,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -402,6 +404,18 @@ const FRAME_PROPS = {
     help: 'language not supported. Options are: de, en-us, en, es, fi, fr, it, jp, ka, nl, no, pl, pt, ru, sv, tr, user',
   },
   userName: true, // ignored if there's a token
+  userData: {
+    validate: (data) => {
+      try {
+        validateUserData(data);
+        return true;
+      } catch (e) {
+        console.warn(e);
+        return false;
+      }
+    },
+    help: 'invalid userData type provided',
+  },
   activeSpeakerMode: true,
   showLeaveButton: true,
   showLocalVideo: true,
@@ -1478,6 +1492,31 @@ export default class DailyIframe extends EventEmitter {
           name: name ?? '',
           thisMeetingOnly:
             isReactNative() || (options ? !!options.thisMeetingOnly : false),
+        },
+        k
+      );
+    });
+  }
+
+  setUserData(data) {
+    try {
+      validateUserData(data);
+    } catch (e) {
+      throw e;
+    }
+    this.properties.userData = data;
+
+    return new Promise(async (resolve) => {
+      const k = (msg) => {
+        delete msg.action;
+        delete msg.callbackStamp;
+        delete msg.callFrameId;
+        resolve(msg);
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_SET_USER_DATA,
+          userData: data,
         },
         k
       );
@@ -3778,6 +3817,32 @@ function methodOnlySupportedInReactNative() {
   if (!isReactNative()) {
     throw new Error('This daily-js method is only supported in React Native');
   }
+}
+
+function validateUserData(data) {
+  try {
+    structuredClone && structuredClone(data);
+  } catch (e) {
+    throw Error(`userData must be clonable: ${e}`);
+  }
+  let dataStr;
+  if (typeof data === 'string') {
+    dataStr = data;
+  } else {
+    try {
+      dataStr = JSON.stringify(data);
+    } catch (e) {
+      throw Error(`userData must be serializable to JSON: ${e}`);
+    }
+  }
+
+  const bytes = new TextEncoder().encode(dataStr).length;
+  if (bytes > MAX_USER_DATA_SIZE) {
+    throw Error(
+      `userData object is too large (${bytes} Bytes). Maximum size suppported is 256 bytes.`
+    );
+  }
+  return true;
 }
 
 function validateReceiveSettings(
