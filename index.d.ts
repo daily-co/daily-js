@@ -558,14 +558,10 @@ export interface DailyEventObjectNoPayload {
     | 'loaded'
     | 'joining-meeting'
     | 'left-meeting'
-    | 'recording-stopped'
     | 'recording-stats'
-    | 'recording-error'
     | 'recording-upload-completed'
     | 'fullscreen'
     | 'exited-fullscreen'
-    | 'live-streaming-started'
-    | 'live-streaming-stopped'
   >;
 }
 
@@ -598,8 +594,14 @@ export interface DailyEventObjectNonFatalError {
 }
 
 export interface DailyEventObjectGenericError {
-  action: Extract<DailyEvent, 'load-attempt-failed' | 'live-streaming-error'>;
+  action: Extract<DailyEvent, 'load-attempt-failed'>;
   errorMsg: string;
+}
+
+export interface DailyEventObjectLiveStreamingError {
+  action: Extract<DailyEvent, 'live-streaming-error'>;
+  errorMsg: string;
+  instanceId?: string;
 }
 
 export interface DailyEventObjectParticipants {
@@ -652,6 +654,18 @@ export interface DailyEventObjectRecordingStarted {
   startedBy?: string;
   type?: string;
   layout?: DailyStreamingLayoutConfig;
+  instanceId?: string;
+}
+
+export interface DailyEventObjectRecordingStopped {
+  action: Extract<DailyEvent, 'recording-stopped'>;
+  instanceId?: string;
+}
+
+export interface DailyEventObjectRecordingError {
+  action: Extract<DailyEvent, 'recording-error'>;
+  errorMsg: string;
+  instanceId?: string;
 }
 
 export interface DailyEventObjectRecordingData {
@@ -763,6 +777,12 @@ export interface DailyEventObjectInputSettingsUpdated {
 export interface DailyEventObjectLiveStreamingStarted {
   action: Extract<DailyEvent, 'live-streaming-started'>;
   layout?: DailyStreamingLayoutConfig;
+  instanceId?: string;
+}
+
+export interface DailyEventObjectLiveStreamingStopped {
+  action: Extract<DailyEvent, 'live-streaming-stopped'>;
+  instanceId?: string;
 }
 
 export interface DailyEventObjectTranscriptionStarted {
@@ -818,6 +838,8 @@ export type DailyEventObject<T extends DailyEvent = any> =
     : T extends DailyEventObjectGenericError['action']
     ? DailyEventObjectGenericError
     : T extends DailyEventObjectParticipants['action']
+    ? DailyEventObjectLiveStreamingError
+    : T extends DailyEventObjectLiveStreamingError['action']
     ? DailyEventObjectParticipants
     : T extends DailyEventObjectParticipant['action']
     ? DailyEventObjectParticipant
@@ -971,6 +993,7 @@ export interface DailyStreamingOptions {
   fps?: number;
   minIdleTimeOut?: number;
   backgroundColor?: string;
+  instanceId?: string;
   layout?: DailyStreamingLayoutConfig;
 }
 
@@ -1114,17 +1137,25 @@ export interface DailyCall {
   startScreenShare(captureOptions?: DailyScreenCaptureOptions): void;
   stopScreenShare(): void;
   startRecording(options?: DailyStreamingOptions): void;
-  updateRecording(options: { layout?: DailyStreamingLayoutConfig }): void;
-  stopRecording(): void;
+  updateRecording(options: {
+    layout?: DailyStreamingLayoutConfig;
+    instanceId?: string;
+  }): void;
+  stopRecording(options?: { instanceId: string }): void;
   startLiveStreaming(options: DailyLiveStreamingOptions): void;
-  updateLiveStreaming(options: { layout?: DailyStreamingLayoutConfig }): void;
+  updateLiveStreaming(options: {
+    layout?: DailyStreamingLayoutConfig;
+    instanceId?: string;
+  }): void;
   addLiveStreamingEndpoints(options: {
     endpoints: DailyStreamingEndpoint[];
+    instanceId?: string;
   }): void;
   removeLiveStreamingEndpoints(options: {
     endpoints: DailyStreamingEndpoint[];
+    instanceId?: string;
   }): void;
-  stopLiveStreaming(): void;
+  stopLiveStreaming(options?: { instanceId: string }): void;
   startRemoteMediaPlayer(
     options: DailyRemoteMediaPlayerStartOptions
   ): Promise<DailyRemoteMediaPlayerInfo>;

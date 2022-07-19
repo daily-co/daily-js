@@ -2169,15 +2169,19 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  updateRecording({ layout = { preset: 'default' } }) {
+  updateRecording({ layout = { preset: 'default' }, instanceId }) {
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_UPDATE_RECORDING,
       layout,
+      instanceId,
     });
   }
 
-  stopRecording() {
-    this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_RECORDING });
+  stopRecording(args = {}) {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_STOP_RECORDING,
+      ...args,
+    });
   }
 
   startLiveStreaming(args = {}) {
@@ -2187,10 +2191,11 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  updateLiveStreaming({ layout = { preset: 'default' } }) {
+  updateLiveStreaming({ layout = { preset: 'default' }, instanceId }) {
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_UPDATE_LIVE_STREAMING,
       layout,
+      instanceId,
     });
   }
 
@@ -2210,8 +2215,11 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  stopLiveStreaming() {
-    this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_LIVE_STREAMING });
+  stopLiveStreaming(args = {}) {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_STOP_LIVE_STREAMING,
+      ...args,
+    });
   }
 
   async startRemoteMediaPlayer({
