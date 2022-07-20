@@ -294,6 +294,18 @@ export interface DailyTrackState {
   persistentTrack?: MediaStreamTrack;
 }
 
+export interface DailyParticipantPermissions {
+  hasPresence: boolean;
+  canSend: Set<
+    | 'video'
+    | 'audio'
+    | 'screenVideo'
+    | 'screenAudio'
+    | 'customVideo'
+    | 'customAudio'
+  >;
+}
+
 export interface DailyParticipant {
   // tracks
   audioTrack?: MediaStreamTrack;
@@ -325,6 +337,7 @@ export interface DailyParticipant {
   will_eject_at: Date;
   local: boolean;
   owner: boolean;
+  permissions: DailyParticipantPermissions;
   record: boolean;
   participantType?: string;
 
