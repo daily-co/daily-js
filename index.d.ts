@@ -306,6 +306,11 @@ export interface DailyParticipantPermissions {
   >;
 }
 
+export type DailyParticipantPermissionsUpdate = {
+  hasPresence?: boolean;
+  canSend?: DailyParticipantPermissions['canSend'] | boolean;
+};
+
 export interface DailyParticipant {
   // tracks
   audioTrack?: MediaStreamTrack;
@@ -374,6 +379,7 @@ export interface DailyParticipantUpdateOptions {
   setVideo?: boolean;
   setSubscribedTracks?: DailyTrackSubscriptionOptions;
   eject?: true;
+  updatePermissions?: DailyParticipantPermissionsUpdate;
   styles?: DailyParticipantCss;
 }
 

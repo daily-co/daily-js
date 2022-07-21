@@ -667,6 +667,49 @@ const PARTICIPANT_PROPS = {
   setAudio: true,
   setVideo: true,
   eject: true,
+  updatePermissions: {
+    validate: (permissionsUpdate) => {
+      // Note: this validation logic should probably be moved into
+      // Permissions.js, which should then be used by this file. It'd be a first
+      // for us to depend on a file outside daily-js, though.
+      for (const [permissionName, permission] of Object.entries(
+        permissionsUpdate
+      )) {
+        switch (permissionName) {
+          case 'hasPresence':
+            if (typeof permission !== 'boolean') {
+              return false;
+            }
+            break;
+          case 'canSend':
+            if (typeof permission === 'boolean') {
+              return true;
+            } else if (permission instanceof Set) {
+              const knownMediaTypes = [
+                'video',
+                'audio',
+                'screenVideo',
+                'screenAudio',
+                'customVideo',
+                'customAudio',
+              ];
+              for (const mediaType of permission) {
+                if (!knownMediaTypes.includes(mediaType)) {
+                  return false;
+                }
+              }
+            } else {
+              return false;
+            }
+            break;
+          default:
+            return false;
+        }
+      }
+      return true;
+    },
+    help: 'updatePermissions can take hasPresence and canSend permissions. hasPresence must be a boolean. canSend can be a boolean or an array of media types (video, audio, screenVideo, screenAudio, customVideo, customAudio).',
+  },
 };
 
 //
