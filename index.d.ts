@@ -296,19 +296,20 @@ export interface DailyTrackState {
 
 export interface DailyParticipantPermissions {
   hasPresence: boolean;
-  canSend: Set<
-    | 'video'
-    | 'audio'
-    | 'screenVideo'
-    | 'screenAudio'
-    | 'customVideo'
-    | 'customAudio'
-  >;
+  canSend:
+    | Set<
+        | 'video'
+        | 'audio'
+        | 'screenVideo'
+        | 'screenAudio'
+        | 'customVideo'
+        | 'customAudio'
+      >
+    | boolean;
 }
 
 export type DailyParticipantPermissionsUpdate = {
-  hasPresence?: boolean;
-  canSend?: DailyParticipantPermissions['canSend'] | boolean;
+  [Property in keyof DailyParticipantPermissions]+?: DailyParticipantPermissions[Property];
 };
 
 export interface DailyParticipant {
