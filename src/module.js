@@ -682,9 +682,7 @@ const PARTICIPANT_PROPS = {
             }
             break;
           case 'canSend':
-            if (typeof permission === 'boolean') {
-              return true;
-            } else if (permission instanceof Set) {
+            if (permission instanceof Set) {
               const knownMediaTypes = [
                 'video',
                 'audio',
@@ -698,7 +696,7 @@ const PARTICIPANT_PROPS = {
                   return false;
                 }
               }
-            } else {
+            } else if (typeof permission !== 'boolean') {
               return false;
             }
             break;
