@@ -23,4 +23,4 @@ If you're using daily-js to embed [Daily Prebuilt](https://docs.daily.co/guides/
 
 Today you can opt in to making daily-js behave in a CSP-friendly way by specifying `dailyConfig: { avoidEval: true }` wherever you provide your [call options](https://docs.daily.co/reference/daily-js/daily-iframe-class/properties). You can read more about this option and how to set up your CSP (Content Security Policy) in [this guide](https://docs.daily.co/guides/privacy-and-security/content-security-policy#custom-call-object).
 
-Starting in an upcoming version of daily-js, `avoidEval` will deault to `true`. To prepare for this change, please make sure that your CSP's `script-src` directive contains `https://*.daily.co`.
+Starting in an upcoming version of daily-js, `avoidEval` will switch to defaulting to `true`. To prepare for this change, please make sure that your CSP's `script-src` directive contains `https://*.daily.co` (or explicitly opt out of the new behavior by setting `avoidEval: false`).
