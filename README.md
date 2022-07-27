@@ -1,6 +1,6 @@
-**🚨Our docs have moved! 🚨**
+# Get started with Daily
 
-[Check them out here](https://docs.daily.co/docs) or jump to docs for our front-end javascript library and REST API, below.
+Please check our [our documentation site](https://docs.daily.co/) to get started. If you're building a web app with our daily-js front-end JavaScript library, you may be particularly interested in:
 
-- [Javascript docs](https://docs.daily.co/reference#using-the-dailyco-front-end-library): To add video calls to web pages and mobile apps
-- [REST API docs](https://docs.daily.co/reference): To create video call rooms, configure features for the rooms, and manage users and permissions
+- The [daily-js reference docs](https://docs.daily.co/reference#using-the-dailyco-front-end-library), for help adding video calls to your app
+- The [REST API reference docs](https://docs.daily.co/reference), for help creating video call rooms, configuring features for those rooms, and managing users and permissions
