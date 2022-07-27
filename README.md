@@ -17,7 +17,7 @@ So, starting in an upcoming version of daily-js, bug fixes and updates will no l
 
 Going forward, if you’re using a numbered version of daily-js in call object mode, you will need to periodically update to the latest version in order to receive any of the latest fixes or improvements.
 
-If you're using daily-js to embed [Daily Prebuilt](https://docs.daily.co/guides/products/prebuilt), there's no change: you'll continue to get the latest Prebuilt experience.
+If you're using daily-js to embed [Daily Prebuilt](https://docs.daily.co/guides/products/prebuilt), there's no change: you'll continue to get the latest Prebuilt experience and will only need to upgrade for API changes/improvements or to keep within our 6 month support window.
 
 ## `avoidEval` will become `true` by default
 
