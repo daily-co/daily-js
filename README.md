@@ -13,7 +13,7 @@ Today, if you're using `daily-js` in [call object](https://docs.daily.co/guides/
 
 We’ve received feedback from developers who are looking for more stability and want more control over when these fixes and updates end up in their client implementations.
 
-So, starting in an upcoming version of daily-js, bug fixes and updates will no longer be automatically applied to previous versions of daily-js, reducing unexpected changes for users of our library.
+So, starting in an upcoming version of `daily-js`, bug fixes and updates will no longer be automatically applied to previous versions of `daily-js`, reducing unexpected changes for users of our library.
 
 Going forward, if you’re using a numbered version of daily-js in call object mode, you will need to periodically update to the latest version in order to receive any of the latest fixes or improvements.
 
