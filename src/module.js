@@ -410,7 +410,7 @@ const FRAME_PROPS = {
         validateUserData(data);
         return true;
       } catch (e) {
-        console.warn(e);
+        console.error(e);
         return false;
       }
     },
@@ -1498,7 +1498,7 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  setUserData(data) {
+  async setUserData(data) {
     try {
       validateUserData(data);
     } catch (e) {
@@ -3821,6 +3821,9 @@ function methodOnlySupportedInReactNative() {
 
 function validateUserData(data) {
   try {
+    // under the hood, sendMessageToCallMachine uses post which in turn
+    // uses the structured clone algorithm, so if the data passed in
+    // can't be cloned, it will fail
     structuredClone && structuredClone(data);
   } catch (e) {
     throw Error(`userData must be clonable: ${e}`);
@@ -3836,6 +3839,12 @@ function validateUserData(data) {
     }
   }
 
+  // check that what goes in is the same coming out :)
+  if (!deepEqual(JSON.parse(dataStr), data)) {
+    throw Error(`userData must be serializable to JSON: ${e}`);
+  }
+
+  // check the size of the payload
   const bytes = new TextEncoder().encode(dataStr).length;
   if (bytes > MAX_USER_DATA_SIZE) {
     throw Error(

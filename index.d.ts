@@ -236,6 +236,7 @@ export interface DailyCallOptions {
   receiveSettings?: DailyReceiveSettings;
   inputSettings?: DailyInputSettings;
   userName?: string;
+  userData?: any;
 }
 
 export interface DailyLoadOptions extends DailyCallOptions {
@@ -318,6 +319,7 @@ export interface DailyParticipant {
   // user/session info
   user_id: string;
   user_name: string;
+  userData?: any;
   session_id: string;
   joined_at: Date;
   will_eject_at: Date;
