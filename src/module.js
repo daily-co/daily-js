@@ -3820,28 +3820,16 @@ function methodOnlySupportedInReactNative() {
 }
 
 function validateUserData(data) {
-  try {
-    // under the hood, sendMessageToCallMachine uses post which in turn
-    // uses the structured clone algorithm, so if the data passed in
-    // can't be cloned, it will fail
-    structuredClone && structuredClone(data);
-  } catch (e) {
-    throw Error(`userData must be clonable: ${e}`);
-  }
   let dataStr;
-  if (typeof data === 'string') {
-    dataStr = data;
-  } else {
-    try {
-      dataStr = JSON.stringify(data);
-    } catch (e) {
-      throw Error(`userData must be serializable to JSON: ${e}`);
-    }
+  try {
+    dataStr = JSON.stringify(data);
+  } catch (e) {
+    throw Error(`userData must be serializable to JSON: ${e}`);
   }
 
   // check that what goes in is the same coming out :)
   if (!deepEqual(JSON.parse(dataStr), data)) {
-    throw Error(`userData must be serializable to JSON: ${e}`);
+    throw Error(`userData must be serializable to JSON`);
   }
 
   // check the size of the payload
