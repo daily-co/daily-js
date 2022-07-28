@@ -91,6 +91,7 @@ export type DailyEvent =
   | 'receive-settings-updated'
   | 'input-settings-updated'
   | 'show-local-video-changed'
+  | 'selected-devices-updated'
   | 'custom-button-click';
 
 export type DailyMeetingState =
@@ -794,6 +795,11 @@ export interface DailyEventObjectCustomButtonClick {
   button_id: string;
 }
 
+export interface DailyEventObjectSelectedDevicesUpdated {
+  action: Extract<DailyEvent, 'selected-devices-updated'>;
+  devices: DailyDeviceInfos;
+}
+
 export type DailyEventObject<T extends DailyEvent = any> =
   T extends DailyEventObjectAppMessage['action']
     ? DailyEventObjectAppMessage
@@ -855,6 +861,8 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectInputSettingsUpdated
     : T extends DailyEventObjectCustomButtonClick['action']
     ? DailyEventObjectCustomButtonClick
+    : T extends DailyEventObjectSelectedDevicesUpdated['action']
+    ? DailyEventObjectSelectedDevicesUpdated
     : any;
 
 export interface DailyFaceInfo {

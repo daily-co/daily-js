@@ -164,6 +164,7 @@ import {
   DAILY_EVENT_CUSTOM_BUTTON_CLICK,
   DAILY_METHOD_SET_CAMERA,
   DAILY_EVENT_AVAILABLE_DEVICES_UPDATED,
+  DAILY_EVENT_SELECTED_DEVICES_UPDATED,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -3029,6 +3030,15 @@ export default class DailyIframe extends EventEmitter {
           });
         } catch (e) {
           console.log('could not emit', msg, e);
+        }
+        break;
+      case DAILY_EVENT_SELECTED_DEVICES_UPDATED:
+        if (msg.devices) {
+          try {
+            this.emit(msg.action, msg);
+          } catch (e) {
+            console.log('could not emit', msg, e);
+          }
         }
         break;
       case DAILY_EVENT_NETWORK_QUALITY_CHANGE:
