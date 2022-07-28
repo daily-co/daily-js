@@ -5,7 +5,7 @@ Please check our [our documentation site](https://docs.daily.co/) to get started
 - The [daily-js reference docs](https://docs.daily.co/reference#using-the-dailyco-front-end-library), for help adding video calls to your app
 - The [REST API reference docs](https://docs.daily.co/reference), for help creating video call rooms, configuring features for those rooms, and managing users and permissions
 
-# ⚠️ Notice of upcoming changes
+# ⚠ Upcoming changes that may require action
 
 ## Dynamic updates to previous daily-js versions will end
 
