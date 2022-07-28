@@ -1179,7 +1179,6 @@ export interface DailyCall {
   properties: {
     dailyConfig?: DailyAdvancedConfig;
     userName?: string;
-    userData?: any;
   };
 }
 
