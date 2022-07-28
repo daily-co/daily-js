@@ -9,7 +9,7 @@ Please check our [our documentation site](https://docs.daily.co/) to get started
 
 ## Dynamic updates to previous `daily-js` versions will end
 
-Today, if you're using `daily-js` in [call object](https://docs.daily.co/guides/products/call-object) mode, you may have noticed that certain bugfixes and updates are applied automatically to your client code, regardless of the version of `daily-js` you're using. Sometimes, these dynamic updates can introduce slight changes to the behavior of the API.
+Today, if you're using `daily-js` in [call object](https://docs.daily.co/guides/products/call-object) mode, you may have noticed that certain bug fixes and updates are applied automatically to your client code, regardless of the version of `daily-js` you're using. Sometimes, these dynamic updates can introduce slight changes to the behavior of the API.
 
 We’ve received feedback from developers who are looking for more stability and want more control over when these fixes and updates end up in their client implementations.
 
