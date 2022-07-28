@@ -15,9 +15,11 @@ We’ve received feedback from developers who are looking for more stability and
 
 So, starting in an upcoming version of `daily-js`, bug fixes and updates will no longer be automatically applied to previous versions of `daily-js`, reducing unexpected changes for users of our library.
 
-Going forward, if you’re using a numbered version of `daily-js` in call object mode, you will need to periodically update to the latest version in order to receive any of the latest fixes or improvements.
+Going forward, if you’re using a numbered version of `daily-js` in call object mode, you will need to periodically update to the latest version in order to receive any of the latest fixes or improvements\*.
 
-If you're using `daily-js` to embed [Daily Prebuilt](https://docs.daily.co/guides/products/prebuilt), there's no change: you'll continue to get the latest Prebuilt experience and will only need to upgrade for API changes/improvements or to keep within our 6 month support window.
+If you're using `daily-js` to embed [Daily Prebuilt](https://docs.daily.co/guides/products/prebuilt), there's no change; you'll continue to get the latest embedded Daily Prebuilt experience (though you might choose to regularly update `daily-js` to take advantage of its latest API improvements\*).
+
+\*_Note: Daily commits to supporting previous `daily-js` versions released up to 6 months ago, so you'll want to at least update to stay within that support window._
 
 ## `avoidEval` will become `true` by default
 
