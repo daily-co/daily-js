@@ -61,6 +61,7 @@ export const DAILY_EVENT_JOINED_MEETING = 'joined-meeting';
 export const DAILY_EVENT_LEFT_MEETING = 'left-meeting';
 export const DAILY_EVENT_AVAILABLE_DEVICES_UPDATED =
   'available-devices-updated';
+export const DAILY_EVENT_SELECTED_DEVICES_UPDATED = 'selected-devices-updated';
 
 export const DAILY_EVENT_PARTICIPANT_JOINED = 'participant-joined';
 export const DAILY_EVENT_PARTICIPANT_UPDATED = 'participant-updated';
