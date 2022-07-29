@@ -236,7 +236,7 @@ export interface DailyCallOptions {
   receiveSettings?: DailyReceiveSettings;
   inputSettings?: DailyInputSettings;
   userName?: string;
-  userData?: any;
+  userData?: unknown;
 }
 
 export interface DailyLoadOptions extends DailyCallOptions {
@@ -319,7 +319,7 @@ export interface DailyParticipant {
   // user/session info
   user_id: string;
   user_name: string;
-  userData?: any;
+  userData?: unknown;
   session_id: string;
   joined_at: Date;
   will_eject_at: Date;
@@ -1085,7 +1085,7 @@ export interface DailyCall {
     name: string,
     options?: { thisMeetingOnly?: boolean }
   ): Promise<{ userName: string }>;
-  setUserData(data: any): Promise<{ userData: any }>;
+  setUserData(data: unknown): Promise<{ userData: unknown }>;
   startCamera(properties?: DailyCallOptions): Promise<DailyDeviceInfos>;
   cycleCamera(): Promise<{ device?: MediaDeviceInfo | null }>;
   cycleMic(): Promise<{ device?: MediaDeviceInfo | null }>;
