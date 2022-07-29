@@ -297,7 +297,7 @@ function getEdgeVersion() {
 // less at the time of each release.
 const OLDEST_SUPPORTED_DAILY_JS_VERSION = {
   major: 0,
-  minor: 22,
+  minor: 23,
   patch: 0,
 };
 
