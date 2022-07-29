@@ -443,6 +443,7 @@ export interface DailyRoomInfo {
     enable_screenshare?: boolean;
     enable_advanced_chat?: boolean;
     enable_chat?: boolean;
+    enable_hand_raising?: boolean;
     enable_knocking?: boolean;
     enable_network_ui?: boolean;
     enable_people_ui?: boolean;
@@ -478,6 +479,7 @@ export interface DailyRoomInfo {
     max_live_streams?: number;
     enable_advanced_chat?: boolean;
     enable_chat?: boolean;
+    enable_hand_raising?: boolean;
     enable_network_ui?: boolean;
     enable_people_ui?: boolean;
     enable_pip_ui?: boolean;
