@@ -838,9 +838,9 @@ export type DailyEventObject<T extends DailyEvent = any> =
     : T extends DailyEventObjectGenericError['action']
     ? DailyEventObjectGenericError
     : T extends DailyEventObjectParticipants['action']
-    ? DailyEventObjectLiveStreamingError
-    : T extends DailyEventObjectLiveStreamingError['action']
     ? DailyEventObjectParticipants
+    : T extends DailyEventObjectLiveStreamingError['action']
+    ? DailyEventObjectLiveStreamingError
     : T extends DailyEventObjectParticipant['action']
     ? DailyEventObjectParticipant
     : T extends DailyEventObjectParticipantCounts['action']
