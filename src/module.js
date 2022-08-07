@@ -172,6 +172,8 @@ import {
   isReactNative,
   browserVideoSupported_p,
   getUserAgent,
+  iframeAllowValue,
+  isChromeV61,
   isFullscreenSupported,
   isScreenSharingSupported,
   isSfuSupported,
@@ -732,6 +734,17 @@ export default class DailyIframe extends EventEmitter {
         properties.layout = 'browser';
       }
     }
+    if (
+      !(isChromeV61()
+        ? /(?=.*microphone)(?=.*camera)/.test(iframeish.allow)
+        : /(?=.*microphone)(?=.*camera)(?=.*autoplay)(?=.*display-capture)/.test(
+            iframeish.allow
+          ))
+    ) {
+      console.error(
+        `The iframe's "allow" property should contain the following values: ${iframeAllowValue()}`
+      );
+    }
     return new DailyIframe(iframeish, properties);
   }
 
@@ -770,12 +783,7 @@ export default class DailyIframe extends EventEmitter {
     }
 
     let iframeEl = document.createElement('iframe');
-    // special-case for old Electron for Figma
-    if (window.navigator && window.navigator.userAgent.match(/Chrome\/61\./)) {
-      iframeEl.allow = 'microphone, camera';
-    } else {
-      iframeEl.allow = 'microphone; camera; autoplay; display-capture';
-    }
+    iframeEl.allow = iframeAllowValue();
     iframeEl.style.visibility = 'hidden';
     parentEl.appendChild(iframeEl);
     iframeEl.style.visibility = null;
