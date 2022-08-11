@@ -614,6 +614,7 @@ export interface DailyEventObjectNonFatalError {
   action: Extract<DailyEvent, 'nonfatal-error'>;
   type: DailyNonFatalErrorType;
   errorMsg: string;
+  details?: any;
 }
 
 export interface DailyEventObjectGenericError {
