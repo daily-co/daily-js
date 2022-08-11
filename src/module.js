@@ -1148,7 +1148,7 @@ export default class DailyIframe extends EventEmitter {
     ) {
       sessionId = 'local';
     }
-    if (sessionId && properties && this._participants[sessionId]) {
+    if (sessionId && properties) {
       this.validateParticipantProperties(sessionId, properties);
       this.sendMessageToCallMachine({
         action: DAILY_METHOD_UPDATE_PARTICIPANT,
@@ -1166,17 +1166,8 @@ export default class DailyIframe extends EventEmitter {
       if (sessionId === localId) {
         sessionId = 'local';
       }
-      if (
-        sessionId &&
-        properties[sessionId] &&
-        (this._participants[sessionId] || sessionId === '*')
-      ) {
+      if (sessionId && properties[sessionId]) {
         this.validateParticipantProperties(sessionId, properties[sessionId]);
-      } else {
-        console.warn(
-          `unrecognized participant in updateParticipants: ${sessionId}`
-        );
-        delete properties[sessionId];
       }
     }
     this.sendMessageToCallMachine({
