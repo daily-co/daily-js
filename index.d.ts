@@ -442,6 +442,7 @@ export interface DailyRoomInfo {
     max_participants?: number;
     enable_screenshare?: boolean;
     enable_advanced_chat?: boolean;
+    enable_audience_reactions?: boolean;
     enable_chat?: boolean;
     enable_hand_raising?: boolean;
     enable_knocking?: boolean;
@@ -478,6 +479,7 @@ export interface DailyRoomInfo {
     webhook_meeting_end?: any;
     max_live_streams?: number;
     enable_advanced_chat?: boolean;
+    enable_audience_reactions?: boolean;
     enable_chat?: boolean;
     enable_hand_raising?: boolean;
     enable_network_ui?: boolean;
