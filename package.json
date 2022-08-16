@@ -73,8 +73,8 @@
     "branches": [
       {
         "name": "main",
-        "channel": "prebuilt",
-        "prerelease": "prebuilt"
+        "channel": "internal",
+        "prerelease": "internal"
       },
       {
         "name": "daily-js-releases"
