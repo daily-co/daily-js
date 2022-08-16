@@ -321,7 +321,7 @@ export interface DailyParticipant {
   user_name: string;
   userData?: unknown;
   session_id: string;
-  joined_at: Date;
+  joined_at?: Date;
   will_eject_at: Date;
   local: boolean;
   owner: boolean;
