@@ -355,3 +355,14 @@ export function isCurrentDailyJsNearEndOfSupport() {
     NEARING_EOS_DAILY_JS_VERSION
   );
 }
+
+export function isChromeV61() {
+  return window.navigator?.userAgent.match(/Chrome\/61\./);
+}
+
+export function iframeAllowValue() {
+  // special-case for old Electron for Figma
+  return isChromeV61()
+    ? 'microphone, camera'
+    : 'microphone; camera; autoplay; display-capture';
+}
