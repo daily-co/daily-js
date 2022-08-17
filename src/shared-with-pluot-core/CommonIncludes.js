@@ -144,7 +144,7 @@ export const DAILY_EVENT_CUSTOM_BUTTON_CLICK = 'custom-button-click';
 //
 
 export const MAX_APP_MSG_SIZE = 1024 * 4;
-export const MAX_USER_DATA_SIZE = 256;
+export const MAX_USER_DATA_SIZE = 1024 * 4;
 
 export const IFRAME_MESSAGE_MARKER = 'iframe-call-message';
 

@@ -1502,11 +1502,12 @@ export default class DailyIframe extends EventEmitter {
     try {
       validateUserData(data);
     } catch (e) {
+      console.error(e);
       throw e;
     }
     this.properties.userData = data;
 
-    return new Promise(async (resolve) => {
+    return new Promise((resolve) => {
       const k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
@@ -3837,14 +3838,13 @@ function validateUserData(data) {
 
   // check that what goes in is the same coming out :)
   if (!deepEqual(JSON.parse(dataStr), data)) {
-    throw Error(`userData must be serializable to JSON`);
+    console.warning(`The userData provided will be modified when serialized.`);
   }
 
   // check the size of the payload
-  const bytes = new TextEncoder().encode(dataStr).length;
-  if (bytes > MAX_USER_DATA_SIZE) {
+  if (dataStr.length > MAX_USER_DATA_SIZE) {
     throw Error(
-      `userData object is too large (${bytes} Bytes). Maximum size suppported is 256 bytes.`
+      `userData is too large (${dataStr.length} characters). Maximum size suppported is ${MAX_USER_DATA_SIZE}.`
     );
   }
   return true;
