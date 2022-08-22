@@ -638,7 +638,7 @@ export interface DailyEventObjectParticipant {
 }
 
 // only 1 reason reported for now. more to come.
-export type DailyParticipantLeftReason = 'became-hidden';
+export type DailyParticipantLeftReason = 'hidden';
 
 export interface DailyEventObjectParticipantLeft {
   action: Extract<DailyEvent, 'participant-left'>;
