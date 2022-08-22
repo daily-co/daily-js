@@ -77,6 +77,11 @@
         "prerelease": "internal"
       },
       {
+        "name": "eng-5178-version-and-deploy-daily-jscall-machine",
+        "channel": "semvertest",
+        "prerelease": "semvertest"
+      },
+      {
         "name": "daily-js-releases"
       }
     ],
