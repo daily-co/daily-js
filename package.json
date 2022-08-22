@@ -97,7 +97,17 @@
             },
             {
               "type": "fix",
+              "scope": "dj",
+              "release": "patch"
+            },
+            {
+              "type": "fix",
               "scope": "call-machine",
+              "release": "patch"
+            },
+            {
+              "type": "fix",
+              "scope": "cm",
               "release": "patch"
             },
             {
@@ -107,7 +117,17 @@
             },
             {
               "type": "feat",
+              "scope": "dj",
+              "release": "minor"
+            },
+            {
+              "type": "feat",
               "scope": "call-machine",
+              "release": "minor"
+            },
+            {
+              "type": "feat",
+              "scope": "cm",
               "release": "minor"
             },
             {
@@ -117,7 +137,37 @@
             },
             {
               "type": "improvement",
+              "scope": "dj",
+              "release": "minor"
+            },
+            {
+              "type": "improvement",
               "scope": "call-machine",
+              "release": "minor"
+            },
+            {
+              "type": "improvement",
+              "scope": "cm",
+              "release": "minor"
+            },
+            {
+              "type": "imp",
+              "scope": "daily-js",
+              "release": "minor"
+            },
+            {
+              "type": "imp",
+              "scope": "dj",
+              "release": "minor"
+            },
+            {
+              "type": "imp",
+              "scope": "call-machine",
+              "release": "minor"
+            },
+            {
+              "type": "imp",
+              "scope": "cm",
               "release": "minor"
             },
             {
