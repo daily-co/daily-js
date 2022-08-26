@@ -2232,19 +2232,21 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  addLiveStreamingEndpoints({ endpoints }) {
+  addLiveStreamingEndpoints({ endpoints, instanceId }) {
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_UPDATE_LIVE_STREAMING_ENDPOINTS,
       endpointsOp: UPDATE_LIVE_STREAMING_ENDPOINTS_OP.ADD_ENDPOINTS,
       endpoints,
+      instanceId,
     });
   }
 
-  removeLiveStreamingEndpoints({ endpoints }) {
+  removeLiveStreamingEndpoints({ endpoints, instanceId }) {
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_UPDATE_LIVE_STREAMING_ENDPOINTS,
       endpointsOp: UPDATE_LIVE_STREAMING_ENDPOINTS_OP.REMOVE_ENDPOINTS,
       endpoints,
+      instanceId,
     });
   }
 
