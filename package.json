@@ -184,6 +184,16 @@
               "breaking": true,
               "scope": "call-machine",
               "release": "minor"
+            },
+            {
+              "breaking": true,
+              "scope": "dj",
+              "release": "minor"
+            },
+            {
+              "breaking": true,
+              "scope": "cm",
+              "release": "minor"
             }
           ]
         }
