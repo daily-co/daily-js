@@ -62,11 +62,6 @@ export function isVideoProcessingSupported() {
   return supportedBrowsersForVideoProcessors.includes(getBrowserName());
 }
 
-export function isSfuSupported() {
-  if (isReactNative()) return true;
-  return browserVideoSupported_p();
-}
-
 export function canUnifiedPlan() {
   return browserCanUnifiedPlan(getBrowserName(), getBrowserVersion());
 }

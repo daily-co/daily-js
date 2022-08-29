@@ -174,7 +174,6 @@ import {
   getUserAgent,
   isFullscreenSupported,
   isScreenSharingSupported,
-  isSfuSupported,
   isVideoProcessingSupported,
 } from './shared-with-pluot-core/Environment.js';
 import WebMessageChannel from './shared-with-pluot-core/script-message-channels/WebMessageChannel';
@@ -739,7 +738,7 @@ export default class DailyIframe extends EventEmitter {
       version: browser.getBrowserVersion(),
       supportsFullscreen: !!isFullscreenSupported(),
       supportsScreenShare: !!isScreenSharingSupported(),
-      supportsSfu: !!isSfuSupported(),
+      supportsSfu: !!browserVideoSupported_p(),
       supportsVideoProcessing: isVideoProcessingSupported(),
     };
   }

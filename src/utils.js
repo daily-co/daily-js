@@ -1,5 +1,3 @@
-import { isSfuSupported } from './shared-with-pluot-core/Environment';
-
 export function randomStringId() {
   return Date.now() + Math.random().toString();
 }
@@ -20,9 +18,7 @@ export function callObjectBundleUrl(meetingOrBaseUrl) {
   let baseUrl = meetingOrBaseUrl ? new URL(meetingOrBaseUrl).origin : null;
 
   function bundleUrlFromBaseUrl(url) {
-    return `${url}/static/call-machine-object${
-      isSfuSupported() ? '' : '-nosfu'
-    }-bundle.js`;
+    return `${url}/static/call-machine-object-bundle.js`;
   }
 
   function cdnBundleUrl({ isStaging = false } = {}) {
