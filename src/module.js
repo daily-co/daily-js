@@ -667,6 +667,47 @@ const PARTICIPANT_PROPS = {
   setAudio: true,
   setVideo: true,
   eject: true,
+  updatePermissions: {
+    validate: (permissionsUpdate) => {
+      // Note: this validation logic should probably be moved into
+      // Permissions.js, which should then be used by this file. It'd be a first
+      // for us to depend on a file outside daily-js, though.
+      for (const [permissionName, permission] of Object.entries(
+        permissionsUpdate
+      )) {
+        switch (permissionName) {
+          case 'hasPresence':
+            if (typeof permission !== 'boolean') {
+              return false;
+            }
+            break;
+          case 'canSend':
+            if (permission instanceof Set) {
+              const knownMediaTypes = [
+                'video',
+                'audio',
+                'screenVideo',
+                'screenAudio',
+                'customVideo',
+                'customAudio',
+              ];
+              for (const mediaType of permission) {
+                if (!knownMediaTypes.includes(mediaType)) {
+                  return false;
+                }
+              }
+            } else if (typeof permission !== 'boolean') {
+              return false;
+            }
+            break;
+          default:
+            return false;
+        }
+      }
+      return true;
+    },
+    help: 'updatePermissions can take hasPresence and canSend permissions. hasPresence must be a boolean. canSend can be a boolean or an array of media types (video, audio, screenVideo, screenAudio, customVideo, customAudio).',
+  },
 };
 
 //
@@ -1107,7 +1148,7 @@ export default class DailyIframe extends EventEmitter {
     ) {
       sessionId = 'local';
     }
-    if (sessionId && properties && this._participants[sessionId]) {
+    if (sessionId && properties) {
       this.validateParticipantProperties(sessionId, properties);
       this.sendMessageToCallMachine({
         action: DAILY_METHOD_UPDATE_PARTICIPANT,
@@ -1125,17 +1166,8 @@ export default class DailyIframe extends EventEmitter {
       if (sessionId === localId) {
         sessionId = 'local';
       }
-      if (
-        sessionId &&
-        properties[sessionId] &&
-        (this._participants[sessionId] || sessionId === '*')
-      ) {
+      if (sessionId && properties[sessionId]) {
         this.validateParticipantProperties(sessionId, properties[sessionId]);
-      } else {
-        console.warn(
-          `unrecognized participant in updateParticipants: ${sessionId}`
-        );
-        delete properties[sessionId];
       }
     }
     this.sendMessageToCallMachine({
@@ -2200,19 +2232,21 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  addLiveStreamingEndpoints({ endpoints }) {
+  addLiveStreamingEndpoints({ endpoints, instanceId }) {
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_UPDATE_LIVE_STREAMING_ENDPOINTS,
       endpointsOp: UPDATE_LIVE_STREAMING_ENDPOINTS_OP.ADD_ENDPOINTS,
       endpoints,
+      instanceId,
     });
   }
 
-  removeLiveStreamingEndpoints({ endpoints }) {
+  removeLiveStreamingEndpoints({ endpoints, instanceId }) {
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_UPDATE_LIVE_STREAMING_ENDPOINTS,
       endpointsOp: UPDATE_LIVE_STREAMING_ENDPOINTS_OP.REMOVE_ENDPOINTS,
       endpoints,
+      instanceId,
     });
   }
 

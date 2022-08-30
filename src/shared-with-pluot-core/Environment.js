@@ -305,7 +305,7 @@ const OLDEST_SUPPORTED_DAILY_JS_VERSION = {
 // to give customers ample time to upgrade.
 const NEARING_EOS_DAILY_JS_VERSION = {
   major: 0,
-  minor: 23,
+  minor: 24,
   patch: 0,
 };
 
