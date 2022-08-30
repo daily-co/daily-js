@@ -486,6 +486,7 @@ export interface DailyRoomInfo {
     enable_people_ui?: boolean;
     enable_pip_ui?: boolean;
     enable_prejoin_ui?: boolean;
+    enable_transcription?: boolean;
     enable_video_processing_ui?: boolean;
     recordings_bucket?: DailyRecordingsBucket;
   };
