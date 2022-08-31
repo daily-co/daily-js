@@ -22,8 +22,9 @@ export function callObjectBundleUrl(meetingOrBaseUrl) {
   }
 
   function cdnBundleUrl({ isStaging = false } = {}) {
-    const cdnBaseUrl = `https://c${isStaging ? '.staging' : ''}.daily.co`;
-    return bundleUrlFromBaseUrl(cdnBaseUrl);
+    return `https://c${
+      isStaging ? '.staging' : ''
+    }.daily.co/call-machine/versioned/${__dailyJsVersion__}/call-machine-object-bundle.js`;
   }
 
   // 1. No URL      --> load bundle from prod CDN
