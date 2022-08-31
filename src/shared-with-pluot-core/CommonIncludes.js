@@ -166,6 +166,8 @@ export const MAX_USER_DATA_SIZE = 1024 * 4;
 
 export const IFRAME_MESSAGE_MARKER = 'iframe-call-message';
 
+export const DAILY_METHOD_UPDATE_CUSTOM_EMBEDS =
+  'update-custom-embeds';
 export const DAILY_METHOD_UPDATE_CUSTOM_TRAY_BUTTONS =
   'update-custom-tray-buttons';
 export const DAILY_METHOD_SET_THEME = 'set-theme';

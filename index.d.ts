@@ -226,6 +226,65 @@ export interface DailyCustomTrayButtons {
   [id: string]: DailyCustomTrayButton;
 }
 
+export interface DailyCustomEmbed {
+  /**
+   * Specifies the feature policy for the iframe.
+   * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-allow
+   */
+  allow?: HTMLIFrameElement['allow'];
+  /**
+   * Specifies the [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) for the iframe.
+   * Please check browser support before using this property.
+   * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-csp
+   * https://caniuse.com/mdn-api_htmliframeelement_csp
+   */
+  csp?: string;
+  /**
+   * By default embeds will be loaded lazily.
+   */
+  loading?: 'eager' | 'lazy';
+  /**
+   * Daily supports two different types of custom embeds:
+   * - Main call area embeds
+   * - Sidebar embeds
+   */
+  location: 'main' | 'sidebar';
+  /**
+   * A unique name for the iframe.
+   * For more info see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-name
+   */
+  name?: HTMLIFrameElement['name'];
+  /**
+   * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-referrerpolicy
+   */
+  referrerPolicy?: HTMLIFrameElement['referrerPolicy'];
+  /**
+   * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-sandbox
+   */
+  sandbox?: string;
+  /**
+   * The iframe's source URL.
+   * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-src
+   */
+  src?: HTMLIFrameElement['src'];
+  /**
+   * Allows to embed inline HTML in an iframe.
+   * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-srcdoc
+   * https://caniuse.com/iframe-srcdoc
+   */
+  srcdoc?: HTMLIFrameElement['srcdoc'];
+  /**
+   * When enabled, shares the embed's state with all other participants in the call.
+   * When the embed is started, it will be started for all participants.
+   * When it's stopped, it will stop for all participants.
+   */
+  shared?: boolean;
+}
+
+export interface DailyCustomEmbeds {
+  [id: string]: DailyCustomEmbed;
+}
+
 export interface DailyCallOptions {
   url?: string;
   token?: string;
@@ -237,6 +296,7 @@ export interface DailyCallOptions {
   showFullscreenButton?: boolean;
   showUserNameChangeUI?: boolean;
   iframeStyle?: Partial<CSSStyleDeclaration>;
+  customEmbeds?: DailyCustomEmbeds;
   customLayout?: boolean;
   customTrayButtons?: DailyCustomTrayButtons;
   bodyClass?: string;
@@ -1356,6 +1416,8 @@ export interface DailyCall {
   getInputSettings(): Promise<DailyInputSettings>;
   updateCustomTrayButtons(customTrayButtons: DailyCustomTrayButtons): DailyCall;
   customTrayButtons(): DailyCustomTrayButtons;
+  updateCustomEmbeds(customEmbeds: DailyCustomEmbeds): DailyCall;
+  customEmbeds(): DailyCustomEmbeds;
   setBandwidth(bw: {
     kbs?: number | 'NO_CAP' | null;
     trackConstraints?: MediaTrackConstraints;

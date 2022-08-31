@@ -184,6 +184,7 @@ import {
   DAILY_EXIT_FULLSCREEN,
   DAILY_METHOD_TRANSMIT_LOG,
   DAILY_METHOD_GET_CPU_LOAD_STATS,
+  DAILY_METHOD_UPDATE_CUSTOM_EMBEDS,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -376,6 +377,7 @@ const customTrayButtonsType = {
 };
 
 const FRAME_PROPS = {
+  customEmbeds: true,
   customTrayButtons: {
     validate: validateCustomTrayButtons,
     help: `customTrayButtons should be a dictionary of the type ${JSON.stringify(
@@ -964,6 +966,16 @@ export default class DailyIframe extends EventEmitter {
       }
     } else {
       this._showParticipantsBar = true;
+    }
+
+    if (properties.customEmbeds !== undefined) {
+      if (this._callObjectMode) {
+        console.error('customEmbeds is not available in call object mode');
+      } else {
+        this._customEmbeds = properties.customEmbeds;
+      }
+    } else {
+      this._customEmbeds = {};
     }
 
     if (properties.customTrayButtons !== undefined) {
@@ -2774,6 +2786,46 @@ export default class DailyIframe extends EventEmitter {
     );
     methodNotSupportedInReactNative();
     return this._showParticipantsBar;
+  }
+
+  customEmbeds() {
+    methodNotSupportedInReactNative();
+    if (this._callObjectMode) {
+      console.error('customEmbeds is not available in callObject mode');
+      return this;
+    }
+    return this._customEmbeds;
+  }
+
+  updateCustomEmbeds(embeds) {
+    methodNotSupportedInReactNative();
+    if (this._callObjectMode) {
+      console.error(
+        'updateCustomEmbeds is not available in callObject mode'
+      );
+      return this;
+    }
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      console.error(
+        'the meeting must be joined before calling updateCustomEmbeds'
+      );
+      return this;
+    }
+    // TODO: Write validator for custom embeds.
+    // if (!validateCustomEmbeds(embeds)) {
+    //   console.error(
+    //     `updateCustomEmbeds only accepts a dictionary of the type ${JSON.stringify(
+    //       customEmbedsType
+    //     )}`
+    //   );
+    //   return this;
+    // }
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_UPDATE_CUSTOM_EMBEDS,
+      embeds,
+    });
+    this._customEmbeds = embeds;
+    return this;
   }
 
   customTrayButtons() {
