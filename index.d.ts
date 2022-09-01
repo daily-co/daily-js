@@ -628,6 +628,7 @@ export interface DailyEventObjectLiveStreamingError {
   action: Extract<DailyEvent, 'live-streaming-error'>;
   errorMsg: string;
   instanceId?: string;
+  actionTraceId?: string;
 }
 
 export interface DailyEventObjectParticipants {
@@ -700,6 +701,7 @@ export interface DailyEventObjectRecordingError {
   action: Extract<DailyEvent, 'recording-error'>;
   errorMsg: string;
   instanceId?: string;
+  actionTraceId?: string;
 }
 
 export interface DailyEventObjectRecordingData {
