@@ -78,8 +78,8 @@
       },
       {
         "name": "eng-5281-deploy-pre-release-versions-of-daily-js",
-        "channel": "eng-5281-test",
-        "prerelease": "eng-5281-test"
+        "channel": "eng-5281-test-a",
+        "prerelease": "eng-5281-test-a"
       },
       {
         "name": "daily-js-releases"
