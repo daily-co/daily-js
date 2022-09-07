@@ -1611,7 +1611,7 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       let k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
@@ -3872,26 +3872,46 @@ function methodOnlySupportedInReactNative() {
   }
 }
 
-function validateSessionData(data) {
-  let dataStr;
-  try {
-    dataStr = JSON.stringify(data);
-  } catch (e) {
-    throw Error(`sessionData must be serializable to JSON: ${e}`);
+function validateSessionData(data, mergeStrategy) {
+  const OK_STRATEGIES = ['replace', 'shallow-merge'];
+  if (!OK_STRATEGIES.includes(mergeStrategy)) {
+    throw Error(
+      `Invalid mergeStrategy provided. Options are: 'replace' or 'shallow-merge'`
+    );
   }
 
-  // check that what goes in is the same coming out :)
-  if (!deepEqual(JSON.parse(dataStr), data)) {
-    console.warning(
-      `The sessionData provided will be modified when serialized.`
-    );
+  // any version of data equating to false would mean that it is valid
+  if (!data) {
+    return true;
+  }
+
+  let dataStr;
+  if (typeof data === 'string') {
+    // JSON.stringify adds two characters to the string, so do sizing checks
+    // on the raw string.
+    dataStr = data;
+  } else {
+    try {
+      dataStr = JSON.stringify(data);
+      // check that what goes in is the same coming out :)
+      if (!deepEqual(JSON.parse(dataStr), data)) {
+        console.warning(
+          `The sessionData provided will be modified when serialized.`
+        );
+      }
+    } catch (e) {
+      throw Error(`sessionData must be serializable to JSON: ${e}`);
+    }
   }
 
   // TODO: If shallow-merge is specified, should we update the str to include
   //       the cache to catch sizing errors early? (note: could also have false errors)
 
   // check the key count
-  if (Object.keys(data).length > MAX_SESSION_DATA_KEY_CNT) {
+  if (
+    typeof data === 'object' &&
+    Object.keys(data).length > MAX_SESSION_DATA_KEY_CNT
+  ) {
     throw Error(
       `sessionData has too many keys (${
         Object.keys(data).length
@@ -3909,18 +3929,30 @@ function validateSessionData(data) {
 }
 
 function validateUserData(data) {
+  // any version of data equating to false would mean that it is valid
+  if (!data) {
+    return true;
+  }
+
   let dataStr;
-  try {
-    dataStr = JSON.stringify(data);
-  } catch (e) {
-    throw Error(`userData must be serializable to JSON: ${e}`);
-  }
+  if (typeof data === 'string') {
+    // JSON.stringify adds two characters to the string, so do sizing checks
+    // on the raw string.
+    dataStr = data;
+  } else {
+    try {
+      dataStr = JSON.stringify(data);
 
-  // check that what goes in is the same coming out :)
-  if (!deepEqual(JSON.parse(dataStr), data)) {
-    console.warn(`The userData provided will be modified when serialized.`);
+      // check that what goes in is the same coming out :)
+      if (!deepEqual(JSON.parse(dataStr), data)) {
+        console.warning(
+          `The userData provided will be modified when serialized.`
+        );
+      }
+    } catch (e) {
+      throw Error(`userData must be serializable to JSON: ${e}`);
+    }
   }
-
   // check the size of the payload
   if (dataStr.length > MAX_USER_DATA_SIZE) {
     throw Error(
