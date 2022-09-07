@@ -1548,7 +1548,7 @@ export default class DailyIframe extends EventEmitter {
       throw new Error('setMeetingSessionData() is only available when joined');
     }
     try {
-      validateSessionData(data);
+      validateSessionData(data, mergeStrategy);
     } catch (e) {
       console.error(e);
       throw e;
