@@ -126,7 +126,8 @@ export type DailyNonFatalErrorType =
   | 'screen-share-error'
   | 'video-processor-error'
   | 'remote-media-player-error'
-  | 'live-streaming-warning';
+  | 'live-streaming-warning'
+  | 'session-data-error';
 
 export type DailyNetworkTopology = 'sfu' | 'peer';
 
@@ -555,7 +556,12 @@ export interface DailyMeetingSession {
   id: string;
 }
 
-//  Temporary change for an empty commit
+export interface DailyMeetingSessionState {
+  data: unknown;
+  topology: DailyNetworkTopology | 'none';
+}
+
+export type sessionDataMergeStrategy = 'replace' | 'shallow-merge';
 
 export interface DailyVideoReceiveSettings {
   layer?: number;
@@ -741,6 +747,11 @@ export interface DailyEventObjectAccessState extends DailyAccessState {
 export interface DailyEventObjectMeetingSessionUpdated {
   action: Extract<DailyEvent, 'meeting-session-updated'>;
   meetingSession: DailyMeetingSession;
+}
+
+export interface DailyEventObjectMeetingSessionStateUpdated {
+  action: Extract<DailyEvent, 'meeting-session-state-updated'>;
+  meetingSessionState: DailyMeetingSessionState;
 }
 
 export interface DailyEventObjectTrack {
@@ -1225,6 +1236,11 @@ export interface DailyCall {
   getMeetingSession(): Promise<{
     meetingSession: DailyMeetingSession;
   }>;
+  meetingSessionState(): DailyMeetingSessionState;
+  setMeetingSessionData(
+    data: unknown,
+    mergeStrategy?: sessionDataMergeStrategy
+  ): void;
   setUserName(
     name: string,
     options?: { thisMeetingOnly?: boolean }

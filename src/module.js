@@ -131,7 +131,7 @@ import {
   DAILY_METHOD_GET_LANG,
   DAILY_METHOD_SET_LANG,
   DAILY_METHOD_GET_MEETING_SESSION,
-  MAX_APP_MSG_SIZE,
+  DAILY_METHOD_SET_SESSION_DATA,
   DAILY_METHOD_REGISTER_INPUT_HANDLER,
   DAILY_METHOD_DETECT_ALL_FACES,
   DAILY_METHOD_ROOM,
@@ -172,6 +172,9 @@ import {
   DAILY_METHOD_SET_CAMERA,
   DAILY_EVENT_AVAILABLE_DEVICES_UPDATED,
   DAILY_EVENT_SELECTED_DEVICES_UPDATED,
+  MAX_APP_MSG_SIZE,
+  MAX_SESSION_DATA_KEY_CNT,
+  MAX_SESSION_DATA_SIZE,
   MAX_USER_DATA_SIZE,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
@@ -1509,7 +1512,7 @@ export default class DailyIframe extends EventEmitter {
     if (this._meetingState !== DAILY_STATE_JOINED) {
       throw new Error('getMeetingSession() is only allowed when joined');
     }
-    return new Promise(async (resolve) => {
+    return new Promise((resolve) => {
       const k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
@@ -1523,9 +1526,30 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
+  meetingSessionState() {
+    console.log('i should return session state');
+  }
+
+  setMeetingSessionData(data, mergeStrategy = 'replace') {
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      throw new Error('getMeetingSessionData() is only available when joined');
+    }
+    try {
+      validateSessionData(data);
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_SET_SESSION_DATA,
+      data,
+      mergeStrategy,
+    });
+  }
+
   setUserName(name, options) {
     this.properties.userName = name;
-    return new Promise(async (resolve) => {
+    return new Promise((resolve) => {
       const k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
@@ -1587,7 +1611,7 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       let k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
@@ -3846,6 +3870,42 @@ function methodOnlySupportedInReactNative() {
   if (!isReactNative()) {
     throw new Error('This daily-js method is only supported in React Native');
   }
+}
+
+function validateSessionData(data) {
+  let dataStr;
+  try {
+    dataStr = JSON.stringify(data);
+  } catch (e) {
+    throw Error(`sessionData must be serializable to JSON: ${e}`);
+  }
+
+  // check that what goes in is the same coming out :)
+  if (!deepEqual(JSON.parse(dataStr), data)) {
+    console.warning(
+      `The sessionData provided will be modified when serialized.`
+    );
+  }
+
+  // TODO: If shallow-merge is specified, should we update the str to include
+  //       the cache to catch sizing errors early? (note: could also have false errors)
+
+  // check the key count
+  if (Object.keys(data).length > MAX_SESSION_DATA_KEY_CNT) {
+    throw Error(
+      `sessionData has too many keys (${
+        Object.keys(data).length
+      }). Maximum suppported is ${MAX_SESSION_DATA_KEY_CNT}.`
+    );
+  }
+
+  // check the size of the payload
+  if (dataStr.length > MAX_SESSION_DATA_SIZE) {
+    throw Error(
+      `sessionData is too large (${dataStr.length} characters). Maximum size suppported is ${MAX_SESSION_DATA_SIZE}.`
+    );
+  }
+  return true;
 }
 
 function validateUserData(data) {

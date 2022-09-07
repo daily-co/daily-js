@@ -150,6 +150,8 @@ export const DAILY_EVENT_CUSTOM_BUTTON_CLICK = 'custom-button-click';
 //
 
 export const MAX_APP_MSG_SIZE = 1024 * 4;
+export const MAX_SESSION_DATA_KEY_CNT = 25;
+export const MAX_SESSION_DATA_SIZE = 1024 * 4 * MAX_SESSION_DATA_KEY_CNT;
 export const MAX_USER_DATA_SIZE = 1024 * 4;
 
 export const IFRAME_MESSAGE_MARKER = 'iframe-call-message';
@@ -191,6 +193,7 @@ export const DAILY_METHOD_REGISTER_INPUT_HANDLER = 'register-input-handler';
 export const DAILY_METHOD_GET_LANG = 'get-daily-lang';
 export const DAILY_METHOD_SET_LANG = 'set-daily-lang';
 export const DAILY_METHOD_GET_MEETING_SESSION = 'get-meeting-session';
+export const DAILY_METHOD_SET_SESSION_DATA = 'set-session-data';
 export const DAILY_METHOD_SET_USER_NAME = 'set-user-name';
 export const DAILY_METHOD_SET_USER_DATA = 'set-user-data';
 export const DAILY_METHOD_DETECT_ALL_FACES = 'detect-all-faces';
