@@ -555,6 +555,8 @@ export interface DailyMeetingSession {
   id: string;
 }
 
+//  Temporary change for an empty commit
+
 export interface DailyVideoReceiveSettings {
   layer?: number;
 }
