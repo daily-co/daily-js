@@ -5,7 +5,7 @@ import Bowser from 'bowser';
 import {
   // re-export
   //
-  // meeting states
+  // call states
   DAILY_STATE_NEW,
   DAILY_STATE_LOADING,
   DAILY_STATE_LOADED,
@@ -195,7 +195,7 @@ import {
 } from './utils.js';
 import * as Participant from './Participant';
 
-// meeting states
+// call states
 export {
   DAILY_STATE_NEW,
   DAILY_STATE_JOINING,
@@ -1207,7 +1207,7 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
-    // Validate meeting state: only allowed once you've joined.
+    // Validate call state: only allowed once you've joined.
     if (this._callState !== DAILY_STATE_JOINED) {
       throw new Error(
         'updateWaitingParticipant() only supported for joined meetings'
@@ -1252,7 +1252,7 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
-    // Validate meeting state: only allowed once you've joined.
+    // Validate call state: only allowed once you've joined.
     if (this._callState !== DAILY_STATE_JOINED) {
       throw new Error(
         'updateWaitingParticipants() only supported for joined meetings'
@@ -1299,7 +1299,7 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
-    // Validate meeting state: access requesting is only allowed once you've
+    // Validate call state: access requesting is only allowed once you've
     // joined.
     if (this._callState !== DAILY_STATE_JOINED) {
       throw new Error('requestAccess() only supported for joined meetings');
@@ -1513,7 +1513,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async getMeetingSession() {
-    // Validate meeting state: meeting session details are only available
+    // Validate call state: meeting session details are only available
     // once you have joined the meeting
     if (this._callState !== DAILY_STATE_JOINED) {
       throw new Error('getMeetingSession() is only allowed when joined');
@@ -1533,6 +1533,8 @@ export default class DailyIframe extends EventEmitter {
   }
 
   meetingSessionState() {
+    // Validate call state: meeting session details are only available
+    // once you have joined the meeting
     if (this._callState !== DAILY_STATE_JOINED) {
       throw new Error('meetingSessionState() is only available when joined');
     }
@@ -1541,8 +1543,10 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setMeetingSessionData(data, mergeStrategy = 'replace') {
+    // Validate call state: session data can only be set once you have
+    // joined the meeting
     if (this._callState !== DAILY_STATE_JOINED) {
-      throw new Error('getMeetingSessionData() is only available when joined');
+      throw new Error('setMeetingSessionData() is only available when joined');
     }
     try {
       validateSessionData(data);
@@ -1611,7 +1615,7 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
-    // Validate meeting state: startCamera() is only allowed if you haven't
+    // Validate call state: startCamera() is only allowed if you haven't
     // already joined (or aren't in the process of joining).
     if ([DAILY_STATE_JOINING, DAILY_STATE_JOINED].includes(this._callState)) {
       throw new Error(
@@ -1906,7 +1910,7 @@ export default class DailyIframe extends EventEmitter {
       throw new Error('preAuth() currently only supported in call object mode');
     }
 
-    // Validate meeting state: pre-auth is only allowed if you haven't already
+    // Validate call state: pre-auth is only allowed if you haven't already
     // joined (or aren't in the process of joining).
     if ([DAILY_STATE_JOINING, DAILY_STATE_JOINED].includes(this._callState)) {
       throw new Error('preAuth() not supported after joining a meeting');

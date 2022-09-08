@@ -83,6 +83,7 @@ export type DailyEvent =
   | 'remote-media-player-updated'
   | 'access-state-updated'
   | 'meeting-session-updated'
+  | 'meeting-session-state-updated'
   | 'waiting-participant-added'
   | 'waiting-participant-updated'
   | 'waiting-participant-removed'
@@ -561,7 +562,7 @@ export interface DailyMeetingSessionState {
   topology: DailyNetworkTopology | 'none';
 }
 
-export type sessionDataMergeStrategy = 'replace' | 'shallow-merge';
+export type DailySessionDataMergeStrategy = 'replace' | 'shallow-merge';
 
 export interface DailyVideoReceiveSettings {
   layer?: number;
@@ -1239,7 +1240,7 @@ export interface DailyCall {
   meetingSessionState(): DailyMeetingSessionState;
   setMeetingSessionData(
     data: unknown,
-    mergeStrategy?: sessionDataMergeStrategy
+    mergeStrategy?: DailySessionDataMergeStrategy
   ): void;
   setUserName(
     name: string,
