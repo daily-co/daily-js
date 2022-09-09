@@ -972,6 +972,8 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectAccessState
     : T extends DailyEventObjectMeetingSessionUpdated['action']
     ? DailyEventObjectMeetingSessionUpdated
+    : T extends DailyEventObjectMeetingSessionStateUpdated['action']
+    ? DailyEventObjectMeetingSessionStateUpdated
     : T extends DailyEventObjectTrack['action']
     ? DailyEventObjectTrack
     : T extends DailyEventObjectRecordingStarted['action']
