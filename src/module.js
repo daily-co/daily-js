@@ -173,7 +173,6 @@ import {
   DAILY_EVENT_AVAILABLE_DEVICES_UPDATED,
   DAILY_EVENT_SELECTED_DEVICES_UPDATED,
   MAX_APP_MSG_SIZE,
-  MAX_SESSION_DATA_KEY_CNT,
   MAX_SESSION_DATA_SIZE,
   MAX_USER_DATA_SIZE,
 } from './shared-with-pluot-core/CommonIncludes.js';
@@ -3886,8 +3885,8 @@ function validateSessionData(data, mergeStrategy) {
     );
   }
 
-  // any version of data equating to false would mean that it is valid
-  if (!data) {
+  // undefined is considered valid but would fail the checks below
+  if (data === undefined) {
     return true;
   }
 
@@ -3913,18 +3912,6 @@ function validateSessionData(data, mergeStrategy) {
   // TODO: If shallow-merge is specified, should we update the str to include
   //       the cache to catch sizing errors early? (note: could also have false errors)
 
-  // check the key count
-  if (
-    typeof data === 'object' &&
-    Object.keys(data).length > MAX_SESSION_DATA_KEY_CNT
-  ) {
-    throw Error(
-      `sessionData has too many keys (${
-        Object.keys(data).length
-      }). Maximum suppported is ${MAX_SESSION_DATA_KEY_CNT}.`
-    );
-  }
-
   // check the size of the payload
   if (dataStr.length > MAX_SESSION_DATA_SIZE) {
     throw Error(
@@ -3935,8 +3922,8 @@ function validateSessionData(data, mergeStrategy) {
 }
 
 function validateUserData(data) {
-  // any version of data equating to false would mean that it is valid
-  if (!data) {
+  // undefined is considered valid but would fail the checks below
+  if (data === undefined) {
     return true;
   }
 

@@ -1,6 +1,5 @@
 import DailyIframe from '../module';
 import {
-  MAX_SESSION_DATA_KEY_CNT,
   MAX_SESSION_DATA_SIZE,
   MAX_USER_DATA_SIZE,
 } from '../shared-with-pluot-core/CommonIncludes';
@@ -53,19 +52,6 @@ it('Session data must be serializable to JSON', () => {
   expect(validateSessionDataFunc([4, 5], 'replace')).toEqual(true);
   expect(validateSessionDataFunc(null, 'replace')).toEqual(true);
   expect(validateSessionDataFunc(undefined, 'replace')).toEqual(true);
-});
-
-it('Session data should not exceed max key allowance', () => {
-  let data = {};
-  for (let i = 0; i < MAX_SESSION_DATA_KEY_CNT; i++) {
-    const key = i.toString(36);
-    data[key] = i;
-  }
-  expect(validateSessionDataFunc(data, 'replace')).toEqual(true);
-  data['foo'] = 'you';
-  expect(() => validateSessionDataFunc(data, 'replace')).toThrow(
-    /too many keys/
-  );
 });
 
 it('Session data should not exceed max character limit', () => {
