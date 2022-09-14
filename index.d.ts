@@ -499,6 +499,7 @@ export interface DailyRoomInfo {
     max_api_rooms?: number;
     webhook_meeting_end?: any;
     max_live_streams?: number;
+    max_streaming_instances_per_room?: number;
     enable_advanced_chat?: boolean;
     enable_audience_reactions?: boolean;
     enable_chat?: boolean;
