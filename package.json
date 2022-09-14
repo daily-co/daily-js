@@ -2,7 +2,7 @@
   "name": "@daily-co/daily-js",
   "private": true,
   "//": "^ COMMENT OUT 'private: true' BEFORE RUNNING NPM PUBLISH",
-  "version": "0.30.0",
+  "version": "0.31.0-internal.14",
   "engines": {
     "node": ">=10.0.0"
   },
@@ -38,11 +38,13 @@
     "@babel/preset-env": "^7.12.11",
     "@rollup/plugin-babel": "^5.2.1",
     "@rollup/plugin-replace": "^2.3.2",
+    "@semantic-release/git": "^10.0.1",
     "babel-cli": "^6.26.0",
     "babel-jest": "^27.4.6",
     "babel-loader": "^8.0.6",
     "babel-plugin-rewire": "^1.2.0",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
+    "conventional-changelog-conventionalcommits": "^5.0.0",
     "jest": "^27.4.7",
     "prettier": "^2.5.1",
     "rollup": "^1.29.0",
@@ -50,6 +52,7 @@
     "rollup-plugin-commonjs": "^9.3.4",
     "rollup-plugin-node-resolve": "^4.2.4",
     "rollup-plugin-terser": "^4.0.4",
+    "semantic-release": "^19.0.3",
     "ts-jest": "^27.1.2",
     "webpack": "^4.41.5",
     "webpack-cli": "^3.3.11",
@@ -65,5 +68,139 @@
   "jest": {
     "verbose": true,
     "testEnvironment": "jsdom"
+  },
+  "release": {
+    "branches": [
+      {
+        "name": "main",
+        "channel": "internal",
+        "prerelease": "internal"
+      },
+      {
+        "name": "daily-js-releases"
+      }
+    ],
+    "plugins": [
+      [
+        "@semantic-release/commit-analyzer",
+        {
+          "preset": "conventionalcommits",
+          "releaseRules": [
+            {
+              "type": "*",
+              "release": false
+            },
+            {
+              "type": "fix",
+              "scope": "daily-js",
+              "release": "patch"
+            },
+            {
+              "type": "fix",
+              "scope": "dj",
+              "release": "patch"
+            },
+            {
+              "type": "fix",
+              "scope": "call-machine",
+              "release": "patch"
+            },
+            {
+              "type": "fix",
+              "scope": "cm",
+              "release": "patch"
+            },
+            {
+              "type": "feat",
+              "scope": "daily-js",
+              "release": "minor"
+            },
+            {
+              "type": "feat",
+              "scope": "dj",
+              "release": "minor"
+            },
+            {
+              "type": "feat",
+              "scope": "call-machine",
+              "release": "minor"
+            },
+            {
+              "type": "feat",
+              "scope": "cm",
+              "release": "minor"
+            },
+            {
+              "type": "improvement",
+              "scope": "daily-js",
+              "release": "minor"
+            },
+            {
+              "type": "improvement",
+              "scope": "dj",
+              "release": "minor"
+            },
+            {
+              "type": "improvement",
+              "scope": "call-machine",
+              "release": "minor"
+            },
+            {
+              "type": "improvement",
+              "scope": "cm",
+              "release": "minor"
+            },
+            {
+              "type": "imp",
+              "scope": "daily-js",
+              "release": "minor"
+            },
+            {
+              "type": "imp",
+              "scope": "dj",
+              "release": "minor"
+            },
+            {
+              "type": "imp",
+              "scope": "call-machine",
+              "release": "minor"
+            },
+            {
+              "type": "imp",
+              "scope": "cm",
+              "release": "minor"
+            },
+            {
+              "breaking": true,
+              "scope": "daily-js",
+              "release": "minor"
+            },
+            {
+              "breaking": true,
+              "scope": "call-machine",
+              "release": "minor"
+            },
+            {
+              "breaking": true,
+              "scope": "dj",
+              "release": "minor"
+            },
+            {
+              "breaking": true,
+              "scope": "cm",
+              "release": "minor"
+            }
+          ]
+        }
+      ],
+      [
+        "@semantic-release/npm",
+        {
+          "npmPublish": false
+        }
+      ],
+      "@semantic-release/git"
+    ],
+    "tagFormat": "release-daily-js-${version}"
   }
 }

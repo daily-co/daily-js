@@ -5,7 +5,7 @@ import commonJS from 'rollup-plugin-commonjs';
 import { terser } from 'rollup-plugin-terser';
 import { version } from './package-lock.json';
 
-const production = process.env.NODE_ENV || 'production';
+const mode = process.env.NODE_ENV || 'production';
 
 export default [
   {
@@ -16,7 +16,7 @@ export default [
         preferBuiltins: false,
       }),
       replace({
-        'process.env.NODE_ENV': JSON.stringify(production),
+        'process.env.NODE_ENV': JSON.stringify(mode),
         __dailyJsVersion__: JSON.stringify(version),
       }),
       babel({
@@ -36,7 +36,7 @@ export default [
           'node_modules/lodash/lodash.js': ['orderBy', 'filter'],
         },
       }),
-      production && terser(), // minify in production
+      mode === 'production' && terser(), // minify in production
     ],
   },
 ];

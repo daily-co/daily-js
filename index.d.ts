@@ -283,6 +283,7 @@ export interface DailyTrackState {
     byUser?: boolean;
     byRemoteRequest?: boolean;
     byBandwidth?: boolean;
+    byCanSendPermission?: boolean;
   };
   // guaranteed-playable reference to the track
   // (it's only present when state === 'playable')
@@ -293,6 +294,24 @@ export interface DailyTrackState {
   // (see https://github.com/daily-demos/call-object-react/blob/c81b21262dead2aacbd5a2f534d0fee8530acfe4/src/components/Tile/Tile.js#L53-L60)
   persistentTrack?: MediaStreamTrack;
 }
+
+export interface DailyParticipantPermissions {
+  hasPresence: boolean;
+  canSend:
+    | Set<
+        | 'video'
+        | 'audio'
+        | 'screenVideo'
+        | 'screenAudio'
+        | 'customVideo'
+        | 'customAudio'
+      >
+    | boolean;
+}
+
+export type DailyParticipantPermissionsUpdate = {
+  [Property in keyof DailyParticipantPermissions]+?: DailyParticipantPermissions[Property];
+};
 
 export interface DailyParticipant {
   // tracks
@@ -325,6 +344,7 @@ export interface DailyParticipant {
   will_eject_at: Date;
   local: boolean;
   owner: boolean;
+  permissions: DailyParticipantPermissions;
   record: boolean;
   participantType?: string;
 
@@ -361,6 +381,7 @@ export interface DailyParticipantUpdateOptions {
   setVideo?: boolean;
   setSubscribedTracks?: DailyTrackSubscriptionOptions;
   eject?: true;
+  updatePermissions?: DailyParticipantPermissionsUpdate;
   styles?: DailyParticipantCss;
 }
 
@@ -486,6 +507,7 @@ export interface DailyRoomInfo {
     enable_people_ui?: boolean;
     enable_pip_ui?: boolean;
     enable_prejoin_ui?: boolean;
+    enable_transcription?: boolean;
     enable_video_processing_ui?: boolean;
     recordings_bucket?: DailyRecordingsBucket;
   };
@@ -593,6 +615,7 @@ export interface DailyEventObjectNonFatalError {
   action: Extract<DailyEvent, 'nonfatal-error'>;
   type: DailyNonFatalErrorType;
   errorMsg: string;
+  details?: any;
 }
 
 export interface DailyEventObjectGenericError {
@@ -612,11 +635,19 @@ export interface DailyEventObjectParticipants {
 }
 
 export interface DailyEventObjectParticipant {
-  action: Extract<
-    DailyEvent,
-    'participant-joined' | 'participant-updated' | 'participant-left'
-  >;
+  action: Extract<DailyEvent, 'participant-joined' | 'participant-updated'>;
   participant: DailyParticipant;
+}
+
+// only 1 reason reported for now. more to come.
+export type DailyParticipantLeftReason = 'hidden';
+
+export interface DailyEventObjectParticipantLeft {
+  action: Extract<DailyEvent, 'participant-left'>;
+  participant: DailyParticipant;
+  // reason undefined if participant left for any reason other than those listed
+  // in DailyParticipantLeftReason
+  reason?: DailyParticipantLeftReason;
 }
 
 export interface DailyEventObjectParticipantCounts {
@@ -845,6 +876,8 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectLiveStreamingError
     : T extends DailyEventObjectParticipant['action']
     ? DailyEventObjectParticipant
+    : T extends DailyEventObjectParticipantLeft['action']
+    ? DailyEventObjectParticipantLeft
     : T extends DailyEventObjectParticipantCounts['action']
     ? DailyEventObjectParticipantCounts
     : T extends DailyEventObjectWaitingParticipant['action']
