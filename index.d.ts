@@ -243,6 +243,11 @@ export interface DailyLoadOptions extends DailyCallOptions {
   baseUrl?: string;
 }
 
+export interface DailyMicAudioModeSettings {
+  bitrate?: number;
+  stereo?: boolean;
+}
+
 export interface DailyAdvancedConfig {
   camSimulcastEncodings?: any[];
   disableSimulcast?: boolean;
@@ -252,7 +257,7 @@ export interface DailyAdvancedConfig {
   ) => void;
   fastConnect?: boolean;
   h264Profile?: string;
-  micAudioMode?: 'music' | 'speech';
+  micAudioMode?: 'music' | 'speech' | DailyMicAudioModeSettings;
   noAutoDefaultDeviceChange?: boolean;
   preferH264?: boolean;
   preferH264ForCam?: boolean;
