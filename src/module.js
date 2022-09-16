@@ -186,6 +186,7 @@ import {
 } from './shared-with-pluot-core/Environment.js';
 import WebMessageChannel from './shared-with-pluot-core/script-message-channels/WebMessageChannel';
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
+import SessionData from './shared-with-pluot-core/SessionData.js';
 import CallObjectLoader from './CallObjectLoader';
 import {
   callObjectBundleUrl,
@@ -3878,46 +3879,9 @@ function methodOnlySupportedInReactNative() {
 }
 
 function validateSessionData(data, mergeStrategy) {
-  const OK_STRATEGIES = ['replace', 'shallow-merge'];
-  if (!OK_STRATEGIES.includes(mergeStrategy)) {
-    throw Error(
-      `Invalid mergeStrategy provided. Options are: 'replace' or 'shallow-merge'`
-    );
-  }
-
-  // undefined is considered valid but would fail the checks below
-  if (data === undefined) {
-    return true;
-  }
-
-  let dataStr;
-  if (typeof data === 'string') {
-    // JSON.stringify adds two characters to the string, so do sizing checks
-    // on the raw string.
-    dataStr = data;
-  } else {
-    try {
-      dataStr = JSON.stringify(data);
-      // check that what goes in is the same coming out :)
-      if (!deepEqual(JSON.parse(dataStr), data)) {
-        console.warning(
-          `The sessionData provided will be modified when serialized.`
-        );
-      }
-    } catch (e) {
-      throw Error(`sessionData must be serializable to JSON: ${e}`);
-    }
-  }
-
-  // TODO: If shallow-merge is specified, should we update the str to include
-  //       the cache to catch sizing errors early? (note: could also have false errors)
-
-  // check the size of the payload
-  if (dataStr.length > MAX_SESSION_DATA_SIZE) {
-    throw Error(
-      `sessionData is too large (${dataStr.length} characters). Maximum size suppported is ${MAX_SESSION_DATA_SIZE}.`
-    );
-  }
+  // the SessionData constructor validates everything and will
+  // throw the errors necessary if things don't check out
+  new SessionData({ data, mergeStrategy });
   return true;
 }
 
