@@ -3902,9 +3902,7 @@ function validateUserData(data) {
 
       // check that what goes in is the same coming out :)
       if (!deepEqual(JSON.parse(dataStr), data)) {
-        console.warning(
-          `The userData provided will be modified when serialized.`
-        );
+        console.warn(`The userData provided will be modified when serialized.`);
       }
     } catch (e) {
       throw Error(`userData must be serializable to JSON: ${e}`);
