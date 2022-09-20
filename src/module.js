@@ -1554,11 +1554,17 @@ export default class DailyIframe extends EventEmitter {
       console.error(e);
       throw e;
     }
-    this.sendMessageToCallMachine({
-      action: DAILY_METHOD_SET_SESSION_DATA,
-      data,
-      mergeStrategy,
-    });
+    try {
+      this.sendMessageToCallMachine({
+        action: DAILY_METHOD_SET_SESSION_DATA,
+        data,
+        mergeStrategy,
+      });
+    } catch (e) {
+      // Probably data was not structured-clonable and couldn't be sent in the
+      // message to the call machine...
+      throw Error(`Error setting meeting session data: ${e}`);
+    }
   }
 
   setUserName(name, options) {
@@ -1597,13 +1603,19 @@ export default class DailyIframe extends EventEmitter {
         delete msg.callFrameId;
         resolve(msg);
       };
-      this.sendMessageToCallMachine(
-        {
-          action: DAILY_METHOD_SET_USER_DATA,
-          userData: data,
-        },
-        k
-      );
+      try {
+        this.sendMessageToCallMachine(
+          {
+            action: DAILY_METHOD_SET_USER_DATA,
+            userData: data,
+          },
+          k
+        );
+      } catch (e) {
+        // Probably userData was not structured-clonable and couldn't be sent in
+        // a message to the call machine...
+        throw Error(`Error setting user data: ${e}`);
+      }
     });
   }
 
