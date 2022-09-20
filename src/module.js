@@ -308,7 +308,7 @@ const simulcastEncodingsValidRanges = {
   scaleResolutionDownBy: { min: 1, max: MAX_SCALE_RESOLUTION_BY },
 };
 
-const startRmpSettingsValidKeys = ['state', 'simulcastEncodings'];
+const startRmpSettingsValidKeys = ['state', 'volume', 'simulcastEncodings'];
 //
 //
 //
@@ -2264,7 +2264,7 @@ export default class DailyIframe extends EventEmitter {
   }) {
     try {
       validateRemotePlayerUrl(url);
-      validateRemotePlayerStateSettings(settings);
+      validateRemotePlayerSettings(settings);
       validateRemotePlayerEncodingSettings(settings);
     } catch (e) {
       console.error(`invalid argument Error: ${e}`);
@@ -2320,7 +2320,7 @@ export default class DailyIframe extends EventEmitter {
     // TODO: Add check of the current_state === desired state
     // And resolve() from here itself.
     try {
-      validateRemotePlayerStateSettings(settings);
+      validateRemotePlayerSettings(settings);
     } catch (e) {
       console.error(`invalid argument Error: ${e}`);
       console.error(remoteMediaPlayerUpdateValidationHelpMsg());
@@ -3453,7 +3453,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   compareEqualForRMPUpdateEvent(a, b) {
-    if (a.state === b.state) {
+    if (a.state === b.state && a.settings?.volume === b.settings?.volume) {
       return true;
     }
     return false;
@@ -4188,21 +4188,35 @@ function validateRemotePlayerUrl(url) {
   }
 }
 
-function validateRemotePlayerStateSettings(playerSettings) {
+function validateRemotePlayerSettings(playerSettings) {
   if (typeof playerSettings !== 'object') {
     throw new Error(`RemoteMediaPlayerSettings: must be "object" type`);
   }
 
-  if (
-    !playerSettings.state ||
-    !Object.values(DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING).includes(
-      playerSettings.state
-    )
-  ) {
-    throw new Error(
-      `Invalid value for RemoteMediaPlayerSettings.state, valid values are: ` +
-        JSON.stringify(DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING)
-    );
+  if (playerSettings.state) {
+    if (
+      !Object.values(DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING).includes(
+        playerSettings.state
+      )
+    ) {
+      throw new Error(
+        `Invalid value for RemoteMediaPlayerSettings.state, valid values are: ` +
+          JSON.stringify(DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING)
+      );
+    }
+  }
+
+  if (playerSettings.volume) {
+    if (typeof playerSettings.volume !== 'number') {
+      throw new Error(
+        `RemoteMediaPlayerSettings.volume: must be "number" type`
+      );
+    }
+    if (playerSettings.volume < 0 || playerSettings.volume > 10) {
+      throw new Error(
+        `RemoteMediaPlayerSettings.volume: must be between 0.0 - 10.0`
+      );
+    }
   }
 }
 
