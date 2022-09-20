@@ -4212,9 +4212,9 @@ function validateRemotePlayerSettings(playerSettings) {
         `RemoteMediaPlayerSettings.volume: must be "number" type`
       );
     }
-    if (playerSettings.volume < 0 || playerSettings.volume > 10) {
+    if (playerSettings.volume < 0 || playerSettings.volume > 2) {
       throw new Error(
-        `RemoteMediaPlayerSettings.volume: must be between 0.0 - 10.0`
+        `RemoteMediaPlayerSettings.volume: must be between 0.0 - 2.0`
       );
     }
   }
