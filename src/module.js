@@ -186,7 +186,7 @@ import {
 } from './shared-with-pluot-core/Environment.js';
 import WebMessageChannel from './shared-with-pluot-core/script-message-channels/WebMessageChannel';
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
-import SessionData from './shared-with-pluot-core/SessionData.js';
+import { SessionDataUpdate } from './shared-with-pluot-core/SessionData.js';
 import CallObjectLoader from './CallObjectLoader';
 import {
   callObjectBundleUrl,
@@ -1549,7 +1549,7 @@ export default class DailyIframe extends EventEmitter {
       throw new Error('setMeetingSessionData() is only available when joined');
     }
     try {
-      validateSessionData(data, mergeStrategy);
+      validateSessionDataUpdate(data, mergeStrategy);
     } catch (e) {
       console.error(e);
       throw e;
@@ -3890,10 +3890,10 @@ function methodOnlySupportedInReactNative() {
   }
 }
 
-function validateSessionData(data, mergeStrategy) {
-  // the SessionData constructor validates everything and will
+function validateSessionDataUpdate(data, mergeStrategy) {
+  // the SessionDataUpdate constructor validates everything and will
   // throw the errors necessary if things don't check out
-  new SessionData({ data, mergeStrategy });
+  new SessionDataUpdate({ data, mergeStrategy });
   return true;
 }
 

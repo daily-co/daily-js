@@ -5,170 +5,233 @@ export const REPLACE_STRATEGY = 'replace';
 export const SHALLOW_MERGE_STRATEGY = 'shallow-merge';
 export const MERGE_STRATEGIES = [REPLACE_STRATEGY, SHALLOW_MERGE_STRATEGY];
 
-const UNDEF_REPL = '__undefined__';
+// Check whether data is a Plain Old JavaScript Object, which can be shallow-
+// merged with another.
+// From https://masteringjs.io/tutorials/fundamentals/pojo.
+function isPlainOldJavaScriptObject(data) {
+  if (data == null || typeof data !== 'object') {
+    return false;
+  }
+  const proto = Object.getPrototypeOf(data);
+  if (proto == null) {
+    return true;
+  }
+  return proto === Object.prototype;
+}
 
-export default class SessionData {
-  constructor({ data, mergeStrategy } = {}) {
-    this.validateAndSetMergeStrategy(mergeStrategy);
-    this.validateAndSetData(data);
+// Meeting session data.
+// ONLY FOR USE BY OTHER CLASSES IN THIS FILE. EXTERNAL CODE SHOULD USE:
+// - SessionDataUpdate to validate & encapsulate user-provided updates
+// - SessionDataClientUpdateQueue to debounce those updates before sending them
+//   to the server
+// - SessionDataServerStore to maintain session data on the server
+class SessionData {
+  constructor(data) {
+    this.data = data;
   }
 
-  validateAndSetMergeStrategy(strategy) {
-    if (strategy === undefined) {
-      return true;
+  // Updates the meeting session data with the given SessionDataUpdate, WITHOUT
+  // deleting keys for undefined fields during a 'shallow-merge'`.
+  // Assumes sessionDataUpdate is valid.
+  update(sessionDataUpdate) {
+    // If data was previously undefined, even a shallow merge replaces it.
+    if (this.data === undefined) {
+      this.data = sessionDataUpdate.data;
+      return;
     }
-    if (MERGE_STRATEGIES.includes(strategy)) {
-      this.mergeStrategy = strategy;
-    } else {
+
+    switch (sessionDataUpdate.mergeStrategy) {
+      case SHALLOW_MERGE_STRATEGY:
+        if (
+          isPlainOldJavaScriptObject(sessionDataUpdate.data) &&
+          isPlainOldJavaScriptObject(this.data)
+        ) {
+          this.data = { ...this.data, ...sessionDataUpdate.data };
+        }
+        break;
+      case REPLACE_STRATEGY:
+        this.data = sessionDataUpdate.data;
+        break;
+    }
+  }
+
+  // Deletes the specified keys from the meeting session data.
+  deleteKeys(keys) {
+    if (Array.isArray(keys)) {
+      for (const key of keys) {
+        if (isPlainOldJavaScriptObject(this.data)) {
+          delete this.data[key];
+        }
+      }
+    }
+  }
+}
+
+export const UNIT_TEST_EXPORTS = { SessionData };
+
+// A user-specified update to meeting session data.
+export class SessionDataUpdate {
+  constructor({ data, mergeStrategy = REPLACE_STRATEGY } = {}) {
+    SessionDataUpdate._validateMergeStrategy(mergeStrategy);
+    SessionDataUpdate._validateData(data, mergeStrategy);
+    this.mergeStrategy = mergeStrategy;
+    this.data = data;
+  }
+
+  // Validate merge strategy, throwing an error if invalid.
+  // Assumes mergeStrategy is not undefined.
+  static _validateMergeStrategy(mergeStrategy) {
+    if (!MERGE_STRATEGIES.includes(mergeStrategy)) {
       throw Error(
-        `Invalid mergeStrategy provided. Options are: [${MERGE_STRATEGIES}]`
+        `Unrecognized mergeStrategy provided. Options are: [${MERGE_STRATEGIES}]`
       );
     }
   }
 
-  validateAndSetData(data) {
-    this.data = data;
+  // Validate data with the given merge strategy, throwing an error if invalid.
+  // Assumes mergeStrategy is valid.
+  static _validateData(data, mergeStrategy) {
+    // Null or undefined data is always valid
+    // (Though note that they are no-ops when mergeStrategy is 'shallow-merge')
     if (data === undefined || data === null) {
-      return true;
+      return;
     }
-    if (this.shouldShallowMerge(data)) {
-      this.data = data;
-      if (!this.isShallowMergeable()) {
-        this.data = undefined;
+
+    // If mergeStrategy is 'shallow-merge', non-null/undefined data must be a
+    // plain (map-like) object
+    if (mergeStrategy === SHALLOW_MERGE_STRATEGY) {
+      if (!isPlainOldJavaScriptObject(data)) {
         throw Error(
-          `For shallow merges, the sessionData must be a map-like object`
+          `When mergeStrategy is 'shallow-merge', meeting session data must be a plain (map-like) object`
         );
       }
     }
+
     let dataStr;
     if (typeof data === 'string') {
-      // JSON.stringify adds two characters to the string, so do sizing checks
-      // on the raw string.
+      // JSON.stringify adds two characters to the string (""), so do sizing
+      // checks on the raw string.
       dataStr = data;
     } else {
       try {
-        dataStr = this.toJSONString();
-        // check that what goes in is the same coming out :)
-        const out = this.constructor.JSONObjectFromJSONString(dataStr);
-        if (!dequal(out.data, data)) {
+        dataStr = JSON.stringify(data);
+        // Check that what goes in is the same coming out :)
+        // TODO: ignore undefineds at the top level when 'shallow-merge'
+        const out = JSON.parse(dataStr);
+        if (!dequal(out, data)) {
           console.warn(
-            `The sessionData provided will be modified when serialized.`,
-            out.data,
+            `The meeting session data provided will be modified when serialized.`,
+            out,
             data
           );
         }
       } catch (e) {
-        this.data = undefined;
-        throw Error(`sessionData must be serializable to JSON: ${e}`);
+        throw Error(`Meeting session data must be serializable to JSON: ${e}`);
       }
     }
 
-    // check the size of the payload
+    // Check the size of the payload
     if (dataStr.length > MAX_SESSION_DATA_SIZE) {
-      this.data = undefined;
       throw Error(
-        `sessionData is too large (${dataStr.length} characters). Maximum size suppported is ${MAX_SESSION_DATA_SIZE}.`
+        `Meeting session data is too large (${dataStr.length} characters). Maximum size suppported is ${MAX_SESSION_DATA_SIZE}.`
       );
     }
-    return true;
+  }
+}
+
+// The client-side update "queue" where meeting session data updates temporarily
+// live before getting flushed to the server (necessary thanks to client-side
+// debouncing).
+// Note that "queue" is in quotes because, though it behaves like a queue, in
+// its implementation the updates are actually merged in place into a single
+// server update.
+export class SessionDataClientUpdateQueue {
+  constructor() {
+    this._resetQueue();
   }
 
-  toJSONString() {
-    const keepUndefined = (key, value) => {
-      return value === undefined ? UNDEF_REPL : value;
+  // "Enqueues" a SessionDataUpdate.
+  // Assumes sessionDataUpdate is valid.
+  enqueueUpdate(sessionDataUpdate) {
+    // If "queue" is empty, initialize it.
+    if (!this.sessionData) {
+      this.sessionData = new SessionData(sessionDataUpdate.data);
+      this.mergeStrategyForNextServerUpdate = sessionDataUpdate.mergeStrategy;
+      return;
+    }
+
+    // Otherwise, update data in the "queue".
+    this.sessionData.update(sessionDataUpdate);
+
+    // If this was a 'replace' update, set 'replace' as the strategy for the
+    // next server update, regardless of incoming client updates until then.
+    if (sessionDataUpdate.mergeStrategy === REPLACE_STRATEGY) {
+      this.mergeStrategyForNextServerUpdate = REPLACE_STRATEGY;
+    }
+  }
+
+  // Flush queue into an update payload to send to the server.
+  flushToServerUpdatePayload() {
+    // If nothing's enqueued, return no payload.
+    if (!this.sessionData) {
+      return null;
+    }
+
+    // Make server payload.
+    let payload = {
+      data: this.sessionData.data,
+      mergeStrategy: this.mergeStrategyForNextServerUpdate,
     };
-    return JSON.stringify(this.toJSONObject(), keepUndefined);
-  }
 
-  toJSONObject() {
-    return { data: this.data, mergeStrategy: this.mergeStrategy };
-  }
-
-  static JSONObjectFromJSONString(string) {
-    const recursivelyFixUndefined = (jsonObj) => {
-      if (jsonObj && typeof jsonObj === 'object') {
-        for (const [k, v] of Object.entries(jsonObj)) {
-          if (v && typeof v === 'object') {
-            recursivelyFixUndefined(jsonObj[k]);
-          } else if (v === UNDEF_REPL) {
-            jsonObj[k] = undefined;
+    // If this is a merge and any top-level keys are undefined, include them in
+    // the server payload as "to be removed", since they'd otherwise be stripped
+    // during JSON serialization.
+    if (payload.mergeStrategy === SHALLOW_MERGE_STRATEGY) {
+      for (const key in payload.data) {
+        if (Object.hasOwnProperty.call(payload.data, key)) {
+          if (payload.data[key] === undefined) {
+            if (!payload.keysToDelete) {
+              payload.keysToDelete = [];
+            }
+            payload.keysToDelete.push(key);
           }
         }
       }
-      return jsonObj;
-    };
-    let json = JSON.parse(string);
-    return recursivelyFixUndefined(json);
+    }
+
+    this._resetQueue();
+
+    return payload;
   }
 
-  shouldShallowMerge(newerSessionData) {
-    if (newerSessionData.data === null || newerSessionData.data === undefined) {
-      return false;
-    }
-    return newerSessionData.mergeStrategy === SHALLOW_MERGE_STRATEGY;
+  _resetQueue() {
+    this.sessionData = null;
+    this.mergeStrategyForNextServerUpdate = false;
+  }
+}
+
+// The server-side store for meeting session data.
+export class SessionDataServerStore {
+  constructor() {
+    this.sessionData = new SessionData();
   }
 
-  isShallowMergeable() {
-    if (this.data == null || typeof this.data !== 'object') {
-      return false;
-    }
-    const proto = Object.getPrototypeOf(this.data);
-    if (proto == null) {
-      return true;
-    }
-    return proto === Object.prototype;
-  }
-
-  // assumes mergeStrategy has already been validated
-  // and returns true if data was modified.
-  updateFrom(newerSessionData) {
-    const prevData = { ...this.data };
-    // update data according to the strategy
-    if (this.shouldShallowMerge(newerSessionData)) {
-      // if shallow-merge is specified but either set of data is not
-      // a valid key/val object, then no-op, do not collect $200.
-      if (
-        !(this.isShallowMergeable() && newerSessionData.isShallowMergeable())
-      ) {
-        return false;
-      }
-      this.data = {
-        ...this.data,
-        ...newerSessionData.data,
-      };
-    } else {
-      if (newerSessionData.data && typeof newerSessionData.data === 'object') {
-        this.data = { ...newerSessionData.data };
-      } else {
-        this.data = newerSessionData.data;
-      }
-    }
-    // update merge strategy only if defined and previous strategy
-    // was not REPLACE. This is useful when caching client-side.
-    if (
-      newerSessionData.mergeStrategy &&
-      this.mergeStrategy !== REPLACE_STRATEGY
-    ) {
-      this.mergeStrategy = newerSessionData.mergeStrategy;
-    }
-
-    // filter out all undefined keys
-    if (this.data && typeof this.data === 'object') {
-      let d2 = Object.fromEntries(
-        Object.entries(this.data).filter(([, val]) => {
-          return val !== undefined;
-        })
-      );
-      this.data = d2;
-    }
-
-    return !dequal(prevData, this.data);
-  }
-
-  clone() {
-    return new SessionData({
-      data: JSON.parse(JSON.stringify(this.data)),
-      mergeStrategy: this.mergeStrategy,
+  // Update session data from the payload of a client message.
+  // Throws if clientPayload doesn't contain a valid session data update.
+  updateFromClient(clientPayload) {
+    // Update session data, without deleting keys.
+    const sessionDataUpdate = new SessionDataUpdate({
+      data: clientPayload.data,
+      mergeStrategy: clientPayload.mergeStrategy,
     });
+    this.sessionData.update(sessionDataUpdate);
+
+    // Handle any keys that need to be deleted.
+    this.sessionData.deleteKeys(clientPayload.keysToDelete);
+  }
+
+  // Update session data from the payload of a peer SFU message.
+  updateFromPeerServer(peerServerPayload) {
+    // TODO
   }
 }

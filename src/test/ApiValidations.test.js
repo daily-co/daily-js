@@ -30,11 +30,13 @@ it('Track constraints must be Object Type', () => {
   expect(() => validateRMPEncodeFunc(validateTcIsObject)).toThrowError();
 });
 
-const validateSessionDataFunc = DailyIframe.__get__('validateSessionData');
+const validateSessionDataFunc = DailyIframe.__get__(
+  'validateSessionDataUpdate'
+);
 
 it('Session data merge strategy must be valid', () => {
   expect(() => validateSessionDataFunc({}, 'merge')).toThrow(
-    /Invalid mergeStrategy/
+    /Unrecognized mergeStrategy/
   );
   expect(validateSessionDataFunc({}, 'shallow-merge')).toEqual(true);
   expect(validateSessionDataFunc({}, 'replace')).toEqual(true);
