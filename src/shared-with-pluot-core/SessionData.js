@@ -217,8 +217,11 @@ export class SessionDataServerStore {
   }
 
   // Update session data from the payload of a client message.
+  // Returns whether session data has changed.
   // Throws if clientPayload doesn't contain a valid session data update.
   updateFromClient(clientPayload) {
+    const before = this.sessionData.data;
+
     // Update session data, without deleting keys.
     const sessionDataUpdate = new SessionDataUpdate({
       data: clientPayload.data,
@@ -228,6 +231,10 @@ export class SessionDataServerStore {
 
     // Handle any keys that need to be deleted.
     this.sessionData.deleteKeys(clientPayload.keysToDelete);
+
+    // Return whether session data has changed.
+    const after = this.sessionData.data;
+    return !dequal(before, after);
   }
 
   // Update session data from the payload of a peer SFU message.

@@ -356,9 +356,11 @@ describe('SessionDataServerStore', () => {
     const store = new SessionDataServerStore();
     expect(store.sessionData.data).toStrictEqual(undefined);
   });
+
   it('updates properly from client payloads, including deleting keys', () => {
-    // Step 1: shallow merge (which overwrites initial undefined)
     const store = new SessionDataServerStore();
+
+    // Step 1: shallow merge (which overwrites initial undefined)
     store.updateFromClient({
       data: { foo: 'bar' },
       mergeStrategy: SHALLOW_MERGE_STRATEGY,
@@ -379,5 +381,70 @@ describe('SessionDataServerStore', () => {
       keysToDelete: ['hello'],
     });
     expect(store.sessionData.data).toStrictEqual({ a: 1, b: 2 });
+  });
+
+  describe('updateFromClient()', () => {
+    it('returns true when data has changed', () => {
+      const store = new SessionDataServerStore();
+
+      // Step 1: replace
+      let hasChanged = store.updateFromClient({
+        data: { foo: 'bar' },
+        mergeStrategy: REPLACE_STRATEGY,
+      });
+      expect(hasChanged).toStrictEqual(true);
+
+      // Step 2: shallow merge
+      hasChanged = store.updateFromClient({
+        data: { hello: 'world' },
+        mergeStrategy: SHALLOW_MERGE_STRATEGY,
+      });
+      expect(hasChanged).toStrictEqual(true);
+
+      // Step 3: key deletion
+      hasChanged = store.updateFromClient({
+        data: { hello: undefined },
+        mergeStrategy: SHALLOW_MERGE_STRATEGY,
+        keysToDelete: ['hello'],
+      });
+      expect(hasChanged).toStrictEqual(true);
+
+      // Step 4: replace with null
+      hasChanged = store.updateFromClient({
+        data: null,
+        mergeStrategy: REPLACE_STRATEGY,
+      });
+      expect(hasChanged).toStrictEqual(true);
+
+      // Step 4: replace with undefined
+      hasChanged = store.updateFromClient({
+        data: undefined,
+        mergeStrategy: REPLACE_STRATEGY,
+      });
+      expect(hasChanged).toStrictEqual(true);
+    });
+    it('returns false when data has not changed', () => {
+      const store = new SessionDataServerStore();
+
+      // Step 1: replace (don't valid here, as data HAS changed)
+      let hasChanged = store.updateFromClient({
+        data: { foo: 'bar' },
+        mergeStrategy: REPLACE_STRATEGY,
+      });
+
+      // Step 2: shallow merge empty object
+      hasChanged = store.updateFromClient({
+        data: {},
+        mergeStrategy: SHALLOW_MERGE_STRATEGY,
+      });
+      expect(hasChanged).toStrictEqual(false);
+
+      // Step 3: replace with same object
+      hasChanged = store.updateFromClient({
+        data: { foo: 'bar' },
+        mergeStrategy: REPLACE_STRATEGY,
+      });
+      expect(hasChanged).toStrictEqual(false);
+    });
   });
 });
