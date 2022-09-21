@@ -128,7 +128,7 @@ export type DailyNonFatalErrorType =
   | 'video-processor-error'
   | 'remote-media-player-error'
   | 'live-streaming-warning'
-  | 'session-data-error';
+  | 'meeting-session-data-error';
 
 export type DailyNetworkTopology = 'sfu' | 'peer';
 
