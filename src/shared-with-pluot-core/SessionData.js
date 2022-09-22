@@ -91,8 +91,12 @@ export class SessionDataUpdate {
   // Validate data with the given merge strategy, throwing an error if invalid.
   // Assumes mergeStrategy is valid.
   static _validateData(data, mergeStrategy) {
-    // Null or undefined data is always valid
-    // (Though note that they are no-ops when mergeStrategy is 'shallow-merge')
+    // Null or undefined data is always valid.
+    // Note that they are no-ops when mergeStrategy is 'shallow-merge' - we're
+    // choosing to allow them in that case to be user-friendly: variables that
+    // users pass in as session data might easily become null or undefined and
+    // it doesn't hurt to simply no-op rather than throw, alleviating some
+    // validation burden in their code.
     if (data === undefined || data === null) {
       return;
     }
