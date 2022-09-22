@@ -1565,7 +1565,7 @@ export default class DailyIframe extends EventEmitter {
     } catch (e) {
       // Probably data was not structured-clonable and couldn't be sent in the
       // message to the call machine...
-      throw Error(`Error setting meeting session data: ${e}`);
+      throw new Error(`Error setting meeting session data: ${e}`);
     }
   }
 
@@ -1616,7 +1616,7 @@ export default class DailyIframe extends EventEmitter {
       } catch (e) {
         // Probably userData was not structured-clonable and couldn't be sent in
         // a message to the call machine...
-        throw Error(`Error setting user data: ${e}`);
+        throw new Error(`Error setting user data: ${e}`);
       }
     });
   }
