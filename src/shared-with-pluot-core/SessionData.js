@@ -116,14 +116,33 @@ export class SessionDataUpdate {
       try {
         dataStr = JSON.stringify(data);
         // Check that what goes in is the same coming out :)
-        // TODO: ignore undefineds at the top level when 'shallow-merge'
-        const out = JSON.parse(dataStr);
-        if (!dequal(out, data)) {
-          console.warn(
-            `The meeting session data provided will be modified when serialized.`,
-            out,
-            data
-          );
+        // (Make an exception for top-level 'undefined's with 'shallow-merge',
+        // though: those are 100% kosher so users shouldn't be warned about
+        // them)
+        if (mergeStrategy === REPLACE_STRATEGY) {
+          const out = JSON.parse(dataStr);
+          if (!dequal(out, data)) {
+            console.warn(
+              `The meeting session data provided will be modified when serialized.`,
+              out,
+              data
+            );
+          }
+        } else if (mergeStrategy === SHALLOW_MERGE_STRATEGY) {
+          for (const key in data) {
+            if (Object.hasOwnProperty.call(data, key)) {
+              if (data[key] !== undefined) {
+                const out = JSON.parse(JSON.stringify(data[key]));
+                if (!dequal(data[key], out)) {
+                  console.warn(
+                    `At least one key in the meeting session data provided will be modified when serialized.`,
+                    out,
+                    data[key]
+                  );
+                }
+              }
+            }
+          }
         }
       } catch (e) {
         throw Error(`Meeting session data must be serializable to JSON: ${e}`);
