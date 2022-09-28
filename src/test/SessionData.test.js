@@ -10,16 +10,23 @@ import {
 const { SessionData } = UNIT_TEST_EXPORTS;
 
 describe('SessionDataUpdate', () => {
+  it('defaults to undefined data', () => {
+    expect(new SessionDataUpdate().data).toStrictEqual(undefined);
+    expect(new SessionDataUpdate({}).data).toStrictEqual(undefined);
+  });
+
   it('defaults to the "replace" merge strategy', () => {
     expect(
-      new SessionDataUpdate({ data: 'hello' }).mergeStrategy
+      new SessionDataUpdate({ data: { foo: 'bar' } }).mergeStrategy
     ).toStrictEqual(REPLACE_STRATEGY);
   });
 
   it('validates its mergeStrategy', () => {
     expect(
-      new SessionDataUpdate({ data: 'hello', mergeStrategy: REPLACE_STRATEGY })
-        .mergeStrategy
+      new SessionDataUpdate({
+        data: { foo: 'bar' },
+        mergeStrategy: REPLACE_STRATEGY,
+      }).mergeStrategy
     ).toStrictEqual(REPLACE_STRATEGY);
     expect(
       new SessionDataUpdate({
@@ -30,13 +37,13 @@ describe('SessionDataUpdate', () => {
     expect(
       () =>
         new SessionDataUpdate({
-          data: 'hello',
+          data: { foo: 'bar' },
           mergeStrategy: 'foo',
         }).mergeStrategy
     ).toThrow(/Unrecognized mergeStrategy provided/);
   });
 
-  it('validates that when "shallow-merge" merge strategy is used, data is null, undefined, or a plain object', () => {
+  it('validates that data is null, undefined, or a plain object', () => {
     expect(
       new SessionDataUpdate({
         data: undefined,
@@ -64,89 +71,68 @@ describe('SessionDataUpdate', () => {
     ).toThrow(/plain/);
   });
 
-  it('cannot be constructed with bad arguments', () => {
-    expect(new SessionDataUpdate().data).toStrictEqual(undefined);
-    expect(new SessionDataUpdate({}).data).toStrictEqual(undefined);
-    expect(new SessionDataUpdate({ data: null }).data).toStrictEqual(null);
-    expect(new SessionDataUpdate({ data: undefined }).data).toStrictEqual(
-      undefined
-    );
-    expect(new SessionDataUpdate({ data: 1 }).data).toStrictEqual(1);
-    expect(new SessionDataUpdate({ data: 'foo' }).data).toStrictEqual('foo');
-    expect(new SessionDataUpdate({ data: [1, 2, 3] }).data).toStrictEqual([
-      1, 2, 3,
-    ]);
-    expect(new SessionDataUpdate({ data: { foo: 'bar' } }).data).toStrictEqual({
-      foo: 'bar',
-    });
-
-    // NOTE: this will print a warning and that's a GOOD thing
+  it('allows data that will be lost during serialization (though it prints a warning)', () => {
     expect(
-      new SessionDataUpdate({ data: new Set([1, 2, 3]) }).data
-    ).toStrictEqual(new Set([1, 2, 3]));
+      new SessionDataUpdate({ data: { foo: new Set([1, 2, 3]) } }).data
+    ).toStrictEqual({ foo: new Set([1, 2, 3]) });
+  });
 
-    let f = () => {
-      console.log('boo');
-    };
-    expect(() => new SessionDataUpdate({ data: f })).toThrow(
-      /must be serializable/
-    );
-
+  it('validates that data is serializable', () => {
     const circularReference = {};
     circularReference.myself = circularReference;
-    expect(() => new SessionDataUpdate({ data: circularReference })).toThrow(
-      /must be serializable/
-    );
+    expect(
+      () => new SessionDataUpdate({ data: { foo: circularReference } })
+    ).toThrow(/must be serializable/);
   });
 });
 
 describe('SessionData', () => {
-  it('defaults to undefined data', () => {
-    expect(new SessionData().data).toStrictEqual(undefined);
+  it('defaults to empty-object data', () => {
+    expect(new SessionData().data).toStrictEqual({});
   });
 
-  it('supports "replace" updates with null', () => {
-    const sessionData = new SessionData({ foo: 'bar' });
+  it('no-ops on "replace" updates with null', () => {
+    const sessionData = new SessionData();
     const update = new SessionDataUpdate({
       data: null,
       mergeStrategy: REPLACE_STRATEGY,
     });
     sessionData.update(update);
-    expect(sessionData.data).toStrictEqual(null);
+    expect(sessionData.data).toStrictEqual({});
   });
 
   it('no-ops on "shallow-merge" updates with null', () => {
-    const sessionData = new SessionData({ foo: 'bar' });
+    const sessionData = new SessionData();
     const update = new SessionDataUpdate({
       data: null,
       mergeStrategy: SHALLOW_MERGE_STRATEGY,
     });
     sessionData.update(update);
-    expect(sessionData.data).toStrictEqual({ foo: 'bar' });
+    expect(sessionData.data).toStrictEqual({});
   });
 
-  it('supports "replace" updates with undefined', () => {
-    const sessionData = new SessionData({ foo: 'bar' });
+  it('no-ops on "replace" updates with undefined', () => {
+    const sessionData = new SessionData();
     const update = new SessionDataUpdate({
       data: undefined,
       mergeStrategy: REPLACE_STRATEGY,
     });
     sessionData.update(update);
-    expect(sessionData.data).toStrictEqual(undefined);
+    expect(sessionData.data).toStrictEqual({});
   });
 
   it('no-ops on "shallow-merge" updates with undefined', () => {
-    const sessionData = new SessionData({ foo: 'bar' });
+    const sessionData = new SessionData();
     const update = new SessionDataUpdate({
       data: undefined,
       mergeStrategy: SHALLOW_MERGE_STRATEGY,
     });
     sessionData.update(update);
-    expect(sessionData.data).toStrictEqual({ foo: 'bar' });
+    expect(sessionData.data).toStrictEqual({});
   });
 
   it('supports the "shallow-merge" strategy', () => {
-    const sessionData = new SessionData({ foo: { who: 'you' } });
+    const sessionData = new SessionData();
 
     const update1 = new SessionDataUpdate({
       data: { foo: 'boo' },
@@ -161,10 +147,17 @@ describe('SessionData', () => {
     });
     sessionData.update(update2);
     expect(sessionData.data).toStrictEqual({ foo: 'boo', bar: 10 });
+
+    const update3 = new SessionDataUpdate({
+      data: {},
+      mergeStrategy: SHALLOW_MERGE_STRATEGY,
+    });
+    sessionData.update(update3);
+    expect(sessionData.data).toStrictEqual({ foo: 'boo', bar: 10 });
   });
 
   it('supports the "replace" strategy', () => {
-    const sessionData = new SessionData({ foo: { who: 'you' } });
+    const sessionData = new SessionData();
 
     const update1 = new SessionDataUpdate({
       data: { foo: 'boo' },
@@ -174,21 +167,18 @@ describe('SessionData', () => {
     expect(sessionData.data).toStrictEqual({ foo: 'boo' });
 
     const update2 = new SessionDataUpdate({
-      data: 10,
+      data: { foo: 10 },
       mergeStrategy: REPLACE_STRATEGY,
     });
     sessionData.update(update2);
-    expect(sessionData.data).toStrictEqual(10);
-  });
+    expect(sessionData.data).toStrictEqual({ foo: 10 });
 
-  it('replaces previously-undefined data with update data when the "shallow-merge" strategy is used', () => {
-    const sessionData = new SessionData(undefined);
-    const update = new SessionDataUpdate({
-      data: { foo: 'bar' },
-      mergeStrategy: SHALLOW_MERGE_STRATEGY,
+    const update3 = new SessionDataUpdate({
+      data: {},
+      mergeStrategy: REPLACE_STRATEGY,
     });
-    sessionData.update(update);
-    expect(sessionData.data).toStrictEqual({ foo: 'bar' });
+    sessionData.update(update3);
+    expect(sessionData.data).toStrictEqual({});
   });
 
   it('supports top-level key deletion', () => {
@@ -198,20 +188,15 @@ describe('SessionData', () => {
       a: 1,
     };
 
-    const sessionData1 = new SessionData(data);
+    const sessionData1 = new SessionData();
+    sessionData1.update(new SessionDataUpdate({ data }));
     sessionData1.deleteKeys(['hello']);
     expect(sessionData1.data).toStrictEqual({ foo: 'bar', a: 1 });
 
     const sessionData2 = new SessionData(data);
+    sessionData2.update(new SessionDataUpdate({ data }));
     sessionData2.deleteKeys(['hello', 'foo']);
     expect(sessionData2.data).toStrictEqual({ a: 1 });
-  });
-
-  it('no-ops when attempting to delete keys from an object that is not a plain object', () => {
-    const sessionData = new SessionData('hello');
-    sessionData.deleteKeys(['length']);
-    expect(sessionData.data).toStrictEqual('hello');
-    expect(sessionData.data.length).toStrictEqual(5);
   });
 });
 
@@ -222,6 +207,22 @@ describe('SessionDataClientUpdateQueue', () => {
   it('if no updates have been enqueued, has no server update to flush', () => {
     const queue = new SessionDataClientUpdateQueue();
     expect(queue.flushToServerUpdatePayload()).toStrictEqual(null);
+  });
+
+  it('if a no-op update has been enqueued, has no server update to flush', () => {
+    const queue1 = new SessionDataClientUpdateQueue();
+    queue1.enqueueUpdate(new SessionDataUpdate({ data: null }));
+    expect(queue1.flushToServerUpdatePayload()).toStrictEqual(null);
+
+    const queue2 = new SessionDataClientUpdateQueue();
+    queue2.enqueueUpdate(new SessionDataUpdate({ data: undefined }));
+    expect(queue2.flushToServerUpdatePayload()).toStrictEqual(null);
+
+    const queue3 = new SessionDataClientUpdateQueue();
+    queue3.enqueueUpdate(
+      new SessionDataUpdate({ data: {}, mergeStrategy: SHALLOW_MERGE_STRATEGY })
+    );
+    expect(queue3.flushToServerUpdatePayload()).toStrictEqual(null);
   });
 
   it('if only one update has been enqueued, flushes a server update with just that update', () => {
@@ -315,8 +316,7 @@ describe('SessionDataClientUpdateQueue', () => {
     );
     const payload = queue.flushToServerUpdatePayload();
     expect(payload).toStrictEqual({
-      // NOTE: undefineds still here but will be stripped on JSON.stringify() when sending to server
-      data: { foo: undefined, baz: undefined, hello: 'world' },
+      data: { hello: 'world' },
       mergeStrategy: SHALLOW_MERGE_STRATEGY,
       keysToDelete: ['foo', 'baz'],
     });
@@ -352,9 +352,9 @@ describe('SessionDataClientUpdateQueue', () => {
 });
 
 describe('SessionDataServerStore', () => {
-  it('defaults to undefined data', () => {
+  it('defaults to empty-object data', () => {
     const store = new SessionDataServerStore();
-    expect(store.sessionData.data).toStrictEqual(undefined);
+    expect(store.sessionData.data).toStrictEqual({});
   });
 
   it('updates properly from client payloads, including deleting keys', () => {
@@ -408,25 +408,11 @@ describe('SessionDataServerStore', () => {
         keysToDelete: ['hello'],
       });
       expect(hasChanged).toStrictEqual(true);
-
-      // Step 4: replace with null
-      hasChanged = store.updateFromClient({
-        data: null,
-        mergeStrategy: REPLACE_STRATEGY,
-      });
-      expect(hasChanged).toStrictEqual(true);
-
-      // Step 4: replace with undefined
-      hasChanged = store.updateFromClient({
-        data: undefined,
-        mergeStrategy: REPLACE_STRATEGY,
-      });
-      expect(hasChanged).toStrictEqual(true);
     });
     it('returns false when data has not changed', () => {
       const store = new SessionDataServerStore();
 
-      // Step 1: replace (don't valid here, as data HAS changed)
+      // Step 1: replace (don't validate here, as data HAS changed)
       let hasChanged = store.updateFromClient({
         data: { foo: 'bar' },
         mergeStrategy: REPLACE_STRATEGY,

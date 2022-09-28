@@ -5,8 +5,8 @@ export const REPLACE_STRATEGY = 'replace';
 export const SHALLOW_MERGE_STRATEGY = 'shallow-merge';
 export const MERGE_STRATEGIES = [REPLACE_STRATEGY, SHALLOW_MERGE_STRATEGY];
 
-// Check whether data is a Plain Old JavaScript Object, which can be shallow-
-// merged with another.
+// Check whether data is a Plain Old JavaScript Object (a map-like object),
+// which can be shallow-merged with another.
 // From https://masteringjs.io/tutorials/fundamentals/pojo.
 function isPlainOldJavaScriptObject(data) {
   if (data == null || typeof data !== 'object') {
@@ -21,33 +21,25 @@ function isPlainOldJavaScriptObject(data) {
 
 // Meeting session data.
 // ONLY FOR USE BY OTHER CLASSES IN THIS FILE. EXTERNAL CODE SHOULD USE:
-// - SessionDataUpdate to validate & encapsulate user-provided updates
-// - SessionDataClientUpdateQueue to debounce those updates before sending them
-//   to the server
-// - SessionDataServerStore to maintain session data on the server
+// - SessionDataUpdate to validate & encapsulate updates to session data.
+// - SessionDataClientUpdateQueue to locally enqueue some user-provided updates
+//   before flushing them all to the server as one update.
+// - SessionDataServerStore to maintain session data on the server.
 class SessionData {
-  constructor(data) {
-    this.data = data;
+  constructor() {
+    this.data = {};
   }
 
   // Updates the meeting session data with the given SessionDataUpdate, WITHOUT
   // deleting keys for undefined fields during a 'shallow-merge'`.
-  // Assumes sessionDataUpdate is valid.
+  // Assumes data and sessionDataUpdate are valid.
   update(sessionDataUpdate) {
-    // If data was previously undefined, even a shallow merge replaces it.
-    if (this.data === undefined) {
-      this.data = sessionDataUpdate.data;
+    if (sessionDataUpdate.isNoOp()) {
       return;
     }
-
     switch (sessionDataUpdate.mergeStrategy) {
       case SHALLOW_MERGE_STRATEGY:
-        if (
-          isPlainOldJavaScriptObject(sessionDataUpdate.data) &&
-          isPlainOldJavaScriptObject(this.data)
-        ) {
-          this.data = { ...this.data, ...sessionDataUpdate.data };
-        }
+        this.data = { ...this.data, ...sessionDataUpdate.data };
         break;
       case REPLACE_STRATEGY:
         this.data = sessionDataUpdate.data;
@@ -69,13 +61,33 @@ class SessionData {
 
 export const UNIT_TEST_EXPORTS = { SessionData };
 
-// A user-specified update to meeting session data.
+// An update to meeting session data.
+// Guaranteed to be valid upon construction, which means:
+// - mergeStrategy is either 'replace' or 'shallow-merge'
+// - data is either null, undefined, or a plain (map-like) object
+// - data isn't too big
 export class SessionDataUpdate {
   constructor({ data, mergeStrategy = REPLACE_STRATEGY } = {}) {
     SessionDataUpdate._validateMergeStrategy(mergeStrategy);
-    SessionDataUpdate._validateData(data, mergeStrategy);
+    SessionDataUpdate._validateData(data);
     this.mergeStrategy = mergeStrategy;
     this.data = data;
+  }
+
+  // Whether this update is a no-op.
+  isNoOp() {
+    return SessionDataUpdate.isNoOpUpdate(this.data, this.mergeStrategy);
+  }
+
+  // Whether an update comprised of the given data and mergeStrategy would be a
+  // no-op.
+  static isNoOpUpdate(data, mergeStrategy) {
+    return (
+      data === null ||
+      data === undefined ||
+      (Object.keys(data).length === 0 &&
+        mergeStrategy === SHALLOW_MERGE_STRATEGY)
+    );
   }
 
   // Validate merge strategy, throwing an error if invalid.
@@ -91,9 +103,8 @@ export class SessionDataUpdate {
   // Validate data with the given merge strategy, throwing an error if invalid.
   // Assumes mergeStrategy is valid.
   static _validateData(data, mergeStrategy) {
-    // Null or undefined data is always valid.
-    // Note that they are no-ops when mergeStrategy is 'shallow-merge' - we're
-    // choosing to allow them in that case to be user-friendly: variables that
+    // Null and undefined data are valid; they are simply no-ops.
+    // We're choosing to allow them in order to be user-friendly: variables that
     // users pass in as session data might easily become null or undefined and
     // it doesn't hurt to simply no-op rather than throw, alleviating some
     // validation burden in their code.
@@ -101,56 +112,45 @@ export class SessionDataUpdate {
       return;
     }
 
-    // If mergeStrategy is 'shallow-merge', non-null/undefined data must be a
-    // plain (map-like) object
-    if (mergeStrategy === SHALLOW_MERGE_STRATEGY) {
-      if (!isPlainOldJavaScriptObject(data)) {
-        throw Error(
-          `When mergeStrategy is 'shallow-merge', meeting session data must be a plain (map-like) object`
-        );
-      }
+    // Data must be a plain (map-like) object.
+    if (!isPlainOldJavaScriptObject(data)) {
+      throw Error(`Meeting session data must be a plain (map-like) object`);
     }
 
+    // Check that what goes in will be the same coming out :)
+    // (Make an exception for top-level 'undefined's with 'shallow-merge',
+    // though, since those are meaningful and will be translated into key
+    // deletions).
     let dataStr;
-    if (typeof data === 'string') {
-      // JSON.stringify adds two characters to the string (""), so do sizing
-      // checks on the raw string.
-      dataStr = data;
-    } else {
-      try {
-        dataStr = JSON.stringify(data);
-        // Check that what goes in is the same coming out :)
-        // (Make an exception for top-level 'undefined's with 'shallow-merge',
-        // though: those are 100% kosher so users shouldn't be warned about
-        // them)
-        if (mergeStrategy === REPLACE_STRATEGY) {
-          const out = JSON.parse(dataStr);
-          if (!dequal(out, data)) {
-            console.warn(
-              `The meeting session data provided will be modified when serialized.`,
-              out,
-              data
-            );
-          }
-        } else if (mergeStrategy === SHALLOW_MERGE_STRATEGY) {
-          for (const key in data) {
-            if (Object.hasOwnProperty.call(data, key)) {
-              if (data[key] !== undefined) {
-                const out = JSON.parse(JSON.stringify(data[key]));
-                if (!dequal(data[key], out)) {
-                  console.warn(
-                    `At least one key in the meeting session data provided will be modified when serialized.`,
-                    out,
-                    data[key]
-                  );
-                }
+    try {
+      dataStr = JSON.stringify(data);
+      if (mergeStrategy === REPLACE_STRATEGY) {
+        const out = JSON.parse(dataStr);
+        if (!dequal(out, data)) {
+          console.warn(
+            `The meeting session data provided will be modified when serialized.`,
+            out,
+            data
+          );
+        }
+      } else if (mergeStrategy === SHALLOW_MERGE_STRATEGY) {
+        for (const key in data) {
+          if (Object.hasOwnProperty.call(data, key)) {
+            if (data[key] !== undefined) {
+              const out = JSON.parse(JSON.stringify(data[key]));
+              if (!dequal(data[key], out)) {
+                console.warn(
+                  `At least one key in the meeting session data provided will be modified when serialized.`,
+                  out,
+                  data[key]
+                );
               }
             }
           }
         }
-      } catch (e) {
-        throw Error(`Meeting session data must be serializable to JSON: ${e}`);
       }
+    } catch (e) {
+      throw Error(`Meeting session data must be serializable to JSON: ${e}`);
     }
 
     // Check the size of the payload
@@ -176,11 +176,15 @@ export class SessionDataClientUpdateQueue {
   // "Enqueues" a SessionDataUpdate.
   // Assumes sessionDataUpdate is valid.
   enqueueUpdate(sessionDataUpdate) {
+    // If update is a no-op, don't enqueue it.
+    if (sessionDataUpdate.isNoOp()) {
+      return;
+    }
+
     // If "queue" is empty, initialize it.
     if (!this.sessionData) {
-      this.sessionData = new SessionData(sessionDataUpdate.data);
+      this.sessionData = new SessionData();
       this.mergeStrategyForNextServerUpdate = sessionDataUpdate.mergeStrategy;
-      return;
     }
 
     // Otherwise, update data in the "queue".
@@ -194,6 +198,7 @@ export class SessionDataClientUpdateQueue {
   }
 
   // Flush queue into an update payload to send to the server.
+  // Returns null if there's no update to send, or it'd be a no-op.
   flushToServerUpdatePayload() {
     // If nothing's enqueued, return no payload.
     if (!this.sessionData) {
@@ -206,9 +211,9 @@ export class SessionDataClientUpdateQueue {
       mergeStrategy: this.mergeStrategyForNextServerUpdate,
     };
 
-    // If this is a merge and any top-level keys are undefined, include them in
-    // the server payload as "to be removed", since they'd otherwise be stripped
-    // during JSON serialization.
+    // If this is a merge and any top-level keys are undefined, translate them
+    // into explicit "keys to delete" in the payload; otherwise they'd be
+    // stripped during JSON serialization.
     if (payload.mergeStrategy === SHALLOW_MERGE_STRATEGY) {
       for (const key in payload.data) {
         if (Object.hasOwnProperty.call(payload.data, key)) {
@@ -217,6 +222,7 @@ export class SessionDataClientUpdateQueue {
               payload.keysToDelete = [];
             }
             payload.keysToDelete.push(key);
+            delete payload.data[key];
           }
         }
       }
@@ -234,6 +240,10 @@ export class SessionDataClientUpdateQueue {
 }
 
 // The server-side store for meeting session data.
+// NOTE: this is very temporarily an in-memory store running directly on the
+// SFU, which is why the meeting session data API does not support mesh SFU.
+// This implementation will soon be updated to use an in-memory store shared
+// between SFUs.
 export class SessionDataServerStore {
   constructor() {
     this.sessionData = new SessionData();
@@ -258,10 +268,5 @@ export class SessionDataServerStore {
     // Return whether session data has changed.
     const after = this.sessionData.data;
     return !dequal(before, after);
-  }
-
-  // Update session data from the payload of a peer SFU message.
-  updateFromPeerServer(peerServerPayload) {
-    // TODO
   }
 }

@@ -48,22 +48,22 @@ it('Session data must be serializable to JSON', () => {
   expect(() => validateSessionDataFunc(circularReference, 'replace')).toThrow(
     /must be serializable/
   );
-  expect(validateSessionDataFunc(1, 'replace')).toEqual(true);
-  expect(validateSessionDataFunc('2', 'replace')).toEqual(true);
   expect(validateSessionDataFunc({ foo: 3 }, 'replace')).toEqual(true);
-  expect(validateSessionDataFunc([4, 5], 'replace')).toEqual(true);
   expect(validateSessionDataFunc(null, 'replace')).toEqual(true);
   expect(validateSessionDataFunc(undefined, 'replace')).toEqual(true);
 });
 
 it('Session data should not exceed max character limit', () => {
-  let data = '';
-  for (let i = 0; i < MAX_SESSION_DATA_SIZE; i++) {
-    data += '0';
+  let strData = '';
+  const scaffolding = '"{"a":}"';
+  for (let i = 0; i < MAX_SESSION_DATA_SIZE - scaffolding.length; i++) {
+    strData += '0';
   }
-  expect(validateSessionDataFunc(data, 'replace')).toEqual(true);
-  data += '0';
-  expect(() => validateSessionDataFunc(data, 'replace')).toThrow(/too large/);
+  expect(validateSessionDataFunc({ a: strData }, 'replace')).toEqual(true);
+  strData += '0';
+  expect(() => validateSessionDataFunc({ a: strData }, 'replace')).toThrow(
+    /too large/
+  );
 });
 
 const validateUserDataFunc = DailyIframe.__get__('validateUserData');
