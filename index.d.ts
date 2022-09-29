@@ -463,7 +463,7 @@ export interface DailyRoomInfo {
     max_participants?: number;
     enable_screenshare?: boolean;
     enable_advanced_chat?: boolean;
-    enable_audience_reactions?: boolean;
+    enable_emoji_reactions?: boolean;
     enable_chat?: boolean;
     enable_hand_raising?: boolean;
     enable_knocking?: boolean;
@@ -501,7 +501,7 @@ export interface DailyRoomInfo {
     max_live_streams?: number;
     max_streaming_instances_per_room?: number;
     enable_advanced_chat?: boolean;
-    enable_audience_reactions?: boolean;
+    enable_emoji_reactions?: boolean;
     enable_chat?: boolean;
     enable_hand_raising?: boolean;
     enable_network_ui?: boolean;
