@@ -69,7 +69,7 @@ export const UNIT_TEST_EXPORTS = { SessionData };
 export class SessionDataUpdate {
   constructor({ data, mergeStrategy = REPLACE_STRATEGY } = {}) {
     SessionDataUpdate._validateMergeStrategy(mergeStrategy);
-    SessionDataUpdate._validateData(data);
+    SessionDataUpdate._validateData(data, mergeStrategy);
     this.mergeStrategy = mergeStrategy;
     this.data = data;
   }
