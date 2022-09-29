@@ -403,7 +403,7 @@ describe('SessionDataServerStore', () => {
 
       // Step 3: key deletion
       hasChanged = store.updateFromClient({
-        data: { hello: undefined },
+        data: {},
         mergeStrategy: SHALLOW_MERGE_STRATEGY,
         keysToDelete: ['hello'],
       });

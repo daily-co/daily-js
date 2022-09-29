@@ -253,7 +253,7 @@ export class SessionDataServerStore {
   // Returns whether session data has changed.
   // Throws if clientPayload doesn't contain a valid session data update.
   updateFromClient(clientPayload) {
-    const before = this.sessionData.data;
+    const before = { ...this.sessionData.data };
 
     // Update session data, without deleting keys.
     const sessionDataUpdate = new SessionDataUpdate({
