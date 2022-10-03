@@ -1027,6 +1027,8 @@ export interface DailyStreamingOptions {
   width?: number;
   height?: number;
   fps?: number;
+  videoBitrate?: number;
+  audioBitrate?: number;
   minIdleTimeOut?: number;
   backgroundColor?: string;
   instanceId?: string;
