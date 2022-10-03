@@ -1051,7 +1051,10 @@ export interface RemoteMediaPlayerSimulcastEncoding {
 }
 
 export interface DailyRemoteMediaPlayerSettings {
-  state: DailyRemoteMediaPlayerSettingPlay | DailyRemoteMediaPlayerSettingPause;
+  state?:
+    | DailyRemoteMediaPlayerSettingPlay
+    | DailyRemoteMediaPlayerSettingPause;
+  volume?: number;
   simulcastEncodings?: RemoteMediaPlayerSimulcastEncoding[];
 }
 
