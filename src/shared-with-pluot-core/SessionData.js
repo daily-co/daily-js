@@ -5,10 +5,22 @@ export const REPLACE_STRATEGY = 'replace';
 export const SHALLOW_MERGE_STRATEGY = 'shallow-merge';
 export const MERGE_STRATEGIES = [REPLACE_STRATEGY, SHALLOW_MERGE_STRATEGY];
 
+// Explanation of public meeting-session-data-related classes:
+// - Client side (this file):
+//   - SessionDataUpdate: used on the client side to validate & encapsulate
+//     user-specified updates to meeting session data.
+//   - SessionDataClientUpdateQueue: used on the client side to enqueue multiple
+//     user-specified updates before flushing them to the server as a single
+//     payload.
+// - Server side (other file):
+//   - SessionDataServerStore: used on the SFU side to interact with stored
+//     meeting session data, including updating the data and listening to
+//     changes to that data (which may have been updated via a different SFU).
+
 // Check whether data is a Plain Old JavaScript Object (a map-like object),
 // which can be shallow-merged with another.
 // From https://masteringjs.io/tutorials/fundamentals/pojo.
-function isPlainOldJavaScriptObject(data) {
+export function isPlainOldJavaScriptObject(data) {
   if (data == null || typeof data !== 'object') {
     return false;
   }
@@ -20,11 +32,7 @@ function isPlainOldJavaScriptObject(data) {
 }
 
 // Meeting session data.
-// ONLY FOR USE BY OTHER CLASSES IN THIS FILE. EXTERNAL CODE SHOULD USE:
-// - SessionDataUpdate to validate & encapsulate updates to session data.
-// - SessionDataClientUpdateQueue to locally enqueue some user-provided updates
-//   before flushing them all to the server as one update.
-// - SessionDataServerStore to maintain session data on the server.
+// Only used by SessionDataClientUpdateQueue.
 class SessionData {
   constructor() {
     this.data = {};
@@ -237,226 +245,4 @@ export class SessionDataClientUpdateQueue {
     this.sessionData = null;
     this.mergeStrategyForNextServerUpdate = false;
   }
-}
-
-// The server-side store for meeting session data.
-// NOTE: this is very temporarily an in-memory store running directly on the
-// SFU, which is why the meeting session data API does not support mesh SFU.
-// This implementation will soon be updated to use an in-memory store shared
-// between SFUs.
-export class SessionDataServerStore {
-  constructor({ mtgStr, redis, subscriberRedis, logger, dataChangeHandler }) {
-    this.redis = redis;
-    this.subscriberRedis = subscriberRedis;
-    this.logger = logger;
-    this.key = `${mtgStr}:session-data`;
-    this.keyspacePattern = `__keyspace*__:${this.key}`;
-    this.data = null; // not {} to avoid pretending we know when we don't yet
-    this.dataChangeHandler = dataChangeHandler;
-
-    this.initialized = false;
-    this.subscribed = false;
-  }
-
-  async initialize() {
-    if (this.initialized) {
-      return;
-    }
-
-    this._subscribeToDataMaybeChangedMessages();
-    this.data = this._decodeFromRedis(await this.redis.hgetall(this.key));
-
-    this.initialized = true;
-  }
-
-  // Update session data from the payload of a client message.
-  // Throws if clientPayload doesn't contain a valid session data update.
-  updateFromClient({ data, mergeStrategy, keysToDelete }) {
-    // Validation: ensure data and/or keysToDelete (if provided) are of expected
-    // types
-    if (data && !isPlainOldJavaScriptObject(data)) {
-      return;
-    }
-    if (keysToDelete && !Array.isArray(keysToDelete)) {
-      return;
-    }
-
-    // Transform data for storage in Redis
-    data = this._encodeForRedis(data);
-
-    // Perform update
-    if (mergeStrategy === REPLACE_STRATEGY) {
-      this._replace(data);
-    } else if (mergeStrategy === SHALLOW_MERGE_STRATEGY) {
-      this._shallowMerge(data, keysToDelete);
-    }
-  }
-
-  tearDown() {
-    this._unsubscribeFromDataMaybeChangedMessages();
-  }
-
-  // Assumes data, if provided, is valid
-  _encodeForRedis(data) {
-    if (!data) {
-      return;
-    }
-
-    for (const key in data) {
-      data[key] = JSON.stringify(data[key]);
-    }
-
-    return data;
-  }
-
-  // Assumes data, if provided, is valid
-  _decodeFromRedis(data) {
-    if (!data) {
-      return {};
-    }
-
-    for (const key in data) {
-      data[key] = JSON.parse(data[key]);
-    }
-
-    return data;
-  }
-
-  // Assumes data, if provided, is valid
-  _replace(data) {
-    // TODO: remove
-    this.logger.debug('[pk] replacing...', data);
-
-    // Validation: we should have data
-    if (!data) {
-      return;
-    }
-
-    // Different cases can be optimally handled by different Redis commands
-    // - Empty data
-    // - Non-empty data
-    if (Object.keys(data).length === 0) {
-      // Case: empty data
-      // TODO: remove
-      this.logger.debug('[pk] [replacing] case empty data...', data);
-      this.redis.del(this.key);
-    } else {
-      // Case: non-empty data
-      // TODO: remove
-      this.logger.debug('[pk] [replacing] case non-empty data...', data);
-      this.redis.multi().del(this.key).hset(this.key, data).exec();
-    }
-  }
-
-  // Assumes data and/or keysToDelete, if provided, are valid
-  _shallowMerge(data, keysToDelete) {
-    // TODO: remove
-    this.logger.debug('[pk] shallow merging...', data, keysToDelete);
-
-    // Validation: we should have data and/or keysToDelete
-    if (!(data || keysToDelete)) {
-      return;
-    }
-
-    // Different cases can be optimally handled by different Redis commands
-    // - Only data
-    // - Only keysToDelete
-    // - Both data and keysToDelete
-    const hasData = data && Object.keys(data).length > 0;
-    const hasKeysToDelete = keysToDelete && keysToDelete.length > 0;
-    if (hasData && !hasKeysToDelete) {
-      // Case: only data
-      // TODO: remove
-      this.logger.debug('[pk] [shallow] case only data...', data);
-      this.redis.hset(this.key, data);
-    } else if (hasKeysToDelete && !hasData) {
-      // TODO: remove
-      this.logger.debug(
-        '[pk] [shallow] case only keysToDelete...',
-        keysToDelete
-      );
-      // Case: only keysToDelete
-      this.redis.hdel(this.key, keysToDelete);
-    } else if (hasData && hasKeysToDelete) {
-      // Case: both data and keysToDelete
-      // TODO: remove
-      this.logger.debug('[pk] [shallow] case both...', data, keysToDelete);
-      this.redis
-        .multi()
-        .hset(this.key, data)
-        .hdel(this.key, keysToDelete)
-        .exec();
-    }
-  }
-
-  _subscribeToDataMaybeChangedMessages() {
-    if (this.subscribed) {
-      return;
-    }
-
-    // For the message that is sent when any calls to hset occur on the session
-    // data in Redis:
-    // 1. Subscribe to the message
-    // 2. Attach a listener for when the message is received
-
-    // 1. Subscribe to the message
-    this.subscriberRedis.psubscribe(this.keyspacePattern, (err) => {
-      if (err) {
-        this.logger.error(
-          `Error subscrbing to session data updates for meeting ${mtgStr}`,
-          err
-        );
-      }
-    });
-
-    // 2. Attach a listener for when the message is received
-    this.subscriberRedis.on('pmessage', this._handleDataMaybeChangedMessage);
-
-    this.subscribed = true;
-  }
-
-  _unsubscribeFromDataMaybeChangedMessages() {
-    // For the message that is sent when any calls to hset occur on the session
-    // data in Redis:
-    // 1. Detach the listener for when the message is received
-    // 2. Unsubscribe from the message
-
-    // 1. Detach the listener for when the message is received
-    this.subscriberRedis.off('pmessage', this._handleDataMaybeChangedMessage);
-
-    // 2. Unsubscribe from the message
-    this.subscriberRedis.punsubscribe(this.keyspacePattern, (err) => {
-      if (err) {
-        this.logger.error(
-          `Error unsubscribing from session data updates for meeting ${mtgStr}`,
-          err
-        );
-      }
-    });
-  }
-
-  _handleDataMaybeChangedMessage = (pattern, channel, message) => {
-    // Ignore if the received message is not about this session data
-    // (it might be about session data for another meeting, for example)
-    // TODO: does the fact that we'll receive *all* 'pmessage' messages here
-    // and have to filter them out here constitute a big performance concern?
-    // If so, is a potential solution to have a separate Redis client (or at
-    // least subscriber client) for each SigGroup? I was hoping to minimize the
-    // number of Redis clients connected to our Redis instance by having one per
-    // SFU server, but maybe that's not the right thing to optimize for...
-    if (pattern !== this.keyspacePattern) {
-      return;
-    }
-    this.redis.hgetall(this.key).then((data) => {
-      data = this._decodeFromRedis(data);
-      // TODO: remove eventually
-      this.logger.debug('[pk] data maybe changed', data);
-      if (!dequal(data, this.data)) {
-        // TODO: remove eventually
-        this.logger.debug('[pk] data DID change', data);
-        this.data = data;
-        this.dataChangeHandler();
-      }
-    });
-  };
 }

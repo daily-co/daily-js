@@ -4,7 +4,6 @@ import {
   SHALLOW_MERGE_STRATEGY,
   SessionDataUpdate,
   SessionDataClientUpdateQueue,
-  SessionDataServerStore,
 } from '../shared-with-pluot-core/SessionData';
 
 const { SessionData } = UNIT_TEST_EXPORTS;
