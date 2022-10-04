@@ -1,12 +1,11 @@
+import { MAX_SESSION_DATA_SIZE } from '../shared-with-pluot-core/CommonIncludes';
 import {
-  UNIT_TEST_EXPORTS,
   REPLACE_STRATEGY,
   SHALLOW_MERGE_STRATEGY,
+  SessionData,
   SessionDataUpdate,
   SessionDataClientUpdateQueue,
 } from '../shared-with-pluot-core/SessionData';
-
-const { SessionData } = UNIT_TEST_EXPORTS;
 
 describe('SessionDataUpdate', () => {
   it('defaults to undefined data', () => {
@@ -196,6 +195,39 @@ describe('SessionData', () => {
     sessionData2.update(new SessionDataUpdate({ data }));
     sessionData2.deleteKeys(['hello', 'foo']);
     expect(sessionData2.data).toStrictEqual({ a: 1 });
+  });
+
+  it('reports whether its data has exceeded max allowed size via exceedsMaxSize()', () => {
+    const sessionData1 = new SessionData();
+    sessionData1.update(
+      new SessionDataUpdate({
+        data: { a: 1 },
+        mergeStrategy: REPLACE_STRATEGY,
+      })
+    );
+    expect(sessionData1.exceedsMaxSize()).toStrictEqual(false);
+
+    let strData = '';
+    const scaffolding = '"{"a":}"';
+    for (let i = 0; i < MAX_SESSION_DATA_SIZE - scaffolding.length; i++) {
+      strData += '0';
+    }
+    const sessionData2 = new SessionData();
+    sessionData2.update(
+      new SessionDataUpdate({
+        data: { a: strData },
+        mergeStrategy: REPLACE_STRATEGY,
+      })
+    );
+    expect(sessionData2.exceedsMaxSize()).toStrictEqual(false);
+
+    sessionData2.update(
+      new SessionDataUpdate({
+        data: { b: 1 },
+        mergeStrategy: SHALLOW_MERGE_STRATEGY,
+      })
+    );
+    expect(sessionData2.exceedsMaxSize()).toStrictEqual(true);
   });
 });
 

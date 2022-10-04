@@ -81,6 +81,8 @@ export const DAILY_EVENT_ACCESS_STATE_UPDATED = 'access-state-updated';
 export const DAILY_EVENT_MEETING_SESSION_UPDATED = 'meeting-session-updated';
 export const DAILY_EVENT_MEETING_SESSION_STATE_UPDATED =
   'meeting-session-state-updated';
+export const DAILY_EVENT_MEETING_SESSION_DATA_ERROR =
+  'meeting-session-data-error';
 
 export const DAILY_EVENT_WAITING_PARTICIPANT_ADDED =
   'waiting-participant-added';

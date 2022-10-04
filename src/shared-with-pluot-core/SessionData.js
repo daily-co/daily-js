@@ -20,7 +20,7 @@ export const MERGE_STRATEGIES = [REPLACE_STRATEGY, SHALLOW_MERGE_STRATEGY];
 // Check whether data is a Plain Old JavaScript Object (a map-like object),
 // which can be shallow-merged with another.
 // From https://masteringjs.io/tutorials/fundamentals/pojo.
-export function isPlainOldJavaScriptObject(data) {
+function isPlainOldJavaScriptObject(data) {
   if (data == null || typeof data !== 'object') {
     return false;
   }
@@ -32,15 +32,16 @@ export function isPlainOldJavaScriptObject(data) {
 }
 
 // Meeting session data.
-// Only used by SessionDataClientUpdateQueue.
-class SessionData {
+// CONSIDER THIS "PRIVATE": ONLY MEANT FOR USE BY SESSIONDATACLIENTUPDATEQUEUE
+// AND SESSIONDATASERVERSTORE.
+export class SessionData {
   constructor() {
     this.data = {};
   }
 
   // Updates the meeting session data with the given SessionDataUpdate, WITHOUT
   // deleting keys for undefined fields during a 'shallow-merge'`.
-  // Assumes data and sessionDataUpdate are valid.
+  // Assumes sessionDataUpdate is valid.
   update(sessionDataUpdate) {
     if (sessionDataUpdate.isNoOp()) {
       return;
@@ -65,9 +66,12 @@ class SessionData {
       }
     }
   }
-}
 
-export const UNIT_TEST_EXPORTS = { SessionData };
+  // Whether the current data exceeds the max size.
+  exceedsMaxSize() {
+    return JSON.stringify(this.data).length > MAX_SESSION_DATA_SIZE;
+  }
+}
 
 // An update to meeting session data.
 // Guaranteed to be valid upon construction, which means:
