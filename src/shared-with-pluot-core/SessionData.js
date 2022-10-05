@@ -76,7 +76,7 @@ export class SessionData {
 // An update to meeting session data.
 // Guaranteed to be valid upon construction, which means:
 // - mergeStrategy is either 'replace' or 'shallow-merge'
-// - data is either null, undefined, or a plain (map-like) object
+// - data is a plain (map-like) object
 // - data isn't too big
 export class SessionDataUpdate {
   constructor({ data, mergeStrategy = REPLACE_STRATEGY } = {}) {
@@ -95,10 +95,7 @@ export class SessionDataUpdate {
   // no-op.
   static isNoOpUpdate(data, mergeStrategy) {
     return (
-      data === null ||
-      data === undefined ||
-      (Object.keys(data).length === 0 &&
-        mergeStrategy === SHALLOW_MERGE_STRATEGY)
+      Object.keys(data).length === 0 && mergeStrategy === SHALLOW_MERGE_STRATEGY
     );
   }
 
@@ -115,15 +112,6 @@ export class SessionDataUpdate {
   // Validate data with the given merge strategy, throwing an error if invalid.
   // Assumes mergeStrategy is valid.
   static _validateData(data, mergeStrategy) {
-    // Null and undefined data are valid; they are simply no-ops.
-    // We're choosing to allow them in order to be user-friendly: variables that
-    // users pass in as session data might easily become null or undefined and
-    // it doesn't hurt to simply no-op rather than throw, alleviating some
-    // validation burden in their code.
-    if (data === undefined || data === null) {
-      return;
-    }
-
     // Data must be a plain (map-like) object.
     if (!isPlainOldJavaScriptObject(data)) {
       throw Error(`Meeting session data must be a plain (map-like) object`);

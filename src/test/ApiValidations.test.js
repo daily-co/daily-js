@@ -49,8 +49,11 @@ it('Session data must be serializable to JSON', () => {
     /must be serializable/
   );
   expect(validateSessionDataFunc({ foo: 3 }, 'replace')).toEqual(true);
-  expect(validateSessionDataFunc(null, 'replace')).toEqual(true);
-  expect(validateSessionDataFunc(undefined, 'replace')).toEqual(true);
+});
+
+it('Session data must be a plain object', () => {
+  expect(() => validateSessionDataFunc(null, 'replace')).toThrow(/plain/);
+  expect(() => validateSessionDataFunc(undefined, 'replace')).toThrow(/plain/);
 });
 
 it('Session data should not exceed max character limit', () => {

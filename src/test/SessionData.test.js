@@ -8,11 +8,6 @@ import {
 } from '../shared-with-pluot-core/SessionData';
 
 describe('SessionDataUpdate', () => {
-  it('defaults to undefined data', () => {
-    expect(new SessionDataUpdate().data).toStrictEqual(undefined);
-    expect(new SessionDataUpdate({}).data).toStrictEqual(undefined);
-  });
-
   it('defaults to the "replace" merge strategy', () => {
     expect(
       new SessionDataUpdate({ data: { foo: 'bar' } }).mergeStrategy
@@ -41,19 +36,7 @@ describe('SessionDataUpdate', () => {
     ).toThrow(/Unrecognized mergeStrategy provided/);
   });
 
-  it('validates that data is null, undefined, or a plain object', () => {
-    expect(
-      new SessionDataUpdate({
-        data: undefined,
-        mergeStrategy: SHALLOW_MERGE_STRATEGY,
-      }).data
-    ).toStrictEqual(undefined);
-    expect(
-      new SessionDataUpdate({
-        data: null,
-        mergeStrategy: SHALLOW_MERGE_STRATEGY,
-      }).data
-    ).toStrictEqual(null);
+  it('validates that data is a plain object', () => {
     expect(
       new SessionDataUpdate({
         data: { foo: 'bar' },
@@ -64,6 +47,20 @@ describe('SessionDataUpdate', () => {
       () =>
         new SessionDataUpdate({
           data: 'hello',
+          mergeStrategy: SHALLOW_MERGE_STRATEGY,
+        }).data
+    ).toThrow(/plain/);
+    expect(
+      () =>
+        new SessionDataUpdate({
+          data: undefined,
+          mergeStrategy: SHALLOW_MERGE_STRATEGY,
+        }).data
+    ).toThrow(/plain/);
+    expect(
+      () =>
+        new SessionDataUpdate({
+          data: null,
           mergeStrategy: SHALLOW_MERGE_STRATEGY,
         }).data
     ).toThrow(/plain/);
@@ -87,46 +84,6 @@ describe('SessionDataUpdate', () => {
 describe('SessionData', () => {
   it('defaults to empty-object data', () => {
     expect(new SessionData().data).toStrictEqual({});
-  });
-
-  it('no-ops on "replace" updates with null', () => {
-    const sessionData = new SessionData();
-    const update = new SessionDataUpdate({
-      data: null,
-      mergeStrategy: REPLACE_STRATEGY,
-    });
-    sessionData.update(update);
-    expect(sessionData.data).toStrictEqual({});
-  });
-
-  it('no-ops on "shallow-merge" updates with null', () => {
-    const sessionData = new SessionData();
-    const update = new SessionDataUpdate({
-      data: null,
-      mergeStrategy: SHALLOW_MERGE_STRATEGY,
-    });
-    sessionData.update(update);
-    expect(sessionData.data).toStrictEqual({});
-  });
-
-  it('no-ops on "replace" updates with undefined', () => {
-    const sessionData = new SessionData();
-    const update = new SessionDataUpdate({
-      data: undefined,
-      mergeStrategy: REPLACE_STRATEGY,
-    });
-    sessionData.update(update);
-    expect(sessionData.data).toStrictEqual({});
-  });
-
-  it('no-ops on "shallow-merge" updates with undefined', () => {
-    const sessionData = new SessionData();
-    const update = new SessionDataUpdate({
-      data: undefined,
-      mergeStrategy: SHALLOW_MERGE_STRATEGY,
-    });
-    sessionData.update(update);
-    expect(sessionData.data).toStrictEqual({});
   });
 
   it('supports the "shallow-merge" strategy', () => {
@@ -241,19 +198,11 @@ describe('SessionDataClientUpdateQueue', () => {
   });
 
   it('if a no-op update has been enqueued, has no server update to flush', () => {
-    const queue1 = new SessionDataClientUpdateQueue();
-    queue1.enqueueUpdate(new SessionDataUpdate({ data: null }));
-    expect(queue1.flushToServerUpdatePayload()).toStrictEqual(null);
-
-    const queue2 = new SessionDataClientUpdateQueue();
-    queue2.enqueueUpdate(new SessionDataUpdate({ data: undefined }));
-    expect(queue2.flushToServerUpdatePayload()).toStrictEqual(null);
-
-    const queue3 = new SessionDataClientUpdateQueue();
-    queue3.enqueueUpdate(
+    const queue = new SessionDataClientUpdateQueue();
+    queue.enqueueUpdate(
       new SessionDataUpdate({ data: {}, mergeStrategy: SHALLOW_MERGE_STRATEGY })
     );
-    expect(queue3.flushToServerUpdatePayload()).toStrictEqual(null);
+    expect(queue.flushToServerUpdatePayload()).toStrictEqual(null);
   });
 
   it('if only one update has been enqueued, flushes a server update with just that update', () => {
