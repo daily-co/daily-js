@@ -3291,11 +3291,7 @@ export default class DailyIframe extends EventEmitter {
         break;
       case DAILY_EVENT_MEETING_SESSION_STATE_UPDATED:
         this._meetingSessionState = msg.meetingSessionState;
-        try {
-          this.emit(msg.action, msg);
-        } catch (e) {
-          console.log('could not emit', msg, e);
-        }
+        this.emitDailyJSEvent(msg);
         break;
       case DAILY_EVENT_RECORDING_STARTED:
       case DAILY_EVENT_RECORDING_STOPPED:
