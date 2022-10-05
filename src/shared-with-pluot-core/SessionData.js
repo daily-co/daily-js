@@ -199,7 +199,7 @@ export class SessionDataClientUpdateQueue {
       this.mergeStrategyForNextServerUpdate = sessionDataUpdate.mergeStrategy;
     }
 
-    // Otherwise, update data in the "queue".
+    // Update data in the "queue".
     this.sessionData.update(sessionDataUpdate);
 
     // If this was a 'replace' update, set 'replace' as the strategy for the
