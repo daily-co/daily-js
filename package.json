@@ -45,6 +45,7 @@
     "babel-plugin-rewire": "^1.2.0",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
     "conventional-changelog-conventionalcommits": "^5.0.0",
+    "dotenv": "^16.0.3",
     "jest": "^27.4.7",
     "prettier": "^2.5.1",
     "rollup": "^1.29.0",

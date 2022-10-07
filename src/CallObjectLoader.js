@@ -25,9 +25,6 @@ export default class CallObjectLoader {
    * Since the call object bundle sets up global state in the same scope as the
    * app code consuming it, it only needs to be loaded and executed once ever.
    *
-   * @param meetingOrBaseUrl Meeting URL (like https://somecompany.daily.co/hello)
-   *  or base URL (like https://somecompany.daily.co), used to determine where
-   *  to load the bundle from.
    * @param callFrameId A string identifying this "call frame", to distinguish it
    *  from other iframe-based calls for message channel purposes.
    * @param avoidEval Whether to use the new eval-less loading mechanism on web
@@ -38,13 +35,7 @@ export default class CallObjectLoader {
    * @param failureCallback Callback function that takes an error message and a
    *   boolean indicating whether an automatic retry is slated to occur.
    */
-  load(
-    meetingOrBaseUrl,
-    callFrameId,
-    avoidEval,
-    successCallback,
-    failureCallback
-  ) {
+  load(callFrameId, avoidEval, successCallback, failureCallback) {
     if (this.loaded) {
       window._dailyCallObjectSetup(callFrameId);
       successCallback(true); // true = "this load() was a no-op"
@@ -57,13 +48,9 @@ export default class CallObjectLoader {
     this._currentLoad && this._currentLoad.cancel();
 
     // Start a new load
-    this._currentLoad = new LoadOperation(
-      meetingOrBaseUrl,
-      () => {
-        successCallback(false); // false = "this load() wasn't a no-op"
-      },
-      failureCallback
-    );
+    this._currentLoad = new LoadOperation(() => {
+      successCallback(false); // false = "this load() wasn't a no-op"
+    }, failureCallback);
     this._currentLoad.start();
   }
 
@@ -95,11 +82,10 @@ const LOAD_ATTEMPT_DELAY = 3 * 1000;
 class LoadOperation {
   // Here failureCallback takes the same parameters as CallObjectLoader.load,
   // and successCallback takes no parameters.
-  constructor(meetingOrBaseUrl, successCallback, failureCallback) {
+  constructor(successCallback, failureCallback) {
     this._attemptsRemaining = LOAD_ATTEMPTS;
     this._currentAttempt = null;
 
-    this._meetingOrBaseUrl = meetingOrBaseUrl;
     this._successCallback = successCallback;
     this._failureCallback = failureCallback;
   }
@@ -132,7 +118,6 @@ class LoadOperation {
           return;
         }
         this._currentAttempt = new LoadAttempt(
-          this._meetingOrBaseUrl,
           this._successCallback,
           retryOrFailureCallback
         );
@@ -141,7 +126,6 @@ class LoadOperation {
     };
 
     this._currentAttempt = new LoadAttempt(
-      this._meetingOrBaseUrl,
       this._successCallback,
       retryOrFailureCallback
     );
@@ -187,19 +171,11 @@ const LOAD_ATTEMPT_NETWORK_TIMEOUT = 20 * 1000;
  * in React Native and also no CSP consideration to contend with.
  */
 class LoadAttempt {
-  constructor(meetingOrBaseUrl, successCallback, failureCallback) {
+  constructor(successCallback, failureCallback) {
     this._loadAttemptImpl =
       isReactNative() || !_dailyConfig.avoidEval
-        ? new LoadAttempt_ReactNative(
-            meetingOrBaseUrl,
-            successCallback,
-            failureCallback
-          )
-        : new LoadAttempt_Web(
-            meetingOrBaseUrl,
-            successCallback,
-            failureCallback
-          );
+        ? new LoadAttempt_ReactNative(successCallback, failureCallback)
+        : new LoadAttempt_Web(successCallback, failureCallback);
   }
 
   async start() {
@@ -227,7 +203,7 @@ class LoadAttempt {
 class LoadAttempt_ReactNative {
   // Here successCallback takes no parameters, and failureCallback takes a
   // single error message parameter.
-  constructor(meetingOrBaseUrl, successCallback, failureCallback) {
+  constructor(successCallback, failureCallback) {
     this.cancelled = false;
     this.succeeded = false;
 
@@ -239,22 +215,13 @@ class LoadAttempt_ReactNative {
       iOSCallObjectBundleCache;
     this._refetchHeaders = null;
 
-    this._meetingOrBaseUrl = meetingOrBaseUrl;
     this._successCallback = successCallback;
     this._failureCallback = failureCallback;
   }
 
   async start() {
     // console.log("[LoadAttempt_ReactNative] starting...");
-    let url;
-    try {
-      url = callObjectBundleUrl(this._meetingOrBaseUrl);
-    } catch (e) {
-      this._failureCallback(
-        `Failed to get call object bundle for URL ${this._meetingOrBaseUrl}: ${e}`
-      );
-      return;
-    }
+    const url = callObjectBundleUrl();
     const loadedFromIOSCache = await this._tryLoadFromIOSCache(url);
     !loadedFromIOSCache && this._loadFromNetwork(url);
   }
@@ -427,11 +394,10 @@ class LoadAttempt_ReactNative {
  * of implementing this synchronization.
  */
 class LoadAttempt_Web {
-  constructor(meetingOrBaseUrl, successCallback, failureCallback) {
+  constructor(successCallback, failureCallback) {
     this.cancelled = false;
     this.succeeded = false;
 
-    this._meetingOrBaseUrl = meetingOrBaseUrl;
     this._successCallback = successCallback;
     this._failureCallback = failureCallback;
 
@@ -447,15 +413,7 @@ class LoadAttempt_Web {
     }
 
     // Get call machine bundle URL
-    let url;
-    try {
-      url = callObjectBundleUrl(this._meetingOrBaseUrl);
-    } catch (e) {
-      this._failureCallback(
-        `Failed to get call object bundle for URL ${this._meetingOrBaseUrl}: ${e}`
-      );
-      return;
-    }
+    const url = callObjectBundleUrl();
 
     // Sanity check that we're running in a DOM/web context
     if (typeof document !== 'object') {
