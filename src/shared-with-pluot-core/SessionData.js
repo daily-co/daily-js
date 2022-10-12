@@ -12,7 +12,7 @@ export const MERGE_STRATEGIES = [REPLACE_STRATEGY, SHALLOW_MERGE_STRATEGY];
 //   - SessionDataClientUpdateQueue: used on the client side to enqueue multiple
 //     user-specified updates before flushing them to the server as a single
 //     payload.
-// - Server side (other file):
+// - Server side (other file, skyliner-express/app/SessionDataServerStore.js):
 //   - SessionDataServerStore: used on the SFU side to interact with stored
 //     meeting session data, including updating the data and listening to
 //     changes to that data (which may have been updated via a different SFU).
