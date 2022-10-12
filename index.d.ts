@@ -827,6 +827,10 @@ export interface DailyEventObjectTranscriptionStarted {
   action: Extract<DailyEvent, 'transcription-started'>;
   language: string;
   model: string;
+  tier?: string;
+  detect_language?: boolean;
+  profanity_filter?: boolean;
+  redact?: boolean;
   startedBy: string;
 }
 
@@ -1089,9 +1093,9 @@ export interface DailyTranscriptionDeepgramOptions {
   language?: string;
   model?: string;
   tier?: string;
-  detect_language?: string;
-  profanity_filter?: string;
-  redact?: string;
+  detect_language?: boolean;
+  profanity_filter?: boolean;
+  redact?: boolean;
 }
 
 export interface DailyCall {
