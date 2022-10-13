@@ -1,9 +1,14 @@
 // todo: add debug target
 
+require('dotenv').config();
+
 const path = require('path');
 const webpack = require('webpack');
 const version = require('./package-lock.json').version;
 const mode = process.env.NODE_ENV || 'production';
+const devCallMachineUrl =
+  process.env.DEV_CALL_MACHINE_URL ||
+  'https://khk-local.wss.daily.co:8000/static/call-machine-object-bundle.js';
 
 // whether to build with React Native Hermes support (only necessary in dev; prod already supports it)
 const RN = !!process.env.RN;
@@ -29,6 +34,7 @@ const bundle = {
         NODE_ENV: JSON.stringify(mode),
       },
       __dailyJsVersion__: JSON.stringify(version),
+      __devCallMachineUrl__: JSON.stringify(devCallMachineUrl),
       global: 'window',
     }),
   ],

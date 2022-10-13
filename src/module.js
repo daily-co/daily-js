@@ -1877,19 +1877,8 @@ export default class DailyIframe extends EventEmitter {
     }
 
     // Assign properties, ensuring that at a minimum url is set.
-    // Disallow changing to a url with a different bundle url than the one used
-    // for load().
     if (!properties.url) {
       throw new Error('preAuth() requires at least a url to be provided');
-    }
-    const newBundleUrl = callObjectBundleUrl(properties.url);
-    const loadedBundleUrl = callObjectBundleUrl(
-      this.properties.url || this.properties.baseUrl
-    );
-    if (newBundleUrl !== loadedBundleUrl) {
-      throw new Error(
-        `url in preAuth() has a different bundle url than the one loaded (${loadedBundleUrl} -> ${newBundleUrl})`
-      );
     }
     this.validateProperties(properties);
     this.properties = { ...this.properties, ...properties };
@@ -1954,7 +1943,6 @@ export default class DailyIframe extends EventEmitter {
       return new Promise((resolve, reject) => {
         this._callObjectLoader.cancel();
         this._callObjectLoader.load(
-          this.properties.url || this.properties.baseUrl,
           this._callFrameId,
           this.properties.dailyConfig && this.properties.dailyConfig.avoidEval,
           (wasNoOp) => {
@@ -2039,31 +2027,15 @@ export default class DailyIframe extends EventEmitter {
         }
       }
 
-      // Validate that url we're using to join() doesn't conflict with the url
-      // we used to load()
-      if (properties.url) {
-        if (this._callObjectMode) {
-          const newBundleUrl = callObjectBundleUrl(properties.url);
-          const loadedBundleUrl = callObjectBundleUrl(
-            this.properties.url || this.properties.baseUrl
+      // In iframe mode, validate that url we're using to join() doesn't
+      // conflict with the url we used to load()
+      if (properties.url && !this._callObjectMode) {
+        if (properties.url && properties.url !== this.properties.url) {
+          console.error(
+            `url in join() is different than the one used in load() (${this.properties.url} -> ${properties.url})`
           );
-          if (newBundleUrl !== loadedBundleUrl) {
-            console.error(
-              `url in join() has a different bundle url than the one loaded (${loadedBundleUrl} -> ${newBundleUrl})`
-            );
-            this.updateIsPreparingToJoin(false);
-            return Promise.reject();
-          }
-          this.properties.url = properties.url;
-        } else {
-          // iframe mode
-          if (properties.url && properties.url !== this.properties.url) {
-            console.error(
-              `url in join() is different than the one used in load() (${this.properties.url} -> ${properties.url})`
-            );
-            this.updateIsPreparingToJoin(false);
-            return Promise.reject();
-          }
+          this.updateIsPreparingToJoin(false);
+          return Promise.reject();
         }
       }
 
