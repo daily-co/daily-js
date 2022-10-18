@@ -28,21 +28,34 @@ function _getDailyJsVersion() {
 }
 
 export class DailyJsVersion {
-  constructor(
-    { major, minor, patch } = DailyJsVersion.fromString(_getDailyJsVersion())
-  ) {
-    // keep it simple. don't support non-number versions or partial
-    // i.e. if you declare one, you have to declare them all.
-    if (
-      typeof major !== 'number' ||
-      typeof minor !== 'number' ||
-      typeof patch !== 'number'
-    ) {
-      major = minor = patch = 0;
+  // Allow version to be provided as a string, object, or other DailyJSVersion
+  constructor(version = _getDailyJsVersion()) {
+    // For any non-internal versions, `internal` will be `undefined`
+    let djv = { major: 0, minor: 0, patch: 0, internal: undefined };
+    if (typeof version === 'string') {
+      djv = DailyJsVersion.fromString(version);
+    } else if (typeof version === 'object') {
+      // keep it simple. don't support non-number versions or partial
+      // i.e. if you declare one, you have to declare them all.
+      if (
+        typeof version.major === 'number' &&
+        typeof version.minor === 'number' &&
+        typeof version.patch === 'number'
+      ) {
+        djv = version;
+      }
+      // zero out the internal key if it's not valid
+      // TODO: is this the right thing? OR if it's provided and the wrong
+      // type, should we invalidate (0 out) the whole thing?
+      // NOTE: this should be a theoretical exercise anyway
+      if (version.internal && typeof version.internal !== 'number') {
+        djv.internal = 0;
+      }
     }
-    this.major = major;
-    this.minor = minor;
-    this.patch = patch;
+    this.major = djv.major;
+    this.minor = djv.minor;
+    this.patch = djv.patch;
+    this.internal = djv.internal;
   }
 
   isThisDailyJsVersionAtLeastThat(thatV) {
@@ -77,20 +90,52 @@ export class DailyJsVersion {
     );
   }
 
+  isInternal() {
+    return typeof this.internal === 'number';
+  }
+
   toString() {
-    return `${this.major}.${this.minor}.${this.patch}`;
+    const base = `${this.major}.${this.minor}.${this.patch}`;
+    return this.isInternal() ? `${base}-internal.${this.internal}` : base;
   }
 
   static fromString(versionString) {
     let major = 0,
       minor = 0,
       patch = 0;
+    let internal;
     try {
-      const versionParts = versionString.split('.');
+      let strCpy = versionString;
+      let isInternal = strCpy.includes('internal');
+      if (isInternal) {
+        strCpy = strCpy.replace('-internal', '');
+      }
+      const versionParts = strCpy.split('.');
+      if (
+        (isInternal && versionParts.length !== 4) ||
+        (!isInternal && versionParts.length !== 3)
+      ) {
+        throw new Error(`malformed version string: ${versionString}`);
+      }
+
       major = parseInt(versionParts[0], 10);
       minor = parseInt(versionParts[1], 10);
       patch = parseInt(versionParts[2], 10);
-    } catch (e) {}
-    return new DailyJsVersion({ major, minor, patch });
+      if (isNaN(major) || isNaN(minor) || isNaN(patch)) {
+        major = minor = patch = 0;
+        throw new Error(`malformed version string: ${versionString}`);
+      }
+
+      if (isInternal) {
+        internal = parseInt(versionParts[3], 10);
+        if (isNaN(internal)) {
+          internal = undefined;
+          throw new Error(`malformed version string: ${versionString}`);
+        }
+      }
+    } catch (e) {
+      console.error(`${e}`);
+    }
+    return new DailyJsVersion({ major, minor, patch, internal });
   }
 }
