@@ -58,7 +58,7 @@ export class DailyJsVersion {
     this.internal = djv.internal;
   }
 
-  isThisDailyJsVersionAtLeastThat(thatV) {
+  isEqualToOrNewerThan(thatV) {
     if (this.major !== thatV.major) {
       return this.major > thatV.major;
     }
@@ -68,7 +68,7 @@ export class DailyJsVersion {
     return this.patch >= thatV.patch;
   }
 
-  isThisDailyJsVersionNewerThanThat(thatV) {
+  isNewerThan(thatV) {
     if (this.major !== thatV.major) {
       return this.major > thatV.major;
     }
@@ -79,15 +79,11 @@ export class DailyJsVersion {
   }
 
   isSupported() {
-    return this.isThisDailyJsVersionAtLeastThat(
-      OLDEST_SUPPORTED_DAILY_JS_VERSION
-    );
+    return this.isEqualToOrNewerThan(OLDEST_SUPPORTED_DAILY_JS_VERSION);
   }
 
   isNearEndOfSupport() {
-    return !this.isThisDailyJsVersionNewerThanThat(
-      NEARING_EOS_DAILY_JS_VERSION
-    );
+    return !this.isNewerThan(NEARING_EOS_DAILY_JS_VERSION);
   }
 
   isInternal() {

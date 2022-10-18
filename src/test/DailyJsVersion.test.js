@@ -128,15 +128,13 @@ describe('constructor', () => {
   });
 });
 
-describe('isThisDailyJsVersionAtLeastThat', () => {
+describe('isEqualToOrNewerThan', () => {
   for (let i = 0; i < configVersions.length; i++) {
     it(`returns true when equal (${configVersions[i]})`, () => {
       window._dailyConfig = { dailyJsVersion: configVersions[i] };
 
       expect(
-        new DailyJsVersion().isThisDailyJsVersionAtLeastThat(
-          new DailyJsVersion()
-        )
+        new DailyJsVersion().isEqualToOrNewerThan(new DailyJsVersion())
       ).toStrictEqual(true);
     });
   }
@@ -144,91 +142,89 @@ describe('isThisDailyJsVersionAtLeastThat', () => {
   it('returns true when that is older', () => {
     const thisV = new DailyJsVersion({ major: 1, minor: 1, patch: 1 });
     let thatV = new DailyJsVersion({ major: 1, minor: 1, patch: 0 });
-    expect(thisV.isThisDailyJsVersionAtLeastThat(thatV)).toStrictEqual(true);
+    expect(thisV.isEqualToOrNewerThan(thatV)).toStrictEqual(true);
     thatV.patch = 1;
     thatV.minor = 0;
-    expect(thisV.isThisDailyJsVersionAtLeastThat(thatV)).toStrictEqual(true);
+    expect(thisV.isEqualToOrNewerThan(thatV)).toStrictEqual(true);
     thatV.minor = 1;
     thatV.major = 0;
-    expect(thisV.isThisDailyJsVersionAtLeastThat(thatV)).toStrictEqual(true);
+    expect(thisV.isEqualToOrNewerThan(thatV)).toStrictEqual(true);
   });
 
   it('returns false when that is newer', () => {
     const thisV = new DailyJsVersion({ major: 1, minor: 1, patch: 1 });
     let thatV = new DailyJsVersion({ major: 1, minor: 1, patch: 2 });
-    expect(thisV.isThisDailyJsVersionAtLeastThat(thatV)).toStrictEqual(false);
+    expect(thisV.isEqualToOrNewerThan(thatV)).toStrictEqual(false);
     thatV.patch = 1;
     thatV.minor = 2;
-    expect(thisV.isThisDailyJsVersionAtLeastThat(thatV)).toStrictEqual(false);
+    expect(thisV.isEqualToOrNewerThan(thatV)).toStrictEqual(false);
     thatV.minor = 1;
     thatV.major = 2;
-    expect(thisV.isThisDailyJsVersionAtLeastThat(thatV)).toStrictEqual(false);
+    expect(thisV.isEqualToOrNewerThan(thatV)).toStrictEqual(false);
   });
 
   it('internal versions work too', () => {
     let pubV = new DailyJsVersion({ major: 1, minor: 1, patch: 1 });
     let intV = new DailyJsVersion('1.1.1-internal.0');
-    expect(pubV.isThisDailyJsVersionAtLeastThat(intV)).toStrictEqual(true);
-    expect(intV.isThisDailyJsVersionAtLeastThat(pubV)).toStrictEqual(true);
+    expect(pubV.isEqualToOrNewerThan(intV)).toStrictEqual(true);
+    expect(intV.isEqualToOrNewerThan(pubV)).toStrictEqual(true);
     intV.internal = 1;
-    expect(pubV.isThisDailyJsVersionAtLeastThat(intV)).toStrictEqual(true);
-    expect(intV.isThisDailyJsVersionAtLeastThat(pubV)).toStrictEqual(true);
+    expect(pubV.isEqualToOrNewerThan(intV)).toStrictEqual(true);
+    expect(intV.isEqualToOrNewerThan(pubV)).toStrictEqual(true);
 
     intV.patch = 0;
-    expect(pubV.isThisDailyJsVersionAtLeastThat(intV)).toStrictEqual(true);
-    expect(intV.isThisDailyJsVersionAtLeastThat(pubV)).toStrictEqual(false);
+    expect(pubV.isEqualToOrNewerThan(intV)).toStrictEqual(true);
+    expect(intV.isEqualToOrNewerThan(pubV)).toStrictEqual(false);
   });
 });
 
-describe('isThisDailyJsVersionNewerThanThat', () => {
+describe('isNewerThan', () => {
   for (let i = 0; i < configVersions.length; i++) {
     it('returns false when equal', () => {
       window._dailyConfig = { dailyJsVersion: configVersions[i] };
 
       const curVersion = new DailyJsVersion();
       const thatVersion = new DailyJsVersion();
-      expect(
-        curVersion.isThisDailyJsVersionNewerThanThat(thatVersion)
-      ).toStrictEqual(false);
+      expect(curVersion.isNewerThan(thatVersion)).toStrictEqual(false);
     });
   }
 
   it('returns true when that is older', () => {
     const thisV = new DailyJsVersion({ major: 1, minor: 1, patch: 1 });
     let thatV = new DailyJsVersion({ major: 1, minor: 1, patch: 0 });
-    expect(thisV.isThisDailyJsVersionNewerThanThat(thatV)).toStrictEqual(true);
+    expect(thisV.isNewerThan(thatV)).toStrictEqual(true);
     thatV.patch = 1;
     thatV.minor = 0;
-    expect(thisV.isThisDailyJsVersionNewerThanThat(thatV)).toStrictEqual(true);
+    expect(thisV.isNewerThan(thatV)).toStrictEqual(true);
     thatV.minor = 1;
     thatV.major = 0;
-    expect(thisV.isThisDailyJsVersionNewerThanThat(thatV)).toStrictEqual(true);
+    expect(thisV.isNewerThan(thatV)).toStrictEqual(true);
   });
 
   it('returns false when that is newer', () => {
     const thisV = new DailyJsVersion({ major: 1, minor: 1, patch: 1 });
     let thatV = new DailyJsVersion({ major: 1, minor: 1, patch: 2 });
-    expect(thisV.isThisDailyJsVersionNewerThanThat(thatV)).toStrictEqual(false);
+    expect(thisV.isNewerThan(thatV)).toStrictEqual(false);
     thatV.patch = 1;
     thatV.minor = 2;
-    expect(thisV.isThisDailyJsVersionNewerThanThat(thatV)).toStrictEqual(false);
+    expect(thisV.isNewerThan(thatV)).toStrictEqual(false);
     thatV.minor = 1;
     thatV.major = 2;
-    expect(thisV.isThisDailyJsVersionNewerThanThat(thatV)).toStrictEqual(false);
+    expect(thisV.isNewerThan(thatV)).toStrictEqual(false);
   });
 
   it('internal versions work too', () => {
     let pubV = new DailyJsVersion({ major: 1, minor: 1, patch: 1 });
     let intV = new DailyJsVersion('1.1.1-internal.0');
-    expect(pubV.isThisDailyJsVersionNewerThanThat(intV)).toStrictEqual(false);
-    expect(intV.isThisDailyJsVersionNewerThanThat(pubV)).toStrictEqual(false);
+    expect(pubV.isNewerThan(intV)).toStrictEqual(false);
+    expect(intV.isNewerThan(pubV)).toStrictEqual(false);
     intV.internal = 1;
-    expect(pubV.isThisDailyJsVersionNewerThanThat(intV)).toStrictEqual(false);
-    expect(intV.isThisDailyJsVersionNewerThanThat(pubV)).toStrictEqual(false);
+    expect(pubV.isNewerThan(intV)).toStrictEqual(false);
+    expect(intV.isNewerThan(pubV)).toStrictEqual(false);
 
     intV.patch = 0;
-    expect(pubV.isThisDailyJsVersionNewerThanThat(intV)).toStrictEqual(true);
-    expect(intV.isThisDailyJsVersionNewerThanThat(pubV)).toStrictEqual(false);
+    expect(pubV.isNewerThan(intV)).toStrictEqual(true);
+    expect(intV.isNewerThan(pubV)).toStrictEqual(false);
   });
 });
 
