@@ -125,7 +125,7 @@ export type DailyNonFatalErrorType =
 export type DailyNetworkTopology = 'sfu' | 'peer';
 
 export interface DailyParticipantsObject {
-  local: DailyParticipant;
+  local?: DailyParticipant;
   [id: string]: DailyParticipant;
 }
 
