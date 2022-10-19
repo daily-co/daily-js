@@ -1,8 +1,6 @@
 //--------------------------------
 // daily-js version helpers
 
-import { THIS_WORKER_UNAVAILABLE } from '../../../skyliner-express/app/sfu/SoupCommon';
-
 // Daily supports the last 6 months of versions.
 // These variable should be updated as part of each release as needed.
 
@@ -51,7 +49,7 @@ export class DailyJsVersion {
       // type, should we invalidate (0 out) the whole thing?
       // NOTE: this should be a theoretical exercise anyway
       if (version.internal && typeof version.internal !== 'number') {
-        djv.internal = 0;
+        djv.internal = -1;
       }
     }
     this.major = djv.major;
@@ -151,7 +149,7 @@ export class DailyJsVersion {
       if (isInternal) {
         internal = parseInt(versionParts[3], 10);
         if (isNaN(internal)) {
-          internal = undefined;
+          internal = -1;
           throw new Error(`malformed version string: ${versionString}`);
         }
       }

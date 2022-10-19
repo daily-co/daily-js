@@ -100,7 +100,8 @@ describe('constructor', () => {
     expect(version.major).toStrictEqual(4);
     expect(version.minor).toStrictEqual(2);
     expect(version.patch).toStrictEqual(3);
-    expect(version.internal).toStrictEqual(0);
+    expect(version.internal).toStrictEqual(-1);
+    expect(version.isInternal()).toStrictEqual(true);
 
     version = new DailyJsVersion('4.2');
     expect(version.major).toStrictEqual(0);
@@ -113,6 +114,14 @@ describe('constructor', () => {
     expect(version.minor).toStrictEqual(0);
     expect(version.patch).toStrictEqual(0);
     expect(version.internal).toStrictEqual(undefined);
+    expect(version.isInternal()).toStrictEqual(false);
+
+    version = new DailyJsVersion('4.2.3-internal.foo');
+    expect(version.major).toStrictEqual(4);
+    expect(version.minor).toStrictEqual(2);
+    expect(version.patch).toStrictEqual(3);
+    expect(version.internal).toStrictEqual(-1);
+    expect(version.isInternal()).toStrictEqual(true);
 
     version = new DailyJsVersion('4.2.foo');
     expect(version.major).toStrictEqual(0);
