@@ -60,15 +60,33 @@ export class DailyJsVersion {
 
   isEqualToOrNewerThan(thatV) {
     let that = new DailyJsVersion(thatV);
-    if (
-      this.major === that.major &&
-      this.minor === that.minor &&
-      this.patch === that.patch &&
-      this.internal === that.internal
-    ) {
-      return true;
+
+    if (this.major !== that.major) {
+      return this.major > that.major;
     }
-    return this.isNewerThan(thatV);
+    if (this.minor !== that.minor) {
+      return this.minor > that.minor;
+    }
+    if (this.patch !== that.patch) {
+      return this.patch > that.patch;
+    }
+
+    // major/minor/patch are equal, so now things get
+    // complicated. Internal releases are actually
+    // pre-releases, so we need to make sure that a pre-release
+    // is deemed older than an equivalent public release.
+    // Example: 0.32.0 is actually newer than 0.32.0-internal.9999
+    // So artificially set public internal versions to infinity for
+    // ease of comparison
+    let thisInternal = this.isInternal() ? this.internal : Infinity;
+    let thatInternal = that.isInternal() ? that.internal : Infinity;
+    if (thisInternal !== thatInternal) {
+      return thisInternal > thatInternal;
+    }
+
+    // if we're here, then all-the-things are equal, so...
+    // yes
+    return true;
   }
 
   isNewerThan(thatV) {
