@@ -1,6 +1,8 @@
 //--------------------------------
 // daily-js version helpers
 
+import { THIS_WORKER_UNAVAILABLE } from '../../../skyliner-express/app/sfu/SoupCommon';
+
 // Daily supports the last 6 months of versions.
 // These variable should be updated as part of each release as needed.
 
@@ -59,23 +61,47 @@ export class DailyJsVersion {
   }
 
   isEqualToOrNewerThan(thatV) {
-    if (this.major !== thatV.major) {
-      return this.major > thatV.major;
+    let that = new DailyJsVersion(thatV);
+    if (
+      this.major === that.major &&
+      this.minor === that.minor &&
+      this.patch === that.patch &&
+      this.internal === that.internal
+    ) {
+      return true;
     }
-    if (this.minor !== thatV.minor) {
-      return this.minor > thatV.minor;
-    }
-    return this.patch >= thatV.patch;
+    return this.isNewerThan(thatV);
   }
 
   isNewerThan(thatV) {
-    if (this.major !== thatV.major) {
-      return this.major > thatV.major;
+    let that = new DailyJsVersion(thatV);
+
+    if (this.major !== that.major) {
+      return this.major > that.major;
     }
-    if (this.minor !== thatV.minor) {
-      return this.minor > thatV.minor;
+    if (this.minor !== that.minor) {
+      return this.minor > that.minor;
     }
-    return this.patch > thatV.patch;
+    if (this.patch !== that.patch) {
+      return this.patch > that.patch;
+    }
+
+    // major/minor/patch are equal, so now things get
+    // complicated. Internal releases are actually
+    // pre-releases, so we need to make sure that a pre-release
+    // is deemed older than an equivalent public release.
+    // Example: 0.32.0 is actually newer than 0.32.0-internal.9999
+    // So artificially set public internal versions to infinity for
+    // ease of comparison
+    let thisInternal = this.isInternal() ? this.internal : Infinity;
+    let thatInternal = that.isInternal() ? that.internal : Infinity;
+    if (thisInternal !== thatInternal) {
+      return thisInternal > thatInternal;
+    }
+
+    // if we're here, then all-the-things are equal, so...
+    // no, it's not newer
+    return false;
   }
 
   isSupported() {
