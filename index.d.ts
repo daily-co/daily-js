@@ -113,7 +113,8 @@ export type DailyFatalErrorType =
   | 'nbf-room'
   | 'nbf-token'
   | 'exp-room'
-  | 'exp-token';
+  | 'exp-token'
+  | 'meeting-full';
 
 export type DailyNonFatalErrorType =
   | 'input-settings-error'

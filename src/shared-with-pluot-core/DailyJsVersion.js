@@ -59,16 +59,16 @@ export class DailyJsVersion {
   }
 
   isEqualToOrNewerThan(thatV) {
+    if (this.isNewerThan(thatV)) {
+      return true;
+    }
     let that = new DailyJsVersion(thatV);
-    if (
+    return (
       this.major === that.major &&
       this.minor === that.minor &&
       this.patch === that.patch &&
       this.internal === that.internal
-    ) {
-      return true;
-    }
-    return this.isNewerThan(thatV);
+    );
   }
 
   isNewerThan(thatV) {
