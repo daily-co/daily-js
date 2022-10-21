@@ -8,7 +8,7 @@
 // less at the time of each release.
 export const OLDEST_SUPPORTED_DAILY_JS_VERSION = {
   major: 0,
-  minor: 24,
+  minor: 25,
   patch: 0,
 };
 
@@ -16,7 +16,7 @@ export const OLDEST_SUPPORTED_DAILY_JS_VERSION = {
 // to give customers ample time to upgrade.
 export const NEARING_EOS_DAILY_JS_VERSION = {
   major: 0,
-  minor: 25,
+  minor: 26,
   patch: 0,
 };
 
