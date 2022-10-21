@@ -417,6 +417,8 @@ const FRAME_PROPS = {
     },
     help: 'invalid userData type provided',
   },
+  startVideoOff: true,
+  startAudioOff: true,
   activeSpeakerMode: true,
   showLeaveButton: true,
   showLocalVideo: true,
