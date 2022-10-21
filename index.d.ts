@@ -238,6 +238,8 @@ export interface DailyCallOptions {
   inputSettings?: DailyInputSettings;
   userName?: string;
   userData?: unknown;
+  startVideoOff?: boolean;
+  startAudioOff?: boolean;
 }
 
 export interface DailyLoadOptions extends DailyCallOptions {
