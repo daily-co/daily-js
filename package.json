@@ -2,7 +2,7 @@
   "name": "@daily-co/daily-js",
   "private": true,
   "//": "^ COMMENT OUT 'private: true' BEFORE RUNNING NPM PUBLISH",
-  "version": "0.31.0",
+  "version": "0.32.0-internal.29",
   "engines": {
     "node": ">=10.0.0"
   },
@@ -45,6 +45,7 @@
     "babel-plugin-rewire": "^1.2.0",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
     "conventional-changelog-conventionalcommits": "^5.0.0",
+    "dotenv": "^16.0.3",
     "jest": "^27.4.7",
     "prettier": "^2.5.1",
     "rollup": "^1.29.0",

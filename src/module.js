@@ -34,6 +34,7 @@ import {
   DAILY_FATAL_ERROR_NBF_TOKEN,
   DAILY_FATAL_ERROR_EXP_ROOM,
   DAILY_FATAL_ERROR_EXP_TOKEN,
+  DAILY_FATAL_ERROR_MEETING_FULL,
   DAILY_CAMERA_ERROR_CAM_IN_USE,
   DAILY_CAMERA_ERROR_MIC_IN_USE,
   DAILY_CAMERA_ERROR_CAM_AND_MIC_IN_USE,
@@ -226,6 +227,7 @@ export {
   DAILY_FATAL_ERROR_NBF_TOKEN,
   DAILY_FATAL_ERROR_EXP_ROOM,
   DAILY_FATAL_ERROR_EXP_TOKEN,
+  DAILY_FATAL_ERROR_MEETING_FULL,
   DAILY_CAMERA_ERROR_CAM_IN_USE,
   DAILY_CAMERA_ERROR_MIC_IN_USE,
   DAILY_CAMERA_ERROR_CAM_AND_MIC_IN_USE,
@@ -308,7 +310,7 @@ const simulcastEncodingsValidRanges = {
   scaleResolutionDownBy: { min: 1, max: MAX_SCALE_RESOLUTION_BY },
 };
 
-const startRmpSettingsValidKeys = ['state', 'simulcastEncodings'];
+const startRmpSettingsValidKeys = ['state', 'volume', 'simulcastEncodings'];
 //
 //
 //
@@ -415,6 +417,8 @@ const FRAME_PROPS = {
     },
     help: 'invalid userData type provided',
   },
+  startVideoOff: true,
+  startAudioOff: true,
   activeSpeakerMode: true,
   showLeaveButton: true,
   showLocalVideo: true,
@@ -1877,19 +1881,8 @@ export default class DailyIframe extends EventEmitter {
     }
 
     // Assign properties, ensuring that at a minimum url is set.
-    // Disallow changing to a url with a different bundle url than the one used
-    // for load().
     if (!properties.url) {
       throw new Error('preAuth() requires at least a url to be provided');
-    }
-    const newBundleUrl = callObjectBundleUrl(properties.url);
-    const loadedBundleUrl = callObjectBundleUrl(
-      this.properties.url || this.properties.baseUrl
-    );
-    if (newBundleUrl !== loadedBundleUrl) {
-      throw new Error(
-        `url in preAuth() has a different bundle url than the one loaded (${loadedBundleUrl} -> ${newBundleUrl})`
-      );
     }
     this.validateProperties(properties);
     this.properties = { ...this.properties, ...properties };
@@ -1954,7 +1947,6 @@ export default class DailyIframe extends EventEmitter {
       return new Promise((resolve, reject) => {
         this._callObjectLoader.cancel();
         this._callObjectLoader.load(
-          this.properties.url || this.properties.baseUrl,
           this._callFrameId,
           this.properties.dailyConfig && this.properties.dailyConfig.avoidEval,
           (wasNoOp) => {
@@ -2039,31 +2031,15 @@ export default class DailyIframe extends EventEmitter {
         }
       }
 
-      // Validate that url we're using to join() doesn't conflict with the url
-      // we used to load()
-      if (properties.url) {
-        if (this._callObjectMode) {
-          const newBundleUrl = callObjectBundleUrl(properties.url);
-          const loadedBundleUrl = callObjectBundleUrl(
-            this.properties.url || this.properties.baseUrl
+      // In iframe mode, validate that url we're using to join() doesn't
+      // conflict with the url we used to load()
+      if (properties.url && !this._callObjectMode) {
+        if (properties.url && properties.url !== this.properties.url) {
+          console.error(
+            `url in join() is different than the one used in load() (${this.properties.url} -> ${properties.url})`
           );
-          if (newBundleUrl !== loadedBundleUrl) {
-            console.error(
-              `url in join() has a different bundle url than the one loaded (${loadedBundleUrl} -> ${newBundleUrl})`
-            );
-            this.updateIsPreparingToJoin(false);
-            return Promise.reject();
-          }
-          this.properties.url = properties.url;
-        } else {
-          // iframe mode
-          if (properties.url && properties.url !== this.properties.url) {
-            console.error(
-              `url in join() is different than the one used in load() (${this.properties.url} -> ${properties.url})`
-            );
-            this.updateIsPreparingToJoin(false);
-            return Promise.reject();
-          }
+          this.updateIsPreparingToJoin(false);
+          return Promise.reject();
         }
       }
 
@@ -2163,13 +2139,7 @@ export default class DailyIframe extends EventEmitter {
         // nothing to do, here, just resolve
         resolve();
       } else {
-        this._leftCallback = () => {
-          if (this._meetingState !== DAILY_STATE_ERROR) {
-            this.updateMeetingState(DAILY_STATE_LEFT);
-          }
-          this.resetMeetingDependentVars();
-          resolve();
-        };
+        this._resolveLeave = resolve;
         // TODO: the possibility that the iframe call machine is not yet loaded
         // is never handled here...
         this.sendMessageToCallMachine({ action: DAILY_METHOD_LEAVE });
@@ -2264,7 +2234,7 @@ export default class DailyIframe extends EventEmitter {
   }) {
     try {
       validateRemotePlayerUrl(url);
-      validateRemotePlayerStateSettings(settings);
+      validateRemotePlayerSettings(settings);
       validateRemotePlayerEncodingSettings(settings);
     } catch (e) {
       console.error(`invalid argument Error: ${e}`);
@@ -2320,7 +2290,7 @@ export default class DailyIframe extends EventEmitter {
     // TODO: Add check of the current_state === desired state
     // And resolve() from here itself.
     try {
-      validateRemotePlayerStateSettings(settings);
+      validateRemotePlayerSettings(settings);
     } catch (e) {
       console.error(`invalid argument Error: ${e}`);
       console.error(remoteMediaPlayerUpdateValidationHelpMsg());
@@ -3084,9 +3054,16 @@ export default class DailyIframe extends EventEmitter {
         }
         break;
       case DAILY_EVENT_LEFT_MEETING:
-        if (this._leftCallback) {
-          this._leftCallback();
-          this._leftCallback = null;
+        // if we've left due to error, the error msg should have
+        // already been handled and we do not want to override
+        // the state.
+        if (this._meetingState !== DAILY_STATE_ERROR) {
+          this.updateMeetingState(DAILY_STATE_LEFT);
+        }
+        this.resetMeetingDependentVars();
+        if (this._resolveLeave) {
+          this._resolveLeave();
+          this._resolveLeave = null;
         }
         try {
           this.emit(msg.action, msg);
@@ -3453,7 +3430,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   compareEqualForRMPUpdateEvent(a, b) {
-    if (a.state === b.state) {
+    if (a.state === b.state && a.settings?.volume === b.settings?.volume) {
       return true;
     }
     return false;
@@ -3871,7 +3848,7 @@ function validateUserData(data) {
 
   // check that what goes in is the same coming out :)
   if (!deepEqual(JSON.parse(dataStr), data)) {
-    console.warning(`The userData provided will be modified when serialized.`);
+    console.warn(`The userData provided will be modified when serialized.`);
   }
 
   // check the size of the payload
@@ -4188,21 +4165,35 @@ function validateRemotePlayerUrl(url) {
   }
 }
 
-function validateRemotePlayerStateSettings(playerSettings) {
+function validateRemotePlayerSettings(playerSettings) {
   if (typeof playerSettings !== 'object') {
     throw new Error(`RemoteMediaPlayerSettings: must be "object" type`);
   }
 
-  if (
-    !playerSettings.state ||
-    !Object.values(DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING).includes(
-      playerSettings.state
-    )
-  ) {
-    throw new Error(
-      `Invalid value for RemoteMediaPlayerSettings.state, valid values are: ` +
-        JSON.stringify(DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING)
-    );
+  if (playerSettings.state) {
+    if (
+      !Object.values(DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING).includes(
+        playerSettings.state
+      )
+    ) {
+      throw new Error(
+        `Invalid value for RemoteMediaPlayerSettings.state, valid values are: ` +
+          JSON.stringify(DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING)
+      );
+    }
+  }
+
+  if (playerSettings.volume) {
+    if (typeof playerSettings.volume !== 'number') {
+      throw new Error(
+        `RemoteMediaPlayerSettings.volume: must be "number" type`
+      );
+    }
+    if (playerSettings.volume < 0 || playerSettings.volume > 2) {
+      throw new Error(
+        `RemoteMediaPlayerSettings.volume: must be between 0.0 - 2.0`
+      );
+    }
   }
 }
 

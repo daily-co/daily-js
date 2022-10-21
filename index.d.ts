@@ -113,7 +113,8 @@ export type DailyFatalErrorType =
   | 'nbf-room'
   | 'nbf-token'
   | 'exp-room'
-  | 'exp-token';
+  | 'exp-token'
+  | 'meeting-full';
 
 export type DailyNonFatalErrorType =
   | 'input-settings-error'
@@ -237,6 +238,8 @@ export interface DailyCallOptions {
   inputSettings?: DailyInputSettings;
   userName?: string;
   userData?: unknown;
+  startVideoOff?: boolean;
+  startAudioOff?: boolean;
 }
 
 export interface DailyLoadOptions extends DailyCallOptions {
@@ -463,7 +466,8 @@ export interface DailyRoomInfo {
     max_participants?: number;
     enable_screenshare?: boolean;
     enable_advanced_chat?: boolean;
-    enable_audience_reactions?: boolean;
+    enable_breakout_rooms?: boolean;
+    enable_emoji_reactions?: boolean;
     enable_chat?: boolean;
     enable_hand_raising?: boolean;
     enable_knocking?: boolean;
@@ -499,8 +503,10 @@ export interface DailyRoomInfo {
     max_api_rooms?: number;
     webhook_meeting_end?: any;
     max_live_streams?: number;
+    max_streaming_instances_per_room?: number;
     enable_advanced_chat?: boolean;
-    enable_audience_reactions?: boolean;
+    enable_breakout_rooms?: boolean;
+    enable_emoji_reactions?: boolean;
     enable_chat?: boolean;
     enable_hand_raising?: boolean;
     enable_network_ui?: boolean;
@@ -627,6 +633,7 @@ export interface DailyEventObjectLiveStreamingError {
   action: Extract<DailyEvent, 'live-streaming-error'>;
   errorMsg: string;
   instanceId?: string;
+  actionTraceId?: string;
 }
 
 export interface DailyEventObjectParticipants {
@@ -699,6 +706,7 @@ export interface DailyEventObjectRecordingError {
   action: Extract<DailyEvent, 'recording-error'>;
   errorMsg: string;
   instanceId?: string;
+  actionTraceId?: string;
 }
 
 export interface DailyEventObjectRecordingData {
@@ -1026,6 +1034,8 @@ export interface DailyStreamingOptions {
   width?: number;
   height?: number;
   fps?: number;
+  videoBitrate?: number;
+  audioBitrate?: number;
   minIdleTimeOut?: number;
   backgroundColor?: string;
   instanceId?: string;
@@ -1048,7 +1058,10 @@ export interface RemoteMediaPlayerSimulcastEncoding {
 }
 
 export interface DailyRemoteMediaPlayerSettings {
-  state: DailyRemoteMediaPlayerSettingPlay | DailyRemoteMediaPlayerSettingPause;
+  state?:
+    | DailyRemoteMediaPlayerSettingPlay
+    | DailyRemoteMediaPlayerSettingPause;
+  volume?: number;
   simulcastEncodings?: RemoteMediaPlayerSimulcastEncoding[];
 }
 
