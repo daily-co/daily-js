@@ -45,6 +45,11 @@ export const DAILY_FATAL_ERROR_MEETING_FULL = 'meeting-full';
 export const DAILY_CAMERA_ERROR_CAM_IN_USE = 'cam-in-use';
 export const DAILY_CAMERA_ERROR_MIC_IN_USE = 'mic-in-use';
 export const DAILY_CAMERA_ERROR_CAM_AND_MIC_IN_USE = 'cam-mic-in-use';
+export const DAILY_CAMERA_ERROR_PERMISSIONS = 'permissions';
+export const DAILY_CAMERA_ERROR_UNDEF_MEDIADEVICES = 'undefined-mediadevices';
+export const DAILY_CAMERA_ERROR_NOT_FOUND = 'not-found';
+export const DAILY_CAMERA_ERROR_CONSTRAINTS = 'constraints';
+export const DAILY_CAMERA_ERROR_UNKNOWN = 'unknown';
 
 // events
 
