@@ -271,6 +271,7 @@ export interface DailyAdvancedConfig {
   userMediaVideoConstraints?: boolean | MediaTrackConstraints;
   avoidEval?: boolean;
   callObjectBundleUrlOverride?: string;
+  enableIndependentDevicePermissionPrompts?: boolean;
 }
 
 export interface DailyTrackState {
