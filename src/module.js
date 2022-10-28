@@ -4080,8 +4080,17 @@ function validateReceiveSettings(
 // functionality is added to inputSettings in the future.
 function validateInputSettings(settings) {
   if (typeof settings !== 'object') return false;
-  if (!(settings.video && typeof settings.video === 'object')) return false;
-  if (!validateVideoProcessor(settings.video.processor)) return false;
+  if (
+    !(
+      (settings.video && typeof settings.video === 'object') ||
+      (settings.audio && typeof settings.audio === 'object')
+    )
+  )
+    return false;
+  if (settings.video && !validateVideoProcessor(settings.video.processor))
+    return false;
+  if (settings.audio && !validateAudioProcessor(settings.audio.processor))
+    return false;
   return true;
 }
 
@@ -4111,6 +4120,19 @@ function validateVideoProcessor(p) {
     .filter((k) => !VALID_PROCESSOR_KEYS.includes(k))
     .forEach((k) => {
       console.warn(`invalid key inputSettings -> video -> processor : ${k}`);
+      delete p[k];
+    });
+  return true;
+}
+
+function validateAudioProcessor(p) {
+  const VALID_PROCESSOR_KEYS = ['type', 'config'];
+  if (!p) return false;
+  if (typeof p !== 'object') return false;
+  Object.keys(p)
+    .filter((k) => !VALID_PROCESSOR_KEYS.includes(k))
+    .forEach((k) => {
+      console.warn(`invalid key inputSettings -> audio -> processor : ${k}`);
       delete p[k];
     });
   return true;

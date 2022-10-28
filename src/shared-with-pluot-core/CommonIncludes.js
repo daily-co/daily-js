@@ -262,6 +262,13 @@ export const DAILY_JS_VIDEO_PROCESSOR_TYPES = {
   // CUSTOM: 'custom',
 };
 
+export const DAILY_JS_AUDIO_PROCESSOR_TYPES = {
+  NONE: 'none',
+  KRISP: 'krisp',
+  SYNTH: 'synth',
+  CUSTOM: 'custom',
+};
+
 export const DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING = {
   PLAY: 'play',
   PAUSE: 'pause',
