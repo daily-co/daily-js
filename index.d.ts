@@ -292,6 +292,7 @@ export interface DailyTrackState {
     byRemoteRequest?: boolean;
     byBandwidth?: boolean;
     byCanSendPermission?: boolean;
+    byServerLimit?: boolean;
   };
   // guaranteed-playable reference to the track
   // (it's only present when state === 'playable')
