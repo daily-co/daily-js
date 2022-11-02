@@ -319,9 +319,9 @@ const MAX_LAYER_BITRATE = 2500000;
 const MIN_LAYER_BITRATE = 100000;
 
 const DEFAULT_SESSION_STATE = isReactNative()
-  ? { data: undefined }
+  ? { data: {} }
   : {
-      data: undefined,
+      data: {},
       topology: 'none',
     };
 
