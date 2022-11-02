@@ -296,7 +296,7 @@ export function getOSName() {
     ) {
       // in case bowser changes its consts, we don't have to
       if (window.DailyNativeUtils.platform.OS === 'ios') {
-        OSName = 'ios';
+        OSName = 'iOS';
       } else if (window.DailyNativeUtils.platform.OS === 'android') {
         OSName = 'Android';
       } else {
@@ -326,6 +326,12 @@ export function getOSName() {
           break;
         case 'Linux':
           OSName = 'Linux';
+          break;
+        case 'iOS':
+          OSName = 'iOS';
+          break;
+        case 'Android':
+          OSName = 'Android';
           break;
         default:
           OSName = bowserName;
