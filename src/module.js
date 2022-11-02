@@ -318,10 +318,12 @@ const MAX_SCALE_RESOLUTION_BY = 8;
 const MAX_LAYER_BITRATE = 2500000;
 const MIN_LAYER_BITRATE = 100000;
 
-const DEFAULT_SESSION_STATE = {
-  data: undefined,
-  topology: 'none',
-};
+const DEFAULT_SESSION_STATE = isReactNative()
+  ? { data: undefined }
+  : {
+      data: undefined,
+      topology: 'none',
+    };
 
 const EMPTY_PARTICIPANT_COUNTS = { present: 0, hidden: 0 };
 
