@@ -1,3 +1,6 @@
+// Note: Bowser is only used for OS detection, not Browser detection
+import Bowser from 'bowser';
+
 // This method should be used instead of window.navigator.userAgent, which
 // is not defined in React Native and results in an error.
 // (Actually, if it *is* defined in React Native, it's not meant for us, but
@@ -280,4 +283,64 @@ function getEdgeVersion() {
     }
   }
   return { major, minor };
+}
+
+export function getOSName() {
+  let OSName = 'Unknown';
+  if (isReactNative()) {
+    if (
+      window &&
+      window.DailyNativeUtils &&
+      window.DailyNativeUtils.platform &&
+      window.DailyNativeUtils.platform.OS
+    ) {
+      // in case bowser changes its consts, we don't have to
+      if (window.DailyNativeUtils.platform.OS === 'ios') {
+        OSName = 'iOS';
+      } else if (window.DailyNativeUtils.platform.OS === 'android') {
+        OSName = 'Android';
+      } else {
+        OSName = window.DailyNativeUtils.platform.OS;
+      }
+    }
+    return OSName;
+  }
+
+  // platform module
+  if (
+    typeof window !== 'undefined' &&
+    window.navigator &&
+    window.navigator.userAgent
+  ) {
+    try {
+      let navAgentInfo = Bowser.getParser(window.navigator.userAgent);
+      let bowserName = navAgentInfo.getOSName();
+      // this seems unnecessary, i know. but it defends against
+      // changes to bowser
+      switch (bowserName) {
+        case 'macOS':
+          OSName = 'macOS';
+          break;
+        case 'Windows':
+          OSName = 'Windows';
+          break;
+        case 'Linux':
+          OSName = 'Linux';
+          break;
+        case 'iOS':
+          OSName = 'iOS';
+          break;
+        case 'Android':
+          OSName = 'Android';
+          break;
+        default:
+          OSName = bowserName;
+          break;
+      }
+    } catch (error) {
+      console.log('bowser error', error);
+      // pass
+    }
+  }
+  return OSName;
 }

@@ -106,7 +106,12 @@ export type DailyMeetingState =
 export type DailyCameraErrorType =
   | 'cam-in-use'
   | 'mic-in-use'
-  | 'cam-mic-in-use';
+  | 'cam-mic-in-use'
+  | 'permissions'
+  | 'undefined-mediadevices'
+  | 'not-found'
+  | 'constraints'
+  | 'unknown';
 
 export type DailyFatalErrorType =
   | 'ejected'
@@ -246,6 +251,11 @@ export interface DailyLoadOptions extends DailyCallOptions {
   baseUrl?: string;
 }
 
+export interface DailyMicAudioModeSettings {
+  bitrate?: number;
+  stereo?: boolean;
+}
+
 export interface DailyAdvancedConfig {
   camSimulcastEncodings?: any[];
   disableSimulcast?: boolean;
@@ -255,7 +265,7 @@ export interface DailyAdvancedConfig {
   ) => void;
   fastConnect?: boolean;
   h264Profile?: string;
-  micAudioMode?: 'music' | 'speech';
+  micAudioMode?: 'music' | 'speech' | DailyMicAudioModeSettings;
   noAutoDefaultDeviceChange?: boolean;
   preferH264?: boolean;
   preferH264ForCam?: boolean;
@@ -266,6 +276,7 @@ export interface DailyAdvancedConfig {
   userMediaVideoConstraints?: boolean | MediaTrackConstraints;
   avoidEval?: boolean;
   callObjectBundleUrlOverride?: string;
+  enableIndependentDevicePermissionPrompts?: boolean;
 }
 
 export interface DailyTrackState {
@@ -287,6 +298,7 @@ export interface DailyTrackState {
     byRemoteRequest?: boolean;
     byBandwidth?: boolean;
     byCanSendPermission?: boolean;
+    byServerLimit?: boolean;
   };
   // guaranteed-playable reference to the track
   // (it's only present when state === 'playable')
@@ -595,6 +607,57 @@ export interface DailyEventObjectNoPayload {
   >;
 }
 
+export type DailyCameraError = {
+  msg: string;
+  localizedMsg?: string;
+};
+
+export interface DailyCamPermissionsError extends DailyCameraError {
+  type: Extract<DailyCameraErrorType, 'permissions'>;
+  blockedBy: 'user' | 'browser';
+  blockedMedia: Set<'video' | 'audio'>;
+}
+
+export interface DailyCamDeviceNotFoundError extends DailyCameraError {
+  type: Extract<DailyCameraErrorType, 'not-found'>;
+  missingMedia: Set<'video' | 'audio'>;
+}
+
+export interface DailyCamConstraintsError extends DailyCameraError {
+  type: Extract<DailyCameraErrorType, 'constraints'>;
+  reason: Set<'invalid' | 'none-specified'>;
+}
+
+export interface DailyCamInUseError extends DailyCameraError {
+  type: Extract<
+    DailyCameraErrorType,
+    'cam-in-use' | 'mic-in-use' | 'cam-mic-in-use'
+  >;
+}
+
+export interface DailyCamTypeError extends DailyCameraError {
+  type: Extract<DailyCameraErrorType, 'undefined-mediadevices'>;
+}
+
+export interface DailyCamUnknownError extends DailyCameraError {
+  type: Extract<DailyCameraErrorType, 'unknown'>;
+}
+
+export type DailyCameraErrorObject<T extends DailyCameraError = any> =
+  T extends DailyCamPermissionsError['type']
+    ? DailyCamPermissionsError
+    : T extends DailyCamDeviceNotFoundError['type']
+    ? DailyCamDeviceNotFoundError
+    : T extends DailyCamConstraintsError['type']
+    ? DailyCamConstraintsError
+    : T extends DailyCamInUseError['type']
+    ? DailyCamInUseError
+    : T extends DailyCamTypeError['type']
+    ? DailyCamTypeError
+    : T extends DailyCamUnknownError['type']
+    ? DailyCamUnknownError
+    : any;
+
 export interface DailyEventObjectCameraError {
   action: Extract<DailyEvent, 'camera-error'>;
   errorMsg: {
@@ -602,10 +665,7 @@ export interface DailyEventObjectCameraError {
     audioOk?: boolean;
     videoOk?: boolean;
   };
-  error?: {
-    type: DailyCameraErrorType;
-    localizedMsg?: string;
-  };
+  error: DailyCameraErrorObject;
 }
 
 export interface DailyEventObjectFatalError {
@@ -830,6 +890,10 @@ export interface DailyEventObjectTranscriptionStarted {
   action: Extract<DailyEvent, 'transcription-started'>;
   language: string;
   model: string;
+  tier?: string;
+  detect_language?: boolean;
+  profanity_filter?: boolean;
+  redact?: boolean;
   startedBy: string;
 }
 
@@ -1091,6 +1155,10 @@ export interface DailyRemoteMediaPlayerInfo {
 export interface DailyTranscriptionDeepgramOptions {
   language?: string;
   model?: string;
+  tier?: string;
+  detect_language?: boolean;
+  profanity_filter?: boolean;
+  redact?: boolean;
 }
 
 export interface DailyCall {
