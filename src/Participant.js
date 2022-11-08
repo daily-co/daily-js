@@ -3,7 +3,6 @@ import {
   getLocalTrack,
   getRemoteTrack,
   getLocalCustomTrack,
-  getRemoteCustomTrack,
 } from './shared-with-pluot-core/selectors';
 
 // Adds tracks to daily-js Participant object.
@@ -47,7 +46,7 @@ export function addCustomTracks(p) {
       if (trackInfo) {
         const track = p.local
           ? getLocalCustomTrack(state, trackEntryKey, kind)
-          : getRemoteCustomTrack(state, p.session_id, trackEntryKey, kind);
+          : getRemoteTrack(state, p.session_id, trackEntryKey, kind);
         if (trackInfo.state === 'playable') {
           p.tracks[trackEntryKey].track = track;
         }
@@ -88,8 +87,10 @@ export function addLegacyTracks(p, prevP) {
     }
     if (p.screen) {
       try {
-        p.screenVideoTrack = state.local.streams.screen.stream.getVideoTracks()[0];
-        p.screenAudioTrack = state.local.streams.screen.stream.getAudioTracks()[0];
+        p.screenVideoTrack =
+          state.local.streams.screen.stream.getVideoTracks()[0];
+        p.screenAudioTrack =
+          state.local.streams.screen.stream.getAudioTracks()[0];
         if (!(p.screenVideoTrack || p.screenAudioTrack)) {
           p.screen = false;
         }
