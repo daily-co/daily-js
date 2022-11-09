@@ -249,6 +249,12 @@ export interface DailyCallOptions {
   startAudioOff?: boolean;
 }
 
+export interface StartCustomTrackOptions {
+  track: MediaStreamTrack;
+  mode?: 'music' | 'speech' | DailyMicAudioModeSettings | undefined;
+  trackName?: string;
+}
+
 export interface DailyLoadOptions extends DailyCallOptions {
   baseUrl?: string;
 }
@@ -1258,6 +1264,8 @@ export interface DailyCall {
     videoDeviceId?: string | false | null;
     videoSource?: MediaStreamTrack | false;
   }): DailyCall;
+  startCustomTrack(properties: StartCustomTrackOptions): string;
+  stopCustomTrack(mediaTag: string): void;
   setInputDevicesAsync(devices: {
     audioDeviceId?: string | false | null;
     audioSource?: MediaStreamTrack | false;

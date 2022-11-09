@@ -172,6 +172,8 @@ import {
   DAILY_METHOD_UPDATE_CUSTOM_TRAY_BUTTONS,
   DAILY_EVENT_CUSTOM_BUTTON_CLICK,
   DAILY_METHOD_SET_CAMERA,
+  DAILY_METHOD_START_CUSTOM_TRACK,
+  DAILY_METHOD_STOP_CUSTOM_TRACK,
   DAILY_EVENT_AVAILABLE_DEVICES_UPDATED,
   DAILY_EVENT_SELECTED_DEVICES_UPDATED,
   MAX_APP_MSG_SIZE,
@@ -1661,6 +1663,96 @@ export default class DailyIframe extends EventEmitter {
           action: DAILY_METHOD_START_CAMERA,
           properties: makeSafeForPostMessage(this.properties),
           preloadCache: makeSafeForPostMessage(this._preloadCache),
+        },
+        k
+      );
+    });
+  }
+
+  validateCustomTrack(track, mode, trackName) {
+    if (trackName && trackName.length > 50) {
+      throw new Error(
+        'Custom track `trackName` must not be more than 50 characters'
+      );
+    }
+    if (mode) {
+      // Since no property from DailyMicAudioModeSettings is required, we are just checking if It is an object
+      if (mode !== 'music' && mode !== 'speech' && !(mode instanceof Object)) {
+        throw new Error(
+          'Custom track `mode` must be either `music` | `speech` | `DailyMicAudioModeSettings` or `undefined`'
+        );
+      }
+    }
+    const isUsingReservedTrackName = trackName
+      ? [
+          'cam-audio',
+          'cam-video',
+          'screen-video',
+          'screen-audio',
+          'rmpAudio',
+          'rmpVideo',
+        ].includes(trackName)
+      : false;
+    if (isUsingReservedTrackName) {
+      throw new Error(
+        'Custom track `trackName` must not match a track name already used by daily: ' +
+          'cam-audio, cam-video, screen-video, screen-audio, rmpAudio, rmpVideo'
+      );
+    }
+    if (!(track instanceof MediaStreamTrack)) {
+      throw new Error(
+        'Custom tracks provided must be instances of MediaStreamTrack'
+      );
+    }
+  }
+
+  startCustomTrack(properties = { track, mode, trackName }) {
+    methodNotSupportedInReactNative();
+    this.validateCustomTrack(
+      properties.track,
+      properties.mode,
+      properties.trackName
+    );
+    // Validate meeting state: custom tracks are only available
+    // once you have joined the meeting
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      throw new Error('startCustomTrack() is only allowed when joined');
+    }
+    return new Promise((resolve, _) => {
+      let k = (msg) => {
+        if (msg.error) {
+          reject({ error: msg.error });
+        } else {
+          resolve(msg.mediaTag);
+        }
+      };
+      window._dailyPreloadCache.customTrack = properties.track;
+      properties.track = DAILY_CUSTOM_TRACK;
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_START_CUSTOM_TRACK,
+          properties,
+        },
+        k
+      );
+    });
+  }
+
+  stopCustomTrack(mediaTag) {
+    methodNotSupportedInReactNative();
+    // Validate meeting state: custom tracks are only available
+    // once you have joined the meeting
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      throw new Error('stopCustomTrack() is only allowed when joined');
+    }
+    return new Promise((resolve, _) => {
+      let k = (msg) => {
+        resolve(msg.mediaTag);
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_STOP_CUSTOM_TRACK,
+          mediaTag,
         },
         k
       );
