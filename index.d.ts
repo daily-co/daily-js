@@ -280,8 +280,8 @@ export interface DailyAdvancedConfig {
   preferH264ForScreenSharing?: boolean;
   screenSimulcastEncodings?: any[];
   useDevicePreferenceCookies?: boolean;
-  userMediaAudioConstraints?: boolean | MediaTrackConstraints;
-  userMediaVideoConstraints?: boolean | MediaTrackConstraints;
+  userMediaAudioConstraints?: MediaTrackConstraints;
+  userMediaVideoConstraints?: MediaTrackConstraints;
   avoidEval?: boolean;
   callObjectBundleUrlOverride?: string;
   enableIndependentDevicePermissionPrompts?: boolean;
