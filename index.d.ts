@@ -229,6 +229,7 @@ export interface DailyCallOptions {
   showParticipantsBar?: boolean;
   showLocalVideo?: boolean;
   showFullscreenButton?: boolean;
+  showUserNameChangeUI?: boolean;
   iframeStyle?: Partial<CSSStyleDeclaration>;
   customLayout?: boolean;
   customTrayButtons?: DailyCustomTrayButtons;

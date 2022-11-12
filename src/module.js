@@ -449,6 +449,7 @@ const FRAME_PROPS = {
   showLocalVideo: true,
   showParticipantsBar: true,
   showFullscreenButton: true,
+  showUserNameChangeUI: true,
   // style to apply to iframe in createFrame factory method
   iframeStyle: true,
   // styles passed through to video calls inside the iframe
