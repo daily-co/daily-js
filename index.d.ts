@@ -1124,6 +1124,7 @@ export interface DailyStreamingOptions {
   videoBitrate?: number;
   audioBitrate?: number;
   minIdleTimeOut?: number;
+  maxDuration?: number;
   backgroundColor?: string;
   instanceId?: string;
   layout?: DailyStreamingLayoutConfig;
