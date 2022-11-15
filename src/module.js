@@ -3477,7 +3477,7 @@ export default class DailyIframe extends EventEmitter {
     }
   }
 
-  maybeEventCustomTrackStopped(prevTrack, thisTrack, prevP, thisP) {
+  maybeEventCustomTrackStopped(prevTrack, thisTrack, thisP) {
     if (!prevTrack) {
       return;
     }
@@ -3548,7 +3548,6 @@ export default class DailyIframe extends EventEmitter {
       this.maybeEventCustomTrackStopped(
         prevP.tracks[trackKey].track,
         thisP && thisP.tracks[trackKey] ? thisP.tracks[trackKey].track : null,
-        prevP,
         thisP
       );
     }
