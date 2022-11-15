@@ -3481,18 +3481,6 @@ export default class DailyIframe extends EventEmitter {
     if (!prevTrack) {
       return;
     }
-    // TODO: This check will return even when the rmp track was stopped due to a network interrupt.
-    //We should revisit this to take care of this scenario and trigger a `track-stopped` event.
-    if (
-      thisP &&
-      thisP.remoteMediaPlayerState &&
-      (thisP.remoteMediaPlayerState.state ==
-        DAILY_JS_REMOTE_MEDIA_PLAYER_STATE.PLAYING ||
-        thisP.remoteMediaPlayerState.state ==
-          DAILY_JS_REMOTE_MEDIA_PLAYER_STATE.PAUSED)
-    ) {
-      return;
-    }
     if (
       (prevTrack && prevTrack.readyState === 'ended') ||
       (prevTrack && !thisTrack) ||
@@ -3502,7 +3490,7 @@ export default class DailyIframe extends EventEmitter {
         this.emit(DAILY_EVENT_TRACK_STOPPED, {
           action: DAILY_EVENT_TRACK_STOPPED,
           track: prevTrack,
-          participant: prevP,
+          participant: thisP,
         });
       } catch (e) {
         console.log('maybeEventCustomTrackStopped: could not emit', e);
