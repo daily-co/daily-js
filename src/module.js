@@ -5,7 +5,7 @@ import Bowser from 'bowser';
 import {
   // re-export
   //
-  // meeting states
+  // call states
   DAILY_STATE_NEW,
   DAILY_STATE_LOADING,
   DAILY_STATE_LOADED,
@@ -91,6 +91,8 @@ import {
   DAILY_EVENT_SHOW_LOCAL_VIDEO_CHANGED,
   DAILY_EVENT_ACCESS_STATE_UPDATED,
   DAILY_EVENT_MEETING_SESSION_UPDATED,
+  DAILY_EVENT_MEETING_SESSION_STATE_UPDATED,
+  DAILY_EVENT_MEETING_SESSION_DATA_ERROR,
   DAILY_EVENT_WAITING_PARTICIPANT_ADDED,
   DAILY_EVENT_WAITING_PARTICIPANT_REMOVED,
   DAILY_EVENT_WAITING_PARTICIPANT_UPDATED,
@@ -131,7 +133,7 @@ import {
   DAILY_METHOD_GET_LANG,
   DAILY_METHOD_SET_LANG,
   DAILY_METHOD_GET_MEETING_SESSION,
-  MAX_APP_MSG_SIZE,
+  DAILY_METHOD_SET_SESSION_DATA,
   DAILY_METHOD_REGISTER_INPUT_HANDLER,
   DAILY_METHOD_DETECT_ALL_FACES,
   DAILY_METHOD_ROOM,
@@ -170,8 +172,11 @@ import {
   DAILY_METHOD_UPDATE_CUSTOM_TRAY_BUTTONS,
   DAILY_EVENT_CUSTOM_BUTTON_CLICK,
   DAILY_METHOD_SET_CAMERA,
+  DAILY_METHOD_START_CUSTOM_TRACK,
+  DAILY_METHOD_STOP_CUSTOM_TRACK,
   DAILY_EVENT_AVAILABLE_DEVICES_UPDATED,
   DAILY_EVENT_SELECTED_DEVICES_UPDATED,
+  MAX_APP_MSG_SIZE,
   MAX_USER_DATA_SIZE,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
@@ -184,6 +189,7 @@ import {
 } from './shared-with-pluot-core/Environment.js';
 import WebMessageChannel from './shared-with-pluot-core/script-message-channels/WebMessageChannel';
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
+import { SessionDataUpdate } from './shared-with-pluot-core/SessionData.js';
 import CallObjectLoader from './CallObjectLoader';
 import {
   callObjectBundleUrl,
@@ -192,7 +198,7 @@ import {
 } from './utils.js';
 import * as Participant from './Participant';
 
-// meeting states
+// call states
 export {
   DAILY_STATE_NEW,
   DAILY_STATE_JOINING,
@@ -291,6 +297,8 @@ export {
   DAILY_EVENT_LANG_UPDATED,
   DAILY_EVENT_ACCESS_STATE_UPDATED,
   DAILY_EVENT_MEETING_SESSION_UPDATED,
+  DAILY_EVENT_MEETING_SESSION_STATE_UPDATED,
+  DAILY_EVENT_MEETING_SESSION_DATA_ERROR,
   DAILY_EVENT_WAITING_PARTICIPANT_ADDED,
   DAILY_EVENT_WAITING_PARTICIPANT_REMOVED,
   DAILY_EVENT_WAITING_PARTICIPANT_UPDATED,
@@ -311,6 +319,13 @@ const MAX_SIMULCAST_LAYERS = 3;
 const MAX_SCALE_RESOLUTION_BY = 8;
 const MAX_LAYER_BITRATE = 2500000;
 const MIN_LAYER_BITRATE = 100000;
+
+const DEFAULT_SESSION_STATE = isReactNative()
+  ? { data: {} }
+  : {
+      data: {},
+      topology: 'none',
+    };
 
 const EMPTY_PARTICIPANT_COUNTS = { present: 0, hidden: 0 };
 
@@ -434,6 +449,7 @@ const FRAME_PROPS = {
   showLocalVideo: true,
   showParticipantsBar: true,
   showFullscreenButton: true,
+  showUserNameChangeUI: true,
   // style to apply to iframe in createFrame factory method
   iframeStyle: true,
   // styles passed through to video calls inside the iframe
@@ -952,9 +968,10 @@ export default class DailyIframe extends EventEmitter {
     this._callObjectLoader = this._callObjectMode
       ? new CallObjectLoader()
       : null;
-    this._meetingState = DAILY_STATE_NEW; // only update via updateIsPreparingToJoin() or updateMeetingState()
-    this._isPreparingToJoin = false; // only update via updateMeetingState()
+    this._callState = DAILY_STATE_NEW; // only update via updateIsPreparingToJoin() or _updateCallState()
+    this._isPreparingToJoin = false; // only update via _updateCallState()
     this._accessState = { access: DAILY_ACCESS_UNKNOWN };
+    this._meetingSessionState = DEFAULT_SESSION_STATE;
     this._nativeInCallAudioMode = NATIVE_AUDIO_MODE_VIDEO_CALL;
     this._participants = {};
     this._participantCounts = EMPTY_PARTICIPANT_COUNTS;
@@ -1053,9 +1070,7 @@ export default class DailyIframe extends EventEmitter {
 
   async destroy() {
     try {
-      if (
-        [DAILY_STATE_JOINED, DAILY_STATE_LOADING].includes(this._meetingState)
-      ) {
+      if ([DAILY_STATE_JOINED, DAILY_STATE_LOADING].includes(this._callState)) {
         await this.leave();
       }
     } catch (e) {}
@@ -1104,7 +1119,9 @@ export default class DailyIframe extends EventEmitter {
   }
 
   meetingState() {
-    return this._meetingState;
+    // TODO: This function will be deprecated and renamed to callState()
+    //       for better consistency in naming
+    return this._callState;
   }
 
   accessState() {
@@ -1198,8 +1215,8 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
-    // Validate meeting state: only allowed once you've joined.
-    if (this._meetingState !== DAILY_STATE_JOINED) {
+    // Validate call state: only allowed once you've joined.
+    if (this._callState !== DAILY_STATE_JOINED) {
       throw new Error(
         'updateWaitingParticipant() only supported for joined meetings'
       );
@@ -1243,8 +1260,8 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
-    // Validate meeting state: only allowed once you've joined.
-    if (this._meetingState !== DAILY_STATE_JOINED) {
+    // Validate call state: only allowed once you've joined.
+    if (this._callState !== DAILY_STATE_JOINED) {
       throw new Error(
         'updateWaitingParticipants() only supported for joined meetings'
       );
@@ -1290,9 +1307,9 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
-    // Validate meeting state: access requesting is only allowed once you've
+    // Validate call state: access requesting is only allowed once you've
     // joined.
-    if (this._meetingState !== DAILY_STATE_JOINED) {
+    if (this._callState !== DAILY_STATE_JOINED) {
       throw new Error('requestAccess() only supported for joined meetings');
     }
 
@@ -1418,7 +1435,7 @@ export default class DailyIframe extends EventEmitter {
     // but since there's an easy alternative way to specify initial receive
     // settings until join(), for simplicity let's just require that we be
     // joined).
-    if (this._meetingState !== DAILY_STATE_JOINED) {
+    if (this._callState !== DAILY_STATE_JOINED) {
       throw new Error(
         'updateReceiveSettings() is only allowed when joined. To specify receive settings earlier, use the receiveSettings config property.'
       );
@@ -1504,12 +1521,12 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async getMeetingSession() {
-    // Validate meeting state: meeting session details are only available
+    // Validate call state: meeting session details are only available
     // once you have joined the meeting
-    if (this._meetingState !== DAILY_STATE_JOINED) {
+    if (this._callState !== DAILY_STATE_JOINED) {
       throw new Error('getMeetingSession() is only allowed when joined');
     }
-    return new Promise(async (resolve) => {
+    return new Promise((resolve) => {
       const k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
@@ -1523,9 +1540,44 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
+  meetingSessionState() {
+    // Validate call state: meeting session details are only available
+    // once you have joined the meeting
+    if (this._callState !== DAILY_STATE_JOINED) {
+      throw new Error('meetingSessionState() is only available when joined');
+    }
+    // currently only default values returned
+    return this._meetingSessionState;
+  }
+
+  setMeetingSessionData(data, mergeStrategy = 'replace') {
+    // Validate call state: session data can only be set once you have
+    // joined the meeting
+    if (this._callState !== DAILY_STATE_JOINED) {
+      throw new Error('setMeetingSessionData() is only available when joined');
+    }
+    try {
+      validateSessionDataUpdate(data, mergeStrategy);
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
+    try {
+      this.sendMessageToCallMachine({
+        action: DAILY_METHOD_SET_SESSION_DATA,
+        data,
+        mergeStrategy,
+      });
+    } catch (e) {
+      // Probably data was not structured-clonable and couldn't be sent in the
+      // message to the call machine...
+      throw new Error(`Error setting meeting session data: ${e}`);
+    }
+  }
+
   setUserName(name, options) {
     this.properties.userName = name;
-    return new Promise(async (resolve) => {
+    return new Promise((resolve) => {
       const k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
@@ -1559,13 +1611,19 @@ export default class DailyIframe extends EventEmitter {
         delete msg.callFrameId;
         resolve(msg);
       };
-      this.sendMessageToCallMachine(
-        {
-          action: DAILY_METHOD_SET_USER_DATA,
-          userData: data,
-        },
-        k
-      );
+      try {
+        this.sendMessageToCallMachine(
+          {
+            action: DAILY_METHOD_SET_USER_DATA,
+            userData: data,
+          },
+          k
+        );
+      } catch (e) {
+        // Probably userData was not structured-clonable and couldn't be sent in
+        // a message to the call machine...
+        throw new Error(`Error setting user data: ${e}`);
+      }
     });
   }
 
@@ -1577,11 +1635,9 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
-    // Validate meeting state: startCamera() is only allowed if you haven't
+    // Validate call state: startCamera() is only allowed if you haven't
     // already joined (or aren't in the process of joining).
-    if (
-      [DAILY_STATE_JOINING, DAILY_STATE_JOINED].includes(this._meetingState)
-    ) {
+    if ([DAILY_STATE_JOINING, DAILY_STATE_JOINED].includes(this._callState)) {
       throw new Error(
         'startCamera() not supported after joining a meeting: did you mean to use setLocalAudio() and/or setLocalVideo() instead?'
       );
@@ -1608,6 +1664,96 @@ export default class DailyIframe extends EventEmitter {
           action: DAILY_METHOD_START_CAMERA,
           properties: makeSafeForPostMessage(this.properties),
           preloadCache: makeSafeForPostMessage(this._preloadCache),
+        },
+        k
+      );
+    });
+  }
+
+  validateCustomTrack(track, mode, trackName) {
+    if (trackName && trackName.length > 50) {
+      throw new Error(
+        'Custom track `trackName` must not be more than 50 characters'
+      );
+    }
+    if (mode) {
+      // Since no property from DailyMicAudioModeSettings is required, we are just checking if It is an object
+      if (mode !== 'music' && mode !== 'speech' && !(mode instanceof Object)) {
+        throw new Error(
+          'Custom track `mode` must be either `music` | `speech` | `DailyMicAudioModeSettings` or `undefined`'
+        );
+      }
+    }
+    const isUsingReservedTrackName = trackName
+      ? [
+          'cam-audio',
+          'cam-video',
+          'screen-video',
+          'screen-audio',
+          'rmpAudio',
+          'rmpVideo',
+        ].includes(trackName)
+      : false;
+    if (isUsingReservedTrackName) {
+      throw new Error(
+        'Custom track `trackName` must not match a track name already used by daily: ' +
+          'cam-audio, cam-video, screen-video, screen-audio, rmpAudio, rmpVideo'
+      );
+    }
+    if (!(track instanceof MediaStreamTrack)) {
+      throw new Error(
+        'Custom tracks provided must be instances of MediaStreamTrack'
+      );
+    }
+  }
+
+  startCustomTrack(properties = { track, mode, trackName }) {
+    methodNotSupportedInReactNative();
+    this.validateCustomTrack(
+      properties.track,
+      properties.mode,
+      properties.trackName
+    );
+    // Validate meeting state: custom tracks are only available
+    // once you have joined the meeting
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      throw new Error('startCustomTrack() is only allowed when joined');
+    }
+    return new Promise((resolve, _) => {
+      let k = (msg) => {
+        if (msg.error) {
+          reject({ error: msg.error });
+        } else {
+          resolve(msg.mediaTag);
+        }
+      };
+      window._dailyPreloadCache.customTrack = properties.track;
+      properties.track = DAILY_CUSTOM_TRACK;
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_START_CUSTOM_TRACK,
+          properties,
+        },
+        k
+      );
+    });
+  }
+
+  stopCustomTrack(mediaTag) {
+    methodNotSupportedInReactNative();
+    // Validate meeting state: custom tracks are only available
+    // once you have joined the meeting
+    if (this._meetingState !== DAILY_STATE_JOINED) {
+      throw new Error('stopCustomTrack() is only allowed when joined');
+    }
+    return new Promise((resolve, _) => {
+      let k = (msg) => {
+        resolve(msg.mediaTag);
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_STOP_CUSTOM_TRACK,
+          mediaTag,
         },
         k
       );
@@ -1860,10 +2006,7 @@ export default class DailyIframe extends EventEmitter {
     // (assuming automatic audio device management isn't disabled)
     if (
       !this.disableReactNativeAutoDeviceManagement('audio') &&
-      this.isMeetingPendingOrOngoing(
-        this._meetingState,
-        this._isPreparingToJoin
-      )
+      this._isCallPendingOrOngoing(this._callState, this._isPreparingToJoin)
     ) {
       this.nativeUtils().setAudioMode(this._nativeInCallAudioMode);
     }
@@ -1877,11 +2020,9 @@ export default class DailyIframe extends EventEmitter {
       throw new Error('preAuth() currently only supported in call object mode');
     }
 
-    // Validate meeting state: pre-auth is only allowed if you haven't already
+    // Validate call state: pre-auth is only allowed if you haven't already
     // joined (or aren't in the process of joining).
-    if (
-      [DAILY_STATE_JOINING, DAILY_STATE_JOINED].includes(this._meetingState)
-    ) {
+    if ([DAILY_STATE_JOINING, DAILY_STATE_JOINED].includes(this._callState)) {
       throw new Error('preAuth() not supported after joining a meeting');
     }
 
@@ -1945,7 +2086,7 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
-    this.updateMeetingState(DAILY_STATE_LOADING);
+    this._updateCallState(DAILY_STATE_LOADING);
     try {
       this.emit(DAILY_EVENT_LOADING, { action: DAILY_EVENT_LOADING });
     } catch (e) {
@@ -1960,7 +2101,7 @@ export default class DailyIframe extends EventEmitter {
           this._callFrameId,
           this.properties.dailyConfig && this.properties.dailyConfig.avoidEval,
           (wasNoOp) => {
-            this.updateMeetingState(DAILY_STATE_LOADED);
+            this._updateCallState(DAILY_STATE_LOADED);
             // Only need to emit event if load was a no-op, since the loaded
             // bundle won't be emitting it if it's not executed again
             wasNoOp &&
@@ -1973,7 +2114,7 @@ export default class DailyIframe extends EventEmitter {
               errorMsg,
             });
             if (!willRetry) {
-              this.updateMeetingState(DAILY_STATE_ERROR);
+              this._updateCallState(DAILY_STATE_ERROR);
               this.resetMeetingDependentVars();
               this.emit(DAILY_EVENT_ERROR, {
                 action: DAILY_EVENT_ERROR,
@@ -1989,11 +2130,11 @@ export default class DailyIframe extends EventEmitter {
       this._iframe.src = this.assembleMeetingUrl();
       return new Promise((resolve, reject) => {
         this._loadedCallback = (error) => {
-          if (this._meetingState === DAILY_STATE_ERROR) {
+          if (this._callState === DAILY_STATE_ERROR) {
             reject(error);
             return;
           }
-          this.updateMeetingState(DAILY_STATE_LOADED);
+          this._updateCallState(DAILY_STATE_LOADED);
           if (this.properties.cssFile || this.properties.cssText) {
             this.loadCss(this.properties);
           }
@@ -2078,14 +2219,14 @@ export default class DailyIframe extends EventEmitter {
     }
 
     if (
-      this._meetingState === DAILY_STATE_JOINED ||
-      this._meetingState === DAILY_STATE_JOINING
+      this._callState === DAILY_STATE_JOINED ||
+      this._callState === DAILY_STATE_JOINING
     ) {
       console.warn('already joined meeting, call leave() before joining again');
       this.updateIsPreparingToJoin(false);
       return;
     }
-    this.updateMeetingState(DAILY_STATE_JOINING, false);
+    this._updateCallState(DAILY_STATE_JOINING, false);
     try {
       this.emit(DAILY_EVENT_JOINING_MEETING, {
         action: DAILY_EVENT_JOINING_MEETING,
@@ -2100,11 +2241,11 @@ export default class DailyIframe extends EventEmitter {
     });
     return new Promise((resolve, reject) => {
       this._joinedCallback = (participants, error) => {
-        if (this._meetingState === DAILY_STATE_ERROR) {
+        if (this._callState === DAILY_STATE_ERROR) {
           reject(error);
           return;
         }
-        this.updateMeetingState(DAILY_STATE_JOINED);
+        this._updateCallState(DAILY_STATE_JOINED);
         if (participants) {
           for (var id in participants) {
             if (this._callObjectMode) {
@@ -2134,7 +2275,7 @@ export default class DailyIframe extends EventEmitter {
         // needed and clean up state immediately (without waiting for call
         // machine to clean up its state).
         this._callObjectLoader.cancel();
-        this.updateMeetingState(DAILY_STATE_LEFT);
+        this._updateCallState(DAILY_STATE_LEFT);
         this.resetMeetingDependentVars();
         try {
           this.emit(DAILY_STATE_LEFT, { action: DAILY_STATE_LEFT });
@@ -2143,8 +2284,8 @@ export default class DailyIframe extends EventEmitter {
         }
         resolve();
       } else if (
-        this._meetingState === DAILY_STATE_LEFT ||
-        this._meetingState === DAILY_STATE_ERROR
+        this._callState === DAILY_STATE_LEFT ||
+        this._callState === DAILY_STATE_ERROR
       ) {
         // nothing to do, here, just resolve
         resolve();
@@ -2344,7 +2485,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   getNetworkStats() {
-    if (this._meetingState !== DAILY_STATE_JOINED) {
+    if (this._callState !== DAILY_STATE_JOINED) {
       let stats = { latest: {} };
       return { stats };
     }
@@ -2380,7 +2521,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setSubscribeToTracksAutomatically(enabled) {
-    if (this._meetingState !== DAILY_STATE_JOINED) {
+    if (this._callState !== DAILY_STATE_JOINED) {
       throw new Error(
         'setSubscribeToTracksAutomatically() is only allowed when joined'
       );
@@ -2454,7 +2595,7 @@ export default class DailyIframe extends EventEmitter {
       console.error('setShowLocalVideo is not available in callObject mode');
       return this;
     }
-    if (this._meetingState !== DAILY_STATE_JOINED) {
+    if (this._callState !== DAILY_STATE_JOINED) {
       console.error(
         'the meeting must be joined before calling setShowLocalVideo'
       );
@@ -2489,7 +2630,7 @@ export default class DailyIframe extends EventEmitter {
       );
       return this;
     }
-    if (this._meetingState !== DAILY_STATE_JOINED) {
+    if (this._callState !== DAILY_STATE_JOINED) {
       console.error(
         'the meeting must be joined before calling setShowParticipantsBar'
       );
@@ -2529,7 +2670,7 @@ export default class DailyIframe extends EventEmitter {
       );
       return this;
     }
-    if (this._meetingState !== DAILY_STATE_JOINED) {
+    if (this._callState !== DAILY_STATE_JOINED) {
       console.error(
         'the meeting must be joined before calling updateCustomTrayButtons'
       );
@@ -2818,7 +2959,7 @@ export default class DailyIframe extends EventEmitter {
       DAILY_STATE_LOADING,
       DAILY_STATE_LEFT,
       DAILY_STATE_ERROR,
-    ].includes(this._meetingState);
+    ].includes(this._callState);
   }
 
   sendMessageToCallMachine(message, callback) {
@@ -2890,7 +3031,7 @@ export default class DailyIframe extends EventEmitter {
         break;
       case DAILY_EVENT_PARTICIPANT_JOINED:
       case DAILY_EVENT_PARTICIPANT_UPDATED:
-        if (this._meetingState === DAILY_STATE_LEFT) {
+        if (this._callState === DAILY_STATE_LEFT) {
           return;
         }
         if (msg.participant && msg.participant.session_id) {
@@ -3016,7 +3157,7 @@ export default class DailyIframe extends EventEmitter {
           }
         }
         break;
-      case DAILY_EVENT_ACCESS_STATE_UPDATED:
+      case DAILY_EVENT_ACCESS_STATE_UPDATED: {
         let newAccessState = {
           access: msg.access,
         };
@@ -3032,6 +3173,7 @@ export default class DailyIframe extends EventEmitter {
           }
         }
         break;
+      }
       case DAILY_EVENT_MEETING_SESSION_UPDATED:
         if (msg.meetingSession) {
           try {
@@ -3046,7 +3188,7 @@ export default class DailyIframe extends EventEmitter {
         if (this._iframe && !msg.preserveIframe) {
           this._iframe.src = '';
         }
-        this.updateMeetingState(DAILY_STATE_ERROR);
+        this._updateCallState(DAILY_STATE_ERROR);
         this.resetMeetingDependentVars();
         if (this._loadedCallback) {
           this._loadedCallback(msg.errorMsg);
@@ -3068,7 +3210,7 @@ export default class DailyIframe extends EventEmitter {
         // already been handled and we do not want to override
         // the state.
         if (this._meetingState !== DAILY_STATE_ERROR) {
-          this.updateMeetingState(DAILY_STATE_LEFT);
+          this._updateCallState(DAILY_STATE_LEFT);
         }
         this.resetMeetingDependentVars();
         if (this._resolveLeave) {
@@ -3242,6 +3384,10 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_CUSTOM_BUTTON_CLICK:
         this.emitDailyJSEvent(msg);
         break;
+      case DAILY_EVENT_MEETING_SESSION_STATE_UPDATED:
+        this._meetingSessionState = msg.meetingSessionState;
+        this.emitDailyJSEvent(msg);
+        break;
       case DAILY_EVENT_RECORDING_STARTED:
       case DAILY_EVENT_RECORDING_STOPPED:
       case DAILY_EVENT_RECORDING_STATS:
@@ -3335,18 +3481,6 @@ export default class DailyIframe extends EventEmitter {
     if (!prevTrack) {
       return;
     }
-    // TODO: This check will return even when the rmp track was stopped due to a network interrupt.
-    //We should revisit this to take care of this scenario and trigger a `track-stopped` event.
-    if (
-      thisP &&
-      thisP.remoteMediaPlayerState &&
-      (thisP.remoteMediaPlayerState.state ==
-        DAILY_JS_REMOTE_MEDIA_PLAYER_STATE.PLAYING ||
-        thisP.remoteMediaPlayerState.state ==
-          DAILY_JS_REMOTE_MEDIA_PLAYER_STATE.PAUSED)
-    ) {
-      return;
-    }
     if (
       (prevTrack && prevTrack.readyState === 'ended') ||
       (prevTrack && !thisTrack) ||
@@ -3356,7 +3490,7 @@ export default class DailyIframe extends EventEmitter {
         this.emit(DAILY_EVENT_TRACK_STOPPED, {
           action: DAILY_EVENT_TRACK_STOPPED,
           track: prevTrack,
-          participant: prevP,
+          participant: thisP,
         });
       } catch (e) {
         console.log('maybeEventCustomTrackStopped: could not emit', e);
@@ -3495,45 +3629,42 @@ export default class DailyIframe extends EventEmitter {
   }
 
   updateIsPreparingToJoin(isPreparingToJoin) {
-    this.updateMeetingState(this._meetingState, isPreparingToJoin);
+    this._updateCallState(this._callState, isPreparingToJoin);
   }
 
-  updateMeetingState(
-    meetingState,
-    isPreparingToJoin = this._isPreparingToJoin
-  ) {
+  _updateCallState(callState, isPreparingToJoin = this._isPreparingToJoin) {
     // If state hasn't changed, bail
     if (
-      meetingState === this._meetingState &&
+      callState === this._callState &&
       isPreparingToJoin === this._isPreparingToJoin
     ) {
       return;
     }
 
     // Update state
-    const oldMeetingState = this._meetingState;
+    const oldMeetingState = this._callState;
     const oldIsPreparingToJoin = this._isPreparingToJoin;
-    this._meetingState = meetingState;
+    this._callState = callState;
     this._isPreparingToJoin = isPreparingToJoin;
 
     // Update state side-effects (which, for now, all depend on whether
-    // isMeetingPendingOrOngoing)
-    const oldIsMeetingPendingOrOngoing = this.isMeetingPendingOrOngoing(
+    // _isCallPendingOrOngoing)
+    const oldIsMeetingPendingOrOngoing = this._isCallPendingOrOngoing(
       oldMeetingState,
       oldIsPreparingToJoin
     );
-    const isMeetingPendingOrOngoing = this.isMeetingPendingOrOngoing(
-      this._meetingState,
+    const _isCallPendingOrOngoing = this._isCallPendingOrOngoing(
+      this._callState,
       this._isPreparingToJoin
     );
-    if (oldIsMeetingPendingOrOngoing === isMeetingPendingOrOngoing) {
+    if (oldIsMeetingPendingOrOngoing === _isCallPendingOrOngoing) {
       return;
     }
-    this.updateKeepDeviceAwake(isMeetingPendingOrOngoing);
-    this.updateDeviceAudioMode(isMeetingPendingOrOngoing);
-    this.updateShowAndroidOngoingMeetingNotification(isMeetingPendingOrOngoing);
+    this.updateKeepDeviceAwake(_isCallPendingOrOngoing);
+    this.updateDeviceAudioMode(_isCallPendingOrOngoing);
+    this.updateShowAndroidOngoingMeetingNotification(_isCallPendingOrOngoing);
     this.updateNoOpRecordingEnsuringBackgroundContinuity(
-      isMeetingPendingOrOngoing
+      _isCallPendingOrOngoing
     );
   }
 
@@ -3549,6 +3680,7 @@ export default class DailyIframe extends EventEmitter {
     this._activeSpeakerMode = false;
     this._didPreAuth = false;
     this._accessState = { access: DAILY_ACCESS_UNKNOWN };
+    this._meetingSessionState = DEFAULT_SESSION_STATE;
     this._receiveSettings = {};
     this._inputSettings = {};
     resetPreloadCache(this._preloadCache);
@@ -3622,9 +3754,9 @@ export default class DailyIframe extends EventEmitter {
     );
   }
 
-  isMeetingPendingOrOngoing(meetingState, isPreparingToJoin) {
+  _isCallPendingOrOngoing(callState, isPreparingToJoin) {
     return (
-      [DAILY_STATE_JOINING, DAILY_STATE_JOINED].includes(meetingState) ||
+      [DAILY_STATE_JOINING, DAILY_STATE_JOINED].includes(callState) ||
       isPreparingToJoin
     );
   }
@@ -3848,19 +3980,36 @@ function methodOnlySupportedInReactNative() {
   }
 }
 
+function validateSessionDataUpdate(data, mergeStrategy) {
+  // the SessionDataUpdate constructor validates everything and will
+  // throw the errors necessary if things don't check out
+  new SessionDataUpdate({ data, mergeStrategy });
+  return true;
+}
+
 function validateUserData(data) {
+  // undefined is considered valid but would fail the checks below
+  if (data === undefined) {
+    return true;
+  }
+
   let dataStr;
-  try {
-    dataStr = JSON.stringify(data);
-  } catch (e) {
-    throw Error(`userData must be serializable to JSON: ${e}`);
-  }
+  if (typeof data === 'string') {
+    // JSON.stringify adds two characters to the string, so do sizing checks
+    // on the raw string.
+    dataStr = data;
+  } else {
+    try {
+      dataStr = JSON.stringify(data);
 
-  // check that what goes in is the same coming out :)
-  if (!deepEqual(JSON.parse(dataStr), data)) {
-    console.warn(`The userData provided will be modified when serialized.`);
+      // check that what goes in is the same coming out :)
+      if (!deepEqual(JSON.parse(dataStr), data)) {
+        console.warn(`The userData provided will be modified when serialized.`);
+      }
+    } catch (e) {
+      throw Error(`userData must be serializable to JSON: ${e}`);
+    }
   }
-
   // check the size of the payload
   if (dataStr.length > MAX_USER_DATA_SIZE) {
     throw Error(

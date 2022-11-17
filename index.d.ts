@@ -83,6 +83,7 @@ export type DailyEvent =
   | 'remote-media-player-updated'
   | 'access-state-updated'
   | 'meeting-session-updated'
+  | 'meeting-session-state-updated'
   | 'waiting-participant-added'
   | 'waiting-participant-updated'
   | 'waiting-participant-removed'
@@ -126,7 +127,8 @@ export type DailyNonFatalErrorType =
   | 'screen-share-error'
   | 'video-processor-error'
   | 'remote-media-player-error'
-  | 'live-streaming-warning';
+  | 'live-streaming-warning'
+  | 'meeting-session-data-error';
 
 export type DailyNetworkTopology = 'sfu' | 'peer';
 
@@ -227,6 +229,7 @@ export interface DailyCallOptions {
   showParticipantsBar?: boolean;
   showLocalVideo?: boolean;
   showFullscreenButton?: boolean;
+  showUserNameChangeUI?: boolean;
   iframeStyle?: Partial<CSSStyleDeclaration>;
   customLayout?: boolean;
   customTrayButtons?: DailyCustomTrayButtons;
@@ -245,6 +248,12 @@ export interface DailyCallOptions {
   userData?: unknown;
   startVideoOff?: boolean;
   startAudioOff?: boolean;
+}
+
+export interface StartCustomTrackOptions {
+  track: MediaStreamTrack;
+  mode?: 'music' | 'speech' | DailyMicAudioModeSettings | undefined;
+  trackName?: string;
 }
 
 export interface DailyLoadOptions extends DailyCallOptions {
@@ -272,8 +281,8 @@ export interface DailyAdvancedConfig {
   preferH264ForScreenSharing?: boolean;
   screenSimulcastEncodings?: any[];
   useDevicePreferenceCookies?: boolean;
-  userMediaAudioConstraints?: boolean | MediaTrackConstraints;
-  userMediaVideoConstraints?: boolean | MediaTrackConstraints;
+  userMediaAudioConstraints?: MediaTrackConstraints;
+  userMediaVideoConstraints?: MediaTrackConstraints;
   avoidEval?: boolean;
   callObjectBundleUrlOverride?: string;
   enableIndependentDevicePermissionPrompts?: boolean;
@@ -555,6 +564,13 @@ export interface DailyMeetingSession {
   id: string;
 }
 
+export interface DailyMeetingSessionState {
+  data: unknown;
+  topology: DailyNetworkTopology | 'none';
+}
+
+export type DailySessionDataMergeStrategy = 'replace' | 'shallow-merge';
+
 export interface DailyVideoReceiveSettings {
   layer?: number;
 }
@@ -739,6 +755,11 @@ export interface DailyEventObjectAccessState extends DailyAccessState {
 export interface DailyEventObjectMeetingSessionUpdated {
   action: Extract<DailyEvent, 'meeting-session-updated'>;
   meetingSession: DailyMeetingSession;
+}
+
+export interface DailyEventObjectMeetingSessionStateUpdated {
+  action: Extract<DailyEvent, 'meeting-session-state-updated'>;
+  meetingSessionState: DailyMeetingSessionState;
 }
 
 export interface DailyEventObjectTrack {
@@ -958,6 +979,8 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectAccessState
     : T extends DailyEventObjectMeetingSessionUpdated['action']
     ? DailyEventObjectMeetingSessionUpdated
+    : T extends DailyEventObjectMeetingSessionStateUpdated['action']
+    ? DailyEventObjectMeetingSessionStateUpdated
     : T extends DailyEventObjectTrack['action']
     ? DailyEventObjectTrack
     : T extends DailyEventObjectRecordingStarted['action']
@@ -1101,6 +1124,7 @@ export interface DailyStreamingOptions {
   videoBitrate?: number;
   audioBitrate?: number;
   minIdleTimeOut?: number;
+  maxDuration?: number;
   backgroundColor?: string;
   instanceId?: string;
   layout?: DailyStreamingLayoutConfig;
@@ -1223,6 +1247,11 @@ export interface DailyCall {
   getMeetingSession(): Promise<{
     meetingSession: DailyMeetingSession;
   }>;
+  meetingSessionState(): DailyMeetingSessionState;
+  setMeetingSessionData(
+    data: unknown,
+    mergeStrategy?: DailySessionDataMergeStrategy
+  ): void;
   setUserName(
     name: string,
     options?: { thisMeetingOnly?: boolean }
@@ -1237,6 +1266,8 @@ export interface DailyCall {
     videoDeviceId?: string | false | null;
     videoSource?: MediaStreamTrack | false;
   }): DailyCall;
+  startCustomTrack(properties: StartCustomTrackOptions): string;
+  stopCustomTrack(mediaTag: string): void;
   setInputDevicesAsync(devices: {
     audioDeviceId?: string | false | null;
     audioSource?: MediaStreamTrack | false;
