@@ -184,7 +184,7 @@ import {
   DAILY_EXIT_FULLSCREEN,
   DAILY_METHOD_TRANSMIT_LOG,
   DAILY_METHOD_GET_CPU_LOAD_STATS,
-  DAILY_METHOD_UPDATE_CUSTOM_EMBEDS,
+  DAILY_METHOD_UPDATE_CUSTOM_INTEGRATIONS,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -377,7 +377,7 @@ const customTrayButtonsType = {
 };
 
 const FRAME_PROPS = {
-  customEmbeds: true,
+  customIntegrations: true,
   customTrayButtons: {
     validate: validateCustomTrayButtons,
     help: `customTrayButtons should be a dictionary of the type ${JSON.stringify(
@@ -968,14 +968,14 @@ export default class DailyIframe extends EventEmitter {
       this._showParticipantsBar = true;
     }
 
-    if (properties.customEmbeds !== undefined) {
+    if (properties.customIntegrations !== undefined) {
       if (this._callObjectMode) {
-        console.error('customEmbeds is not available in call object mode');
+        console.error('customIntegrations is not available in call object mode');
       } else {
-        this._customEmbeds = properties.customEmbeds;
+        this._customIntegrations = properties.customIntegrations;
       }
     } else {
-      this._customEmbeds = {};
+      this._customIntegrations = {};
     }
 
     if (properties.customTrayButtons !== undefined) {
@@ -2788,43 +2788,43 @@ export default class DailyIframe extends EventEmitter {
     return this._showParticipantsBar;
   }
 
-  customEmbeds() {
+  customIntegrations() {
     methodNotSupportedInReactNative();
     if (this._callObjectMode) {
-      console.error('customEmbeds is not available in callObject mode');
+      console.error('customIntegrations is not available in callObject mode');
       return this;
     }
-    return this._customEmbeds;
+    return this._customIntegrations;
   }
 
-  updateCustomEmbeds(embeds) {
+  updateCustomIntegrations(integrations) {
     methodNotSupportedInReactNative();
     if (this._callObjectMode) {
       console.error(
-        'updateCustomEmbeds is not available in callObject mode'
+        'updateCustomIntegrations is not available in callObject mode'
       );
       return this;
     }
     if (this._callState !== DAILY_STATE_JOINED) {
       console.error(
-        'the meeting must be joined before calling updateCustomEmbeds'
+        'the meeting must be joined before calling updateCustomIntegrations'
       );
       return this;
     }
-    // TODO: Write validator for custom embeds.
-    // if (!validateCustomEmbeds(embeds)) {
+    // TODO: Write validator for custom integrations.
+    // if (!validateCustomIntegrations(integrations)) {
     //   console.error(
-    //     `updateCustomEmbeds only accepts a dictionary of the type ${JSON.stringify(
-    //       customEmbedsType
+    //     `updateCustomIntegrations only accepts a dictionary of the type ${JSON.stringify(
+    //       customIntegrationsType
     //     )}`
     //   );
     //   return this;
     // }
     this.sendMessageToCallMachine({
-      action: DAILY_METHOD_UPDATE_CUSTOM_EMBEDS,
-      embeds,
+      action: DAILY_METHOD_UPDATE_CUSTOM_INTEGRATIONS,
+      integrations,
     });
-    this._customEmbeds = embeds;
+    this._customIntegrations = integrations;
     return this;
   }
 
