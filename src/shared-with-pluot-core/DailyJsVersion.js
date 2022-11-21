@@ -4,20 +4,50 @@
 // Daily supports the last 6 months of versions.
 // These variable should be updated as part of each release as needed.
 
-// OLDEST should match the oldest version that is exactly 6 months or
-// less at the time of each release.
+// OLDEST SUPPORTED should match the oldest version that is exactly
+// 6 months or less at the time of each release.
 export const OLDEST_SUPPORTED_DAILY_JS_VERSION = {
   major: 0,
   minor: 25,
   patch: 0,
 };
 
-// NEARING should be a version roughly 1 month out from being unsupported
-// to give customers ample time to upgrade.
+// NEARING END OF SUPPORT should be a version roughly 1 month out
+// from being unsupported to give customers ample time to upgrade.
 export const NEARING_EOS_DAILY_JS_VERSION = {
   major: 0,
   minor: 26,
   patch: 0,
+};
+
+// OLDEST LIVING should match the oldest version that can still
+// connect and work with our servers. Anything older will be
+// rejected from the meeting. Any version older than this (rejected)
+// should be at least 9 months old
+// To begin: There are no official eol versions
+export const OLDEST_LIVING_DAILY_JS_VERSION = {
+  major: -1,
+  minor: 0,
+  patch: 0,
+};
+
+// NEARING END OF LIFE should be a version roughly 1 month out
+// from being truly end-of-life. This version should be at least
+// 8 months old
+// To begin: There are no official eol versions
+export const NEARING_EOL_DAILY_JS_VERSION = {
+  major: -1,
+  minor: 0,
+  patch: 0,
+};
+
+export const DAILY_CLIENT_SUPPORT_STATE = {
+  SUPPORTED: 'supported',
+  NEARING_EOS: 'nearing-eos',
+  UNSUPPORTED: 'unsupported',
+  NEARING_EOL: 'nearing-eol',
+  EOL: 'eol',
+  UNKNOWN: 'unknown', // for completeness
 };
 
 function _getDailyJsVersion() {
@@ -100,6 +130,22 @@ export class DailyJsVersion {
     // if we're here, then all-the-things are equal, so...
     // no, it's not newer
     return false;
+  }
+
+  supportState() {
+    if (this.isNewerThan(NEARING_EOS_DAILY_JS_VERSION)) {
+      return DAILY_CLIENT_SUPPORT_STATE.SUPPORTED;
+    }
+    if (this.isEqualToOrNewerThan(OLDEST_SUPPORTED_DAILY_JS_VERSION)) {
+      return DAILY_CLIENT_SUPPORT_STATE.NEARING_EOS;
+    }
+    if (this.isNewerThan(NEARING_EOL_DAILY_JS_VERSION)) {
+      return DAILY_CLIENT_SUPPORT_STATE.UNSUPPORTED;
+    }
+    if (this.isEqualToOrNewerThan(OLDEST_LIVING_DAILY_JS_VERSION)) {
+      return DAILY_CLIENT_SUPPORT_STATE.NEARING_EOL;
+    }
+    return DAILY_CLIENT_SUPPORT_STATE.EOL;
   }
 
   isSupported() {
