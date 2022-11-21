@@ -1716,7 +1716,7 @@ export default class DailyIframe extends EventEmitter {
     );
     // Validate meeting state: custom tracks are only available
     // once you have joined the meeting
-    if (this._meetingState !== DAILY_STATE_JOINED) {
+    if (this._callState !== DAILY_STATE_JOINED) {
       throw new Error('startCustomTrack() is only allowed when joined');
     }
     return new Promise((resolve, _) => {
@@ -1739,11 +1739,11 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  stopCustomTrack(mediaTag) {
+  stopCustomTrack(trackName) {
     methodNotSupportedInReactNative();
     // Validate meeting state: custom tracks are only available
     // once you have joined the meeting
-    if (this._meetingState !== DAILY_STATE_JOINED) {
+    if (this._callState !== DAILY_STATE_JOINED) {
       throw new Error('stopCustomTrack() is only allowed when joined');
     }
     return new Promise((resolve, _) => {
@@ -1753,7 +1753,7 @@ export default class DailyIframe extends EventEmitter {
       this.sendMessageToCallMachine(
         {
           action: DAILY_METHOD_STOP_CUSTOM_TRACK,
-          mediaTag,
+          mediaTag: trackName,
         },
         k
       );
@@ -3209,7 +3209,7 @@ export default class DailyIframe extends EventEmitter {
         // if we've left due to error, the error msg should have
         // already been handled and we do not want to override
         // the state.
-        if (this._meetingState !== DAILY_STATE_ERROR) {
+        if (this._callState !== DAILY_STATE_ERROR) {
           this._updateCallState(DAILY_STATE_LEFT);
         }
         this.resetMeetingDependentVars();

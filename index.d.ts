@@ -1267,7 +1267,7 @@ export interface DailyCall {
     videoSource?: MediaStreamTrack | false;
   }): DailyCall;
   startCustomTrack(properties: StartCustomTrackOptions): string;
-  stopCustomTrack(mediaTag: string): void;
+  stopCustomTrack(trackName: string): void;
   setInputDevicesAsync(devices: {
     audioDeviceId?: string | false | null;
     audioSource?: MediaStreamTrack | false;
