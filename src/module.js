@@ -2805,7 +2805,7 @@ export default class DailyIframe extends EventEmitter {
       );
       return this;
     }
-    if (this._meetingState !== DAILY_STATE_JOINED) {
+    if (this._callState !== DAILY_STATE_JOINED) {
       console.error(
         'the meeting must be joined before calling updateCustomEmbeds'
       );
