@@ -240,6 +240,10 @@ export interface DailyCustomIntegration {
    */
   csp?: string;
   /**
+   * Used to render the integration's name in Prebuilt.
+   */
+  label: string;
+  /**
    * By default integrations will be loaded lazily.
    */
   loading?: 'eager' | 'lazy';
