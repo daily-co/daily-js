@@ -120,7 +120,8 @@ export type DailyFatalErrorType =
   | 'nbf-token'
   | 'exp-room'
   | 'exp-token'
-  | 'meeting-full';
+  | 'meeting-full'
+  | 'end-of-life';
 
 export type DailyNonFatalErrorType =
   | 'input-settings-error'
