@@ -42,6 +42,7 @@ export const DAILY_FATAL_ERROR_EXP_ROOM = 'exp-room';
 export const DAILY_FATAL_ERROR_EXP_TOKEN = 'exp-token';
 export const DAILY_FATAL_ERROR_MEETING_FULL = 'meeting-full';
 export const DAILY_FATAL_ERROR_EOL = 'end-of-life';
+export const DAILY_FATAL_ERROR_NOT_ALLOWED = 'not-allowed';
 
 export const DAILY_CAMERA_ERROR_CAM_IN_USE = 'cam-in-use';
 export const DAILY_CAMERA_ERROR_MIC_IN_USE = 'mic-in-use';
