@@ -151,8 +151,6 @@ import {
   DAILY_METHOD_START_TRANSCRIPTION,
   DAILY_METHOD_STOP_TRANSCRIPTION,
   DAILY_CUSTOM_TRACK,
-  DAILY_UI_REQUEST_FULLSCREEN,
-  DAILY_UI_EXIT_FULLSCREEN,
   DAILY_METHOD_GET_CAMERA_FACING_MODE,
   DAILY_METHOD_SET_USER_NAME,
   DAILY_METHOD_SET_USER_DATA,
@@ -3356,12 +3354,6 @@ export default class DailyIframe extends EventEmitter {
         } catch (e) {
           console.log('could not emit', msg, e);
         }
-        break;
-      case DAILY_UI_REQUEST_FULLSCREEN:
-        this.requestFullscreen();
-        break;
-      case DAILY_UI_EXIT_FULLSCREEN:
-        this.exitFullscreen();
         break;
       default: // no op
     }
