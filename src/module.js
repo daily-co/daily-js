@@ -2547,6 +2547,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setShowNamesMode(mode) {
+    methodOnlySupportedInPrebuilt(this._callObjectMode, 'setShowNamesMode()');
     methodNotSupportedInReactNative();
     if (mode && !(mode === 'always' || mode === 'never')) {
       console.error(
