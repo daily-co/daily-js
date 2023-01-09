@@ -42,6 +42,7 @@ export const DAILY_FATAL_ERROR_EXP_ROOM = 'exp-room';
 export const DAILY_FATAL_ERROR_EXP_TOKEN = 'exp-token';
 export const DAILY_FATAL_ERROR_MEETING_FULL = 'meeting-full';
 export const DAILY_FATAL_ERROR_EOL = 'end-of-life';
+export const DAILY_FATAL_ERROR_NOT_ALLOWED = 'not-allowed';
 
 export const DAILY_CAMERA_ERROR_CAM_IN_USE = 'cam-in-use';
 export const DAILY_CAMERA_ERROR_MIC_IN_USE = 'mic-in-use';
@@ -239,8 +240,6 @@ export const DAILY_METHOD_UPDATE_RECEIVE_SETTINGS = 'update-receive-settings';
 export const DAILY_METHOD_UPDATE_INPUT_SETTINGS = 'update-input-settings';
 
 export const DAILY_CUSTOM_TRACK = 'daily-custom-track';
-export const DAILY_UI_REQUEST_FULLSCREEN = 'request-fullscreen';
-export const DAILY_UI_EXIT_FULLSCREEN = 'request-exit-fullscreen';
 
 export const DAILY_JS_NETWORK_QUALITY = {
   VERY_LOW: 'very-low',
