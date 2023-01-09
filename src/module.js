@@ -103,6 +103,7 @@ import {
   DAILY_EVENT_RECEIVE_SETTINGS_UPDATED,
   DAILY_EVENT_INPUT_SETTINGS_UPDATED,
   DAILY_EVENT_NONFATAL_ERROR,
+  DAILY_EVENT_SIDEBAR_VIEW_CHANGED,
 
   // internals
   //
@@ -185,6 +186,8 @@ import {
   DAILY_METHOD_TRANSMIT_LOG,
   DAILY_METHOD_GET_CPU_LOAD_STATS,
   DAILY_METHOD_UPDATE_CUSTOM_INTEGRATIONS,
+  DAILY_METHOD_GET_SIDEBAR_VIEW,
+  DAILY_METHOD_SET_SIDEBAR_VIEW,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -2942,6 +2945,35 @@ export default class DailyIframe extends EventEmitter {
     }
   }
 
+  async getSidebarView() {
+    if (this._callObjectMode) {
+      console.error('getSidebarView is not available in callObject mode');
+      return Promise.resolve(null);
+    }
+    return new Promise((resolve) => {
+      let k = (msg) => {
+        resolve(msg.view);
+      };
+      this.sendMessageToCallMachine(
+        { action: DAILY_METHOD_GET_SIDEBAR_VIEW },
+        k
+      );
+    });
+  }
+
+  setSidebarView(view) {
+    if (this._callObjectMode) {
+      console.error('setSidebarView is not available in callObject mode');
+      return this;
+    }
+    // Send message to Prebuilt UI Iframe driver
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_SET_SIDEBAR_VIEW,
+      view: view,
+    });
+    return this;
+  }
+
   async room({ includeRoomConfigDefaults = true } = {}) {
     // The call machine bundle is loaded and it's already given us an access
     // state (which is based on room info), so we know it can be queried for
@@ -3504,6 +3536,9 @@ export default class DailyIframe extends EventEmitter {
         }
         break;
       case DAILY_EVENT_CUSTOM_BUTTON_CLICK:
+        this.emitDailyJSEvent(msg);
+        break;
+      case DAILY_EVENT_SIDEBAR_VIEW_CHANGED:
         this.emitDailyJSEvent(msg);
         break;
       case DAILY_EVENT_MEETING_SESSION_STATE_UPDATED:

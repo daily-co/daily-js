@@ -95,7 +95,8 @@ export type DailyEvent =
   | 'input-settings-updated'
   | 'show-local-video-changed'
   | 'selected-devices-updated'
-  | 'custom-button-click';
+  | 'custom-button-click'
+  | 'sidebar-view-changed';
 
 export type DailyMeetingState =
   | 'new'
@@ -1105,6 +1106,11 @@ export interface DailyEventObjectSelectedDevicesUpdated {
   devices: DailyDeviceInfos;
 }
 
+export interface DailyEventObjectSidebarViewChanged {
+  action: Extract<DailyEvent, 'sidebar-view-changed'>;
+  view: SidebarView;
+}
+
 export type DailyEventObject<T extends DailyEvent = any> =
   T extends DailyEventObjectAppMessage['action']
     ? DailyEventObjectAppMessage
@@ -1186,6 +1192,8 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectCustomButtonClick
     : T extends DailyEventObjectSelectedDevicesUpdated['action']
     ? DailyEventObjectSelectedDevicesUpdated
+    : T extends DailyEventObjectSidebarViewChanged['action']
+    ? DailyEventObjectSidebarViewChanged
     : any;
 
 export interface DailyFaceInfo {
@@ -1369,6 +1377,8 @@ export interface DailyTranscriptionDeepgramOptions {
   redact?: Array<string> | boolean;
 }
 
+export type SidebarView = null | 'people' | 'chat' | 'network' | 'breakout' | string;
+
 export interface DailyCall {
   iframe(): HTMLIFrameElement | null;
   join(properties?: DailyCallOptions): Promise<DailyParticipantsObject | void>;
@@ -1533,6 +1543,8 @@ export interface DailyCall {
     topology: DailyNetworkTopology;
   }): Promise<{ workerId?: string; error?: string }>;
   setPlayNewParticipantSound(sound: boolean | number): void;
+  getSidebarView(): Promise<SidebarView>;
+  setSidebarView(view: SidebarView): DailyCall;
   on<T extends DailyEvent>(
     event: T,
     handler: (event?: DailyEventObject<T>) => void
