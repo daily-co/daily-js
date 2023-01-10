@@ -606,7 +606,21 @@ const FRAME_PROPS = {
     }),
   },
   inputSettings: {
-    validate: (inputSettings) => validateInputSettings(inputSettings),
+    validate: (settings, callObject) => {
+      if (validateInputSettings(settings)) {
+        if (!callObject._preloadCache.inputSettings) {
+          callObject._preloadCache.inputSettings = {};
+        }
+        if (settings.audio) {
+          callObject._preloadCache.inputSettings.audio = settings.audio;
+        }
+        if (settings.video) {
+          callObject._preloadCache.inputSettings.video = settings.video;
+        }
+        return true;
+      }
+      return false;
+    },
     help: inputSettingsValidationHelpMsg(),
   },
   // used internally
@@ -982,14 +996,17 @@ export default class DailyIframe extends EventEmitter {
       this._receiveSettings = {};
     }
 
-    this._inputSettings = {};
-    if (properties.inputSettings) {
-      // #Question: Do I need the call-object check here?
-      this._inputSettings = properties.inputSettings;
-    }
-
     this.validateProperties(properties);
     this.properties = { ...properties };
+    if (!this._preloadCache.inputSettings) {
+      this._preloadCache.inputSettings = {};
+    }
+    if (properties.inputSettings && properties.inputSettings.audio) {
+      this._preloadCache.inputSettings.audio = properties.inputSettings.audio;
+    }
+    if (properties.inputSettings && properties.inputSettings.video) {
+      this._preloadCache.inputSettings.video = properties.inputSettings.video;
+    }
     this._callObjectLoader = this._callObjectMode
       ? new CallObjectLoader()
       : null;
@@ -1479,19 +1496,86 @@ export default class DailyIframe extends EventEmitter {
   // { video: {...}, audio: {...}, screenVideo: {...}, screenAudio: {...} }
   getInputSettings() {
     return new Promise((resolve) => {
-      resolve(this._inputSettings);
+      if (this.needsLoad()) {
+        // If not fully loaded yet, also look at the preload cache.
+        let _videoSettings = { processor: { type: 'none' } };
+        let _audioSettings = { processor: { type: 'none' } };
+        let haveInputSettingsVideo = false;
+        let haveInputSettingsAudio = false;
+
+        if (
+          this._inputSettings &&
+          this._inputSettings.video &&
+          Object.keys(this._inputSettings.video).length > 0
+        ) {
+          _videoSettings = this._inputSettings.video;
+          haveInputSettingsVideo = true;
+        }
+
+        if (
+          this._inputSettings &&
+          this._inputSettings.audio &&
+          Object.keys(this._inputSettings.audio).length > 0
+        ) {
+          _audioSettings = this._inputSettings.audio;
+          haveInputSettingsAudio = true;
+        }
+
+        const havePreloadCacheInputSettingsVideo =
+          this._preloadCache &&
+          this._preloadCache.inputSettings &&
+          this._preloadCache.inputSettings.video &&
+          Object.keys(this._preloadCache.inputSettings.video).length > 0;
+
+        const havePreloadCacheInputSettingsAudio =
+          this._preloadCache &&
+          this._preloadCache.inputSettings &&
+          this._preloadCache.inputSettings.audio &&
+          Object.keys(this._preloadCache.inputSettings.audio).length > 0;
+
+        // If we have no input settings, but we have input settings in the preload
+        // cache, then resolve with the preload cache.
+        if (!haveInputSettingsVideo && havePreloadCacheInputSettingsVideo) {
+          _videoSettings = this._preloadCache.inputSettings.video;
+        }
+
+        if (!haveInputSettingsAudio && havePreloadCacheInputSettingsAudio) {
+          _audioSettings = this._preloadCache.inputSettings.audio;
+        }
+
+        let _inputSettings = { audio: _audioSettings, video: _videoSettings };
+        resolve(_inputSettings);
+      } else {
+        // return the current input settings
+        resolve(this._inputSettings);
+      }
     });
   }
 
   async updateInputSettings(inputSettings) {
+    if (!validateInputSettings(inputSettings)) {
+      console.error(inputSettingsValidationHelpMsg());
+      return Promise.reject(inputSettingsValidationHelpMsg());
+    }
+
+    if (inputSettings) {
+      if (!this._preloadCache.inputSettings) {
+        this._preloadCache.inputSettings = {};
+      }
+      if (inputSettings.audio) {
+        this._preloadCache.inputSettings.audio = inputSettings.audio;
+      }
+      if (inputSettings.video) {
+        this._preloadCache.inputSettings.video = inputSettings.video;
+      }
+    }
+    // if we're in callObject mode and not loaded yet, don't do anything
+    if (this._callObjectMode && this.needsLoad()) {
+      return { inputSettings: this._preloadCache.inputSettings };
+    }
+
     // Ask call machine to update input settings, then await callback.
     return new Promise((resolve, reject) => {
-      if (!validateInputSettings(inputSettings)) {
-        console.error(inputSettingsValidationHelpMsg());
-        reject(inputSettingsValidationHelpMsg());
-        return;
-      }
-
       const k = (msg) => {
         if (msg.error) {
           reject(msg.error);
@@ -2250,6 +2334,18 @@ export default class DailyIframe extends EventEmitter {
     } catch (e) {
       console.log("could not emit 'joining-meeting'", e);
     }
+
+    // set input settings in the preload cache
+    if (!this._preloadCache.inputSettings) {
+      this._preloadCache.inputSettings = {};
+    }
+    if (properties.inputSettings && properties.inputSettings.audio) {
+      this._preloadCache.inputSettings.audio = properties.inputSettings.audio;
+    }
+    if (properties.inputSettings && properties.inputSettings.video) {
+      this._preloadCache.inputSettings.video = properties.inputSettings.video;
+    }
+
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_JOIN,
       properties: makeSafeForPostMessage(this.properties),
@@ -3278,6 +3374,7 @@ export default class DailyIframe extends EventEmitter {
         // input settings
         if (!deepEqual(this._inputSettings, msg.inputSettings)) {
           this._inputSettings = msg.inputSettings;
+          this._preloadCache.inputSettings = {}; // clear cache, if any
           try {
             this.emit(msg.action, {
               action: msg.action,
@@ -3871,6 +3968,7 @@ function initializePreloadCache() {
     audioDeviceId: null,
     videoDeviceId: null,
     outputDeviceId: null,
+    inputSettings: null,
   };
 }
 
