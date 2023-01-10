@@ -65,6 +65,13 @@ export function isVideoProcessingSupported() {
   return supportedBrowsersForVideoProcessors.includes(getBrowserName());
 }
 
+export function isAudioProcessingSupported() {
+  // Using Krisp's compatibility, since they're currently our only audio processor
+  if (isReactNative()) return false;
+  if (browserMobile_p()) return false;
+  return true;
+}
+
 export function canUnifiedPlan() {
   return browserCanUnifiedPlan(getBrowserName(), getBrowserVersion());
 }

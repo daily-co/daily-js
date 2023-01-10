@@ -148,6 +148,7 @@ export interface DailyBrowserInfo {
   supportsScreenShare: boolean;
   supportsSfu: boolean;
   supportsVideoProcessing: boolean;
+  supportsAudioProcessing: boolean;
 }
 
 export interface DailyThemeColors {

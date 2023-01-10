@@ -161,6 +161,7 @@ import {
   DAILY_METHOD_GET_SINGLE_PARTICIPANT_RECEIVE_SETTINGS,
   DAILY_METHOD_UPDATE_RECEIVE_SETTINGS,
   DAILY_JS_VIDEO_PROCESSOR_TYPES as VIDEO_PROCESSOR_TYPES,
+  DAILY_JS_AUDIO_PROCESSOR_TYPES as AUDIO_PROCESSOR_TYPES,
   DAILY_METHOD_UPDATE_INPUT_SETTINGS,
   DAILY_METHOD_START_REMOTE_MEDIA_PLAYER,
   DAILY_METHOD_STOP_REMOTE_MEDIA_PLAYER,
@@ -186,6 +187,7 @@ import {
   isFullscreenSupported,
   isScreenSharingSupported,
   isVideoProcessingSupported,
+  isAudioProcessingSupported,
 } from './shared-with-pluot-core/Environment.js';
 import WebMessageChannel from './shared-with-pluot-core/script-message-channels/WebMessageChannel';
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
@@ -760,6 +762,7 @@ export default class DailyIframe extends EventEmitter {
         supportsScreenShare: false,
         supportsSfu: true,
         supportsVideoProcessing: false,
+        supportsAudioProcessing: false,
       };
     }
     const browser = Bowser.getParser(getUserAgent());
@@ -772,6 +775,7 @@ export default class DailyIframe extends EventEmitter {
       supportsScreenShare: !!isScreenSharingSupported(),
       supportsSfu: !!browserVideoSupported_p(),
       supportsVideoProcessing: isVideoProcessingSupported(),
+      supportsAudioProcessing: isAudioProcessingSupported(),
     };
   }
 
@@ -4045,9 +4049,6 @@ function validateReceiveSettings(
   return true;
 }
 
-// Since currently videoProcessor is the only inputSetting. I wrote this code to reject
-// everything else. I feel it is the safe approach. This will need changes as more
-// functionality is added to inputSettings in the future.
 function validateInputSettings(settings) {
   if (typeof settings !== 'object') return false;
   if (
@@ -4061,6 +4062,30 @@ function validateInputSettings(settings) {
     return false;
   if (settings.audio && !validateAudioProcessor(settings.audio.processor))
     return false;
+  return true;
+}
+
+function validateAudioProcessor(p) {
+  const VALID_PROCESSOR_KEYS = ['type', 'config'];
+  if (!p) return false;
+  if (typeof p !== 'object') return false;
+  Object.keys(p)
+    .filter((k) => !VALID_PROCESSOR_KEYS.includes(k))
+    .forEach((k) => {
+      console.warn(`invalid key inputSettings -> audio -> processor : ${k}`);
+      delete p[k];
+    });
+  if (p.type && !validateAudioProcessorType(p.type)) return false;
+
+  return true;
+}
+
+function validateAudioProcessorType(type) {
+  if (typeof type !== 'string') return false;
+  if (!Object.values(AUDIO_PROCESSOR_TYPES).includes(type)) {
+    console.error('inputSettings audio processor type invalid');
+    return false;
+  }
   return true;
 }
 
@@ -4090,19 +4115,6 @@ function validateVideoProcessor(p) {
     .filter((k) => !VALID_PROCESSOR_KEYS.includes(k))
     .forEach((k) => {
       console.warn(`invalid key inputSettings -> video -> processor : ${k}`);
-      delete p[k];
-    });
-  return true;
-}
-
-function validateAudioProcessor(p) {
-  const VALID_PROCESSOR_KEYS = ['type', 'config'];
-  if (!p) return false;
-  if (typeof p !== 'object') return false;
-  Object.keys(p)
-    .filter((k) => !VALID_PROCESSOR_KEYS.includes(k))
-    .forEach((k) => {
-      console.warn(`invalid key inputSettings -> audio -> processor : ${k}`);
       delete p[k];
     });
   return true;
@@ -4211,8 +4223,9 @@ function validateVideoProcessorType(type) {
 }
 
 function inputSettingsValidationHelpMsg() {
-  let processorOpts = Object.values(VIDEO_PROCESSOR_TYPES).join(' | ');
-  return `inputSettings must be of the form: { video: { processor: [ ${processorOpts} ] }, config?: {} }`;
+  let videoProcessorOpts = Object.values(VIDEO_PROCESSOR_TYPES).join(' | ');
+  let audioProcessorOpts = Object.values(AUDIO_PROCESSOR_TYPES).join(' | ');
+  return `inputSettings must be of the form: { video?: { processor: { type: [ ${videoProcessorOpts} ], config?: {} } }, audio?: { processor: {type: [ ${audioProcessorOpts} ] } } }`;
 }
 
 function receiveSettingsValidationHelpMsg({ allowAllParticipantsKey }) {
