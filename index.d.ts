@@ -241,6 +241,10 @@ export interface DailyCustomIntegration {
    */
   csp?: string;
   /**
+   * Specifies a publicly available URL to an icon image file associated with the integration.
+   */
+  iconURL?: string;
+  /**
    * Used to render the integration's name in Prebuilt.
    */
   label: string;
