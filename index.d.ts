@@ -234,6 +234,14 @@ export interface DailyCustomIntegration {
    */
   allow?: HTMLIFrameElement['allow'];
   /**
+   * Specifies who in the call is able to start and stop this integration.
+   * - '*' means all participants can start and stop this integration
+   * - 'owners' means only meeting owners can start and stop
+   * - string[] defines the list of participants identified by their session_id
+   * Default: '*'
+   */
+  controlledBy?: '*' | 'owners' | string[];
+  /**
    * Specifies the [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) for the iframe.
    * Please check browser support before using this property.
    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-csp
