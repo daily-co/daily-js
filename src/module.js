@@ -4066,7 +4066,7 @@ function validateInputSettings(settings) {
 }
 
 function validateAudioProcessor(p) {
-  const VALID_PROCESSOR_KEYS = ['type', 'config'];
+  const VALID_PROCESSOR_KEYS = ['type'];
   if (!p) return false;
   if (typeof p !== 'object') return false;
   Object.keys(p)

@@ -602,7 +602,16 @@ export interface DailyReceiveSettingsUpdates {
 }
 
 export interface DailyInputSettings {
+  audio?: DailyInputAudioSettings;
   video?: DailyInputVideoSettings;
+}
+
+export interface DailyInputAudioSettings {
+  processor?: DailyInputAudioProcessorSettings;
+}
+
+export interface DailyInputAudioProcessorSettings {
+  type: 'none' | 'krisp';
 }
 
 export interface DailyInputVideoSettings {
@@ -612,6 +621,7 @@ export interface DailyInputVideoProcessorSettings {
   type: 'none' | 'background-blur' | 'background-image';
   config?: {};
 }
+
 export interface DailyEventObjectNoPayload {
   action: Extract<
     DailyEvent,

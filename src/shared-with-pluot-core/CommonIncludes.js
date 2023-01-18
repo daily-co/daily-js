@@ -147,6 +147,8 @@ export const DAILY_EVENT_NONFATAL_ERROR = 'nonfatal-error';
 export const DAILY_INPUT_SETTINGS_ERROR_TYPE = 'input-settings-error';
 export const DAILY_SCREEN_SHARE_ERROR_TYPE = 'screen-share-error';
 export const DAILY_VIDEO_PROCESSOR_ERROR_TYPE = 'video-processor-error';
+export const DAILY_AUDIO_PROCESSOR_ERROR_TYPE = 'audio-processor-error';
+
 export const DAILY_EVENT_ERROR = 'error';
 
 export const DAILY_EVENT_CUSTOM_BUTTON_CLICK = 'custom-button-click';
