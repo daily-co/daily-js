@@ -1268,8 +1268,8 @@ export interface DailyCall {
     videoDeviceId?: string | false | null;
     videoSource?: MediaStreamTrack | false;
   }): DailyCall;
-  startCustomTrack(properties: StartCustomTrackOptions): string;
-  stopCustomTrack(trackName: string): void;
+  startCustomTrack(properties: StartCustomTrackOptions): Promise<string>;
+  stopCustomTrack(trackName: string): Promise<string>;
   setInputDevicesAsync(devices: {
     audioDeviceId?: string | false | null;
     audioSource?: MediaStreamTrack | false;
