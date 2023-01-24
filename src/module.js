@@ -151,8 +151,6 @@ import {
   DAILY_METHOD_START_TRANSCRIPTION,
   DAILY_METHOD_STOP_TRANSCRIPTION,
   DAILY_CUSTOM_TRACK,
-  DAILY_UI_REQUEST_FULLSCREEN,
-  DAILY_UI_EXIT_FULLSCREEN,
   DAILY_METHOD_GET_CAMERA_FACING_MODE,
   DAILY_METHOD_SET_USER_NAME,
   DAILY_METHOD_SET_USER_DATA,
@@ -1129,12 +1127,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   accessState() {
-    if (!this._callObjectMode) {
-      throw new Error(
-        'accessState() currently only supported in call object mode'
-      );
-    }
-
+    methodOnlySupportedInCallObject(this._callObjectMode, 'accessState()');
     return this._accessState;
   }
 
@@ -1147,12 +1140,10 @@ export default class DailyIframe extends EventEmitter {
   }
 
   waitingParticipants() {
-    if (!this._callObjectMode) {
-      throw new Error(
-        'waitingParticipants() currently only supported in call object mode'
-      );
-    }
-
+    methodOnlySupportedInCallObject(
+      this._callObjectMode,
+      'waitingParticipants()'
+    );
     return this._waitingParticipants;
   }
 
@@ -1213,18 +1204,13 @@ export default class DailyIframe extends EventEmitter {
 
   async updateWaitingParticipant(id = '', updates = {}) {
     // Validate mode.
-    if (!this._callObjectMode) {
-      throw new Error(
-        'updateWaitingParticipant() currently only supported in call object mode'
-      );
-    }
+    methodOnlySupportedInCallObject(
+      this._callObjectMode,
+      'updateWaitingParticipant()'
+    );
 
-    // Validate call state: only allowed once you've joined.
-    if (this._callState !== DAILY_STATE_JOINED) {
-      throw new Error(
-        'updateWaitingParticipant() only supported for joined meetings'
-      );
-    }
+    // Validate meeting state: only allowed once you've joined.
+    methodOnlySupportedAfterJoin(this._callState, 'updateWaitingParticipant()');
 
     // Validate argument presence.
     if (!(typeof id === 'string' && typeof updates === 'object')) {
@@ -1258,18 +1244,16 @@ export default class DailyIframe extends EventEmitter {
 
   async updateWaitingParticipants(updatesById = {}) {
     // Validate mode.
-    if (!this._callObjectMode) {
-      throw new Error(
-        'updateWaitingParticipants() currently only supported in call object mode'
-      );
-    }
+    methodOnlySupportedInCallObject(
+      this._callObjectMode,
+      'updateWaitingParticipants()'
+    );
 
-    // Validate call state: only allowed once you've joined.
-    if (this._callState !== DAILY_STATE_JOINED) {
-      throw new Error(
-        'updateWaitingParticipants() only supported for joined meetings'
-      );
-    }
+    // Validate meeting state: only allowed once you've joined.
+    methodOnlySupportedAfterJoin(
+      this._callState,
+      'updateWaitingParticipants()'
+    );
 
     // Validate argument presence.
     if (typeof updatesById !== 'object') {
@@ -1305,17 +1289,11 @@ export default class DailyIframe extends EventEmitter {
     name = '',
   } = {}) {
     // Validate mode.
-    if (!this._callObjectMode) {
-      throw new Error(
-        'requestAccess() currently only supported in call object mode'
-      );
-    }
+    methodOnlySupportedInCallObject(this._callObjectMode, 'requestAccess()');
 
     // Validate call state: access requesting is only allowed once you've
     // joined.
-    if (this._callState !== DAILY_STATE_JOINED) {
-      throw new Error('requestAccess() only supported for joined meetings');
-    }
+    methodOnlySupportedAfterJoin(this._callState, 'requestAccess()');
 
     return new Promise((resolve, reject) => {
       const k = (msg) => {
@@ -1375,11 +1353,10 @@ export default class DailyIframe extends EventEmitter {
   // Listen for the receive-settings-updated to be notified when those come in.
   async getReceiveSettings(id, { showInheritedValues = false } = {}) {
     // Validate mode.
-    if (!this._callObjectMode) {
-      throw new Error(
-        'getReceiveSettings() only supported in call object mode'
-      );
-    }
+    methodOnlySupportedInCallObject(
+      this._callObjectMode,
+      'getReceiveSettings()'
+    );
 
     // This method can be called in two main ways:
     // - it can get receive settings for a specific participant (or "base")
@@ -1416,11 +1393,10 @@ export default class DailyIframe extends EventEmitter {
 
   async updateReceiveSettings(receiveSettings) {
     // Validate mode.
-    if (!this._callObjectMode) {
-      throw new Error(
-        'updateReceiveSettings() only supported in call object mode'
-      );
-    }
+    methodOnlySupportedInCallObject(
+      this._callObjectMode,
+      'updateReceiveSettings()'
+    );
 
     // Validate receive settings.
     if (
@@ -1439,11 +1415,11 @@ export default class DailyIframe extends EventEmitter {
     // but since there's an easy alternative way to specify initial receive
     // settings until join(), for simplicity let's just require that we be
     // joined).
-    if (this._callState !== DAILY_STATE_JOINED) {
-      throw new Error(
-        'updateReceiveSettings() is only allowed when joined. To specify receive settings earlier, use the receiveSettings config property.'
-      );
-    }
+    methodOnlySupportedAfterJoin(
+      this._callState,
+      'updateReceiveSettings()',
+      'To specify receive settings earlier, use the receiveSettings config property.'
+    );
 
     // Ask call machine to update receive settings, then await callback.
     return new Promise((resolve) => {
@@ -1527,10 +1503,8 @@ export default class DailyIframe extends EventEmitter {
   async getMeetingSession() {
     // Validate call state: meeting session details are only available
     // once you have joined the meeting
-    if (this._callState !== DAILY_STATE_JOINED) {
-      throw new Error('getMeetingSession() is only allowed when joined');
-    }
-    return new Promise((resolve) => {
+    methodOnlySupportedAfterJoin(this._callState, 'getMeetingSession()');
+    return new Promise(async (resolve) => {
       const k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
@@ -1633,11 +1607,7 @@ export default class DailyIframe extends EventEmitter {
 
   startCamera(properties = {}) {
     // Validate mode.
-    if (!this._callObjectMode) {
-      throw new Error(
-        'startCamera() currently only supported in call object mode'
-      );
-    }
+    methodOnlySupportedInCallObject(this._callObjectMode, 'startCamera()');
 
     // Validate call state: startCamera() is only allowed if you haven't
     // already joined (or aren't in the process of joining).
@@ -2020,9 +1990,7 @@ export default class DailyIframe extends EventEmitter {
 
   async preAuth(properties = {}) {
     // Validate mode.
-    if (!this._callObjectMode) {
-      throw new Error('preAuth() currently only supported in call object mode');
-    }
+    methodOnlySupportedInCallObject(this._callObjectMode, 'preAuth()');
 
     // Validate call state: pre-auth is only allowed if you haven't already
     // joined (or aren't in the process of joining).
@@ -2525,11 +2493,13 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setSubscribeToTracksAutomatically(enabled) {
-    if (this._callState !== DAILY_STATE_JOINED) {
-      throw new Error(
-        'setSubscribeToTracksAutomatically() is only allowed when joined'
-      );
-    }
+    // todo: is this actually true? doesn't the use of _preloadCache below mean you CAN call it?
+    methodOnlySupportedAfterJoin(
+      this._callState,
+      'setSubscribeToTracksAutomatically()',
+      'Use the subscribeToTracksAutomatically configuration property.'
+    );
+
     this._preloadCache.subscribeToTracksAutomatically = enabled;
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_SET_SUBSCRIBE_TO_TRACKS_AUTOMATICALLY,
@@ -2575,6 +2545,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setShowNamesMode(mode) {
+    methodOnlySupportedInPrebuilt(this._callObjectMode, 'setShowNamesMode()');
     methodNotSupportedInReactNative();
     if (mode && !(mode === 'always' || mode === 'never')) {
       console.error(
@@ -2590,19 +2561,11 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setShowLocalVideo(show = true) {
+    methodOnlySupportedInPrebuilt(this._callObjectMode, 'setShowLocalVideo()');
     methodNotSupportedInReactNative();
+    methodOnlySupportedAfterJoin(this._callState, 'setShowLocalVideo()');
     if (typeof show !== 'boolean') {
       console.error('setShowLocalVideo only accepts a boolean value');
-      return this;
-    }
-    if (this._callObjectMode) {
-      console.error('setShowLocalVideo is not available in callObject mode');
-      return this;
-    }
-    if (this._callState !== DAILY_STATE_JOINED) {
-      console.error(
-        'the meeting must be joined before calling setShowLocalVideo'
-      );
       return this;
     }
     this.sendMessageToCallMachine({
@@ -2614,30 +2577,20 @@ export default class DailyIframe extends EventEmitter {
   }
 
   showLocalVideo() {
+    methodOnlySupportedInPrebuilt(this._callObjectMode, 'showLocalVideo()');
     methodNotSupportedInReactNative();
-    if (this._callObjectMode) {
-      console.error('showLocalVideo is not available in callObject mode');
-      return this;
-    }
     return this._showLocalVideo;
   }
 
   setShowParticipantsBar(show = true) {
+    methodOnlySupportedInPrebuilt(
+      this._callObjectMode,
+      'setShowParticipantsBar()'
+    );
     methodNotSupportedInReactNative();
+    methodOnlySupportedAfterJoin(this._callState, 'setShowParticipantsBar()');
     if (typeof show !== 'boolean') {
       console.error('setShowParticipantsBar only accepts a boolean value');
-      return this;
-    }
-    if (this._callObjectMode) {
-      console.error(
-        'setShowParticipantsBar is not available in callObject mode'
-      );
-      return this;
-    }
-    if (this._callState !== DAILY_STATE_JOINED) {
-      console.error(
-        'the meeting must be joined before calling setShowParticipantsBar'
-      );
       return this;
     }
     this.sendMessageToCallMachine({
@@ -2649,37 +2602,27 @@ export default class DailyIframe extends EventEmitter {
   }
 
   showParticipantsBar() {
+    methodOnlySupportedInPrebuilt(
+      this._callObjectMode,
+      'showParticipantsBar()'
+    );
     methodNotSupportedInReactNative();
-    if (this._callObjectMode) {
-      console.error('showParticipantsBar is not available in callObject mode');
-      return this;
-    }
     return this._showParticipantsBar;
   }
 
   customTrayButtons() {
+    methodOnlySupportedInPrebuilt(this._callObjectMode, 'customTrayButtons()');
     methodNotSupportedInReactNative();
-    if (this._callObjectMode) {
-      console.error('customTrayButtons is not available in callObject mode');
-      return this;
-    }
     return this._customTrayButtons;
   }
 
   updateCustomTrayButtons(btns) {
+    methodOnlySupportedInPrebuilt(
+      this._callObjectMode,
+      'updateCustomTrayButtons()'
+    );
     methodNotSupportedInReactNative();
-    if (this._callObjectMode) {
-      console.error(
-        'updateCustomTrayButtons is not available in callObject mode'
-      );
-      return this;
-    }
-    if (this._callState !== DAILY_STATE_JOINED) {
-      console.error(
-        'the meeting must be joined before calling updateCustomTrayButtons'
-      );
-      return this;
-    }
+    methodOnlySupportedAfterJoin(this._callState, 'updateCustomTrayButtons()');
     if (!validateCustomTrayButtons(btns)) {
       console.error(
         `updateCustomTrayButtons only accepts a dictionary of the type ${JSON.stringify(
@@ -2697,19 +2640,13 @@ export default class DailyIframe extends EventEmitter {
   }
 
   theme() {
-    if (this._callObjectMode) {
-      console.error('theme is not available in callObject mode');
-      return this;
-    }
+    methodOnlySupportedInPrebuilt(this._callObjectMode, 'theme()');
     return this.properties.theme;
   }
 
   setTheme(theme) {
+    methodOnlySupportedInPrebuilt(this._callObjectMode, 'setTheme()');
     return new Promise((resolve, reject) => {
-      if (this._callObjectMode) {
-        reject('setTheme is not available in callObject mode');
-        return;
-      }
       try {
         this.validateProperties({
           theme,
@@ -3418,12 +3355,6 @@ export default class DailyIframe extends EventEmitter {
           console.log('could not emit', msg, e);
         }
         break;
-      case DAILY_UI_REQUEST_FULLSCREEN:
-        this.requestFullscreen();
-        break;
-      case DAILY_UI_EXIT_FULLSCREEN:
-        this.exitFullscreen();
-        break;
       default: // no op
     }
   }
@@ -3967,6 +3898,43 @@ function makeSafeForPostMessage(props) {
     }
   }
   return safe;
+}
+
+function methodOnlySupportedAfterJoin(
+  callState,
+  methodName = 'This daily-js method',
+  moreInfo
+) {
+  if (callState !== DAILY_STATE_JOINED) {
+    let msg = `${methodName} only supported after join.`;
+    if (moreInfo) {
+      msg += ` ${moreInfo}`;
+    }
+    console.error(msg);
+    throw new Error(msg);
+  }
+}
+
+function methodOnlySupportedInCallObject(
+  callObjectMode,
+  methodName = 'This daily-js method'
+) {
+  if (!callObjectMode) {
+    const msg = `${methodName} is only supported on custom callObject instances`;
+    console.error(msg);
+    throw new Error(msg);
+  }
+}
+
+function methodOnlySupportedInPrebuilt(
+  callObjectMode,
+  methodName = 'This daily-js method'
+) {
+  if (callObjectMode) {
+    const msg = `${methodName} is only supported as part of Daily's Prebuilt`;
+    console.error(msg);
+    throw new Error(msg);
+  }
 }
 
 function methodNotSupportedInReactNative() {
