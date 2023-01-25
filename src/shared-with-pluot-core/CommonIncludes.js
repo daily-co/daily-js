@@ -131,6 +131,7 @@ export const DAILY_EVENT_FULLSCREEN = 'fullscreen';
 export const DAILY_EVENT_EXIT_FULLSCREEN = 'exited-fullscreen';
 
 export const DAILY_EVENT_LIVE_STREAMING_STARTED = 'live-streaming-started';
+export const DAILY_EVENT_LIVE_STREAMING_UPDATED = 'live-streaming-updated';
 export const DAILY_EVENT_LIVE_STREAMING_STOPPED = 'live-streaming-stopped';
 export const DAILY_EVENT_LIVE_STREAMING_ERROR = 'live-streaming-error';
 export const DAILY_LIVE_STREAMING_WARNING = 'live-streaming-warning';

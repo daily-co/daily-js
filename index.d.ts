@@ -75,6 +75,7 @@ export type DailyEvent =
   | 'touchmove'
   | 'touchend'
   | 'live-streaming-started'
+  | 'live-streaming-updated'
   | 'live-streaming-stopped'
   | 'live-streaming-error'
   | 'lang-updated'
@@ -934,6 +935,12 @@ export interface DailyEventObjectLiveStreamingStarted {
   layout?: DailyStreamingLayoutConfig;
   instanceId?: string;
 }
+export interface DailyEventObjectLiveStreamingUpdated {
+  action: Extract<DailyEvent, 'live-streaming-updated'>;
+  url: string;
+  status: DailyStreamingStatus;
+  instanceId?: string;
+}
 
 export interface DailyEventObjectLiveStreamingStopped {
   action: Extract<DailyEvent, 'live-streaming-stopped'>;
@@ -1122,6 +1129,8 @@ export type DailyStreamingLayoutConfig =
   | DailyStreamingActiveParticipantLayoutConfig
   | DailyStreamingPortraitLayoutConfig
   | DailyStreamingCustomLayoutConfig;
+
+export type DailyStreamingStatus = 'connected' | 'interrupted';
 
 export type DailyRemoteMediaPlayerSettingPlay = 'play';
 export type DailyRemoteMediaPlayerSettingPause = 'pause';
