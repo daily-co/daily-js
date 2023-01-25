@@ -110,6 +110,7 @@ import {
   DAILY_METHOD_GET_INPUT_DEVICES,
   DAILY_METHOD_JOIN,
   DAILY_METHOD_LEAVE,
+  DAILY_METHOD_DUAL_CALL_DETECTED,
   DAILY_METHOD_UPDATE_PARTICIPANT,
   DAILY_METHOD_UPDATE_PARTICIPANTS,
   DAILY_METHOD_LOCAL_AUDIO,
@@ -166,7 +167,6 @@ import {
   DAILY_METHOD_STOP_REMOTE_MEDIA_PLAYER,
   DAILY_METHOD_UPDATE_REMOTE_MEDIA_PLAYER,
   DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING,
-  DAILY_JS_REMOTE_MEDIA_PLAYER_STATE,
   DAILY_PRESELECTED_BG_IMAGE_URLS_LENGTH,
   DAILY_SUPPORTED_BG_IMG_TYPES,
   DAILY_METHOD_UPDATE_CUSTOM_TRAY_BUTTONS,
@@ -310,6 +310,9 @@ export {
   DAILY_EVENT_INPUT_SETTINGS_UPDATED,
   DAILY_EVENT_NONFATAL_ERROR,
 };
+
+let _dailyCallInstance;
+let _callInstanceCtr = 0;
 
 // Audio modes for React Native: whether we should configure audio for video
 // calls or audio calls (i.e. whether we should use speakerphone).
@@ -896,8 +899,34 @@ export default class DailyIframe extends EventEmitter {
     return DailyIframe.wrap(iframeEl, properties);
   }
 
+  static getCallInstance() {
+    return _dailyCallInstance;
+  }
+
   constructor(iframeish, properties = {}) {
     super();
+    this.strict_mode = properties.strict_mode;
+    if (_dailyCallInstance) {
+      if (!_dailyCallInstance.needsLoad()) {
+        _dailyCallInstance.sendMessageToCallMachine({
+          action: DAILY_METHOD_DUAL_CALL_DETECTED,
+        });
+      } else if (!this.strict_mode) {
+        let errMsg =
+          'Dual call object instances detected. This is unsupported and will ' +
+          'result in unknown errors. This will not be allowed in an upcoming ' +
+          'release. Set strict_mode in your call frame properties to debug ' +
+          'and catch the error now.';
+        console.error(errMsg);
+      }
+      if (this.strict_mode) {
+        throw new Error('Dual DailyIframe instances are not allowed');
+      }
+    } else {
+      _dailyCallInstance = this;
+    }
+    _callInstanceCtr++;
+
     properties.dailyJsVersion = DailyIframe.version();
     this._iframe = iframeish;
     this._callObjectMode = properties.layout === 'none' && !this._iframe;
@@ -986,7 +1015,8 @@ export default class DailyIframe extends EventEmitter {
     this._inputEventsOn = {}; // need to cache these until loaded
     this._network = { threshold: 'good', quality: 100 };
     this._activeSpeaker = {};
-    this._callFrameId = randomStringId();
+    this._callFrameId = randomStringId() + '.' + _callInstanceCtr.toString();
+
     this._messageChannel = isReactNative()
       ? new ReactNativeMessageChannel()
       : new WebMessageChannel();
@@ -1106,6 +1136,13 @@ export default class DailyIframe extends EventEmitter {
     }
 
     this.resetMeetingDependentVars();
+    this.destroyed = true;
+    if (this.strict_mode) {
+      // we set this to undefined in strict_mode so that all calls to
+      // sendMessageToCallMachine will fail
+      this._callFrameId = undefined;
+    }
+    _dailyCallInstance = undefined;
   }
 
   loadCss({ bodyClass, cssFile, cssText }) {
@@ -2908,6 +2945,14 @@ export default class DailyIframe extends EventEmitter {
   }
 
   sendMessageToCallMachine(message, callback) {
+    if (this.destroyed && !this.strict_mode) {
+      let errMsg =
+        'You are attempting to use a call instance that was previously ' +
+        'destroyed. This is unsupported and will not be allowed in an ' +
+        'upcoming release. Set strict_mode in your call frame properties to ' +
+        'debug and catch the error now.';
+      console.error(errMsg);
+    }
     this._messageChannel.sendMessageToCallMachine(
       message,
       callback,
