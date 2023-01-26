@@ -76,7 +76,6 @@ import {
   DAILY_EVENT_RECORDING_UPLOAD_COMPLETED,
   DAILY_EVENT_ERROR,
   DAILY_EVENT_APP_MSG,
-  DAILY_EVENT_INPUT_EVENT,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED,
   DAILY_EVENT_NETWORK_QUALITY_CHANGE,
@@ -283,7 +282,6 @@ export {
   DAILY_EVENT_TRANSCRIPTION_ERROR,
   DAILY_EVENT_ERROR,
   DAILY_EVENT_APP_MSG,
-  DAILY_EVENT_INPUT_EVENT,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED,
   DAILY_EVENT_NETWORK_QUALITY_CHANGE,
@@ -3160,25 +3158,6 @@ export default class DailyIframe extends EventEmitter {
         }
         try {
           this.emit(msg.action, msg);
-        } catch (e) {
-          console.log('could not emit', msg, e);
-        }
-        break;
-      case DAILY_EVENT_INPUT_EVENT:
-        let p = this._participants[msg.session_id];
-        if (!p) {
-          if (msg.session_id === this._participants.local.session_id) {
-            p = this._participants.local;
-          } else {
-            p = {};
-          }
-        }
-        try {
-          this.emit(msg.event.type, {
-            action: msg.event.type,
-            event: msg.event,
-            participant: { ...p },
-          });
         } catch (e) {
           console.log('could not emit', msg, e);
         }
