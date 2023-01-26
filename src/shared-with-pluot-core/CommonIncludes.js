@@ -108,7 +108,6 @@ export const DAILY_EVENT_RECORDING_UPLOAD_COMPLETED =
   'recording-upload-completed';
 export const DAILY_EVENT_RECORDING_DATA = 'recording-data';
 export const DAILY_EVENT_APP_MSG = 'app-message';
-export const DAILY_EVENT_INPUT_EVENT = 'input-event';
 
 export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_STARTED =
   'remote-media-player-started';

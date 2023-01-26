@@ -390,9 +390,11 @@ export interface DailyWaitingParticipant {
   awaitingAccess: SpecifiedDailyAccess;
 }
 
-export type DailyTrackSubscriptionState = 'staged' | boolean;
+export type DailyTrackSubscriptionState = 'staged' | boolean;
 
-export type DailyCustomTrackSubscriptionState = DailyTrackSubscriptionState | { [name: string]: DailyTrackSubscriptionState };
+export type DailyCustomTrackSubscriptionState =
+  | DailyTrackSubscriptionState
+  | { [name: string]: DailyTrackSubscriptionState };
 
 export type DailyTrackSubscriptionOptions =
   | DailyTrackSubscriptionState
