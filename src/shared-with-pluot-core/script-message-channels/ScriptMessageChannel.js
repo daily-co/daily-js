@@ -32,7 +32,7 @@ export default class ScriptMessageChannel {
    * Send a message to daily-js.
    * For use by the call machine (pluot-core).
    */
-  sendMessageToDailyJs(message, isCallObject, callFrameId) {
+  sendMessageToDailyJs(message, callFrameId) {
     notImplementedError();
   }
 

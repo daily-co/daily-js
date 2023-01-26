@@ -84,13 +84,12 @@ export default class WebMessageChannel extends ScriptMessageChannel {
     w.postMessage(msg, '*');
   }
 
-  sendMessageToDailyJs(message, isCallObject, callFrameId) {
+  sendMessageToDailyJs(message, callFrameId) {
     message.what = IFRAME_MESSAGE_MARKER;
     message.callFrameId = callFrameId;
     message.from = 'embedded';
-    const w = isCallObject ? window : window.parent;
     // console.log('[WebMessageChannel] sending message to daily-js', message);
-    w.postMessage(message, '*');
+    window.postMessage(message, '*');
   }
 
   removeListener(listener) {
