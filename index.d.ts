@@ -937,8 +937,8 @@ export interface DailyEventObjectLiveStreamingStarted {
 }
 export interface DailyEventObjectLiveStreamingUpdated {
   action: Extract<DailyEvent, 'live-streaming-updated'>;
-  url: string;
-  status: DailyStreamingStatus;
+  rtmpUrl: string;
+  state: DailyStreamingState;
   instanceId?: string;
 }
 
@@ -1005,6 +1005,12 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectGenericError
     : T extends DailyEventObjectParticipants['action']
     ? DailyEventObjectParticipants
+    : T extends DailyEventObjectLiveStreamingStarted['action']
+    ? DailyEventObjectLiveStreamingStarted
+    : T extends DailyEventObjectLiveStreamingUpdated['action']
+    ? DailyEventObjectLiveStreamingUpdated
+    : T extends DailyEventObjectLiveStreamingStopped['action']
+    ? DailyEventObjectLiveStreamingStopped
     : T extends DailyEventObjectLiveStreamingError['action']
     ? DailyEventObjectLiveStreamingError
     : T extends DailyEventObjectParticipant['action']
@@ -1025,6 +1031,10 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectTrack
     : T extends DailyEventObjectRecordingStarted['action']
     ? DailyEventObjectRecordingStarted
+    : T extends DailyEventObjectRecordingStopped['action']
+    ? DailyEventObjectRecordingStopped
+    : T extends DailyEventObjectRecordingError['action']
+    ? DailyEventObjectRecordingError
     : T extends DailyEventObjectRecordingData['action']
     ? DailyEventObjectRecordingData
     : T extends DailyEventObjectRemoteMediaPlayerUpdate['action']
@@ -1130,7 +1140,7 @@ export type DailyStreamingLayoutConfig =
   | DailyStreamingPortraitLayoutConfig
   | DailyStreamingCustomLayoutConfig;
 
-export type DailyStreamingStatus = 'connected' | 'interrupted';
+export type DailyStreamingState = 'connected' | 'interrupted';
 
 export type DailyRemoteMediaPlayerSettingPlay = 'play';
 export type DailyRemoteMediaPlayerSettingPause = 'pause';
