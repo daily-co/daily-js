@@ -180,6 +180,7 @@ import {
   MAX_USER_DATA_SIZE,
   DAILY_REQUEST_FULLSCREEN,
   DAILY_EXIT_FULLSCREEN,
+  DAILY_METHOD_TRANSMIT_LOG,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -624,6 +625,7 @@ const FRAME_PROPS = {
   dailyJsVersion: {
     queryString: 'dailyJsVersion',
   },
+  strictMode: true,
 };
 
 // todo: more validation?
@@ -905,21 +907,10 @@ export default class DailyIframe extends EventEmitter {
 
   constructor(iframeish, properties = {}) {
     super();
-    this.strict_mode = properties.strict_mode;
+    this.strictMode = properties.strictMode;
     if (_dailyCallInstance) {
-      if (!_dailyCallInstance.needsLoad()) {
-        _dailyCallInstance.sendMessageToCallMachine({
-          action: DAILY_METHOD_DUAL_CALL_DETECTED,
-        });
-      } else if (!this.strict_mode) {
-        let errMsg =
-          'Dual call object instances detected. This is unsupported and will ' +
-          'result in unknown errors. This will not be allowed in an upcoming ' +
-          'release. Set strict_mode in your call frame properties to debug ' +
-          'and catch the error now.';
-        console.error(errMsg);
-      }
-      if (this.strict_mode) {
+      this._logDualInstanceAttempt();
+      if (this.strictMode) {
         throw new Error('Dual DailyIframe instances are not allowed');
       }
     } else {
@@ -1137,8 +1128,8 @@ export default class DailyIframe extends EventEmitter {
 
     this.resetMeetingDependentVars();
     this.destroyed = true;
-    if (this.strict_mode) {
-      // we set this to undefined in strict_mode so that all calls to
+    if (this.strictMode) {
+      // we set this to undefined in strictMode so that all calls to
       // sendMessageToCallMachine will fail
       this._callFrameId = undefined;
     }
@@ -2085,6 +2076,13 @@ export default class DailyIframe extends EventEmitter {
       return;
     }
 
+    if (this.destroyed) {
+      this._logUseAfterDestroy();
+      if (this.strictMode) {
+        throw new Error('Use after destroy');
+      }
+    }
+
     if (properties) {
       this.validateProperties(properties);
       this.properties = { ...this.properties, ...properties };
@@ -2945,13 +2943,11 @@ export default class DailyIframe extends EventEmitter {
   }
 
   sendMessageToCallMachine(message, callback) {
-    if (this.destroyed && !this.strict_mode) {
-      let errMsg =
-        'You are attempting to use a call instance that was previously ' +
-        'destroyed. This is unsupported and will not be allowed in an ' +
-        'upcoming release. Set strict_mode in your call frame properties to ' +
-        'debug and catch the error now.';
-      console.error(errMsg);
+    if (this.destroyed) {
+      this._logUseAfterDestroy();
+      if (this.strictMode) {
+        throw new Error('Use after destroy');
+      }
     }
     this._messageChannel.sendMessageToCallMachine(
       message,
@@ -3888,6 +3884,58 @@ export default class DailyIframe extends EventEmitter {
     const str = 'hello, world.';
     console.log(str);
     return str;
+  }
+
+  _logUseAfterDestroy() {
+    // if we have any live call instance, send the log over the wire to land in l&t
+    // any l&t attached to this window. it don't matter which :)
+    if (!this.needsLoad()) {
+      // once strictMode is always true, this block can go away because it
+      // should be impossible for needsLoad to be false
+      const logMsg = {
+        action: DAILY_METHOD_TRANSMIT_LOG,
+        level: 'error',
+        code: this.strictMode ? 9995 : 9996,
+      };
+      this._messageChannel.sendMessageToCallMachine(
+        logMsg,
+        null,
+        this._iframe,
+        this._callFrameId
+      );
+    } else if (_dailyCallInstance && !_dailyCallInstance.needsLoad()) {
+      const logMsg = {
+        action: DAILY_METHOD_TRANSMIT_LOG,
+        level: 'error',
+        code: this.strictMode ? 9995 : 9996,
+      };
+      _dailyCallInstance.sendMessageToCallMachine(logMsg);
+    } else if (!this.strictMode) {
+      const errMsg =
+        'You are attempting to use a call instance that was previously ' +
+        'destroyed. This is unsupported and will not be allowed in an ' +
+        'upcoming release. Set strictMode in your call frame properties to ' +
+        'debug and catch the error now.';
+      console.error(errMsg);
+    }
+  }
+
+  _logDualInstanceAttempt() {
+    if (!_dailyCallInstance.needsLoad()) {
+      _dailyCallInstance.sendMessageToCallMachine({
+        action: DAILY_METHOD_TRANSMIT_LOG,
+        level: 'error',
+        code: this.strictMode ? 9990 : 9991,
+      });
+    } else if (!this.strictMode) {
+      const errMsg =
+        'Dual call object instances detected. Please ensure the previous ' +
+        'instance has been destroyed before creating a new one. This is ' +
+        'unsupported and will result in unknown errors. This will not be ' +
+        'allowed beginning in 0.42.0. Set strictMode in your call frame ' +
+        'properties to debug and catch the error now.';
+      console.error(errMsg);
+    }
   }
 }
 
