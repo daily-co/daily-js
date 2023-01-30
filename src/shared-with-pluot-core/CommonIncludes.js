@@ -239,6 +239,8 @@ export const DAILY_METHOD_UPDATE_RECEIVE_SETTINGS = 'update-receive-settings';
 export const DAILY_METHOD_UPDATE_INPUT_SETTINGS = 'update-input-settings';
 
 export const DAILY_CUSTOM_TRACK = 'daily-custom-track';
+export const DAILY_REQUEST_FULLSCREEN = 'request-fullscreen';
+export const DAILY_EXIT_FULLSCREEN = 'request-exit-fullscreen';
 
 export const DAILY_JS_NETWORK_QUALITY = {
   VERY_LOW: 'very-low',
