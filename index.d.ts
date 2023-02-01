@@ -1061,6 +1061,7 @@ export interface DailyCallFactory {
   ): DailyCall;
   createFrame(properties?: DailyCallOptions): DailyCall;
   createTransparentFrame(properties?: DailyCallOptions): DailyCall;
+  getCallInstance(): DailyCall;
 }
 
 export interface DailyCallStaticUtils {
@@ -1209,6 +1210,7 @@ export interface DailyCall {
   join(properties?: DailyCallOptions): Promise<DailyParticipantsObject | void>;
   leave(): Promise<void>;
   destroy(): Promise<void>;
+  isDestroyed(): boolean;
   loadCss(properties: {
     bodyClass?: string;
     cssFile?: string;

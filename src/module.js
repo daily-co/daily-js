@@ -1126,13 +1126,17 @@ export default class DailyIframe extends EventEmitter {
     }
 
     this.resetMeetingDependentVars();
-    this.destroyed = true;
+    this._destroyed = true;
     if (this.strictMode) {
       // we set this to undefined in strictMode so that all calls to
       // sendMessageToCallMachine will fail
       this._callFrameId = undefined;
     }
     _dailyCallInstance = undefined;
+  }
+
+  isDestroyed() {
+    return this._destroyed;
   }
 
   loadCss({ bodyClass, cssFile, cssText }) {
@@ -2075,7 +2079,7 @@ export default class DailyIframe extends EventEmitter {
       return;
     }
 
-    if (this.destroyed) {
+    if (this._destroyed) {
       this._logUseAfterDestroy();
       if (this.strictMode) {
         throw new Error('Use after destroy');
@@ -2942,7 +2946,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   sendMessageToCallMachine(message, callback) {
-    if (this.destroyed) {
+    if (this._destroyed) {
       this._logUseAfterDestroy();
       if (this.strictMode) {
         throw new Error('Use after destroy');
