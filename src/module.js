@@ -177,6 +177,8 @@ import {
   DAILY_EVENT_SELECTED_DEVICES_UPDATED,
   MAX_APP_MSG_SIZE,
   MAX_USER_DATA_SIZE,
+  DAILY_REQUEST_FULLSCREEN,
+  DAILY_EXIT_FULLSCREEN,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -3333,6 +3335,12 @@ export default class DailyIframe extends EventEmitter {
         } catch (e) {
           console.log('could not emit', msg, e);
         }
+        break;
+      case DAILY_REQUEST_FULLSCREEN:
+        this.requestFullscreen();
+        break;
+      case DAILY_EXIT_FULLSCREEN:
+        this.exitFullscreen();
         break;
       default: // no op
     }
