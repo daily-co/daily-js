@@ -387,6 +387,25 @@ const FRAME_PROPS = {
   dailyConfig: {
     // only for call object mode, for now
     validate: (config) => {
+      // validate
+      if (
+        config.keepCamIndicatorLightOn !== undefined &&
+        typeof config.keepCamIndicatorLightOn !== 'boolean'
+      ) {
+        console.error('keepCamIndicatorLightOn should be a boolean');
+        return false;
+      }
+      if (
+        config.experimentalChromeVideoMuteLightOff !== undefined &&
+        typeof config.experimentalChromeVideoMuteLightOff !== 'boolean'
+      ) {
+        console.error(
+          'experimentalChromeVideoMuteLightOff should be a boolean'
+        );
+        return false;
+      }
+
+      // set certain config properties on the window right away
       if (!window._dailyConfig) {
         window._dailyConfig = {};
       }
@@ -400,6 +419,7 @@ const FRAME_PROPS = {
         config.callObjectBundleUrlOverride;
       return true;
     },
+    help: 'invalid dailyConfig provided. Check error logs for detailed info.',
   },
   reactNativeConfig: {
     validate: validateReactNativeConfig,
