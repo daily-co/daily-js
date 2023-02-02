@@ -2986,11 +2986,11 @@ export default class DailyIframe extends EventEmitter {
 
           try {
             // track events
-            this.maybeEventTracksStopped(
+            this.maybeParticipantTracksStopped(
               this._participants[id],
               msg.participant
             );
-            this.maybeEventTracksStarted(
+            this.maybeParticipantTracksStarted(
               this._participants[id],
               msg.participant
             );
@@ -3029,7 +3029,7 @@ export default class DailyIframe extends EventEmitter {
           // track events
           let prevP = this._participants[msg.participant.session_id];
           if (prevP) {
-            this.maybeEventTracksStopped(prevP, null);
+            this.maybeParticipantTracksStopped(prevP, null);
           }
           // delete from local cach
           delete this._participants[msg.participant.session_id];
@@ -3365,7 +3365,7 @@ export default class DailyIframe extends EventEmitter {
     }
   }
 
-  maybeEventTracksStopped(prevP, thisP) {
+  maybeParticipantTracksStopped(prevP, thisP) {
     if (!prevP) {
       return;
     }
@@ -3379,7 +3379,7 @@ export default class DailyIframe extends EventEmitter {
     }
   }
 
-  maybeEventTracksStarted(prevP, thisP) {
+  maybeParticipantTracksStarted(prevP, thisP) {
     if (!thisP) {
       return;
     }
