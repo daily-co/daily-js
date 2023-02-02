@@ -3374,7 +3374,7 @@ export default class DailyIframe extends EventEmitter {
         prevP.tracks[trackKey].track,
         thisP && thisP.tracks[trackKey] ? thisP.tracks[trackKey].track : null,
         thisP,
-        trackKey,
+        trackKey
       );
     }
   }
@@ -3388,7 +3388,7 @@ export default class DailyIframe extends EventEmitter {
         prevP && prevP.tracks[trackKey] ? prevP.tracks[trackKey].track : null,
         thisP.tracks[trackKey].track,
         thisP,
-        trackKey,
+        trackKey
       );
     }
   }
