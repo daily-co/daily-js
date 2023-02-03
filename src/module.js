@@ -3329,9 +3329,9 @@ export default class DailyIframe extends EventEmitter {
       return;
     }
     if (
-      (prevTrack && prevTrack.readyState === 'ended') ||
-      (prevTrack && !thisTrack) ||
-      (prevTrack && prevTrack.id !== thisTrack.id)
+      prevTrack.readyState === 'ended' ||
+      !thisTrack ||
+      prevTrack.id !== thisTrack.id
     ) {
       try {
         this.emit(DAILY_EVENT_TRACK_STOPPED, {
@@ -3347,10 +3347,13 @@ export default class DailyIframe extends EventEmitter {
   }
 
   maybeEventTrackStarted(prevTrack, thisTrack, thisP, type) {
+    if (!thisTrack) {
+      return;
+    }
     if (
-      (thisTrack && !prevTrack) ||
-      (thisTrack && prevTrack.readyState === 'ended') ||
-      (thisTrack && thisTrack.id !== prevTrack.id)
+      !prevTrack ||
+      prevTrack.readyState === 'ended' ||
+      thisTrack.id !== prevTrack.id
     ) {
       try {
         this.emit(DAILY_EVENT_TRACK_STARTED, {
