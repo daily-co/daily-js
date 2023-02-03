@@ -307,11 +307,10 @@ export {
   DAILY_EVENT_NONFATAL_ERROR,
 };
 
-let _dailyCallInstance;
-let _callInstanceCtr = 0;
+let _callInstance;
 
 function _setCallInstance(instance) {
-  _dailyCallInstance = instance;
+  _callInstance = instance;
 }
 
 // Audio modes for React Native: whether we should configure audio for video
@@ -901,21 +900,20 @@ export default class DailyIframe extends EventEmitter {
   }
 
   static getCallInstance() {
-    return _dailyCallInstance;
+    return _callInstance;
   }
 
   constructor(iframeish, properties = {}) {
     super();
     this.strictMode = properties.strictMode;
-    if (_dailyCallInstance) {
-      this._logDualInstanceAttempt();
+    if (_callInstance) {
+      this._logDuplicateInstanceAttempt();
       if (this.strictMode) {
-        throw new Error('Dual DailyIframe instances are not allowed');
+        throw new Error('Duplicate DailyIframe instances are not allowed');
       }
     } else {
       _setCallInstance(this);
     }
-    _callInstanceCtr++;
 
     properties.dailyJsVersion = DailyIframe.version();
     this._iframe = iframeish;
@@ -1005,7 +1003,7 @@ export default class DailyIframe extends EventEmitter {
     this._inputEventsOn = {}; // need to cache these until loaded
     this._network = { threshold: 'good', quality: 100 };
     this._activeSpeaker = {};
-    this._callFrameId = randomStringId() + '.' + _callInstanceCtr.toString();
+    this._callFrameId = randomStringId();
 
     this._messageChannel = isReactNative()
       ? new ReactNativeMessageChannel()
@@ -1129,10 +1127,10 @@ export default class DailyIframe extends EventEmitter {
     this._destroyed = true;
     if (this.strictMode) {
       // we set this to undefined in strictMode so that all calls to
-      // sendMessageToCallMachine will fail
+      // the underlying channel's sendMessageToCallMachine will fail
       this._callFrameId = undefined;
     }
-    _dailyCallInstance = undefined;
+    _callInstance = undefined;
   }
 
   isDestroyed() {
@@ -3914,37 +3912,37 @@ export default class DailyIframe extends EventEmitter {
         this._iframe,
         this._callFrameId
       );
-    } else if (_dailyCallInstance && !_dailyCallInstance.needsLoad()) {
+    } else if (_callInstance && !_callInstance.needsLoad()) {
       const logMsg = {
         action: DAILY_METHOD_TRANSMIT_LOG,
         level: 'error',
         code: this.strictMode ? 9995 : 9996,
       };
-      _dailyCallInstance.sendMessageToCallMachine(logMsg);
+      _callInstance.sendMessageToCallMachine(logMsg);
     } else if (!this.strictMode) {
       const errMsg =
         'You are attempting to use a call instance that was previously ' +
-        'destroyed. This is unsupported and will not be allowed in an ' +
-        'upcoming release. Set strictMode in your call frame properties to ' +
-        'debug and catch the error now.';
+        'destroyed. This is unsupported and will not be allowed beginning in ' +
+        '0.42.0. Set strictMode in your call frame properties to debug and ' +
+        'catch the error now.';
       console.error(errMsg);
     }
   }
 
-  _logDualInstanceAttempt() {
-    if (!_dailyCallInstance.needsLoad()) {
-      _dailyCallInstance.sendMessageToCallMachine({
+  _logDuplicateInstanceAttempt() {
+    if (!_callInstance.needsLoad()) {
+      _callInstance.sendMessageToCallMachine({
         action: DAILY_METHOD_TRANSMIT_LOG,
         level: 'error',
         code: this.strictMode ? 9990 : 9991,
       });
     } else if (!this.strictMode) {
       const errMsg =
-        'Dual call object instances detected. Please ensure the previous ' +
-        'instance has been destroyed before creating a new one. This is ' +
-        'unsupported and will result in unknown errors. This will not be ' +
-        'allowed beginning in 0.42.0. Set strictMode in your call frame ' +
-        'properties to debug and catch the error now.';
+        'Duplicate call object instances detected. Please ensure the ' +
+        'previous instance has been destroyed before creating a new one. ' +
+        'This is unsupported and will result in unknown errors. This will ' +
+        'not be allowed beginning in 0.42.0. Set strictMode in your call ' +
+        'frame properties to debug and catch the error now.';
       console.error(errMsg);
     }
   }
