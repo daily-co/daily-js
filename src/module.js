@@ -3923,8 +3923,8 @@ export default class DailyIframe extends EventEmitter {
       const errMsg =
         'You are attempting to use a call instance that was previously ' +
         'destroyed. This is unsupported and will not be allowed beginning in ' +
-        '0.42.0. Set strictMode in your call frame properties to debug and ' +
-        'catch the error now.';
+        '0.42.0. Add `strictMode: true` to your call frame constructor ' +
+        'properties to debug and catch the error now.';
       console.error(errMsg);
     }
   }
@@ -3941,8 +3941,8 @@ export default class DailyIframe extends EventEmitter {
         'Duplicate call object instances detected. Please ensure the ' +
         'previous instance has been destroyed before creating a new one. ' +
         'This is unsupported and will result in unknown errors. This will ' +
-        'not be allowed beginning in 0.42.0. Set strictMode in your call ' +
-        'frame properties to debug and catch the error now.';
+        'not be allowed beginning in 0.42.0. Add `strictMode: true` to your ' +
+        'call frame constructor properties to debug and catch the error now.';
       console.error(errMsg);
     }
   }

@@ -17,20 +17,13 @@ For those who want to keep the current default behavior of leaving the indicator
 
 ## Duplicate call instances will not be allowed
 
-Today we do not support multiple call objects to be instantiated and running simultaneously. Doing so causes a
-smorgasbord of issues, some more obvious than others. After detecing this to be a common issue in development
-we will be making this setup impossible. Starting in 0.42.0, two currently unsupported behaviors will now throw
-and `Error` instead of silently failing or simply logging the error. The constructor of a call will throw an
-`Error` if another one exists and has not been destroyed. And attempting to use a call instance that has been
-destroyed will throw an `Error`. To see if you are using multiple call objects or using a call after it has
-been detroyed, check your logs for `Dual call object instances detected`, `Duplicate call object instances detected`,
-or `You are attempting to use a call instance that was previously destroyed`. 
+Today we do not support multiple call objects to be instantiated and running simultaneously. Doing so causes a smorgasbord of issues, some more obvious than others. After detecting this to be a common issue in development we will be making this setup impossible. Starting in 0.42.0, two currently unsupported behaviors will now throw an `Error` instead of silently failing or simply logging the error. The constructor of a call will throw an `Error` if another one exists and has not been destroyed. And attempting to use a call instance that has been destroyed will throw an `Error`. To see if you are using multiple call objects or using a call after it has been detroyed, check your logs for `Dual call object instances detected`, `Duplicate call object instances detected`, or `You are attempting to use a call instance that was previously destroyed`.
 
-If you think this will affect you, you can turn on the 0.42.0 behavior and have an `Error` thrown by passing adding
-`strictMode: true` to your iframe properties passed in at construction:
+If you think this will affect you, you can turn on the 0.42.0 behavior and have an `Error` thrown by passing adding `strictMode: true` to your iframe properties passed in at construction:
 
 ```
 try {
+  let call = DailyIframe.createCallObject({strictMode: true});
   call = DailyIframe.createCallObject({strictMode: true});
 } catch (e) {
   console.error(e); // 'Error: Duplicate DailyIframe instances are not allowed'
@@ -50,8 +43,7 @@ try {
 
 Please note, there are two supported ways of leaving and rejoining.
 
-1. A single call instance can be re-used, so long as you properly await each call to ensure the prior action
-   has completed:
+1. A single call instance can be re-used, so long as you properly await each call to ensure the prior action has completed:
 
     ```
       await call.join();
@@ -72,9 +64,7 @@ Please note, there are two supported ways of leaving and rejoining.
 
     Without the call to `destroy()`, the above code would be unsupported and will throw an `Error`.
 
-Also of note: To help with the handling of this, we have introduced a new static method:
-`getCallInstance()` so that you can get a handle to your call instance from anywhere and can't
-find yourself stranded.
+Also of note: to help with the handling of this, we have introduced a new static method: `getCallInstance()` so that you can get a handle to your call instance from anywhere in ase you lost track of it.
 
 ```
 try {
