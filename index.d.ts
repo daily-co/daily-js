@@ -937,7 +937,7 @@ export interface DailyEventObjectLiveStreamingStarted {
 }
 export interface DailyEventObjectLiveStreamingUpdated {
   action: Extract<DailyEvent, 'live-streaming-updated'>;
-  rtmpUrl: string;
+  endpoint?: DailyStreamingEndpoint;
   state: DailyStreamingState;
   instanceId?: string;
 }
