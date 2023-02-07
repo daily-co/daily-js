@@ -617,7 +617,7 @@ export interface DailyInputAudioSettings {
 }
 
 export interface DailyInputAudioProcessorSettings {
-  type: 'none' | 'krisp';
+  type: 'none' | 'noise-cancellation';
 }
 
 export interface DailyInputVideoSettings {
