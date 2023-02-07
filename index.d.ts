@@ -502,6 +502,7 @@ export interface DailyRoomInfo {
     enable_hand_raising?: boolean;
     enable_knocking?: boolean;
     enable_network_ui?: boolean;
+    enable_noise_cancellation_ui?: boolean;
     enable_people_ui?: boolean;
     enable_pip_ui?: boolean;
     enable_prejoin_ui?: boolean;
@@ -540,6 +541,7 @@ export interface DailyRoomInfo {
     enable_chat?: boolean;
     enable_hand_raising?: boolean;
     enable_network_ui?: boolean;
+    enable_noise_cancellation_ui?: boolean;
     enable_people_ui?: boolean;
     enable_pip_ui?: boolean;
     enable_prejoin_ui?: boolean;
