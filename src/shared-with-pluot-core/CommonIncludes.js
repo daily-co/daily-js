@@ -266,7 +266,7 @@ export const DAILY_JS_VIDEO_PROCESSOR_TYPES = {
 
 export const DAILY_JS_AUDIO_PROCESSOR_TYPES = {
   NONE: 'none',
-  KRISP: 'krisp',
+  NOISE_CANCELLATION: 'noise-cancellation',
 };
 
 export const DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING = {
