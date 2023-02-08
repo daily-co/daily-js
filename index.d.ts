@@ -937,7 +937,7 @@ export interface DailyEventObjectTranscriptionStarted {
   tier?: string;
   detect_language?: boolean;
   profanity_filter?: boolean;
-  redact?: boolean;
+  redact?: Array<string> | boolean;
   startedBy: string;
 }
 
@@ -1206,7 +1206,7 @@ export interface DailyTranscriptionDeepgramOptions {
   tier?: string;
   detect_language?: boolean;
   profanity_filter?: boolean;
-  redact?: boolean;
+  redact?: Array<string> | boolean;
 }
 
 export interface DailyCall {
