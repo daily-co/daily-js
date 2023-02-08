@@ -3034,53 +3034,11 @@ export default class DailyIframe extends EventEmitter {
 
           try {
             // track events
-            this.maybeEventTrackStopped(
-              this._participants[id],
-              msg.participant,
-              'audioTrack'
-            );
-            this.maybeEventTrackStopped(
-              this._participants[id],
-              msg.participant,
-              'videoTrack'
-            );
-            this.maybeEventTrackStopped(
-              this._participants[id],
-              msg.participant,
-              'screenVideoTrack'
-            );
-            this.maybeEventTrackStopped(
-              this._participants[id],
-              msg.participant,
-              'screenAudioTrack'
-            );
-            this.maybeEventTrackStarted(
-              this._participants[id],
-              msg.participant,
-              'audioTrack'
-            );
-            this.maybeEventTrackStarted(
-              this._participants[id],
-              msg.participant,
-              'videoTrack'
-            );
-            this.maybeEventTrackStarted(
-              this._participants[id],
-              msg.participant,
-              'screenVideoTrack'
-            );
-            this.maybeEventTrackStarted(
-              this._participants[id],
-              msg.participant,
-              'screenAudioTrack'
-            );
-            // custom tracks (presumably we'll do all tracks consistently in the
-            // future, refactoring the above maybeEventTrack* events)
-            this.maybeEventTrackStoppedForCustomTracks(
+            this.maybeParticipantTracksStopped(
               this._participants[id],
               msg.participant
             );
-            this.maybeEventTrackStartedForCustomTracks(
+            this.maybeParticipantTracksStarted(
               this._participants[id],
               msg.participant
             );
@@ -3119,11 +3077,7 @@ export default class DailyIframe extends EventEmitter {
           // track events
           let prevP = this._participants[msg.participant.session_id];
           if (prevP) {
-            this.maybeEventTrackStopped(prevP, null, 'audioTrack');
-            this.maybeEventTrackStopped(prevP, null, 'videoTrack');
-            this.maybeEventTrackStopped(prevP, null, 'screenVideoTrack');
-            this.maybeEventTrackStopped(prevP, null, 'screenAudioTrack');
-            this.maybeEventTrackStoppedForCustomTracks(prevP, null);
+            this.maybeParticipantTracksStopped(prevP, null);
           }
           // delete from local cach
           delete this._participants[msg.participant.session_id];
@@ -3432,118 +3386,74 @@ export default class DailyIframe extends EventEmitter {
     }
   }
 
-  maybeEventTrackStopped(prevP, thisP, key) {
-    if (!prevP) {
-      return;
-    }
-    if (
-      (prevP[key] && prevP[key].readyState === 'ended') ||
-      (prevP[key] && !(thisP && thisP[key])) ||
-      (prevP[key] && prevP[key].id !== thisP[key].id)
-    ) {
-      try {
-        this.emit(DAILY_EVENT_TRACK_STOPPED, {
-          action: DAILY_EVENT_TRACK_STOPPED,
-          track: prevP[key],
-          participant: thisP,
-        });
-      } catch (e) {
-        console.log('could not emit', e);
-      }
-    }
-  }
-
-  maybeEventCustomTrackStopped(prevTrack, thisTrack, thisP) {
+  maybeEventTrackStopped(prevTrack, thisTrack, thisP, type) {
     if (!prevTrack) {
       return;
     }
     if (
-      (prevTrack && prevTrack.readyState === 'ended') ||
-      (prevTrack && !thisTrack) ||
-      (prevTrack && prevTrack.id !== thisTrack.id)
+      prevTrack.readyState === 'ended' ||
+      !thisTrack ||
+      prevTrack.id !== thisTrack.id
     ) {
       try {
         this.emit(DAILY_EVENT_TRACK_STOPPED, {
           action: DAILY_EVENT_TRACK_STOPPED,
           track: prevTrack,
           participant: thisP,
+          type,
         });
       } catch (e) {
-        console.log('maybeEventCustomTrackStopped: could not emit', e);
+        console.log('maybeEventTrackStopped: could not emit', e);
       }
     }
   }
 
-  maybeEventCustomTrackStarted(prevTrack, thisTrack, thisP) {
+  maybeEventTrackStarted(prevTrack, thisTrack, thisP, type) {
+    if (!thisTrack) {
+      return;
+    }
     if (
-      (thisTrack && !prevTrack) ||
-      (thisTrack && prevTrack.readyState === 'ended') ||
-      (thisTrack && thisTrack.id !== prevTrack.id)
+      !prevTrack ||
+      prevTrack.readyState === 'ended' ||
+      thisTrack.id !== prevTrack.id
     ) {
       try {
         this.emit(DAILY_EVENT_TRACK_STARTED, {
           action: DAILY_EVENT_TRACK_STARTED,
           track: thisTrack,
           participant: thisP,
+          type,
         });
       } catch (e) {
-        console.log('maybeEventCustomTrackStarted: could not emit', e);
+        console.log('maybeEventTrackStarted: could not emit', e);
       }
     }
   }
 
-  maybeEventTrackStarted(prevP, thisP, key) {
-    if (
-      (thisP[key] && !(prevP && prevP[key])) ||
-      (thisP[key] && prevP[key].readyState === 'ended') ||
-      (thisP[key] && thisP[key].id !== prevP[key].id)
-    ) {
-      try {
-        this.emit(DAILY_EVENT_TRACK_STARTED, {
-          action: DAILY_EVENT_TRACK_STARTED,
-          track: thisP[key],
-          participant: thisP,
-        });
-      } catch (e) {
-        console.log('could not emit', e);
-      }
-    }
-  }
-
-  maybeEventTrackStoppedForCustomTracks(prevP, thisP) {
+  maybeParticipantTracksStopped(prevP, thisP) {
     if (!prevP) {
       return;
     }
     for (const trackKey in prevP.tracks) {
-      // we might be able to use this logic for all tracks, not just additional,
-      // non-standard tracks. but for now, we'll only handle the non-standard
-      // tracks
-      if (Participant.isPredefinedTrack(trackKey)) {
-        continue;
-      }
-      this.maybeEventCustomTrackStopped(
+      this.maybeEventTrackStopped(
         prevP.tracks[trackKey].track,
         thisP && thisP.tracks[trackKey] ? thisP.tracks[trackKey].track : null,
-        thisP
+        thisP,
+        trackKey
       );
     }
   }
 
-  maybeEventTrackStartedForCustomTracks(prevP, thisP) {
+  maybeParticipantTracksStarted(prevP, thisP) {
     if (!thisP) {
       return;
     }
     for (const trackKey in thisP.tracks) {
-      // we might be able to use this logic for all tracks, not just additional,
-      // non-standard tracks. but for now, we'll only handle the non-standard
-      // tracks
-      if (Participant.isPredefinedTrack(trackKey)) {
-        continue;
-      }
-      this.maybeEventCustomTrackStarted(
+      this.maybeEventTrackStarted(
         prevP && prevP.tracks[trackKey] ? prevP.tracks[trackKey].track : null,
         thisP.tracks[trackKey].track,
-        thisP
+        thisP,
+        trackKey
       );
     }
   }
