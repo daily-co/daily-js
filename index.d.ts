@@ -263,6 +263,10 @@ export interface DailyLoadOptions extends DailyCallOptions {
   baseUrl?: string;
 }
 
+export interface DailyFactoryOptions extends DailyCallOptions {
+  srictMode?: boolean; // only available at constructor time
+}
+
 export interface DailyMicAudioModeSettings {
   bitrate?: number;
   stereo?: boolean;
@@ -1053,14 +1057,15 @@ export interface DailyFaceInfo {
 }
 
 export interface DailyCallFactory {
-  createCallObject(properties?: DailyCallOptions): DailyCall;
-  wrap(iframe: HTMLIFrameElement, properties?: DailyCallOptions): DailyCall;
+  createCallObject(properties?: DailyFactoryOptions): DailyCall;
+  wrap(iframe: HTMLIFrameElement, properties?: DailyFactoryOptions): DailyCall;
   createFrame(
     parentElement: HTMLElement,
-    properties?: DailyCallOptions
+    properties?: DailyFactoryOptions
   ): DailyCall;
-  createFrame(properties?: DailyCallOptions): DailyCall;
-  createTransparentFrame(properties?: DailyCallOptions): DailyCall;
+  createFrame(properties?: DailyFactoryOptions): DailyCall;
+  createTransparentFrame(properties?: DailyFactoryOptions): DailyCall;
+  getCallInstance(): DailyCall;
 }
 
 export interface DailyCallStaticUtils {
@@ -1209,6 +1214,7 @@ export interface DailyCall {
   join(properties?: DailyCallOptions): Promise<DailyParticipantsObject | void>;
   leave(): Promise<void>;
   destroy(): Promise<void>;
+  isDestroyed(): boolean;
   loadCss(properties: {
     bodyClass?: string;
     cssFile?: string;

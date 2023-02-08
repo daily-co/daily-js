@@ -239,6 +239,7 @@ export const DAILY_METHOD_GET_SINGLE_PARTICIPANT_RECEIVE_SETTINGS =
   'get-single-participant-receive-settings';
 export const DAILY_METHOD_UPDATE_RECEIVE_SETTINGS = 'update-receive-settings';
 export const DAILY_METHOD_UPDATE_INPUT_SETTINGS = 'update-input-settings';
+export const DAILY_METHOD_TRANSMIT_LOG = 'transmit-log';
 
 export const DAILY_CUSTOM_TRACK = 'daily-custom-track';
 export const DAILY_REQUEST_FULLSCREEN = 'request-fullscreen';
