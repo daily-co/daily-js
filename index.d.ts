@@ -502,6 +502,7 @@ export interface DailyPendingRoomInfo {
 
 export interface DailyRecordingsBucket {
   allow_api_access: boolean;
+  allow_streaming_from_bucket: boolean;
   assume_role_arn: string;
   bucket_name: string;
   bucket_region: string;
