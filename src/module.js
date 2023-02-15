@@ -2808,7 +2808,7 @@ export default class DailyIframe extends EventEmitter {
   startTranscription(args) {
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_START_TRANSCRIPTION,
-      ...args,
+      options: args,
     });
   }
 
