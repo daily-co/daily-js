@@ -108,7 +108,6 @@ export const DAILY_EVENT_RECORDING_UPLOAD_COMPLETED =
   'recording-upload-completed';
 export const DAILY_EVENT_RECORDING_DATA = 'recording-data';
 export const DAILY_EVENT_APP_MSG = 'app-message';
-export const DAILY_EVENT_INPUT_EVENT = 'input-event';
 
 export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_STARTED =
   'remote-media-player-started';
@@ -147,6 +146,8 @@ export const DAILY_EVENT_NONFATAL_ERROR = 'nonfatal-error';
 export const DAILY_INPUT_SETTINGS_ERROR_TYPE = 'input-settings-error';
 export const DAILY_SCREEN_SHARE_ERROR_TYPE = 'screen-share-error';
 export const DAILY_VIDEO_PROCESSOR_ERROR_TYPE = 'video-processor-error';
+export const DAILY_AUDIO_PROCESSOR_ERROR_TYPE = 'audio-processor-error';
+
 export const DAILY_EVENT_ERROR = 'error';
 
 export const DAILY_EVENT_CUSTOM_BUTTON_CLICK = 'custom-button-click';
@@ -238,8 +239,11 @@ export const DAILY_METHOD_GET_SINGLE_PARTICIPANT_RECEIVE_SETTINGS =
   'get-single-participant-receive-settings';
 export const DAILY_METHOD_UPDATE_RECEIVE_SETTINGS = 'update-receive-settings';
 export const DAILY_METHOD_UPDATE_INPUT_SETTINGS = 'update-input-settings';
+export const DAILY_METHOD_TRANSMIT_LOG = 'transmit-log';
 
 export const DAILY_CUSTOM_TRACK = 'daily-custom-track';
+export const DAILY_REQUEST_FULLSCREEN = 'request-fullscreen';
+export const DAILY_EXIT_FULLSCREEN = 'request-exit-fullscreen';
 
 export const DAILY_JS_NETWORK_QUALITY = {
   VERY_LOW: 'very-low',
@@ -259,6 +263,11 @@ export const DAILY_JS_VIDEO_PROCESSOR_TYPES = {
   BGBLUR: 'background-blur',
   BGIMAGE: 'background-image',
   // CUSTOM: 'custom',
+};
+
+export const DAILY_JS_AUDIO_PROCESSOR_TYPES = {
+  NONE: 'none',
+  NOISE_CANCELLATION: 'noise-cancellation',
 };
 
 export const DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING = {

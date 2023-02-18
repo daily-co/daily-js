@@ -76,7 +76,6 @@ import {
   DAILY_EVENT_RECORDING_UPLOAD_COMPLETED,
   DAILY_EVENT_ERROR,
   DAILY_EVENT_APP_MSG,
-  DAILY_EVENT_INPUT_EVENT,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED,
   DAILY_EVENT_NETWORK_QUALITY_CHANGE,
@@ -161,12 +160,12 @@ import {
   DAILY_METHOD_GET_SINGLE_PARTICIPANT_RECEIVE_SETTINGS,
   DAILY_METHOD_UPDATE_RECEIVE_SETTINGS,
   DAILY_JS_VIDEO_PROCESSOR_TYPES as VIDEO_PROCESSOR_TYPES,
+  DAILY_JS_AUDIO_PROCESSOR_TYPES as AUDIO_PROCESSOR_TYPES,
   DAILY_METHOD_UPDATE_INPUT_SETTINGS,
   DAILY_METHOD_START_REMOTE_MEDIA_PLAYER,
   DAILY_METHOD_STOP_REMOTE_MEDIA_PLAYER,
   DAILY_METHOD_UPDATE_REMOTE_MEDIA_PLAYER,
   DAILY_JS_REMOTE_MEDIA_PLAYER_SETTING,
-  DAILY_JS_REMOTE_MEDIA_PLAYER_STATE,
   DAILY_PRESELECTED_BG_IMAGE_URLS_LENGTH,
   DAILY_SUPPORTED_BG_IMG_TYPES,
   DAILY_METHOD_UPDATE_CUSTOM_TRAY_BUTTONS,
@@ -178,6 +177,9 @@ import {
   DAILY_EVENT_SELECTED_DEVICES_UPDATED,
   MAX_APP_MSG_SIZE,
   MAX_USER_DATA_SIZE,
+  DAILY_REQUEST_FULLSCREEN,
+  DAILY_EXIT_FULLSCREEN,
+  DAILY_METHOD_TRANSMIT_LOG,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -186,16 +188,13 @@ import {
   isFullscreenSupported,
   isScreenSharingSupported,
   isVideoProcessingSupported,
+  isAudioProcessingSupported,
 } from './shared-with-pluot-core/Environment.js';
 import WebMessageChannel from './shared-with-pluot-core/script-message-channels/WebMessageChannel';
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
 import { SessionDataUpdate } from './shared-with-pluot-core/SessionData.js';
 import CallObjectLoader from './CallObjectLoader';
-import {
-  callObjectBundleUrl,
-  randomStringId,
-  validateHttpUrl,
-} from './utils.js';
+import { randomStringId, validateHttpUrl } from './utils.js';
 import * as Participant from './Participant';
 
 // call states
@@ -283,7 +282,6 @@ export {
   DAILY_EVENT_TRANSCRIPTION_ERROR,
   DAILY_EVENT_ERROR,
   DAILY_EVENT_APP_MSG,
-  DAILY_EVENT_INPUT_EVENT,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED,
   DAILY_EVENT_NETWORK_QUALITY_CHANGE,
@@ -308,6 +306,12 @@ export {
   DAILY_EVENT_INPUT_SETTINGS_UPDATED,
   DAILY_EVENT_NONFATAL_ERROR,
 };
+
+let _callInstance;
+
+function _setCallInstance(instance) {
+  _callInstance = instance;
+}
 
 // Audio modes for React Native: whether we should configure audio for video
 // calls or audio calls (i.e. whether we should use speakerphone).
@@ -619,26 +623,27 @@ const FRAME_PROPS = {
   dailyJsVersion: {
     queryString: 'dailyJsVersion',
   },
+  strictMode: true,
 };
 
 // todo: more validation?
 const PARTICIPANT_PROPS = {
   styles: {
     validate: (styles) => {
-      for (var k in styles) {
+      for (let k in styles) {
         if (k !== 'cam' && k !== 'screen') {
           return false;
         }
       }
       if (styles.cam) {
-        for (var k in styles.cam) {
+        for (let k in styles.cam) {
           if (k !== 'div' && k !== 'video') {
             return false;
           }
         }
       }
       if (styles.screen) {
-        for (var k in styles.screen) {
+        for (let k in styles.screen) {
           if (k !== 'div' && k !== 'video') {
             return false;
           }
@@ -651,7 +656,7 @@ const PARTICIPANT_PROPS = {
       '{ cam: {div: {}, video: {}}, screen: {div: {}, video: {}} }',
   },
   setSubscribedTracks: {
-    validate: (subs, callObject, participant) => {
+    validate: (subs, callObject) => {
       if (callObject._preloadCache.subscribeToTracksAutomatically) {
         return false;
       }
@@ -760,6 +765,7 @@ export default class DailyIframe extends EventEmitter {
         supportsScreenShare: false,
         supportsSfu: true,
         supportsVideoProcessing: false,
+        supportsAudioProcessing: false,
       };
     }
     const browser = Bowser.getParser(getUserAgent());
@@ -772,6 +778,7 @@ export default class DailyIframe extends EventEmitter {
       supportsScreenShare: !!isScreenSharingSupported(),
       supportsSfu: !!browserVideoSupported_p(),
       supportsVideoProcessing: isVideoProcessingSupported(),
+      supportsAudioProcessing: isAudioProcessingSupported(),
     };
   }
 
@@ -892,8 +899,22 @@ export default class DailyIframe extends EventEmitter {
     return DailyIframe.wrap(iframeEl, properties);
   }
 
+  static getCallInstance() {
+    return _callInstance;
+  }
+
   constructor(iframeish, properties = {}) {
     super();
+    this.strictMode = properties.strictMode;
+    if (_callInstance) {
+      this._logDuplicateInstanceAttempt();
+      if (this.strictMode) {
+        throw new Error('Duplicate DailyIframe instances are not allowed');
+      }
+    } else {
+      _setCallInstance(this);
+    }
+
     properties.dailyJsVersion = DailyIframe.version();
     this._iframe = iframeish;
     this._callObjectMode = properties.layout === 'none' && !this._iframe;
@@ -983,6 +1004,7 @@ export default class DailyIframe extends EventEmitter {
     this._network = { threshold: 'good', quality: 100 };
     this._activeSpeaker = {};
     this._callFrameId = randomStringId();
+
     this._messageChannel = isReactNative()
       ? new ReactNativeMessageChannel()
       : new WebMessageChannel();
@@ -991,7 +1013,7 @@ export default class DailyIframe extends EventEmitter {
     if (this._iframe) {
       if (this._iframe.requestFullscreen) {
         // chrome (not safari)
-        this._iframe.addEventListener('fullscreenchange', (e) => {
+        this._iframe.addEventListener('fullscreenchange', () => {
           if (document.fullscreenElement === this._iframe) {
             this.emit(DAILY_EVENT_FULLSCREEN, {
               action: DAILY_EVENT_FULLSCREEN,
@@ -1008,7 +1030,7 @@ export default class DailyIframe extends EventEmitter {
         });
       } else if (this._iframe.webkitRequestFullscreen) {
         // safari
-        this._iframe.addEventListener('webkitfullscreenchange', (e) => {
+        this._iframe.addEventListener('webkitfullscreenchange', () => {
           if (document.webkitFullscreenElement === this._iframe) {
             this.emit(DAILY_EVENT_FULLSCREEN, {
               action: DAILY_EVENT_FULLSCREEN,
@@ -1102,6 +1124,17 @@ export default class DailyIframe extends EventEmitter {
     }
 
     this.resetMeetingDependentVars();
+    this._destroyed = true;
+    if (this.strictMode) {
+      // we set this to undefined in strictMode so that all calls to
+      // the underlying channel's sendMessageToCallMachine will fail
+      this._callFrameId = undefined;
+    }
+    _callInstance = undefined;
+  }
+
+  isDestroyed() {
+    return this._destroyed;
   }
 
   loadCss({ bodyClass, cssFile, cssText }) {
@@ -1693,7 +1726,7 @@ export default class DailyIframe extends EventEmitter {
     if (this._callState !== DAILY_STATE_JOINED) {
       throw new Error('startCustomTrack() is only allowed when joined');
     }
-    return new Promise((resolve, _) => {
+    return new Promise((resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
           reject({ error: msg.error });
@@ -1720,7 +1753,7 @@ export default class DailyIframe extends EventEmitter {
     if (this._callState !== DAILY_STATE_JOINED) {
       throw new Error('stopCustomTrack() is only allowed when joined');
     }
-    return new Promise((resolve, _) => {
+    return new Promise((resolve) => {
       let k = (msg) => {
         resolve(msg.mediaTag);
       };
@@ -1741,7 +1774,7 @@ export default class DailyIframe extends EventEmitter {
         'Before you can invoke setCamera, first you need to invoke one of these methods: join, startCamera, or preAuth'
       );
     }
-    return new Promise((resolve, _) => {
+    return new Promise((resolve) => {
       let k = (msg) => {
         resolve({ device: msg.device });
       };
@@ -1760,7 +1793,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   cycleCamera() {
-    return new Promise((resolve, _) => {
+    return new Promise((resolve) => {
       let k = (msg) => {
         resolve({ device: msg.device });
       };
@@ -1770,7 +1803,7 @@ export default class DailyIframe extends EventEmitter {
 
   cycleMic() {
     methodNotSupportedInReactNative();
-    return new Promise((resolve, _) => {
+    return new Promise((resolve) => {
       let k = (msg) => {
         resolve({ device: msg.device });
       };
@@ -1780,7 +1813,7 @@ export default class DailyIframe extends EventEmitter {
 
   getCameraFacingMode() {
     methodOnlySupportedInReactNative();
-    return new Promise((resolve, _) => {
+    return new Promise((resolve) => {
       let k = (msg) => {
         resolve(msg.facingMode);
       };
@@ -1795,7 +1828,7 @@ export default class DailyIframe extends EventEmitter {
     console.warn(
       'setInputDevices() is deprecated: instead use setInputDevicesAsync(), which returns a Promise'
     );
-    this.setInputDevicesAsync({
+    void this.setInputDevicesAsync({
       audioDeviceId,
       videoDeviceId,
       audioSource,
@@ -1874,7 +1907,7 @@ export default class DailyIframe extends EventEmitter {
     console.warn(
       'setOutputDevice() is deprecated: instead use setOutputDeviceAsync(), which returns a Promise'
     );
-    this.setOutputDeviceAsync({ outputDeviceId });
+    void this.setOutputDeviceAsync({ outputDeviceId });
     return this;
   }
 
@@ -1930,7 +1963,7 @@ export default class DailyIframe extends EventEmitter {
       };
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       let k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
@@ -2042,6 +2075,13 @@ export default class DailyIframe extends EventEmitter {
   async load(properties) {
     if (!this.needsLoad()) {
       return;
+    }
+
+    if (this._destroyed) {
+      this._logUseAfterDestroy();
+      if (this.strictMode) {
+        throw new Error('Use after destroy');
+      }
     }
 
     if (properties) {
@@ -2241,7 +2281,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async leave() {
-    return new Promise((resolve, _) => {
+    return new Promise((resolve) => {
       if (this._callObjectLoader && !this._callObjectLoader.loaded) {
         // If call object bundle never successfully loaded, cancel load if
         // needed and clean up state immediately (without waiting for call
@@ -2461,7 +2501,7 @@ export default class DailyIframe extends EventEmitter {
       let stats = { latest: {} };
       return { stats };
     }
-    return new Promise((resolve, _) => {
+    return new Promise((resolve) => {
       let k = (msg) => {
         resolve({ stats: msg.stats, ...this._network });
       };
@@ -2514,7 +2554,7 @@ export default class DailyIframe extends EventEmitter {
       return { devices: raw.map((d) => JSON.parse(JSON.stringify(d))) };
     }
 
-    return new Promise((resolve, _) => {
+    return new Promise((resolve) => {
       let k = (msg) => {
         resolve({ devices: msg.devices });
       };
@@ -2684,7 +2724,7 @@ export default class DailyIframe extends EventEmitter {
 
   detectAllFaces() {
     methodNotSupportedInReactNative();
-    return new Promise((resolve, _) => {
+    return new Promise((resolve) => {
       let k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
@@ -2718,7 +2758,7 @@ export default class DailyIframe extends EventEmitter {
   exitFullscreen() {
     methodNotSupportedInReactNative();
     if (document.fullscreenElement) {
-      document.exitFullscreen();
+      void document.exitFullscreen();
     } else if (document.webkitFullscreenElement) {
       document.webkitExitFullscreen();
     }
@@ -2733,7 +2773,7 @@ export default class DailyIframe extends EventEmitter {
       !this.needsLoad()
     ) {
       // We've succesfully join()ed or preAuth()ed, so we should have room info.
-      return new Promise((resolve, _) => {
+      return new Promise((resolve) => {
         let k = (msg) => {
           delete msg.action;
           delete msg.callbackStamp;
@@ -2760,7 +2800,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async geo() {
-    return new Promise(async (resolve, _) => {
+    return new Promise(async (resolve) => {
       try {
         let url = 'https://gs.daily.co/_ks_/x-swsl/:';
         let res = await fetch(url);
@@ -2904,6 +2944,12 @@ export default class DailyIframe extends EventEmitter {
   }
 
   sendMessageToCallMachine(message, callback) {
+    if (this._destroyed) {
+      this._logUseAfterDestroy();
+      if (this.strictMode) {
+        throw new Error('Use after destroy');
+      }
+    }
     this._messageChannel.sendMessageToCallMachine(
       message,
       callback,
@@ -2988,53 +3034,11 @@ export default class DailyIframe extends EventEmitter {
 
           try {
             // track events
-            this.maybeEventTrackStopped(
-              this._participants[id],
-              msg.participant,
-              'audioTrack'
-            );
-            this.maybeEventTrackStopped(
-              this._participants[id],
-              msg.participant,
-              'videoTrack'
-            );
-            this.maybeEventTrackStopped(
-              this._participants[id],
-              msg.participant,
-              'screenVideoTrack'
-            );
-            this.maybeEventTrackStopped(
-              this._participants[id],
-              msg.participant,
-              'screenAudioTrack'
-            );
-            this.maybeEventTrackStarted(
-              this._participants[id],
-              msg.participant,
-              'audioTrack'
-            );
-            this.maybeEventTrackStarted(
-              this._participants[id],
-              msg.participant,
-              'videoTrack'
-            );
-            this.maybeEventTrackStarted(
-              this._participants[id],
-              msg.participant,
-              'screenVideoTrack'
-            );
-            this.maybeEventTrackStarted(
-              this._participants[id],
-              msg.participant,
-              'screenAudioTrack'
-            );
-            // custom tracks (presumably we'll do all tracks consistently in the
-            // future, refactoring the above maybeEventTrack* events)
-            this.maybeEventTrackStoppedForCustomTracks(
+            this.maybeParticipantTracksStopped(
               this._participants[id],
               msg.participant
             );
-            this.maybeEventTrackStartedForCustomTracks(
+            this.maybeParticipantTracksStarted(
               this._participants[id],
               msg.participant
             );
@@ -3073,11 +3077,7 @@ export default class DailyIframe extends EventEmitter {
           // track events
           let prevP = this._participants[msg.participant.session_id];
           if (prevP) {
-            this.maybeEventTrackStopped(prevP, null, 'audioTrack');
-            this.maybeEventTrackStopped(prevP, null, 'videoTrack');
-            this.maybeEventTrackStopped(prevP, null, 'screenVideoTrack');
-            this.maybeEventTrackStopped(prevP, null, 'screenAudioTrack');
-            this.maybeEventTrackStoppedForCustomTracks(prevP, null);
+            this.maybeParticipantTracksStopped(prevP, null);
           }
           // delete from local cach
           delete this._participants[msg.participant.session_id];
@@ -3164,25 +3164,6 @@ export default class DailyIframe extends EventEmitter {
           console.log('could not emit', msg, e);
         }
         break;
-      case DAILY_EVENT_INPUT_EVENT:
-        let p = this._participants[msg.session_id];
-        if (!p) {
-          if (msg.session_id === this._participants.local.session_id) {
-            p = this._participants.local;
-          } else {
-            p = {};
-          }
-        }
-        try {
-          this.emit(msg.event.type, {
-            action: msg.event.type,
-            event: msg.event,
-            participant: { ...p },
-          });
-        } catch (e) {
-          console.log('could not emit', msg, e);
-        }
-        break;
       case DAILY_EVENT_SELECTED_DEVICES_UPDATED:
         if (msg.devices) {
           try {
@@ -3193,58 +3174,66 @@ export default class DailyIframe extends EventEmitter {
         }
         break;
       case DAILY_EVENT_NETWORK_QUALITY_CHANGE:
-        let { threshold, quality } = msg;
-        if (
-          threshold !== this._network.threshold ||
-          quality !== this._network.quality
-        ) {
-          this._network.quality = quality;
-          this._network.threshold = threshold;
-          try {
-            this.emit(msg.action, msg);
-          } catch (e) {
-            console.log('could not emit', msg, e);
+        {
+          let { threshold, quality } = msg;
+          if (
+            threshold !== this._network.threshold ||
+            quality !== this._network.quality
+          ) {
+            this._network.quality = quality;
+            this._network.threshold = threshold;
+            try {
+              this.emit(msg.action, msg);
+            } catch (e) {
+              console.log('could not emit', msg, e);
+            }
           }
         }
         break;
       case DAILY_EVENT_ACTIVE_SPEAKER_CHANGE:
-        let { activeSpeaker } = msg;
-        if (this._activeSpeaker.peerId !== activeSpeaker.peerId) {
-          this._activeSpeaker.peerId = activeSpeaker.peerId;
+        {
+          let { activeSpeaker } = msg;
+          if (this._activeSpeaker.peerId !== activeSpeaker.peerId) {
+            this._activeSpeaker.peerId = activeSpeaker.peerId;
+            try {
+              this.emit(msg.action, {
+                action: msg.action,
+                activeSpeaker: this._activeSpeaker,
+              });
+            } catch (e) {
+              console.log('could not emit', msg, e);
+            }
+          }
+        }
+        break;
+      case DAILY_EVENT_SHOW_LOCAL_VIDEO_CHANGED:
+        {
+          if (this._callObjectMode) return;
+          const { show } = msg;
+          this._showLocalVideo = show;
           try {
             this.emit(msg.action, {
               action: msg.action,
-              activeSpeaker: this._activeSpeaker,
+              show,
             });
           } catch (e) {
             console.log('could not emit', msg, e);
           }
         }
         break;
-      case DAILY_EVENT_SHOW_LOCAL_VIDEO_CHANGED:
-        if (this._callObjectMode) return;
-        const { show } = msg;
-        this._showLocalVideo = show;
-        try {
-          this.emit(msg.action, {
-            action: msg.action,
-            show,
-          });
-        } catch (e) {
-          console.log('could not emit', msg, e);
-        }
-        break;
       case DAILY_EVENT_ACTIVE_SPEAKER_MODE_CHANGE:
-        const { enabled } = msg;
-        if (this._activeSpeakerMode !== enabled) {
-          this._activeSpeakerMode = enabled;
-          try {
-            this.emit(msg.action, {
-              action: msg.action,
-              enabled: this._activeSpeakerMode,
-            });
-          } catch (e) {
-            console.log('could not emit', msg, e);
+        {
+          const { enabled } = msg;
+          if (this._activeSpeakerMode !== enabled) {
+            this._activeSpeakerMode = enabled;
+            try {
+              this.emit(msg.action, {
+                action: msg.action,
+                enabled: this._activeSpeakerMode,
+              });
+            } catch (e) {
+              console.log('could not emit', msg, e);
+            }
           }
         }
         break;
@@ -3355,6 +3344,12 @@ export default class DailyIframe extends EventEmitter {
           console.log('could not emit', msg, e);
         }
         break;
+      case DAILY_REQUEST_FULLSCREEN:
+        this.requestFullscreen();
+        break;
+      case DAILY_EXIT_FULLSCREEN:
+        this.exitFullscreen();
+        break;
       default: // no op
     }
   }
@@ -3391,118 +3386,74 @@ export default class DailyIframe extends EventEmitter {
     }
   }
 
-  maybeEventTrackStopped(prevP, thisP, key) {
-    if (!prevP) {
-      return;
-    }
-    if (
-      (prevP[key] && prevP[key].readyState === 'ended') ||
-      (prevP[key] && !(thisP && thisP[key])) ||
-      (prevP[key] && prevP[key].id !== thisP[key].id)
-    ) {
-      try {
-        this.emit(DAILY_EVENT_TRACK_STOPPED, {
-          action: DAILY_EVENT_TRACK_STOPPED,
-          track: prevP[key],
-          participant: thisP,
-        });
-      } catch (e) {
-        console.log('could not emit', e);
-      }
-    }
-  }
-
-  maybeEventCustomTrackStopped(prevTrack, thisTrack, thisP) {
+  maybeEventTrackStopped(prevTrack, thisTrack, thisP, type) {
     if (!prevTrack) {
       return;
     }
     if (
-      (prevTrack && prevTrack.readyState === 'ended') ||
-      (prevTrack && !thisTrack) ||
-      (prevTrack && prevTrack.id !== thisTrack.id)
+      prevTrack.readyState === 'ended' ||
+      !thisTrack ||
+      prevTrack.id !== thisTrack.id
     ) {
       try {
         this.emit(DAILY_EVENT_TRACK_STOPPED, {
           action: DAILY_EVENT_TRACK_STOPPED,
           track: prevTrack,
           participant: thisP,
+          type,
         });
       } catch (e) {
-        console.log('maybeEventCustomTrackStopped: could not emit', e);
+        console.log('maybeEventTrackStopped: could not emit', e);
       }
     }
   }
 
-  maybeEventCustomTrackStarted(prevTrack, thisTrack, thisP) {
+  maybeEventTrackStarted(prevTrack, thisTrack, thisP, type) {
+    if (!thisTrack) {
+      return;
+    }
     if (
-      (thisTrack && !prevTrack) ||
-      (thisTrack && prevTrack.readyState === 'ended') ||
-      (thisTrack && thisTrack.id !== prevTrack.id)
+      !prevTrack ||
+      prevTrack.readyState === 'ended' ||
+      thisTrack.id !== prevTrack.id
     ) {
       try {
         this.emit(DAILY_EVENT_TRACK_STARTED, {
           action: DAILY_EVENT_TRACK_STARTED,
           track: thisTrack,
           participant: thisP,
+          type,
         });
       } catch (e) {
-        console.log('maybeEventCustomTrackStarted: could not emit', e);
+        console.log('maybeEventTrackStarted: could not emit', e);
       }
     }
   }
 
-  maybeEventTrackStarted(prevP, thisP, key) {
-    if (
-      (thisP[key] && !(prevP && prevP[key])) ||
-      (thisP[key] && prevP[key].readyState === 'ended') ||
-      (thisP[key] && thisP[key].id !== prevP[key].id)
-    ) {
-      try {
-        this.emit(DAILY_EVENT_TRACK_STARTED, {
-          action: DAILY_EVENT_TRACK_STARTED,
-          track: thisP[key],
-          participant: thisP,
-        });
-      } catch (e) {
-        console.log('could not emit', e);
-      }
-    }
-  }
-
-  maybeEventTrackStoppedForCustomTracks(prevP, thisP) {
+  maybeParticipantTracksStopped(prevP, thisP) {
     if (!prevP) {
       return;
     }
     for (const trackKey in prevP.tracks) {
-      // we might be able to use this logic for all tracks, not just additional,
-      // non-standard tracks. but for now, we'll only handle the non-standard
-      // tracks
-      if (Participant.isPredefinedTrack(trackKey)) {
-        continue;
-      }
-      this.maybeEventCustomTrackStopped(
+      this.maybeEventTrackStopped(
         prevP.tracks[trackKey].track,
         thisP && thisP.tracks[trackKey] ? thisP.tracks[trackKey].track : null,
-        thisP
+        thisP,
+        trackKey
       );
     }
   }
 
-  maybeEventTrackStartedForCustomTracks(prevP, thisP) {
+  maybeParticipantTracksStarted(prevP, thisP) {
     if (!thisP) {
       return;
     }
     for (const trackKey in thisP.tracks) {
-      // we might be able to use this logic for all tracks, not just additional,
-      // non-standard tracks. but for now, we'll only handle the non-standard
-      // tracks
-      if (Participant.isPredefinedTrack(trackKey)) {
-        continue;
-      }
-      this.maybeEventCustomTrackStarted(
+      this.maybeEventTrackStarted(
         prevP && prevP.tracks[trackKey] ? prevP.tracks[trackKey].track : null,
         thisP.tracks[trackKey].track,
-        thisP
+        thisP,
+        trackKey
       );
     }
   }
@@ -3703,7 +3654,7 @@ export default class DailyIframe extends EventEmitter {
       // Desktop web, iOS web, and React Native support the 'devicechange' event
       navigator.mediaDevices.addEventListener(
         'devicechange',
-        this.deviceChangeListener
+        void this.deviceChangeListener
       );
     } else {
       // Android Chrome/Samsung Internet doesn't support the 'devicechange'
@@ -3720,7 +3671,7 @@ export default class DailyIframe extends EventEmitter {
       // Desktop web, iOS web, and React Native support the 'devicechange' event
       navigator.mediaDevices.removeEventListener(
         'devicechange',
-        this.deviceChangeListener
+        void this.deviceChangeListener
       );
     } else {
       // Android Chrome/Samsung Internet doesn't support the 'devicechange'
@@ -3853,9 +3804,61 @@ export default class DailyIframe extends EventEmitter {
     console.log(str);
     return str;
   }
+
+  _logUseAfterDestroy() {
+    // if we have any live call instance, send the log over the wire to land in l&t
+    // any l&t attached to this window. it don't matter which :)
+    if (!this.needsLoad()) {
+      // once strictMode is always true, this block can go away because it
+      // should be impossible for needsLoad to be false
+      const logMsg = {
+        action: DAILY_METHOD_TRANSMIT_LOG,
+        level: 'error',
+        code: this.strictMode ? 9995 : 9996,
+      };
+      this._messageChannel.sendMessageToCallMachine(
+        logMsg,
+        null,
+        this._iframe,
+        this._callFrameId
+      );
+    } else if (_callInstance && !_callInstance.needsLoad()) {
+      const logMsg = {
+        action: DAILY_METHOD_TRANSMIT_LOG,
+        level: 'error',
+        code: this.strictMode ? 9995 : 9996,
+      };
+      _callInstance.sendMessageToCallMachine(logMsg);
+    } else if (!this.strictMode) {
+      const errMsg =
+        'You are attempting to use a call instance that was previously ' +
+        'destroyed. This is unsupported and will not be allowed beginning in ' +
+        '0.42.0. Add `strictMode: true` to your call frame constructor ' +
+        'properties to debug and catch the error now.';
+      console.error(errMsg);
+    }
+  }
+
+  _logDuplicateInstanceAttempt() {
+    if (!_callInstance.needsLoad()) {
+      _callInstance.sendMessageToCallMachine({
+        action: DAILY_METHOD_TRANSMIT_LOG,
+        level: 'error',
+        code: this.strictMode ? 9990 : 9991,
+      });
+    } else if (!this.strictMode) {
+      const errMsg =
+        'Duplicate call object instances detected. Please ensure the ' +
+        'previous instance has been destroyed before creating a new one. ' +
+        'This is unsupported and will result in unknown errors. This will ' +
+        'not be allowed beginning in 0.42.0. Add `strictMode: true` to your ' +
+        'call frame constructor properties to debug and catch the error now.';
+      console.error(errMsg);
+    }
+  }
 }
 
-function initializePreloadCache(callObject, properties) {
+function initializePreloadCache() {
   return {
     subscribeToTracksAutomatically: true,
     audioDeviceId: null,
@@ -4045,13 +4048,43 @@ function validateReceiveSettings(
   return true;
 }
 
-// Since currently videoProcessor is the only inputSetting. I wrote this code to reject
-// everything else. I feel it is the safe approach. This will need changes as more
-// functionality is added to inputSettings in the future.
 function validateInputSettings(settings) {
   if (typeof settings !== 'object') return false;
-  if (!(settings.video && typeof settings.video === 'object')) return false;
-  if (!validateVideoProcessor(settings.video.processor)) return false;
+  if (
+    !(
+      (settings.video && typeof settings.video === 'object') ||
+      (settings.audio && typeof settings.audio === 'object')
+    )
+  )
+    return false;
+  if (settings.video && !validateVideoProcessor(settings.video.processor))
+    return false;
+  if (settings.audio && !validateAudioProcessor(settings.audio.processor))
+    return false;
+  return true;
+}
+
+function validateAudioProcessor(p) {
+  const VALID_PROCESSOR_KEYS = ['type'];
+  if (!p) return false;
+  if (typeof p !== 'object') return false;
+  Object.keys(p)
+    .filter((k) => !VALID_PROCESSOR_KEYS.includes(k))
+    .forEach((k) => {
+      console.warn(`invalid key inputSettings -> audio -> processor : ${k}`);
+      delete p[k];
+    });
+  if (p.type && !validateAudioProcessorType(p.type)) return false;
+
+  return true;
+}
+
+function validateAudioProcessorType(type) {
+  if (typeof type !== 'string') return false;
+  if (!Object.values(AUDIO_PROCESSOR_TYPES).includes(type)) {
+    console.error('inputSettings audio processor type invalid');
+    return false;
+  }
   return true;
 }
 
@@ -4189,8 +4222,9 @@ function validateVideoProcessorType(type) {
 }
 
 function inputSettingsValidationHelpMsg() {
-  let processorOpts = Object.values(VIDEO_PROCESSOR_TYPES).join(' | ');
-  return `inputSettings must be of the form: { video: { processor: [ ${processorOpts} ] }, config?: {} }`;
+  let videoProcessorOpts = Object.values(VIDEO_PROCESSOR_TYPES).join(' | ');
+  let audioProcessorOpts = Object.values(AUDIO_PROCESSOR_TYPES).join(' | ');
+  return `inputSettings must be of the form: { video?: { processor: { type: [ ${videoProcessorOpts} ], config?: {} } }, audio?: { processor: {type: [ ${audioProcessorOpts} ] } } }`;
 }
 
 function receiveSettingsValidationHelpMsg({ allowAllParticipantsKey }) {

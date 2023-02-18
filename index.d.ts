@@ -148,6 +148,7 @@ export interface DailyBrowserInfo {
   supportsScreenShare: boolean;
   supportsSfu: boolean;
   supportsVideoProcessing: boolean;
+  supportsAudioProcessing: boolean;
 }
 
 export interface DailyThemeColors {
@@ -262,6 +263,10 @@ export interface DailyLoadOptions extends DailyCallOptions {
   baseUrl?: string;
 }
 
+export interface DailyFactoryOptions extends DailyCallOptions {
+  srictMode?: boolean; // only available at constructor time
+}
+
 export interface DailyMicAudioModeSettings {
   bitrate?: number;
   stereo?: boolean;
@@ -271,6 +276,7 @@ export interface DailyAdvancedConfig {
   camSimulcastEncodings?: any[];
   disableSimulcast?: boolean;
   experimentalChromeVideoMuteLightOff?: boolean;
+  keepCamIndicatorLightOn?: boolean;
   experimentalGetUserMediaConstraintsModify?: (
     constraints: MediaStreamConstraints
   ) => void;
@@ -390,9 +396,11 @@ export interface DailyWaitingParticipant {
   awaitingAccess: SpecifiedDailyAccess;
 }
 
-export type DailyTrackSubscriptionState = 'staged' | boolean;
+export type DailyTrackSubscriptionState = 'staged' | boolean;
 
-export type DailyCustomTrackSubscriptionState = DailyTrackSubscriptionState | { [name: string]: DailyTrackSubscriptionState };
+export type DailyCustomTrackSubscriptionState =
+  | DailyTrackSubscriptionState
+  | { [name: string]: DailyTrackSubscriptionState };
 
 export type DailyTrackSubscriptionOptions =
   | DailyTrackSubscriptionState
@@ -498,6 +506,7 @@ export interface DailyRoomInfo {
     enable_hand_raising?: boolean;
     enable_knocking?: boolean;
     enable_network_ui?: boolean;
+    enable_noise_cancellation_ui?: boolean;
     enable_people_ui?: boolean;
     enable_pip_ui?: boolean;
     enable_prejoin_ui?: boolean;
@@ -536,6 +545,7 @@ export interface DailyRoomInfo {
     enable_chat?: boolean;
     enable_hand_raising?: boolean;
     enable_network_ui?: boolean;
+    enable_noise_cancellation_ui?: boolean;
     enable_people_ui?: boolean;
     enable_pip_ui?: boolean;
     enable_prejoin_ui?: boolean;
@@ -604,7 +614,16 @@ export interface DailyReceiveSettingsUpdates {
 }
 
 export interface DailyInputSettings {
+  audio?: DailyInputAudioSettings;
   video?: DailyInputVideoSettings;
+}
+
+export interface DailyInputAudioSettings {
+  processor?: DailyInputAudioProcessorSettings;
+}
+
+export interface DailyInputAudioProcessorSettings {
+  type: 'none' | 'noise-cancellation';
 }
 
 export interface DailyInputVideoSettings {
@@ -614,6 +633,7 @@ export interface DailyInputVideoProcessorSettings {
   type: 'none' | 'background-blur' | 'background-image';
   config?: {};
 }
+
 export interface DailyEventObjectNoPayload {
   action: Extract<
     DailyEvent,
@@ -771,6 +791,14 @@ export interface DailyEventObjectTrack {
   action: Extract<DailyEvent, 'track-started' | 'track-stopped'>;
   participant: DailyParticipant | null; // null if participant left meeting
   track: MediaStreamTrack;
+  type:
+    | 'video'
+    | 'audio'
+    | 'screenVideo'
+    | 'screenAudio'
+    | 'rmpVideo'
+    | 'rmpAudio'
+    | string; // string - for custom tracks
 }
 
 export interface DailyEventObjectRecordingStarted {
@@ -919,7 +947,7 @@ export interface DailyEventObjectTranscriptionStarted {
   tier?: string;
   detect_language?: boolean;
   profanity_filter?: boolean;
-  redact?: boolean;
+  redact?: Array<string> | boolean;
   startedBy: string;
 }
 
@@ -1039,14 +1067,15 @@ export interface DailyFaceInfo {
 }
 
 export interface DailyCallFactory {
-  createCallObject(properties?: DailyCallOptions): DailyCall;
-  wrap(iframe: HTMLIFrameElement, properties?: DailyCallOptions): DailyCall;
+  createCallObject(properties?: DailyFactoryOptions): DailyCall;
+  wrap(iframe: HTMLIFrameElement, properties?: DailyFactoryOptions): DailyCall;
   createFrame(
     parentElement: HTMLElement,
-    properties?: DailyCallOptions
+    properties?: DailyFactoryOptions
   ): DailyCall;
-  createFrame(properties?: DailyCallOptions): DailyCall;
-  createTransparentFrame(properties?: DailyCallOptions): DailyCall;
+  createFrame(properties?: DailyFactoryOptions): DailyCall;
+  createTransparentFrame(properties?: DailyFactoryOptions): DailyCall;
+  getCallInstance(): DailyCall;
 }
 
 export interface DailyCallStaticUtils {
@@ -1187,7 +1216,7 @@ export interface DailyTranscriptionDeepgramOptions {
   tier?: string;
   detect_language?: boolean;
   profanity_filter?: boolean;
-  redact?: boolean;
+  redact?: Array<string> | boolean;
 }
 
 export interface DailyCall {
@@ -1195,6 +1224,7 @@ export interface DailyCall {
   join(properties?: DailyCallOptions): Promise<DailyParticipantsObject | void>;
   leave(): Promise<void>;
   destroy(): Promise<void>;
+  isDestroyed(): boolean;
   loadCss(properties: {
     bodyClass?: string;
     cssFile?: string;
