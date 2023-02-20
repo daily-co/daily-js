@@ -75,6 +75,7 @@ export type DailyEvent =
   | 'touchmove'
   | 'touchend'
   | 'live-streaming-started'
+  | 'live-streaming-updated'
   | 'live-streaming-stopped'
   | 'live-streaming-error'
   | 'lang-updated'
@@ -934,6 +935,12 @@ export interface DailyEventObjectLiveStreamingStarted {
   layout?: DailyStreamingLayoutConfig;
   instanceId?: string;
 }
+export interface DailyEventObjectLiveStreamingUpdated {
+  action: Extract<DailyEvent, 'live-streaming-updated'>;
+  endpoint?: DailyStreamingEndpoint;
+  state: DailyStreamingState;
+  instanceId?: string;
+}
 
 export interface DailyEventObjectLiveStreamingStopped {
   action: Extract<DailyEvent, 'live-streaming-stopped'>;
@@ -998,6 +1005,12 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectGenericError
     : T extends DailyEventObjectParticipants['action']
     ? DailyEventObjectParticipants
+    : T extends DailyEventObjectLiveStreamingStarted['action']
+    ? DailyEventObjectLiveStreamingStarted
+    : T extends DailyEventObjectLiveStreamingUpdated['action']
+    ? DailyEventObjectLiveStreamingUpdated
+    : T extends DailyEventObjectLiveStreamingStopped['action']
+    ? DailyEventObjectLiveStreamingStopped
     : T extends DailyEventObjectLiveStreamingError['action']
     ? DailyEventObjectLiveStreamingError
     : T extends DailyEventObjectParticipant['action']
@@ -1018,6 +1031,10 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectTrack
     : T extends DailyEventObjectRecordingStarted['action']
     ? DailyEventObjectRecordingStarted
+    : T extends DailyEventObjectRecordingStopped['action']
+    ? DailyEventObjectRecordingStopped
+    : T extends DailyEventObjectRecordingError['action']
+    ? DailyEventObjectRecordingError
     : T extends DailyEventObjectRecordingData['action']
     ? DailyEventObjectRecordingData
     : T extends DailyEventObjectRemoteMediaPlayerUpdate['action']
@@ -1122,6 +1139,8 @@ export type DailyStreamingLayoutConfig =
   | DailyStreamingActiveParticipantLayoutConfig
   | DailyStreamingPortraitLayoutConfig
   | DailyStreamingCustomLayoutConfig;
+
+export type DailyStreamingState = 'connected' | 'interrupted';
 
 export type DailyRemoteMediaPlayerSettingPlay = 'play';
 export type DailyRemoteMediaPlayerSettingPause = 'pause';
