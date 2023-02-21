@@ -86,6 +86,7 @@ import {
   DAILY_EVENT_NETWORK_CONNECTION,
   DAILY_EVENT_RECORDING_DATA,
   DAILY_EVENT_LIVE_STREAMING_STARTED,
+  DAILY_EVENT_LIVE_STREAMING_UPDATED,
   DAILY_EVENT_LIVE_STREAMING_STOPPED,
   DAILY_EVENT_LIVE_STREAMING_ERROR,
   DAILY_EVENT_LANG_UPDATED,
@@ -292,6 +293,7 @@ export {
   DAILY_EVENT_NETWORK_CONNECTION,
   DAILY_EVENT_RECORDING_DATA,
   DAILY_EVENT_LIVE_STREAMING_STARTED,
+  DAILY_EVENT_LIVE_STREAMING_UPDATED,
   DAILY_EVENT_LIVE_STREAMING_STOPPED,
   DAILY_EVENT_LIVE_STREAMING_ERROR,
   DAILY_EVENT_LANG_UPDATED,
@@ -1097,7 +1099,9 @@ export default class DailyIframe extends EventEmitter {
       if ([DAILY_STATE_JOINED, DAILY_STATE_LOADING].includes(this._callState)) {
         await this.leave();
       }
-    } catch (e) {}
+    } catch (e) {
+      // no-op
+    }
     let iframe = this._iframe;
     if (iframe) {
       let parent = iframe.parentElement;
@@ -2880,10 +2884,12 @@ export default class DailyIframe extends EventEmitter {
 
   off(eventName, k) {
     delete this._inputEventsOn[eventName];
-    this.sendMessageToCallMachine({
-      action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
-      off: eventName,
-    });
+    if (!this.isDestroyed()) {
+      this.sendMessageToCallMachine({
+        action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
+        off: eventName,
+      });
+    }
     return EventEmitter.prototype.off.call(this, eventName, k);
   }
 
@@ -3334,6 +3340,7 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_NETWORK_CONNECTION:
       case DAILY_EVENT_RECORDING_DATA:
       case DAILY_EVENT_LIVE_STREAMING_STARTED:
+      case DAILY_EVENT_LIVE_STREAMING_UPDATED:
       case DAILY_EVENT_LIVE_STREAMING_STOPPED:
       case DAILY_EVENT_LIVE_STREAMING_ERROR:
       case DAILY_EVENT_NONFATAL_ERROR:
@@ -3654,7 +3661,7 @@ export default class DailyIframe extends EventEmitter {
       // Desktop web, iOS web, and React Native support the 'devicechange' event
       navigator.mediaDevices.addEventListener(
         'devicechange',
-        void this.deviceChangeListener
+        this.deviceChangeListener
       );
     } else {
       // Android Chrome/Samsung Internet doesn't support the 'devicechange'
@@ -3671,7 +3678,7 @@ export default class DailyIframe extends EventEmitter {
       // Desktop web, iOS web, and React Native support the 'devicechange' event
       navigator.mediaDevices.removeEventListener(
         'devicechange',
-        void this.deviceChangeListener
+        this.deviceChangeListener
       );
     } else {
       // Android Chrome/Samsung Internet doesn't support the 'devicechange'
