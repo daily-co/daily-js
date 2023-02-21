@@ -1145,23 +1145,33 @@ export interface DailyStreamingPortraitLayoutConfig {
   max_cam_streams?: number;
 }
 
-export interface DailyStreamingCustomLayoutConfig {
+export interface DailyUpdateStreamingCustomLayoutConfig {
   preset: 'custom';
-  composition_id: string;
   composition_params?: {
     [key: string]: boolean | number | string;
   };
+}
+
+export interface DailyStartStreamingCustomLayoutConfig
+  extends DailyUpdateStreamingCustomLayoutConfig {
+  composition_id: string;
   session_assets?: {
     [key: string]: string;
   };
 }
 
-export type DailyStreamingLayoutConfig =
+type DailyStreamingLayoutConfigType = 'start' | 'update';
+
+export type DailyStreamingLayoutConfig<
+  Type extends DailyStreamingLayoutConfigType = 'start'
+> =
   | DailyStreamingDefaultLayoutConfig
   | DailyStreamingSingleParticipantLayoutConfig
   | DailyStreamingActiveParticipantLayoutConfig
   | DailyStreamingPortraitLayoutConfig
-  | DailyStreamingCustomLayoutConfig;
+  | (Type extends 'start'
+      ? DailyStartStreamingCustomLayoutConfig
+      : DailyUpdateStreamingCustomLayoutConfig);
 
 export type DailyStreamingState = 'connected' | 'interrupted';
 
@@ -1193,7 +1203,9 @@ export type DailyAccessRequest = {
   name: string;
 };
 
-export interface DailyStreamingOptions {
+export interface DailyStreamingOptions<
+  Type extends DailyStreamingLayoutConfigType = 'start'
+> {
   width?: number;
   height?: number;
   fps?: number;
@@ -1203,14 +1215,16 @@ export interface DailyStreamingOptions {
   maxDuration?: number;
   backgroundColor?: string;
   instanceId?: string;
-  layout?: DailyStreamingLayoutConfig;
+  layout?: DailyStreamingLayoutConfig<Type>;
 }
 
 export interface DailyStreamingEndpoint {
   endpoint: string;
 }
 
-export interface DailyLiveStreamingOptions extends DailyStreamingOptions {
+export interface DailyLiveStreamingOptions<
+  Type extends DailyStreamingLayoutConfigType = 'start'
+> extends DailyStreamingOptions<Type> {
   rtmpUrl?: string | string[];
   endpoints?: DailyStreamingEndpoint[];
 }
@@ -1360,15 +1374,15 @@ export interface DailyCall {
   load(properties?: DailyLoadOptions): Promise<void>;
   startScreenShare(captureOptions?: DailyScreenCaptureOptions): void;
   stopScreenShare(): void;
-  startRecording(options?: DailyStreamingOptions): void;
+  startRecording(options?: DailyStreamingOptions<'start'>): void;
   updateRecording(options: {
-    layout?: DailyStreamingLayoutConfig;
+    layout?: DailyStreamingLayoutConfig<'update'>;
     instanceId?: string;
   }): void;
   stopRecording(options?: { instanceId: string }): void;
-  startLiveStreaming(options: DailyLiveStreamingOptions): void;
+  startLiveStreaming(options: DailyLiveStreamingOptions<'start'>): void;
   updateLiveStreaming(options: {
-    layout?: DailyStreamingLayoutConfig;
+    layout?: DailyStreamingLayoutConfig<'update'>;
     instanceId?: string;
   }): void;
   addLiveStreamingEndpoints(options: {
