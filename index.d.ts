@@ -62,6 +62,7 @@ export type DailyEvent =
   | 'active-speaker-mode-change'
   | 'network-quality-change'
   | 'network-connection'
+  | 'cpu-load-change'
   | 'fullscreen'
   | 'exited-fullscreen'
   | 'error'
@@ -480,6 +481,20 @@ export interface DailyNetworkStats {
   threshold: 'good' | 'low' | 'very-low';
 }
 
+export interface DailyCpuLoadState {
+  cpuLoadState: 'low' | 'high';
+}
+
+export interface DailyCpuLoadStats {
+  cpuLoadState: 'low' | 'high';
+  stats: {
+    timestamp: number;
+    avgFrameEncodeTimeSec: number;
+    targetEncodeFrameRate: number;
+    cpuUsageBasedOnTargetEncode: number;
+  };
+}
+
 export interface DailyPendingRoomInfo {
   roomUrlPendingJoin: string;
 }
@@ -871,6 +886,11 @@ export interface DailyEventObjectNetworkQualityEvent {
   quality: number;
 }
 
+export interface DailyEventObjectCpuLoadEvent {
+  action: Extract<DailyEvent, 'cpu-load-change'>;
+  cpuLoadState: 'low' | 'high';
+}
+
 export type NetworkConnectionType = 'signaling' | 'peer-to-peer' | 'sfu';
 
 export interface DailyEventObjectNetworkConnectionEvent {
@@ -1030,6 +1050,8 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectTouchEvent
     : T extends DailyEventObjectNetworkQualityEvent['action']
     ? DailyEventObjectNetworkQualityEvent
+    : T extends DailyEventObjectCpuLoadEvent['action']
+    ? DailyEventObjectCpuLoadEvent
     : T extends DailyEventObjectNetworkConnectionEvent['action']
     ? DailyEventObjectNetworkConnectionEvent
     : T extends DailyEventObjectActiveSpeakerChange['action']
@@ -1348,6 +1370,7 @@ export interface DailyCall {
   startTranscription(options?: DailyTranscriptionDeepgramOptions): void;
   stopTranscription(): void;
   getNetworkStats(): Promise<DailyNetworkStats>;
+  getCpuLoadStats(): Promise<DailyCpuLoadStats>;
   getActiveSpeaker(): { peerId?: string };
   setActiveSpeakerMode(enabled: boolean): DailyCall;
   activeSpeakerMode(): boolean;

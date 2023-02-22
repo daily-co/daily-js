@@ -127,6 +127,8 @@ export const DAILY_EVENT_ACTIVE_SPEAKER_MODE_CHANGE =
 export const DAILY_EVENT_NETWORK_QUALITY_CHANGE = 'network-quality-change';
 export const DAILY_EVENT_NETWORK_CONNECTION = 'network-connection';
 
+export const DAILY_EVENT_CPU_LOAD_CHANGE = 'cpu-load-change';
+
 export const DAILY_EVENT_FULLSCREEN = 'fullscreen';
 export const DAILY_EVENT_EXIT_FULLSCREEN = 'exited-fullscreen';
 
@@ -183,6 +185,7 @@ export const DAILY_METHOD_STOP_RECORDING = 'local-recording-stop';
 export const DAILY_METHOD_LOAD_CSS = 'load-css';
 export const DAILY_METHOD_SET_BANDWIDTH = 'set-bandwidth';
 export const DAILY_METHOD_GET_CALC_STATS = 'get-calc-stats';
+export const DAILY_METHOD_GET_CPU_LOAD_STATS = 'get-cpu-load-stats';
 export const DAILY_METHOD_ENUMERATE_DEVICES = 'enumerate-devices';
 export const DAILY_METHOD_CYCLE_CAMERA = 'cycle-camera';
 export const DAILY_METHOD_SET_CAMERA = 'set-camera';
