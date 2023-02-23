@@ -266,7 +266,7 @@ export interface DailyLoadOptions extends DailyCallOptions {
 }
 
 export interface DailyFactoryOptions extends DailyCallOptions {
-  srictMode?: boolean; // only available at constructor time
+  strictMode?: boolean; // only available at constructor time
 }
 
 export interface DailyMicAudioModeSettings {
