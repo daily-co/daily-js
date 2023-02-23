@@ -954,6 +954,7 @@ export interface DailyEventObjectInputSettingsUpdated {
 export interface DailyEventObjectLiveStreamingStarted {
   action: Extract<DailyEvent, 'live-streaming-started'>;
   layout?: DailyStreamingLayoutConfig;
+  hlsRecordingId?: string;
   instanceId?: string;
 }
 export interface DailyEventObjectLiveStreamingUpdated {
