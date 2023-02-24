@@ -1016,7 +1016,10 @@ export default class DailyIframe extends EventEmitter {
     this._callState = DAILY_STATE_NEW; // only update via updateIsPreparingToJoin() or _updateCallState()
     this._isPreparingToJoin = false; // only update via _updateCallState()
     this._accessState = { access: DAILY_ACCESS_UNKNOWN };
-    this._meetingSessionState = DEFAULT_SESSION_STATE;
+    this._meetingSessionState = maybeStripDataFromMeetingSessionState(
+      DEFAULT_SESSION_STATE,
+      this._callObjectMode
+    );
     this._nativeInCallAudioMode = NATIVE_AUDIO_MODE_VIDEO_CALL;
     this._participants = {};
     this._participantCounts = EMPTY_PARTICIPANT_COUNTS;
@@ -1653,6 +1656,11 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setMeetingSessionData(data, mergeStrategy = 'replace') {
+    methodOnlySupportedInCallObject(
+      this._callObjectMode,
+      'setMeetingSessionData()'
+    );
+
     // Validate call state: session data can only be set once you have
     // joined the meeting
     if (this._callState !== DAILY_STATE_JOINED) {
@@ -3447,8 +3455,23 @@ export default class DailyIframe extends EventEmitter {
         this.emitDailyJSEvent(msg);
         break;
       case DAILY_EVENT_MEETING_SESSION_STATE_UPDATED:
-        this._meetingSessionState = msg.meetingSessionState;
-        this.emitDailyJSEvent(msg);
+        const topologyChanged =
+          this._meetingSessionState.topology !==
+          (msg.meetingSessionState && msg.meetingSessionState.topology);
+
+        // Update meeting session state
+        this._meetingSessionState = maybeStripDataFromMeetingSessionState(
+          msg.meetingSessionState,
+          this._callObjectMode
+        );
+
+        // In prebuilt mode, since we strip data, only emit if topology changed
+        // (In call object mode blindly emit to avoid expensive deep equality
+        // check; we're trusting call machine to only send us a message when
+        // things have actually changed).
+        if (this._callObjectMode || topologyChanged) {
+          this.emitDailyJSEvent(msg);
+        }
         break;
       case DAILY_EVENT_RECORDING_STARTED:
       case DAILY_EVENT_RECORDING_STOPPED:
@@ -3698,7 +3721,10 @@ export default class DailyIframe extends EventEmitter {
     this._activeSpeakerMode = false;
     this._didPreAuth = false;
     this._accessState = { access: DAILY_ACCESS_UNKNOWN };
-    this._meetingSessionState = DEFAULT_SESSION_STATE;
+    this._meetingSessionState = maybeStripDataFromMeetingSessionState(
+      DEFAULT_SESSION_STATE,
+      this._callObjectMode
+    );
     this._receiveSettings = {};
     this._inputSettings = {};
     resetPreloadCache(this._preloadCache);
@@ -4554,4 +4580,14 @@ function validateRemotePlayerEncodingSettings(playerSettings) {
       }
     });
   }
+}
+
+function maybeStripDataFromMeetingSessionState(
+  meetingSessionState,
+  callObjectMode
+) {
+  if (meetingSessionState && !callObjectMode) {
+    delete meetingSessionState.data;
+  }
+  return meetingSessionState;
 }
