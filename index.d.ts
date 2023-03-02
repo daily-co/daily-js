@@ -291,11 +291,16 @@ export interface DailyCustomIntegration {
    */
   srcdoc?: HTMLIFrameElement['srcdoc'];
   /**
-   * When enabled, shares the integration's state with all other participants in the call.
-   * When the integration is started, it will be started for all participants.
+   * When configured, shares the integration's state with other participants in the call:
+   * - true will share with all other participants
+   * - false won't share
+   * - 'owners' will share with owners only
+   * - string[] will share with participants with given list of session ids
+   * 
+   * When the integration is started, it will be started for other participants, too.
    * When it's stopped, it will stop for all participants.
    */
-  shared?: boolean;
+  shared?: string[] | 'owners' | boolean;
 }
 
 export interface DailyCustomIntegrations {
