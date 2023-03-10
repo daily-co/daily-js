@@ -79,6 +79,7 @@ import {
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED,
   DAILY_EVENT_NETWORK_QUALITY_CHANGE,
+  DAILY_EVENT_CPU_LOAD_CHANGE,
   DAILY_EVENT_ACTIVE_SPEAKER_CHANGE,
   DAILY_EVENT_ACTIVE_SPEAKER_MODE_CHANGE,
   DAILY_EVENT_FULLSCREEN,
@@ -181,6 +182,7 @@ import {
   DAILY_REQUEST_FULLSCREEN,
   DAILY_EXIT_FULLSCREEN,
   DAILY_METHOD_TRANSMIT_LOG,
+  DAILY_METHOD_GET_CPU_LOAD_STATS,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -286,6 +288,7 @@ export {
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED,
   DAILY_EVENT_NETWORK_QUALITY_CHANGE,
+  DAILY_EVENT_CPU_LOAD_CHANGE,
   DAILY_EVENT_ACTIVE_SPEAKER_CHANGE,
   DAILY_EVENT_ACTIVE_SPEAKER_MODE_CHANGE,
   DAILY_EVENT_FULLSCREEN,
@@ -606,7 +609,21 @@ const FRAME_PROPS = {
     }),
   },
   inputSettings: {
-    validate: (inputSettings) => validateInputSettings(inputSettings),
+    validate: (settings, callObject) => {
+      if (validateInputSettings(settings)) {
+        if (!callObject._preloadCache.inputSettings) {
+          callObject._preloadCache.inputSettings = {};
+        }
+        if (settings.audio) {
+          callObject._preloadCache.inputSettings.audio = settings.audio;
+        }
+        if (settings.video) {
+          callObject._preloadCache.inputSettings.video = settings.video;
+        }
+        return true;
+      }
+      return false;
+    },
     help: inputSettingsValidationHelpMsg(),
   },
   // used internally
@@ -982,21 +999,27 @@ export default class DailyIframe extends EventEmitter {
       this._receiveSettings = {};
     }
 
-    this._inputSettings = {};
-    if (properties.inputSettings) {
-      // #Question: Do I need the call-object check here?
-      this._inputSettings = properties.inputSettings;
-    }
-
     this.validateProperties(properties);
     this.properties = { ...properties };
+    if (!this._preloadCache.inputSettings) {
+      this._preloadCache.inputSettings = {};
+    }
+    if (properties.inputSettings && properties.inputSettings.audio) {
+      this._preloadCache.inputSettings.audio = properties.inputSettings.audio;
+    }
+    if (properties.inputSettings && properties.inputSettings.video) {
+      this._preloadCache.inputSettings.video = properties.inputSettings.video;
+    }
     this._callObjectLoader = this._callObjectMode
       ? new CallObjectLoader()
       : null;
     this._callState = DAILY_STATE_NEW; // only update via updateIsPreparingToJoin() or _updateCallState()
     this._isPreparingToJoin = false; // only update via _updateCallState()
     this._accessState = { access: DAILY_ACCESS_UNKNOWN };
-    this._meetingSessionState = DEFAULT_SESSION_STATE;
+    this._meetingSessionState = maybeStripDataFromMeetingSessionState(
+      DEFAULT_SESSION_STATE,
+      this._callObjectMode
+    );
     this._nativeInCallAudioMode = NATIVE_AUDIO_MODE_VIDEO_CALL;
     this._participants = {};
     this._participantCounts = EMPTY_PARTICIPANT_COUNTS;
@@ -1479,19 +1502,86 @@ export default class DailyIframe extends EventEmitter {
   // { video: {...}, audio: {...}, screenVideo: {...}, screenAudio: {...} }
   getInputSettings() {
     return new Promise((resolve) => {
-      resolve(this._inputSettings);
+      if (this.needsLoad()) {
+        // If not fully loaded yet, also look at the preload cache.
+        let _videoSettings = { processor: { type: 'none' } };
+        let _audioSettings = { processor: { type: 'none' } };
+        let haveInputSettingsVideo = false;
+        let haveInputSettingsAudio = false;
+
+        if (
+          this._inputSettings &&
+          this._inputSettings.video &&
+          Object.keys(this._inputSettings.video).length > 0
+        ) {
+          _videoSettings = this._inputSettings.video;
+          haveInputSettingsVideo = true;
+        }
+
+        if (
+          this._inputSettings &&
+          this._inputSettings.audio &&
+          Object.keys(this._inputSettings.audio).length > 0
+        ) {
+          _audioSettings = this._inputSettings.audio;
+          haveInputSettingsAudio = true;
+        }
+
+        const havePreloadCacheInputSettingsVideo =
+          this._preloadCache &&
+          this._preloadCache.inputSettings &&
+          this._preloadCache.inputSettings.video &&
+          Object.keys(this._preloadCache.inputSettings.video).length > 0;
+
+        const havePreloadCacheInputSettingsAudio =
+          this._preloadCache &&
+          this._preloadCache.inputSettings &&
+          this._preloadCache.inputSettings.audio &&
+          Object.keys(this._preloadCache.inputSettings.audio).length > 0;
+
+        // If we have no input settings, but we have input settings in the preload
+        // cache, then resolve with the preload cache.
+        if (!haveInputSettingsVideo && havePreloadCacheInputSettingsVideo) {
+          _videoSettings = this._preloadCache.inputSettings.video;
+        }
+
+        if (!haveInputSettingsAudio && havePreloadCacheInputSettingsAudio) {
+          _audioSettings = this._preloadCache.inputSettings.audio;
+        }
+
+        let _inputSettings = { audio: _audioSettings, video: _videoSettings };
+        resolve(_inputSettings);
+      } else {
+        // return the current input settings
+        resolve(this._inputSettings);
+      }
     });
   }
 
   async updateInputSettings(inputSettings) {
+    if (!validateInputSettings(inputSettings)) {
+      console.error(inputSettingsValidationHelpMsg());
+      return Promise.reject(inputSettingsValidationHelpMsg());
+    }
+
+    if (inputSettings) {
+      if (!this._preloadCache.inputSettings) {
+        this._preloadCache.inputSettings = {};
+      }
+      if (inputSettings.audio) {
+        this._preloadCache.inputSettings.audio = inputSettings.audio;
+      }
+      if (inputSettings.video) {
+        this._preloadCache.inputSettings.video = inputSettings.video;
+      }
+    }
+    // if we're in callObject mode and not loaded yet, don't do anything
+    if (this._callObjectMode && this.needsLoad()) {
+      return { inputSettings: this._preloadCache.inputSettings };
+    }
+
     // Ask call machine to update input settings, then await callback.
     return new Promise((resolve, reject) => {
-      if (!validateInputSettings(inputSettings)) {
-        console.error(inputSettingsValidationHelpMsg());
-        reject(inputSettingsValidationHelpMsg());
-        return;
-      }
-
       const k = (msg) => {
         if (msg.error) {
           reject(msg.error);
@@ -1566,6 +1656,11 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setMeetingSessionData(data, mergeStrategy = 'replace') {
+    methodOnlySupportedInCallObject(
+      this._callObjectMode,
+      'setMeetingSessionData()'
+    );
+
     // Validate call state: session data can only be set once you have
     // joined the meeting
     if (this._callState !== DAILY_STATE_JOINED) {
@@ -2250,6 +2345,18 @@ export default class DailyIframe extends EventEmitter {
     } catch (e) {
       console.log("could not emit 'joining-meeting'", e);
     }
+
+    // set input settings in the preload cache
+    if (!this._preloadCache.inputSettings) {
+      this._preloadCache.inputSettings = {};
+    }
+    if (properties.inputSettings && properties.inputSettings.audio) {
+      this._preloadCache.inputSettings.audio = properties.inputSettings.audio;
+    }
+    if (properties.inputSettings && properties.inputSettings.video) {
+      this._preloadCache.inputSettings.video = properties.inputSettings.video;
+    }
+
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_JOIN,
       properties: makeSafeForPostMessage(this.properties),
@@ -2510,6 +2617,21 @@ export default class DailyIframe extends EventEmitter {
         resolve({ stats: msg.stats, ...this._network });
       };
       this.sendMessageToCallMachine({ action: DAILY_METHOD_GET_CALC_STATS }, k);
+    });
+  }
+
+  getCpuLoadStats() {
+    if (this._callState !== DAILY_STATE_JOINED) {
+      return { cpuLoadState: undefined, stats: {} };
+    }
+    return new Promise((resolve, _) => {
+      let k = (msg) => {
+        resolve(msg.cpuStats);
+      };
+      this.sendMessageToCallMachine(
+        { action: DAILY_METHOD_GET_CPU_LOAD_STATS },
+        k
+      );
     });
   }
 
@@ -3196,6 +3318,17 @@ export default class DailyIframe extends EventEmitter {
           }
         }
         break;
+      case DAILY_EVENT_CPU_LOAD_CHANGE:
+        {
+          if (msg && msg.cpuLoadState) {
+            try {
+              this.emit(msg.action, msg);
+            } catch (e) {
+              console.log('could not emit', msg, e);
+            }
+          }
+        }
+        break;
       case DAILY_EVENT_ACTIVE_SPEAKER_CHANGE:
         {
           let { activeSpeaker } = msg;
@@ -3278,6 +3411,7 @@ export default class DailyIframe extends EventEmitter {
         // input settings
         if (!deepEqual(this._inputSettings, msg.inputSettings)) {
           this._inputSettings = msg.inputSettings;
+          this._preloadCache.inputSettings = {}; // clear cache, if any
           try {
             this.emit(msg.action, {
               action: msg.action,
@@ -3321,8 +3455,23 @@ export default class DailyIframe extends EventEmitter {
         this.emitDailyJSEvent(msg);
         break;
       case DAILY_EVENT_MEETING_SESSION_STATE_UPDATED:
-        this._meetingSessionState = msg.meetingSessionState;
-        this.emitDailyJSEvent(msg);
+        const topologyChanged =
+          this._meetingSessionState.topology !==
+          (msg.meetingSessionState && msg.meetingSessionState.topology);
+
+        // Update meeting session state
+        this._meetingSessionState = maybeStripDataFromMeetingSessionState(
+          msg.meetingSessionState,
+          this._callObjectMode
+        );
+
+        // In prebuilt mode, since we strip data, only emit if topology changed
+        // (In call object mode blindly emit to avoid expensive deep equality
+        // check; we're trusting call machine to only send us a message when
+        // things have actually changed).
+        if (this._callObjectMode || topologyChanged) {
+          this.emitDailyJSEvent(msg);
+        }
         break;
       case DAILY_EVENT_RECORDING_STARTED:
       case DAILY_EVENT_RECORDING_STOPPED:
@@ -3572,7 +3721,10 @@ export default class DailyIframe extends EventEmitter {
     this._activeSpeakerMode = false;
     this._didPreAuth = false;
     this._accessState = { access: DAILY_ACCESS_UNKNOWN };
-    this._meetingSessionState = DEFAULT_SESSION_STATE;
+    this._meetingSessionState = maybeStripDataFromMeetingSessionState(
+      DEFAULT_SESSION_STATE,
+      this._callObjectMode
+    );
     this._receiveSettings = {};
     this._inputSettings = {};
     resetPreloadCache(this._preloadCache);
@@ -3840,7 +3992,7 @@ export default class DailyIframe extends EventEmitter {
       const errMsg =
         'You are attempting to use a call instance that was previously ' +
         'destroyed. This is unsupported and will not be allowed beginning in ' +
-        '0.42.0. Add `strictMode: true` to your call frame constructor ' +
+        '0.43.0. Add `strictMode: true` to your call frame constructor ' +
         'properties to debug and catch the error now.';
       console.error(errMsg);
     }
@@ -3858,7 +4010,7 @@ export default class DailyIframe extends EventEmitter {
         'Duplicate call object instances detected. Please ensure the ' +
         'previous instance has been destroyed before creating a new one. ' +
         'This is unsupported and will result in unknown errors. This will ' +
-        'not be allowed beginning in 0.42.0. Add `strictMode: true` to your ' +
+        'not be allowed beginning in 0.43.0. Add `strictMode: true` to your ' +
         'call frame constructor properties to debug and catch the error now.';
       console.error(errMsg);
     }
@@ -3871,6 +4023,7 @@ function initializePreloadCache() {
     audioDeviceId: null,
     videoDeviceId: null,
     outputDeviceId: null,
+    inputSettings: null,
   };
 }
 
@@ -4427,4 +4580,14 @@ function validateRemotePlayerEncodingSettings(playerSettings) {
       }
     });
   }
+}
+
+function maybeStripDataFromMeetingSessionState(
+  meetingSessionState,
+  callObjectMode
+) {
+  if (meetingSessionState && !callObjectMode) {
+    delete meetingSessionState.data;
+  }
+  return meetingSessionState;
 }
