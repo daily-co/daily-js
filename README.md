@@ -11,7 +11,7 @@ Please check our [our documentation site](https://docs.daily.co/) to get started
 
 Today, calls are by default configured to leave the camera indicator light on even after the camera has been turned off. Starting in 0.43.0, the default behavior will switch, so that turning off the camera turns off the indicator light. This is usually a much better experience for users and worth the tradeoff of slightly slower camera toggling.
 
-There's already been a way to get the 0.43.0 default behavior: specifying `dailyConfig: { experimentalChromeVideoMuteLightOff: true }`. Once the switch to the new default behavior happens, `experimentalChromeVideoMuteLightOff` won't be needed anymore and so will be deprecated.
+To test the change that will be coming in 0.43.0, you can specify `dailyConfig: { experimentalChromeVideoMuteLightOff: true }`. Once the switch to the new default behavior happens, `experimentalChromeVideoMuteLightOff` won't be needed anymore and so will be deprecated.
 
 For those who want to keep the current default behavior of leaving the indicator light on to speed up camera toggling, they can specify `dailyConfig: { keepCamIndicatorLightOn: true }`. This flag is available today.
 
