@@ -13,127 +13,127 @@
  */
 
 export type DailyLanguage =
-  | "de"
-  | "en"
-  | "es"
-  | "fi"
-  | "fr"
-  | "it"
-  | "jp"
-  | "ka"
-  | "nl"
-  | "no"
-  | "pl"
-  | "pt"
-  | "ru"
-  | "sv"
-  | "tr";
+  | 'de'
+  | 'en'
+  | 'es'
+  | 'fi'
+  | 'fr'
+  | 'it'
+  | 'jp'
+  | 'ka'
+  | 'nl'
+  | 'no'
+  | 'pl'
+  | 'pt'
+  | 'ru'
+  | 'sv'
+  | 'tr';
 
-export type DailyLanguageSetting = DailyLanguage | "user";
+export type DailyLanguageSetting = DailyLanguage | 'user';
 
 export type DailyEvent =
-  | "loading"
-  | "load-attempt-failed"
-  | "loaded"
-  | "started-camera"
-  | "camera-error"
-  | "joining-meeting"
-  | "joined-meeting"
-  | "left-meeting"
-  | "participant-joined"
-  | "participant-updated"
-  | "participant-left"
-  | "participant-counts-updated"
-  | "track-started"
-  | "track-stopped"
-  | "recording-started"
-  | "recording-stopped"
-  | "recording-stats"
-  | "recording-error"
-  | "recording-upload-completed"
-  | "recording-data"
-  | "transcription-started"
-  | "transcription-stopped"
-  | "transcription-error"
-  | "app-message"
-  | "local-screen-share-started"
-  | "local-screen-share-stopped"
-  | "active-speaker-change"
-  | "active-speaker-mode-change"
-  | "network-quality-change"
-  | "network-connection"
-  | "fullscreen"
-  | "exited-fullscreen"
-  | "error"
-  | "nonfatal-error"
-  | "click"
-  | "mousedown"
-  | "mouseup"
-  | "mouseover"
-  | "mousemove"
-  | "touchstart"
-  | "touchmove"
-  | "touchend"
-  | "live-streaming-started"
-  | "live-streaming-updated"
-  | "live-streaming-stopped"
-  | "live-streaming-error"
-  | "lang-updated"
-  | "remote-media-player-started"
-  | "remote-media-player-stopped"
-  | "remote-media-player-updated"
-  | "access-state-updated"
-  | "meeting-session-updated"
-  | "meeting-session-state-updated"
-  | "waiting-participant-added"
-  | "waiting-participant-updated"
-  | "waiting-participant-removed"
-  | "theme-updated"
-  | "available-devices-updated"
-  | "receive-settings-updated"
-  | "input-settings-updated"
-  | "show-local-video-changed"
-  | "selected-devices-updated"
-  | "custom-button-click";
+  | 'loading'
+  | 'load-attempt-failed'
+  | 'loaded'
+  | 'started-camera'
+  | 'camera-error'
+  | 'joining-meeting'
+  | 'joined-meeting'
+  | 'left-meeting'
+  | 'participant-joined'
+  | 'participant-updated'
+  | 'participant-left'
+  | 'participant-counts-updated'
+  | 'track-started'
+  | 'track-stopped'
+  | 'recording-started'
+  | 'recording-stopped'
+  | 'recording-stats'
+  | 'recording-error'
+  | 'recording-upload-completed'
+  | 'recording-data'
+  | 'transcription-started'
+  | 'transcription-stopped'
+  | 'transcription-error'
+  | 'app-message'
+  | 'local-screen-share-started'
+  | 'local-screen-share-stopped'
+  | 'active-speaker-change'
+  | 'active-speaker-mode-change'
+  | 'network-quality-change'
+  | 'network-connection'
+  | 'fullscreen'
+  | 'exited-fullscreen'
+  | 'error'
+  | 'nonfatal-error'
+  | 'click'
+  | 'mousedown'
+  | 'mouseup'
+  | 'mouseover'
+  | 'mousemove'
+  | 'touchstart'
+  | 'touchmove'
+  | 'touchend'
+  | 'live-streaming-started'
+  | 'live-streaming-updated'
+  | 'live-streaming-stopped'
+  | 'live-streaming-error'
+  | 'lang-updated'
+  | 'remote-media-player-started'
+  | 'remote-media-player-stopped'
+  | 'remote-media-player-updated'
+  | 'access-state-updated'
+  | 'meeting-session-updated'
+  | 'meeting-session-state-updated'
+  | 'waiting-participant-added'
+  | 'waiting-participant-updated'
+  | 'waiting-participant-removed'
+  | 'theme-updated'
+  | 'available-devices-updated'
+  | 'receive-settings-updated'
+  | 'input-settings-updated'
+  | 'show-local-video-changed'
+  | 'selected-devices-updated'
+  | 'custom-button-click';
 
 export type DailyMeetingState =
-  | "new"
-  | "loading"
-  | "loaded"
-  | "joining-meeting"
-  | "joined-meeting"
-  | "left-meeting"
-  | "error";
+  | 'new'
+  | 'loading'
+  | 'loaded'
+  | 'joining-meeting'
+  | 'joined-meeting'
+  | 'left-meeting'
+  | 'error';
 
 export type DailyCameraErrorType =
-  | "cam-in-use"
-  | "mic-in-use"
-  | "cam-mic-in-use"
-  | "permissions"
-  | "undefined-mediadevices"
-  | "not-found"
-  | "constraints"
-  | "unknown";
+  | 'cam-in-use'
+  | 'mic-in-use'
+  | 'cam-mic-in-use'
+  | 'permissions'
+  | 'undefined-mediadevices'
+  | 'not-found'
+  | 'constraints'
+  | 'unknown';
 
 export type DailyFatalErrorType =
-  | "ejected"
-  | "nbf-room"
-  | "nbf-token"
-  | "exp-room"
-  | "exp-token"
-  | "meeting-full"
-  | "end-of-life"
-  | "not-allowed";
+  | 'ejected'
+  | 'nbf-room'
+  | 'nbf-token'
+  | 'exp-room'
+  | 'exp-token'
+  | 'meeting-full'
+  | 'end-of-life'
+  | 'not-allowed';
 
 export type DailyNonFatalErrorType =
-  | "input-settings-error"
-  | "screen-share-error"
-  | "video-processor-error"
-  | "remote-media-player-error"
-  | "live-streaming-warning"
-  | "meeting-session-data-error";
+  | 'input-settings-error'
+  | 'screen-share-error'
+  | 'video-processor-error'
+  | 'remote-media-player-error'
+  | 'live-streaming-warning'
+  | 'meeting-session-data-error';
 
-export type DailyNetworkTopology = "sfu" | "peer";
+export type DailyNetworkTopology = 'sfu' | 'peer';
 
 export interface DailyParticipantsObject {
   local: DailyParticipant;
@@ -256,7 +256,7 @@ export interface DailyCallOptions {
 
 export interface StartCustomTrackOptions {
   track: MediaStreamTrack;
-  mode?: "music" | "speech" | DailyMicAudioModeSettings | undefined;
+  mode?: 'music' | 'speech' | DailyMicAudioModeSettings | undefined;
   trackName?: string;
 }
 
@@ -283,7 +283,7 @@ export interface DailyAdvancedConfig {
   ) => void;
   fastConnect?: boolean;
   h264Profile?: string;
-  micAudioMode?: "music" | "speech" | DailyMicAudioModeSettings;
+  micAudioMode?: 'music' | 'speech' | DailyMicAudioModeSettings;
   noAutoDefaultDeviceChange?: boolean;
   preferH264?: boolean;
   preferH264ForCam?: boolean;
@@ -300,12 +300,12 @@ export interface DailyAdvancedConfig {
 export interface DailyTrackState {
   subscribed: DailyTrackSubscriptionState;
   state:
-    | "blocked"
-    | "off"
-    | "sendable"
-    | "loading"
-    | "interrupted"
-    | "playable";
+    | 'blocked'
+    | 'off'
+    | 'sendable'
+    | 'loading'
+    | 'interrupted'
+    | 'playable';
   blocked?: {
     byDeviceMissing?: boolean;
     byDeviceInUse?: boolean;
@@ -332,12 +332,12 @@ export interface DailyParticipantPermissions {
   hasPresence: boolean;
   canSend:
     | Set<
-        | "video"
-        | "audio"
-        | "screenVideo"
-        | "screenAudio"
-        | "customVideo"
-        | "customAudio"
+        | 'video'
+        | 'audio'
+        | 'screenVideo'
+        | 'screenAudio'
+        | 'customVideo'
+        | 'customAudio'
       >
     | boolean;
 }
@@ -397,7 +397,7 @@ export interface DailyWaitingParticipant {
   awaitingAccess: SpecifiedDailyAccess;
 }
 
-export type DailyTrackSubscriptionState = "staged" | boolean;
+export type DailyTrackSubscriptionState = 'staged' | boolean;
 
 export type DailyCustomTrackSubscriptionState =
   | DailyTrackSubscriptionState
@@ -405,7 +405,7 @@ export type DailyCustomTrackSubscriptionState =
 
 export type DailyTrackSubscriptionOptions =
   | DailyTrackSubscriptionState
-  | "avatar"
+  | 'avatar'
   | {
       audio?: DailyTrackSubscriptionState;
       video?: DailyTrackSubscriptionState;
@@ -478,7 +478,7 @@ export interface DailyNetworkStats {
     worstVideoRecvPacketLoss: number;
     worstVideoSendPacketLoss: number;
   };
-  threshold: "good" | "low" | "very-low";
+  threshold: 'good' | 'low' | 'very-low';
 }
 
 export interface DailyPendingRoomInfo {
@@ -522,7 +522,7 @@ export interface DailyRoomInfo {
     autojoin?: boolean;
     eject_at_room_exp?: boolean;
     eject_after_elapsed?: number;
-    lang?: "" | DailyLanguageSetting;
+    lang?: '' | DailyLanguageSetting;
     sfu_switchover?: number;
     signaling_impl?: string;
     geo?: string;
@@ -535,7 +535,7 @@ export interface DailyRoomInfo {
     sfu_impl?: string;
     signaling_impl?: string;
     sfu_switchover?: number;
-    lang?: "" | DailyLanguageSetting;
+    lang?: '' | DailyLanguageSetting;
     max_api_rooms?: number;
     webhook_meeting_end?: any;
     max_live_streams?: number;
@@ -571,7 +571,7 @@ export interface DailyRoomInfo {
     start_cloud_recording?: boolean;
     close_tab_on_exit?: boolean;
     redirect_on_meeting_exit?: string;
-    lang?: "" | DailyLanguageSetting;
+    lang?: '' | DailyLanguageSetting;
   };
   dialInPIN?: string;
 }
@@ -582,10 +582,10 @@ export interface DailyMeetingSession {
 
 export interface DailyMeetingSessionState {
   data: unknown;
-  topology: DailyNetworkTopology | "none";
+  topology: DailyNetworkTopology | 'none';
 }
 
-export type DailySessionDataMergeStrategy = "replace" | "shallow-merge";
+export type DailySessionDataMergeStrategy = 'replace' | 'shallow-merge';
 
 export interface DailyVideoReceiveSettings {
   layer?: number;
@@ -600,18 +600,18 @@ export interface DailyReceiveSettings {
 }
 
 export interface DailyVideoReceiveSettingsUpdates {
-  layer?: number | "inherit";
+  layer?: number | 'inherit';
 }
 
 export interface DailySingleParticipantReceiveSettingsUpdates {
-  video?: DailyVideoReceiveSettingsUpdates | "inherit";
-  screenVideo?: DailyVideoReceiveSettingsUpdates | "inherit";
+  video?: DailyVideoReceiveSettingsUpdates | 'inherit';
+  screenVideo?: DailyVideoReceiveSettingsUpdates | 'inherit';
 }
 
 export interface DailyReceiveSettingsUpdates {
   [participantIdOrBaseOrStar: string]:
     | DailySingleParticipantReceiveSettingsUpdates
-    | "inherit";
+    | 'inherit';
 }
 
 export interface DailyInputSettings {
@@ -624,28 +624,28 @@ export interface DailyInputAudioSettings {
 }
 
 export interface DailyInputAudioProcessorSettings {
-  type: "none" | "noise-cancellation";
+  type: 'none' | 'noise-cancellation';
 }
 
 export interface DailyInputVideoSettings {
   processor?: DailyInputVideoProcessorSettings;
 }
 export interface DailyInputVideoProcessorSettings {
-  type: "none" | "background-blur" | "background-image";
+  type: 'none' | 'background-blur' | 'background-image';
   config?: {};
 }
 
 export interface DailyEventObjectNoPayload {
   action: Extract<
     DailyEvent,
-    | "loading"
-    | "loaded"
-    | "joining-meeting"
-    | "left-meeting"
-    | "recording-stats"
-    | "recording-upload-completed"
-    | "fullscreen"
-    | "exited-fullscreen"
+    | 'loading'
+    | 'loaded'
+    | 'joining-meeting'
+    | 'left-meeting'
+    | 'recording-stats'
+    | 'recording-upload-completed'
+    | 'fullscreen'
+    | 'exited-fullscreen'
   >;
 }
 
@@ -655,53 +655,53 @@ export type DailyCameraError = {
 };
 
 export interface DailyCamPermissionsError extends DailyCameraError {
-  type: Extract<DailyCameraErrorType, "permissions">;
-  blockedBy: "user" | "browser";
-  blockedMedia: Set<"video" | "audio">;
+  type: Extract<DailyCameraErrorType, 'permissions'>;
+  blockedBy: 'user' | 'browser';
+  blockedMedia: Set<'video' | 'audio'>;
 }
 
 export interface DailyCamDeviceNotFoundError extends DailyCameraError {
-  type: Extract<DailyCameraErrorType, "not-found">;
-  missingMedia: Set<"video" | "audio">;
+  type: Extract<DailyCameraErrorType, 'not-found'>;
+  missingMedia: Set<'video' | 'audio'>;
 }
 
 export interface DailyCamConstraintsError extends DailyCameraError {
-  type: Extract<DailyCameraErrorType, "constraints">;
-  reason: Set<"invalid" | "none-specified">;
+  type: Extract<DailyCameraErrorType, 'constraints'>;
+  reason: Set<'invalid' | 'none-specified'>;
 }
 
 export interface DailyCamInUseError extends DailyCameraError {
   type: Extract<
     DailyCameraErrorType,
-    "cam-in-use" | "mic-in-use" | "cam-mic-in-use"
+    'cam-in-use' | 'mic-in-use' | 'cam-mic-in-use'
   >;
 }
 
 export interface DailyCamTypeError extends DailyCameraError {
-  type: Extract<DailyCameraErrorType, "undefined-mediadevices">;
+  type: Extract<DailyCameraErrorType, 'undefined-mediadevices'>;
 }
 
 export interface DailyCamUnknownError extends DailyCameraError {
-  type: Extract<DailyCameraErrorType, "unknown">;
+  type: Extract<DailyCameraErrorType, 'unknown'>;
 }
 
 export type DailyCameraErrorObject<T extends DailyCameraError = any> =
-  T extends DailyCamPermissionsError["type"]
+  T extends DailyCamPermissionsError['type']
     ? DailyCamPermissionsError
-    : T extends DailyCamDeviceNotFoundError["type"]
+    : T extends DailyCamDeviceNotFoundError['type']
     ? DailyCamDeviceNotFoundError
-    : T extends DailyCamConstraintsError["type"]
+    : T extends DailyCamConstraintsError['type']
     ? DailyCamConstraintsError
-    : T extends DailyCamInUseError["type"]
+    : T extends DailyCamInUseError['type']
     ? DailyCamInUseError
-    : T extends DailyCamTypeError["type"]
+    : T extends DailyCamTypeError['type']
     ? DailyCamTypeError
-    : T extends DailyCamUnknownError["type"]
+    : T extends DailyCamUnknownError['type']
     ? DailyCamUnknownError
     : any;
 
 export interface DailyEventObjectCameraError {
-  action: Extract<DailyEvent, "camera-error">;
+  action: Extract<DailyEvent, 'camera-error'>;
   errorMsg: {
     errorMsg: string;
     audioOk?: boolean;
@@ -711,7 +711,7 @@ export interface DailyEventObjectCameraError {
 }
 
 export interface DailyEventObjectFatalError {
-  action: Extract<DailyEvent, "error">;
+  action: Extract<DailyEvent, 'error'>;
   errorMsg: string;
   error?: {
     type: DailyFatalErrorType;
@@ -720,39 +720,39 @@ export interface DailyEventObjectFatalError {
 }
 
 export interface DailyEventObjectNonFatalError {
-  action: Extract<DailyEvent, "nonfatal-error">;
+  action: Extract<DailyEvent, 'nonfatal-error'>;
   type: DailyNonFatalErrorType;
   errorMsg: string;
   details?: any;
 }
 
 export interface DailyEventObjectGenericError {
-  action: Extract<DailyEvent, "load-attempt-failed">;
+  action: Extract<DailyEvent, 'load-attempt-failed'>;
   errorMsg: string;
 }
 
 export interface DailyEventObjectLiveStreamingError {
-  action: Extract<DailyEvent, "live-streaming-error">;
+  action: Extract<DailyEvent, 'live-streaming-error'>;
   errorMsg: string;
   instanceId?: string;
   actionTraceId?: string;
 }
 
 export interface DailyEventObjectParticipants {
-  action: Extract<DailyEvent, "joined-meeting">;
+  action: Extract<DailyEvent, 'joined-meeting'>;
   participants: DailyParticipantsObject;
 }
 
 export interface DailyEventObjectParticipant {
-  action: Extract<DailyEvent, "participant-joined" | "participant-updated">;
+  action: Extract<DailyEvent, 'participant-joined' | 'participant-updated'>;
   participant: DailyParticipant;
 }
 
 // only 1 reason reported for now. more to come.
-export type DailyParticipantLeftReason = "hidden";
+export type DailyParticipantLeftReason = 'hidden';
 
 export interface DailyEventObjectParticipantLeft {
-  action: Extract<DailyEvent, "participant-left">;
+  action: Extract<DailyEvent, 'participant-left'>;
   participant: DailyParticipant;
   // reason undefined if participant left for any reason other than those listed
   // in DailyParticipantLeftReason
@@ -760,50 +760,50 @@ export interface DailyEventObjectParticipantLeft {
 }
 
 export interface DailyEventObjectParticipantCounts {
-  action: Extract<DailyEvent, "participant-counts-updated">;
+  action: Extract<DailyEvent, 'participant-counts-updated'>;
   participantCounts: DailyParticipantCounts;
 }
 
 export interface DailyEventObjectWaitingParticipant {
   action: Extract<
     DailyEvent,
-    | "waiting-participant-added"
-    | "waiting-participant-updated"
-    | "waiting-participant-removed"
+    | 'waiting-participant-added'
+    | 'waiting-participant-updated'
+    | 'waiting-participant-removed'
   >;
   participant: DailyWaitingParticipant;
 }
 
 export interface DailyEventObjectAccessState extends DailyAccessState {
-  action: Extract<DailyEvent, "access-state-updated">;
+  action: Extract<DailyEvent, 'access-state-updated'>;
 }
 
 export interface DailyEventObjectMeetingSessionUpdated {
-  action: Extract<DailyEvent, "meeting-session-updated">;
+  action: Extract<DailyEvent, 'meeting-session-updated'>;
   meetingSession: DailyMeetingSession;
 }
 
 export interface DailyEventObjectMeetingSessionStateUpdated {
-  action: Extract<DailyEvent, "meeting-session-state-updated">;
+  action: Extract<DailyEvent, 'meeting-session-state-updated'>;
   meetingSessionState: DailyMeetingSessionState;
 }
 
 export interface DailyEventObjectTrack {
-  action: Extract<DailyEvent, "track-started" | "track-stopped">;
+  action: Extract<DailyEvent, 'track-started' | 'track-stopped'>;
   participant: DailyParticipant | null; // null if participant left meeting
   track: MediaStreamTrack;
   type:
-    | "video"
-    | "audio"
-    | "screenVideo"
-    | "screenAudio"
-    | "rmpVideo"
-    | "rmpAudio"
+    | 'video'
+    | 'audio'
+    | 'screenVideo'
+    | 'screenAudio'
+    | 'rmpVideo'
+    | 'rmpAudio'
     | string; // string - for custom tracks
 }
 
 export interface DailyEventObjectRecordingStarted {
-  action: Extract<DailyEvent, "recording-started">;
+  action: Extract<DailyEvent, 'recording-started'>;
   local?: boolean;
   recordingId?: string;
   startedBy?: string;
@@ -813,19 +813,19 @@ export interface DailyEventObjectRecordingStarted {
 }
 
 export interface DailyEventObjectRecordingStopped {
-  action: Extract<DailyEvent, "recording-stopped">;
+  action: Extract<DailyEvent, 'recording-stopped'>;
   instanceId?: string;
 }
 
 export interface DailyEventObjectRecordingError {
-  action: Extract<DailyEvent, "recording-error">;
+  action: Extract<DailyEvent, 'recording-error'>;
   errorMsg: string;
   instanceId?: string;
   actionTraceId?: string;
 }
 
 export interface DailyEventObjectRecordingData {
-  action: Extract<DailyEvent, "recording-data">;
+  action: Extract<DailyEvent, 'recording-data'>;
   data: Uint8Array;
   finished: boolean;
 }
@@ -833,7 +833,7 @@ export interface DailyEventObjectRecordingData {
 export interface DailyEventObjectMouseEvent {
   action: Extract<
     DailyEvent,
-    "click" | "mousedown" | "mouseup" | "mouseover" | "mousemove"
+    'click' | 'mousedown' | 'mouseup' | 'mouseover' | 'mousemove'
   >;
   event: {
     type: string;
@@ -855,7 +855,7 @@ export interface DailyEventObjectMouseEvent {
 }
 
 export interface DailyEventObjectTouchEvent {
-  action: Extract<DailyEvent, "touchstart" | "touchmove" | "touchend">;
+  action: Extract<DailyEvent, 'touchstart' | 'touchmove' | 'touchend'>;
   event: {
     type: string;
     altKey: boolean;
@@ -867,15 +867,15 @@ export interface DailyEventObjectTouchEvent {
 }
 
 export interface DailyEventObjectNetworkQualityEvent {
-  action: Extract<DailyEvent, "network-quality-change">;
-  threshold: "good" | "low" | "very-low";
+  action: Extract<DailyEvent, 'network-quality-change'>;
+  threshold: 'good' | 'low' | 'very-low';
   quality: number;
 }
 
-export type NetworkConnectionType = "signaling" | "peer-to-peer" | "sfu";
+export type NetworkConnectionType = 'signaling' | 'peer-to-peer' | 'sfu';
 
 export interface DailyEventObjectNetworkConnectionEvent {
-  action: Extract<DailyEvent, "network-connection">;
+  action: Extract<DailyEvent, 'network-connection'>;
   type: NetworkConnectionType;
   event: string;
   session_id?: string;
@@ -883,72 +883,72 @@ export interface DailyEventObjectNetworkConnectionEvent {
 }
 
 export interface DailyEventObjectActiveSpeakerChange {
-  action: Extract<DailyEvent, "active-speaker-change">;
+  action: Extract<DailyEvent, 'active-speaker-change'>;
   activeSpeaker: {
     peerId: string;
   };
 }
 
 export interface DailyEventObjectActiveSpeakerModeChange {
-  action: Extract<DailyEvent, "active-speaker-mode-change">;
+  action: Extract<DailyEvent, 'active-speaker-mode-change'>;
   enabled: boolean;
 }
 
 export interface DailyEventObjectAppMessage<Data = any> {
-  action: Extract<DailyEvent, "app-message">;
+  action: Extract<DailyEvent, 'app-message'>;
   data: Data;
   fromId: string;
 }
 
 export interface DailyEventObjectLangUpdated {
-  action: Extract<DailyEvent, "lang-updated">;
+  action: Extract<DailyEvent, 'lang-updated'>;
   lang: DailyLanguage;
   langSetting: DailyLanguageSetting;
 }
 
 export interface DailyEventObjectThemeUpdated {
-  action: Extract<DailyEvent, "theme-updated">;
+  action: Extract<DailyEvent, 'theme-updated'>;
   theme: DailyThemeConfig;
 }
 
 export interface DailyEventObjectReceiveSettingsUpdated {
-  action: Extract<DailyEvent, "receive-settings-updated">;
+  action: Extract<DailyEvent, 'receive-settings-updated'>;
   receiveSettings: DailyReceiveSettings;
 }
 
 export interface DailyEventObjectAvailableDevicesUpdated {
-  action: Extract<DailyEvent, "available-devices-updated">;
+  action: Extract<DailyEvent, 'available-devices-updated'>;
   availableDevices: MediaDeviceInfo[];
 }
 
 export interface DailyEventObjectShowLocalVideoChanged {
-  action: Extract<DailyEvent, "show-local-video-changed">;
+  action: Extract<DailyEvent, 'show-local-video-changed'>;
   show: boolean;
 }
 export interface DailyEventObjectInputSettingsUpdated {
-  action: Extract<DailyEvent, "input-settings-updated">;
+  action: Extract<DailyEvent, 'input-settings-updated'>;
   inputSettings: DailyInputSettings;
 }
 
 export interface DailyEventObjectLiveStreamingStarted {
-  action: Extract<DailyEvent, "live-streaming-started">;
+  action: Extract<DailyEvent, 'live-streaming-started'>;
   layout?: DailyStreamingLayoutConfig;
   instanceId?: string;
 }
 export interface DailyEventObjectLiveStreamingUpdated {
-  action: Extract<DailyEvent, "live-streaming-updated">;
+  action: Extract<DailyEvent, 'live-streaming-updated'>;
   endpoint?: DailyStreamingEndpoint;
   state: DailyStreamingState;
   instanceId?: string;
 }
 
 export interface DailyEventObjectLiveStreamingStopped {
-  action: Extract<DailyEvent, "live-streaming-stopped">;
+  action: Extract<DailyEvent, 'live-streaming-stopped'>;
   instanceId?: string;
 }
 
 export interface DailyEventObjectTranscriptionStarted {
-  action: Extract<DailyEvent, "transcription-started">;
+  action: Extract<DailyEvent, 'transcription-started'>;
   language: string;
   model: string;
   tier?: string;
@@ -959,14 +959,14 @@ export interface DailyEventObjectTranscriptionStarted {
 }
 
 export interface DailyEventObjectTranscriptionStopped {
-  action: Extract<DailyEvent, "transcription-stopped">;
+  action: Extract<DailyEvent, 'transcription-stopped'>;
   updatedBy: string;
 }
 
 export interface DailyEventObjectRemoteMediaPlayerUpdate {
   action: Extract<
     DailyEvent,
-    "remote-media-player-started" | "remote-media-player-updated"
+    'remote-media-player-started' | 'remote-media-player-updated'
   >;
   updatedBy: string;
   session_id: string;
@@ -974,100 +974,100 @@ export interface DailyEventObjectRemoteMediaPlayerUpdate {
 }
 
 export interface DailyEventObjectRemoteMediaPlayerStopped {
-  action: Extract<DailyEvent, "remote-media-player-stopped">;
+  action: Extract<DailyEvent, 'remote-media-player-stopped'>;
   session_id: string;
   updatedBy: string;
   reason: DailyRemoteMediaPlayerStopReason;
 }
 
 export interface DailyEventObjectCustomButtonClick {
-  action: Extract<DailyEvent, "custom-button-click">;
+  action: Extract<DailyEvent, 'custom-button-click'>;
   button_id: string;
 }
 
 export interface DailyEventObjectSelectedDevicesUpdated {
-  action: Extract<DailyEvent, "selected-devices-updated">;
+  action: Extract<DailyEvent, 'selected-devices-updated'>;
   devices: DailyDeviceInfos;
 }
 
 export type DailyEventObject<T extends DailyEvent = any> =
-  T extends DailyEventObjectAppMessage["action"]
+  T extends DailyEventObjectAppMessage['action']
     ? DailyEventObjectAppMessage
-    : T extends DailyEventObjectNoPayload["action"]
+    : T extends DailyEventObjectNoPayload['action']
     ? DailyEventObjectNoPayload
-    : T extends DailyEventObjectCameraError["action"]
+    : T extends DailyEventObjectCameraError['action']
     ? DailyEventObjectCameraError
-    : T extends DailyEventObjectFatalError["action"]
+    : T extends DailyEventObjectFatalError['action']
     ? DailyEventObjectFatalError
-    : T extends DailyEventObjectNonFatalError["action"]
+    : T extends DailyEventObjectNonFatalError['action']
     ? DailyEventObjectNonFatalError
-    : T extends DailyEventObjectGenericError["action"]
+    : T extends DailyEventObjectGenericError['action']
     ? DailyEventObjectGenericError
-    : T extends DailyEventObjectParticipants["action"]
+    : T extends DailyEventObjectParticipants['action']
     ? DailyEventObjectParticipants
-    : T extends DailyEventObjectLiveStreamingStarted["action"]
+    : T extends DailyEventObjectLiveStreamingStarted['action']
     ? DailyEventObjectLiveStreamingStarted
-    : T extends DailyEventObjectLiveStreamingUpdated["action"]
+    : T extends DailyEventObjectLiveStreamingUpdated['action']
     ? DailyEventObjectLiveStreamingUpdated
-    : T extends DailyEventObjectLiveStreamingStopped["action"]
+    : T extends DailyEventObjectLiveStreamingStopped['action']
     ? DailyEventObjectLiveStreamingStopped
-    : T extends DailyEventObjectLiveStreamingError["action"]
+    : T extends DailyEventObjectLiveStreamingError['action']
     ? DailyEventObjectLiveStreamingError
-    : T extends DailyEventObjectParticipant["action"]
+    : T extends DailyEventObjectParticipant['action']
     ? DailyEventObjectParticipant
-    : T extends DailyEventObjectParticipantLeft["action"]
+    : T extends DailyEventObjectParticipantLeft['action']
     ? DailyEventObjectParticipantLeft
-    : T extends DailyEventObjectParticipantCounts["action"]
+    : T extends DailyEventObjectParticipantCounts['action']
     ? DailyEventObjectParticipantCounts
-    : T extends DailyEventObjectWaitingParticipant["action"]
+    : T extends DailyEventObjectWaitingParticipant['action']
     ? DailyEventObjectWaitingParticipant
-    : T extends DailyEventObjectAccessState["action"]
+    : T extends DailyEventObjectAccessState['action']
     ? DailyEventObjectAccessState
-    : T extends DailyEventObjectMeetingSessionUpdated["action"]
+    : T extends DailyEventObjectMeetingSessionUpdated['action']
     ? DailyEventObjectMeetingSessionUpdated
-    : T extends DailyEventObjectMeetingSessionStateUpdated["action"]
+    : T extends DailyEventObjectMeetingSessionStateUpdated['action']
     ? DailyEventObjectMeetingSessionStateUpdated
-    : T extends DailyEventObjectTrack["action"]
+    : T extends DailyEventObjectTrack['action']
     ? DailyEventObjectTrack
-    : T extends DailyEventObjectRecordingStarted["action"]
+    : T extends DailyEventObjectRecordingStarted['action']
     ? DailyEventObjectRecordingStarted
-    : T extends DailyEventObjectRecordingStopped["action"]
+    : T extends DailyEventObjectRecordingStopped['action']
     ? DailyEventObjectRecordingStopped
-    : T extends DailyEventObjectRecordingError["action"]
+    : T extends DailyEventObjectRecordingError['action']
     ? DailyEventObjectRecordingError
-    : T extends DailyEventObjectRecordingData["action"]
+    : T extends DailyEventObjectRecordingData['action']
     ? DailyEventObjectRecordingData
-    : T extends DailyEventObjectRemoteMediaPlayerUpdate["action"]
+    : T extends DailyEventObjectRemoteMediaPlayerUpdate['action']
     ? DailyEventObjectRemoteMediaPlayerUpdate
-    : T extends DailyEventObjectRemoteMediaPlayerStopped["action"]
+    : T extends DailyEventObjectRemoteMediaPlayerStopped['action']
     ? DailyEventObjectRemoteMediaPlayerStopped
-    : T extends DailyEventObjectMouseEvent["action"]
+    : T extends DailyEventObjectMouseEvent['action']
     ? DailyEventObjectMouseEvent
-    : T extends DailyEventObjectTouchEvent["action"]
+    : T extends DailyEventObjectTouchEvent['action']
     ? DailyEventObjectTouchEvent
-    : T extends DailyEventObjectNetworkQualityEvent["action"]
+    : T extends DailyEventObjectNetworkQualityEvent['action']
     ? DailyEventObjectNetworkQualityEvent
-    : T extends DailyEventObjectNetworkConnectionEvent["action"]
+    : T extends DailyEventObjectNetworkConnectionEvent['action']
     ? DailyEventObjectNetworkConnectionEvent
-    : T extends DailyEventObjectActiveSpeakerChange["action"]
+    : T extends DailyEventObjectActiveSpeakerChange['action']
     ? DailyEventObjectActiveSpeakerChange
-    : T extends DailyEventObjectActiveSpeakerModeChange["action"]
+    : T extends DailyEventObjectActiveSpeakerModeChange['action']
     ? DailyEventObjectActiveSpeakerModeChange
-    : T extends DailyEventObjectLangUpdated["action"]
+    : T extends DailyEventObjectLangUpdated['action']
     ? DailyEventObjectLangUpdated
-    : T extends DailyEventObjectThemeUpdated["action"]
+    : T extends DailyEventObjectThemeUpdated['action']
     ? DailyEventObjectThemeUpdated
-    : T extends DailyEventObjectReceiveSettingsUpdated["action"]
+    : T extends DailyEventObjectReceiveSettingsUpdated['action']
     ? DailyEventObjectReceiveSettingsUpdated
-    : T extends DailyEventObjectAvailableDevicesUpdated["action"]
+    : T extends DailyEventObjectAvailableDevicesUpdated['action']
     ? DailyEventObjectAvailableDevicesUpdated
-    : T extends DailyEventObjectShowLocalVideoChanged["action"]
+    : T extends DailyEventObjectShowLocalVideoChanged['action']
     ? DailyEventObjectShowLocalVideoChanged
-    : T extends DailyEventObjectInputSettingsUpdated["action"]
+    : T extends DailyEventObjectInputSettingsUpdated['action']
     ? DailyEventObjectInputSettingsUpdated
-    : T extends DailyEventObjectCustomButtonClick["action"]
+    : T extends DailyEventObjectCustomButtonClick['action']
     ? DailyEventObjectCustomButtonClick
-    : T extends DailyEventObjectSelectedDevicesUpdated["action"]
+    : T extends DailyEventObjectSelectedDevicesUpdated['action']
     ? DailyEventObjectSelectedDevicesUpdated
     : any;
 
@@ -1101,29 +1101,29 @@ export interface DailyCallStaticUtils {
 }
 
 export interface DailyStreamingDefaultLayoutConfig {
-  preset: "default";
+  preset: 'default';
   max_cam_streams?: number;
 }
 
 export interface DailyStreamingSingleParticipantLayoutConfig {
-  preset: "single-participant";
+  preset: 'single-participant';
   session_id: string;
 }
 
 export interface DailyStreamingActiveParticipantLayoutConfig {
-  preset: "active-participant";
+  preset: 'active-participant';
 }
 
-export type DailyStreamingPortraitLayoutVariant = "vertical" | "inset";
+export type DailyStreamingPortraitLayoutVariant = 'vertical' | 'inset';
 
 export interface DailyStreamingPortraitLayoutConfig {
-  preset: "portrait";
+  preset: 'portrait';
   variant?: DailyStreamingPortraitLayoutVariant;
   max_cam_streams?: number;
 }
 
 export interface DailyStreamingCustomLayoutConfig {
-  preset: "custom";
+  preset: 'custom';
   composition_id: string;
   composition_params?: {
     [key: string]: boolean | number | string;
@@ -1140,25 +1140,25 @@ export type DailyStreamingLayoutConfig =
   | DailyStreamingPortraitLayoutConfig
   | DailyStreamingCustomLayoutConfig;
 
-export type DailyStreamingState = "connected" | "interrupted";
+export type DailyStreamingState = 'connected' | 'interrupted';
 
-export type DailyRemoteMediaPlayerSettingPlay = "play";
-export type DailyRemoteMediaPlayerSettingPause = "pause";
+export type DailyRemoteMediaPlayerSettingPlay = 'play';
+export type DailyRemoteMediaPlayerSettingPause = 'pause';
 
-export type DailyRemoteMediaPlayerStatePlaying = "playing";
-export type DailyRemoteMediaPlayerStatePaused = "paused";
-export type DailyRemoteMediaPlayerStateBuffering = "buffering";
+export type DailyRemoteMediaPlayerStatePlaying = 'playing';
+export type DailyRemoteMediaPlayerStatePaused = 'paused';
+export type DailyRemoteMediaPlayerStateBuffering = 'buffering';
 
-export type DailyRemoteMediaPlayerEOS = "EOS";
-export type DailyRemoteMediaPlayerPeerStopped = "stopped-by-peer";
+export type DailyRemoteMediaPlayerEOS = 'EOS';
+export type DailyRemoteMediaPlayerPeerStopped = 'stopped-by-peer';
 
 export type DailyRemoteMediaPlayerStopReason =
   | DailyRemoteMediaPlayerEOS
   | DailyRemoteMediaPlayerPeerStopped;
 
-export type DailyAccess = "unknown" | SpecifiedDailyAccess;
+export type DailyAccess = 'unknown' | SpecifiedDailyAccess;
 
-export type SpecifiedDailyAccess = { level: "none" | "lobby" | "full" };
+export type SpecifiedDailyAccess = { level: 'none' | 'lobby' | 'full' };
 
 export type DailyAccessState = {
   access: DailyAccess;
@@ -1166,7 +1166,7 @@ export type DailyAccessState = {
 };
 
 export type DailyAccessRequest = {
-  access?: { level: "full" };
+  access?: { level: 'full' };
   name: string;
 };
 
@@ -1290,7 +1290,7 @@ export interface DailyCall {
   updateCustomTrayButtons(customTrayButtons: DailyCustomTrayButtons): DailyCall;
   customTrayButtons(): DailyCustomTrayButtons;
   setBandwidth(bw: {
-    kbs?: number | "NO_CAP" | null;
+    kbs?: number | 'NO_CAP' | null;
     trackConstraints?: MediaTrackConstraints;
   }): DailyCall;
   getDailyLang(): Promise<{
@@ -1375,7 +1375,7 @@ export interface DailyCall {
   enumerateDevices(): Promise<{ devices: MediaDeviceInfo[] }>;
   sendAppMessage(data: any, to?: string): DailyCall;
   addFakeParticipant(details?: { aspectRatio: number }): DailyCall;
-  setShowNamesMode(mode: false | "always" | "never"): DailyCall;
+  setShowNamesMode(mode: false | 'always' | 'never'): DailyCall;
   setShowLocalVideo(show: boolean): DailyCall;
   setShowParticipantsBar(show: boolean): DailyCall;
   theme(): DailyThemeConfig;
@@ -1392,7 +1392,7 @@ export interface DailyCall {
   }): Promise<DailyPendingRoomInfo | DailyRoomInfo | null>;
   geo(): Promise<{ current: string }>;
   getNetworkTopology(): Promise<{
-    topology: DailyNetworkTopology | "none";
+    topology: DailyNetworkTopology | 'none';
     error?: string;
   }>;
   setNetworkTopology(options: {
