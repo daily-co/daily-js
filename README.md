@@ -9,9 +9,9 @@ Please check our [our documentation site](https://docs.daily.co/) to get started
 
 ## Turning off the camera will turn off the indicator light by default
 
-Today, calls are by default configured to leave the camera indicator light on even after the camera has been turned off. In an upcoming release, the default behavior will switch, so that turning off the camera turns off the indicator light. This is usually a much better experience for users and worth the tradeoff of slightly slower camera toggling.
+Today, calls are by default configured to leave the camera indicator light on even after the camera has been turned off. Starting in 0.43.0, the default behavior will switch, so that turning off the camera turns off the indicator light. This is usually a much better experience for users and worth the tradeoff of slightly slower camera toggling.
 
-There's already been a way to get what will be the new default behavior: specifying `dailyConfig: { experimentalChromeVideoMuteLightOff: true }`. Once the switch to the new default behavior happens, `experimentalChromeVideoMuteLightOff` won't be needed anymore and so will be deprecated.
+There's already been a way to get the 0.43.0 default behavior: specifying `dailyConfig: { experimentalChromeVideoMuteLightOff: true }`. Once the switch to the new default behavior happens, `experimentalChromeVideoMuteLightOff` won't be needed anymore and so will be deprecated.
 
 For those who want to keep the current default behavior of leaving the indicator light on to speed up camera toggling, they can specify `dailyConfig: { keepCamIndicatorLightOn: true }`. This flag is available today.
 
@@ -45,24 +45,24 @@ Please note, there are two supported ways of leaving and rejoining.
 
 1. A single call instance can be re-used, so long as you properly await each call to ensure the prior action has completed:
 
-    ```
-      await call.join();
-      await call.leave();
-      await call.join();
-      // rinse and repeat
-    ```
+   ```
+     await call.join();
+     await call.leave();
+     await call.join();
+     // rinse and repeat
+   ```
 
 2. Use a new call instance for each new join, but be sure to leave and destroy the prior one.
 
-    ```
-      let call1 = DailyIframe.createCallObject({strictMode: true});
-      await call1.join({url: 'https://myDailyDomain.daily.co/myRoom'});
-      await call.destroy(); // this will also leave the call
-      let call2 = DailyIframe.createCallObject({strictMode: true});
-      await call2.join({url: 'https://myDailyDomain.daily.co/myRoom'});
-    ```
+   ```
+     let call1 = DailyIframe.createCallObject({strictMode: true});
+     await call1.join({url: 'https://myDailyDomain.daily.co/myRoom'});
+     await call.destroy(); // this will also leave the call
+     let call2 = DailyIframe.createCallObject({strictMode: true});
+     await call2.join({url: 'https://myDailyDomain.daily.co/myRoom'});
+   ```
 
-    Without the call to `destroy()`, the above code would be unsupported and will throw an `Error`.
+   Without the call to `destroy()`, the above code would be unsupported and will throw an `Error`.
 
 Also of note: to help with the handling of this, we have introduced a new static method: `getCallInstance()` so that you can get a handle to your call instance from anywhere in ase you lost track of it.
 
