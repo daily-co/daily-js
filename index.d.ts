@@ -482,17 +482,32 @@ export interface DailyNetworkStats {
   threshold: 'good' | 'low' | 'very-low';
 }
 
-export interface DailyCpuLoadState {
-  cpuLoadState: 'low' | 'high';
-}
-
 export interface DailyCpuLoadStats {
   cpuLoadState: 'low' | 'high';
+  cpuLoadStateReason: 'encode' | 'decode' | 'scheduleDuration' | 'none'; // We are currently not using the Inter frame Delay to change the cpu load state
   stats: {
-    timestamp: number;
-    avgFrameEncodeTimeSec: number;
-    targetEncodeFrameRate: number;
-    cpuUsageBasedOnTargetEncode: number;
+    latest: {
+      timestamp: number;
+      scheduleDuration: number;
+      frameEncodeTimeSec: number;
+      targetEncodeFrameRate: number;
+      targetDecodeFrameRate: number;
+      targetScheduleDuration: number;
+      cpuUsageBasedOnTargetEncode: number;
+      cpuUsageBasedOnGlobalDecode: number;
+      avgFrameDecodeTimeSec: number;
+      avgInterFrameDelayStandardDeviation: number;
+      totalReceivedVideoTracks: number;
+      cpuInboundVideoStats: {
+        trackId: string;
+        ssrc: number;
+        frameWidth: number;
+        frameHeight: number;
+        fps: number;
+        frameDecodeTimeSec: number;
+        interFrameDelayStandardDeviation: number;
+      }[];
+    };
   };
 }
 
@@ -891,6 +906,7 @@ export interface DailyEventObjectNetworkQualityEvent {
 export interface DailyEventObjectCpuLoadEvent {
   action: Extract<DailyEvent, 'cpu-load-change'>;
   cpuLoadState: 'low' | 'high';
+  cpuLoadStateReason: 'encode' | 'decode' | 'scheduleDuration' | 'none'; // We are currently not using the Inter frame Delay to change the cpu load state
 }
 
 export type NetworkConnectionType = 'signaling' | 'peer-to-peer' | 'sfu';
