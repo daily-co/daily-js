@@ -381,8 +381,29 @@ const customTrayButtonsType = {
   },
 };
 
+const customIntegrationsType = {
+  id: {
+    allow: 'string',
+    controlledBy: "'*' | 'owners' | string[]",
+    csp: 'string',
+    iconURL: 'string',
+    label: 'string',
+    loading: "'eager' | 'lazy'",
+    location: "'main' | 'sidebar'",
+    name: 'string',
+    referrerPolicy: 'string',
+    sandbox: 'string',
+    src: 'string',
+    srcdoc: 'string',
+    shared: "string[] | 'owners' | boolean",
+  },
+};
+
 const FRAME_PROPS = {
-  customIntegrations: true,
+  customIntegrations: {
+    validate: validateCustomIntegrations,
+    help: customIntegrationsValidationHelpMsg(),
+  },
   customTrayButtons: {
     validate: validateCustomTrayButtons,
     help: `customTrayButtons should be a dictionary of the type ${JSON.stringify(
@@ -2808,15 +2829,9 @@ export default class DailyIframe extends EventEmitter {
       'setCustomIntegrations()'
     );
     methodOnlySupportedAfterJoin(this._callState, 'setCustomIntegrations()');
-    // TODO: Write validator for custom integrations.
-    // if (!validateCustomIntegrations(integrations)) {
-    //   console.error(
-    //     `setCustomIntegrations only accepts a dictionary of the type ${JSON.stringify(
-    //       customIntegrationsType
-    //     )}`
-    //   );
-    //   return this;
-    // }
+    if (!validateCustomIntegrations(integrations)) {
+      return this;
+    }
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_SET_CUSTOM_INTEGRATIONS,
       integrations,
@@ -4540,6 +4555,12 @@ function receiveSettingsValidationHelpMsg({ allowAllParticipantsKey }) {
   );
 }
 
+function customIntegrationsValidationHelpMsg() {
+  return `customIntegrations should be an object of type ${JSON.stringify(
+    customIntegrationsType
+  )}.`;
+}
+
 function validateCustomTrayButtons(btns) {
   if ((btns && typeof btns !== 'object') || Array.isArray(btns)) {
     console.error(
@@ -4570,6 +4591,113 @@ function validateCustomTrayButtons(btns) {
           console.error(
             `customTrayButton ${btnKey} should be a ${expectedKey}.`
           );
+          return false;
+        }
+      }
+    }
+  }
+
+  return true;
+}
+
+function validateCustomIntegrations(integrations) {
+  if (
+    (integrations && typeof integrations !== 'object') ||
+    Array.isArray(integrations)
+  ) {
+    console.error(customIntegrationsValidationHelpMsg());
+    return false;
+  }
+
+  if (integrations) {
+    const keyShouldBeType = (key) =>
+      `${key} should be ${customIntegrationsType.id[key]}`;
+    const logError = (id, msg) =>
+      console.error(`customIntegration ${id}: ${msg}`);
+
+    for (const [key] of Object.entries(integrations)) {
+      if (!('label' in integrations[key])) {
+        logError(key, 'label is required');
+        return false;
+      }
+      if (!('location' in integrations[key])) {
+        logError(key, 'location is required');
+        return false;
+      }
+      if (!('src' in integrations[key]) && !('srcdoc' in integrations[key])) {
+        logError(key, 'src or srcdoc is required');
+        return false;
+      }
+      for (const [iKey, iValue] of Object.entries(integrations[key])) {
+        switch (iKey) {
+          case 'allow':
+          case 'csp':
+          case 'name':
+          case 'referrerPolicy':
+          case 'sandbox':
+            if (typeof iValue !== 'string') {
+              logError(key, keyShouldBeType(iKey));
+              return false;
+            }
+            break;
+          case 'iconURL':
+            if (!validateHttpUrl(iValue)) {
+              logError(key, `${iKey} should be a url`);
+              return false;
+            }
+            break;
+          case 'src':
+            if ('srcdoc' in integrations[key]) {
+              logError(key, `cannot have both src and srcdoc`);
+              return false;
+            }
+            if (!validateHttpUrl(iValue)) {
+              logError(key, `src "${iValue}" is not a valid URL`);
+              return false;
+            }
+            break;
+          case 'srcdoc':
+            if ('src' in integrations[key]) {
+              logError(key, `cannot have both src and srcdoc`);
+              return false;
+            }
+            if (typeof iValue !== 'string') {
+              logError(key, keyShouldBeType(iKey));
+              return false;
+            }
+            break;
+          case 'location':
+            if (!['main', 'sidebar'].includes(iValue)) {
+              logError(key, keyShouldBeType(iKey));
+              return false;
+            }
+            break;
+          case 'controlledBy':
+            if (
+              iValue !== '*' &&
+              iValue !== 'owners' &&
+              (!Array.isArray(iValue) ||
+                iValue.some((s) => typeof s !== 'string'))
+            ) {
+              logError(key, keyShouldBeType(iKey));
+              return false;
+            }
+            break;
+          case 'shared':
+            if (
+              (!Array.isArray(iValue) ||
+                iValue.some((s) => typeof s !== 'string')) &&
+              iValue !== 'owners' &&
+              typeof iValue !== 'boolean'
+            ) {
+              logError(key, keyShouldBeType(iKey));
+              return false;
+            }
+            break;
+        }
+        const expectedKey = customIntegrationsType.id[iKey];
+        if (!expectedKey) {
+          console.error(`customIntegration does not support key ${iKey}`);
           return false;
         }
       }
