@@ -124,7 +124,8 @@ export type DailyFatalErrorType =
   | 'exp-token'
   | 'meeting-full'
   | 'end-of-life'
-  | 'not-allowed';
+  | 'not-allowed'
+  | 'connection-error';
 
 export type DailyNonFatalErrorType =
   | 'input-settings-error'
@@ -682,7 +683,6 @@ export interface DailyEventObjectNoPayload {
 
 export type DailyCameraError = {
   msg: string;
-  localizedMsg?: string;
 };
 
 export interface DailyCamPermissionsError extends DailyCameraError {
@@ -741,13 +741,27 @@ export interface DailyEventObjectCameraError {
   error: DailyCameraErrorObject;
 }
 
+export type DailyFatalError = {
+  type: DailyFatalErrorType;
+  msg: string;
+};
+
+export interface DailyFatalConnectionError extends DailyFatalError {
+  type: Extract<DailyFatalConnectionError, 'connection-error'>;
+  details: {
+    on: 'join' | 'reconnect';
+    sourceError: Error;
+    uri?: string;
+  };
+}
+
+export type DailyFatalErrorObject<T extends DailyFatalError = any> =
+  T extends DailyFatalConnectionError['type'] ? DailyFatalConnectionError : any;
+
 export interface DailyEventObjectFatalError {
   action: Extract<DailyEvent, 'error'>;
   errorMsg: string;
-  error?: {
-    type: DailyFatalErrorType;
-    localizedMsg?: string;
-  };
+  error?: DailyFatalErrorObject;
 }
 
 export interface DailyEventObjectNonFatalError {
