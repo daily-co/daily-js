@@ -1323,7 +1323,7 @@ export interface DailyCall {
   ): Promise<DailyReceiveSettings>;
   updateInputSettings(
     inputSettings: DailyInputSettings
-  ): Promise<DailyInputSettings>;
+  ): Promise<{ inputSettings: DailyInputSettings }>;
   getInputSettings(): Promise<DailyInputSettings>;
   updateCustomTrayButtons(customTrayButtons: DailyCustomTrayButtons): DailyCall;
   customTrayButtons(): DailyCustomTrayButtons;
