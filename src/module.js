@@ -1502,10 +1502,12 @@ export default class DailyIframe extends EventEmitter {
   // { video: {...}, audio: {...}, screenVideo: {...}, screenAudio: {...} }
   getInputSettings() {
     return new Promise((resolve) => {
+      const defaultSettings = { processor: { type: 'none' } };
+
       if (this.needsLoad()) {
         // If not fully loaded yet, also look at the preload cache.
-        let _videoSettings = { processor: { type: 'none' } };
-        let _audioSettings = { processor: { type: 'none' } };
+        let _videoSettings = defaultSettings;
+        let _audioSettings = defaultSettings;
         let haveInputSettingsVideo = false;
         let haveInputSettingsAudio = false;
 
@@ -1553,7 +1555,10 @@ export default class DailyIframe extends EventEmitter {
         resolve(_inputSettings);
       } else {
         // return the current input settings
-        resolve(this._inputSettings);
+        let _videoSettings = this._inputSettings?.video || defaultSettings;
+        let _audioSettings = this._inputSettings?.audio || defaultSettings;
+        let _inputSettings = { audio: _audioSettings, video: _videoSettings };
+        resolve(_inputSettings);
       }
     });
   }
