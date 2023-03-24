@@ -185,7 +185,7 @@ import {
   DAILY_EXIT_FULLSCREEN,
   DAILY_METHOD_TRANSMIT_LOG,
   DAILY_METHOD_GET_CPU_LOAD_STATS,
-  DAILY_METHOD_UPDATE_CUSTOM_INTEGRATIONS,
+  DAILY_METHOD_SET_CUSTOM_INTEGRATIONS,
   DAILY_METHOD_GET_SIDEBAR_VIEW,
   DAILY_METHOD_SET_SIDEBAR_VIEW,
   DAILY_METHOD_START_CUSTOM_INTEGRATION,
@@ -2799,21 +2799,21 @@ export default class DailyIframe extends EventEmitter {
     return this._customIntegrations;
   }
 
-  updateCustomIntegrations(integrations) {
+  setCustomIntegrations(integrations) {
     methodNotSupportedInReactNative();
-    methodOnlySupportedInPrebuilt(this._callObjectMode, 'updateCustomIntegrations()');
-    methodOnlySupportedAfterJoin(this._callState, 'updateCustomIntegrations()');
+    methodOnlySupportedInPrebuilt(this._callObjectMode, 'setCustomIntegrations()');
+    methodOnlySupportedAfterJoin(this._callState, 'setCustomIntegrations()');
     // TODO: Write validator for custom integrations.
     // if (!validateCustomIntegrations(integrations)) {
     //   console.error(
-    //     `updateCustomIntegrations only accepts a dictionary of the type ${JSON.stringify(
+    //     `setCustomIntegrations only accepts a dictionary of the type ${JSON.stringify(
     //       customIntegrationsType
     //     )}`
     //   );
     //   return this;
     // }
     this.sendMessageToCallMachine({
-      action: DAILY_METHOD_UPDATE_CUSTOM_INTEGRATIONS,
+      action: DAILY_METHOD_SET_CUSTOM_INTEGRATIONS,
       integrations,
     });
     this._customIntegrations = integrations;

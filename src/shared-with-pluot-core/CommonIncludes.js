@@ -172,8 +172,8 @@ export const DAILY_METHOD_GET_SIDEBAR_VIEW =
   'get-sidebar-view';
 export const DAILY_METHOD_SET_SIDEBAR_VIEW =
   'set-sidebar-view';
-export const DAILY_METHOD_UPDATE_CUSTOM_INTEGRATIONS =
-  'update-custom-integrations';
+export const DAILY_METHOD_SET_CUSTOM_INTEGRATIONS =
+  'set-custom-integrations';
 export const DAILY_METHOD_START_CUSTOM_INTEGRATION =
   'start-custom-integration';
 export const DAILY_METHOD_STOP_CUSTOM_INTEGRATION =

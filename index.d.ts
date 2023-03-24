@@ -1447,7 +1447,7 @@ export interface DailyCall {
   getInputSettings(): Promise<DailyInputSettings>;
   updateCustomTrayButtons(customTrayButtons: DailyCustomTrayButtons): DailyCall;
   customTrayButtons(): DailyCustomTrayButtons;
-  updateCustomIntegrations(customIntegrations: DailyCustomIntegrations): DailyCall;
+  setCustomIntegrations(customIntegrations: DailyCustomIntegrations): DailyCall;
   customIntegrations(): DailyCustomIntegrations;
   startCustomIntegration(id: string): DailyCall;
   stopCustomIntegration(id: string): DailyCall;
