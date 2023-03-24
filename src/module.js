@@ -616,6 +616,7 @@ const FRAME_PROPS = {
         if (!callObject._preloadCache.inputSettings) {
           callObject._preloadCache.inputSettings = {};
         }
+        stripInputSettingsForUnsupportedPlatforms(settings);
         if (settings.audio) {
           callObject._preloadCache.inputSettings.audio = settings.audio;
         }
@@ -1573,6 +1574,7 @@ export default class DailyIframe extends EventEmitter {
       if (!this._preloadCache.inputSettings) {
         this._preloadCache.inputSettings = {};
       }
+      stripInputSettingsForUnsupportedPlatforms(inputSettings);
       if (inputSettings.audio) {
         this._preloadCache.inputSettings.audio = inputSettings.audio;
       }
@@ -1580,6 +1582,13 @@ export default class DailyIframe extends EventEmitter {
         this._preloadCache.inputSettings.video = inputSettings.video;
       }
     }
+
+    // now that input settings may have been stripped of platform-unsupported
+    // settings, check again for validity (it may now be empty)
+    if (!validateInputSettings(inputSettings)) {
+      return await this.getInputSettings();
+    }
+
     // if we're in callObject mode and not loaded yet, don't do anything
     if (this._callObjectMode && this.needsLoad()) {
       return await this.getInputSettings();
@@ -4227,6 +4236,28 @@ function validateInputSettings(settings) {
   if (settings.audio && !validateAudioProcessor(settings.audio.processor))
     return false;
   return true;
+}
+
+// Assumes `settings` is otherwise valid (passes `validateInputSettings()`).
+// Note: currently `processor` is required for `settings` to be valid, so we can
+// strip out the entire `video` or `audio` if processing isn't supported.
+function stripInputSettingsForUnsupportedPlatforms(settings) {
+  const unsupportedProcessors = [];
+  if (settings.video && !isVideoProcessingSupported()) {
+    delete settings.video;
+    unsupportedProcessors.push('video');
+  }
+  if (settings.audio && !isAudioProcessingSupported()) {
+    delete settings.audio;
+    unsupportedProcessors.push('audio');
+  }
+  if (unsupportedProcessors.length > 0) {
+    console.error(
+      `Ignoring browser- or platform-unsupported input processors(s): ${unsupportedProcessors.join(
+        ', '
+      )}`
+    );
+  }
 }
 
 function validateAudioProcessor(p) {
