@@ -4602,6 +4602,7 @@ function validateCustomTrayButtons(btns) {
 
 function validateCustomIntegrations(integrations) {
   if (
+    !integrations ||
     (integrations && typeof integrations !== 'object') ||
     Array.isArray(integrations)
   ) {
@@ -4609,96 +4610,97 @@ function validateCustomIntegrations(integrations) {
     return false;
   }
 
-  if (integrations) {
-    const keyShouldBeType = (key) =>
-      `${key} should be ${customIntegrationsType.id[key]}`;
-    const logError = (id, msg) =>
-      console.error(`customIntegration ${id}: ${msg}`);
+  const keyShouldBeType = (key) =>
+    `${key} should be ${customIntegrationsType.id[key]}`;
+  const logError = (id, msg) =>
+    console.error(`customIntegration ${id}: ${msg}`);
 
-    for (const [key] of Object.entries(integrations)) {
-      if (!('label' in integrations[key])) {
-        logError(key, 'label is required');
-        return false;
-      }
-      if (!('location' in integrations[key])) {
-        logError(key, 'location is required');
-        return false;
-      }
-      if (!('src' in integrations[key]) && !('srcdoc' in integrations[key])) {
-        logError(key, 'src or srcdoc is required');
-        return false;
-      }
-      for (const [iKey, iValue] of Object.entries(integrations[key])) {
-        switch (iKey) {
-          case 'allow':
-          case 'csp':
-          case 'name':
-          case 'referrerPolicy':
-          case 'sandbox':
-            if (typeof iValue !== 'string') {
-              logError(key, keyShouldBeType(iKey));
-              return false;
-            }
-            break;
-          case 'iconURL':
-            if (!validateHttpUrl(iValue)) {
-              logError(key, `${iKey} should be a url`);
-              return false;
-            }
-            break;
-          case 'src':
-            if ('srcdoc' in integrations[key]) {
-              logError(key, `cannot have both src and srcdoc`);
-              return false;
-            }
-            if (!validateHttpUrl(iValue)) {
-              logError(key, `src "${iValue}" is not a valid URL`);
-              return false;
-            }
-            break;
-          case 'srcdoc':
-            if ('src' in integrations[key]) {
-              logError(key, `cannot have both src and srcdoc`);
-              return false;
-            }
-            if (typeof iValue !== 'string') {
-              logError(key, keyShouldBeType(iKey));
-              return false;
-            }
-            break;
-          case 'location':
-            if (!['main', 'sidebar'].includes(iValue)) {
-              logError(key, keyShouldBeType(iKey));
-              return false;
-            }
-            break;
-          case 'controlledBy':
-            if (
-              iValue !== '*' &&
-              iValue !== 'owners' &&
-              (!Array.isArray(iValue) ||
-                iValue.some((s) => typeof s !== 'string'))
-            ) {
-              logError(key, keyShouldBeType(iKey));
-              return false;
-            }
-            break;
-          case 'shared':
-            if (
-              (!Array.isArray(iValue) ||
-                iValue.some((s) => typeof s !== 'string')) &&
-              iValue !== 'owners' &&
-              typeof iValue !== 'boolean'
-            ) {
-              logError(key, keyShouldBeType(iKey));
-              return false;
-            }
-            break;
-        }
-        const expectedKey = customIntegrationsType.id[iKey];
-        if (!expectedKey) {
-          console.error(`customIntegration does not support key ${iKey}`);
-          return false;
+  for (const [key] of Object.entries(integrations)) {
+    if (!('label' in integrations[key])) {
+      logError(key, 'label is required');
+      return false;
+    }
+    if (!('location' in integrations[key])) {
+      logError(key, 'location is required');
+      return false;
+    }
+    if (!('src' in integrations[key]) && !('srcdoc' in integrations[key])) {
+      logError(key, 'src or srcdoc is required');
+      return false;
+    }
+    for (const [iKey, iValue] of Object.entries(integrations[key])) {
+      switch (iKey) {
+        case 'allow':
+        case 'csp':
+        case 'name':
+        case 'referrerPolicy':
+        case 'sandbox':
+          if (typeof iValue !== 'string') {
+            logError(key, keyShouldBeType(iKey));
+            return false;
+          }
+          break;
+        case 'iconURL':
+          if (!validateHttpUrl(iValue)) {
+            logError(key, `${iKey} should be a url`);
+            return false;
+          }
+          break;
+        case 'src':
+          if ('srcdoc' in integrations[key]) {
+            logError(key, `cannot have both src and srcdoc`);
+            return false;
+          }
+          if (!validateHttpUrl(iValue)) {
+            logError(key, `src "${iValue}" is not a valid URL`);
+            return false;
+          }
+          break;
+        case 'srcdoc':
+          if ('src' in integrations[key]) {
+            logError(key, `cannot have both src and srcdoc`);
+            return false;
+          }
+          if (typeof iValue !== 'string') {
+            logError(key, keyShouldBeType(iKey));
+            return false;
+          }
+          break;
+        case 'location':
+          if (!['main', 'sidebar'].includes(iValue)) {
+            logError(key, keyShouldBeType(iKey));
+            return false;
+          }
+          break;
+        case 'controlledBy':
+          if (
+            iValue !== '*' &&
+            iValue !== 'owners' &&
+            (!Array.isArray(iValue) ||
+              iValue.some((s) => typeof s !== 'string'))
+          ) {
+            logError(key, keyShouldBeType(iKey));
+            return false;
+          }
+          break;
+        case 'shared':
+          if (
+            (!Array.isArray(iValue) ||
+              iValue.some((s) => typeof s !== 'string')) &&
+            iValue !== 'owners' &&
+            typeof iValue !== 'boolean'
+          ) {
+            logError(key, keyShouldBeType(iKey));
+            return false;
+          }
+          break;
+        default: {
+          const expectedKey = customIntegrationsType.id[iKey];
+          if (!expectedKey) {
+            console.error(`customIntegration does not support key ${iKey}`);
+            return false;
+          }
+          break;
         }
       }
     }
