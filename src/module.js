@@ -1582,7 +1582,7 @@ export default class DailyIframe extends EventEmitter {
     }
     // if we're in callObject mode and not loaded yet, don't do anything
     if (this._callObjectMode && this.needsLoad()) {
-      return { inputSettings: this._preloadCache.inputSettings };
+      return await this.getInputSettings();
     }
 
     // Ask call machine to update input settings, then await callback.
