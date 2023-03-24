@@ -188,6 +188,8 @@ import {
   DAILY_METHOD_UPDATE_CUSTOM_INTEGRATIONS,
   DAILY_METHOD_GET_SIDEBAR_VIEW,
   DAILY_METHOD_SET_SIDEBAR_VIEW,
+  DAILY_METHOD_START_CUSTOM_INTEGRATION,
+  DAILY_METHOD_STOP_CUSTOM_INTEGRATION,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -2793,27 +2795,14 @@ export default class DailyIframe extends EventEmitter {
 
   customIntegrations() {
     methodNotSupportedInReactNative();
-    if (this._callObjectMode) {
-      console.error('customIntegrations is not available in callObject mode');
-      return this;
-    }
+    methodOnlySupportedInPrebuilt(this._callObjectMode, 'customIntegrations()');
     return this._customIntegrations;
   }
 
   updateCustomIntegrations(integrations) {
     methodNotSupportedInReactNative();
-    if (this._callObjectMode) {
-      console.error(
-        'updateCustomIntegrations is not available in callObject mode'
-      );
-      return this;
-    }
-    if (this._callState !== DAILY_STATE_JOINED) {
-      console.error(
-        'the meeting must be joined before calling updateCustomIntegrations'
-      );
-      return this;
-    }
+    methodOnlySupportedInPrebuilt(this._callObjectMode, 'updateCustomIntegrations()');
+    methodOnlySupportedAfterJoin(this._callState, 'updateCustomIntegrations()');
     // TODO: Write validator for custom integrations.
     // if (!validateCustomIntegrations(integrations)) {
     //   console.error(
@@ -2828,6 +2817,36 @@ export default class DailyIframe extends EventEmitter {
       integrations,
     });
     this._customIntegrations = integrations;
+    return this;
+  }
+
+  startCustomIntegration(id) {
+    methodNotSupportedInReactNative();
+    methodOnlySupportedInPrebuilt(this._callObjectMode, 'startCustomIntegration()');
+    methodOnlySupportedAfterJoin(this._callState, 'startCustomIntegration()');
+    if (!(id in this._customIntegrations)) {
+      console.error(`Can't find custom integration: "${id}"`);
+      return this;
+    }
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_START_CUSTOM_INTEGRATION,
+      id,
+    });
+    return this;
+  }
+
+  stopCustomIntegration(id) {
+    methodNotSupportedInReactNative();
+    methodOnlySupportedInPrebuilt(this._callObjectMode, 'stopCustomIntegration()');
+    methodOnlySupportedAfterJoin(this._callState, 'stopCustomIntegration()');
+    if (!(id in this._customIntegrations)) {
+      console.error(`Can't find custom integration: "${id}"`);
+      return this;
+    }
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_STOP_CUSTOM_INTEGRATION,
+      id,
+    });
     return this;
   }
 
