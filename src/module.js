@@ -188,8 +188,8 @@ import {
   DAILY_METHOD_SET_CUSTOM_INTEGRATIONS,
   DAILY_METHOD_GET_SIDEBAR_VIEW,
   DAILY_METHOD_SET_SIDEBAR_VIEW,
-  DAILY_METHOD_START_CUSTOM_INTEGRATION,
-  DAILY_METHOD_STOP_CUSTOM_INTEGRATION,
+  DAILY_METHOD_START_CUSTOM_INTEGRATIONS,
+  DAILY_METHOD_STOP_CUSTOM_INTEGRATIONS,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -975,7 +975,9 @@ export default class DailyIframe extends EventEmitter {
 
     if (properties.customIntegrations !== undefined) {
       if (this._callObjectMode) {
-        console.error('customIntegrations is not available in call object mode');
+        console.error(
+          'customIntegrations is not available in call object mode'
+        );
       } else {
         this._customIntegrations = properties.customIntegrations;
       }
@@ -2801,7 +2803,10 @@ export default class DailyIframe extends EventEmitter {
 
   setCustomIntegrations(integrations) {
     methodNotSupportedInReactNative();
-    methodOnlySupportedInPrebuilt(this._callObjectMode, 'setCustomIntegrations()');
+    methodOnlySupportedInPrebuilt(
+      this._callObjectMode,
+      'setCustomIntegrations()'
+    );
     methodOnlySupportedAfterJoin(this._callState, 'setCustomIntegrations()');
     // TODO: Write validator for custom integrations.
     // if (!validateCustomIntegrations(integrations)) {
@@ -2820,32 +2825,60 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
-  startCustomIntegration(id) {
+  startCustomIntegrations(ids) {
     methodNotSupportedInReactNative();
-    methodOnlySupportedInPrebuilt(this._callObjectMode, 'startCustomIntegration()');
-    methodOnlySupportedAfterJoin(this._callState, 'startCustomIntegration()');
-    if (!(id in this._customIntegrations)) {
-      console.error(`Can't find custom integration: "${id}"`);
+    methodOnlySupportedInPrebuilt(
+      this._callObjectMode,
+      'startCustomIntegrations()'
+    );
+    methodOnlySupportedAfterJoin(this._callState, 'startCustomIntegrations()');
+    if (
+      (Array.isArray(ids) && ids.some((id) => typeof id !== 'string')) ||
+      (!Array.isArray(ids) && typeof ids !== 'string')
+    ) {
+      console.error('startCustomIntegrations() only accepts string | string[]');
+      return this;
+    }
+    const _ids = typeof ids === 'string' ? [ids] : ids;
+    const notFound = _ids.filter((id) => !(id in this._customIntegrations));
+    if (notFound.length) {
+      console.error(
+        `Can't find custom integration(s): "${notFound.join(', ')}"`
+      );
       return this;
     }
     this.sendMessageToCallMachine({
-      action: DAILY_METHOD_START_CUSTOM_INTEGRATION,
-      id,
+      action: DAILY_METHOD_START_CUSTOM_INTEGRATIONS,
+      ids: _ids,
     });
     return this;
   }
 
-  stopCustomIntegration(id) {
+  stopCustomIntegrations(ids) {
     methodNotSupportedInReactNative();
-    methodOnlySupportedInPrebuilt(this._callObjectMode, 'stopCustomIntegration()');
-    methodOnlySupportedAfterJoin(this._callState, 'stopCustomIntegration()');
-    if (!(id in this._customIntegrations)) {
-      console.error(`Can't find custom integration: "${id}"`);
+    methodOnlySupportedInPrebuilt(
+      this._callObjectMode,
+      'stopCustomIntegrations()'
+    );
+    methodOnlySupportedAfterJoin(this._callState, 'stopCustomIntegrations()');
+    if (
+      (Array.isArray(ids) && ids.some((id) => typeof id !== 'string')) ||
+      (!Array.isArray(ids) && typeof ids !== 'string')
+    ) {
+      console.error('stopCustomIntegrations() only accepts string | string[]');
+      return this;
+    }
+    const _ids = typeof ids === 'string' ? [ids] : ids;
+    const notFound = _ids.filter((id) => !(id in this._customIntegrations));
+    if (notFound.length) {
+      console.error(
+        `Can't find custom integration(s): "${notFound.join(', ')}"`
+      );
       return this;
     }
     this.sendMessageToCallMachine({
-      action: DAILY_METHOD_STOP_CUSTOM_INTEGRATION,
-      id,
+      action: DAILY_METHOD_STOP_CUSTOM_INTEGRATIONS,
+      ids: _ids,
     });
     return this;
   }

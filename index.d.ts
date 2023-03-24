@@ -1449,8 +1449,8 @@ export interface DailyCall {
   customTrayButtons(): DailyCustomTrayButtons;
   setCustomIntegrations(customIntegrations: DailyCustomIntegrations): DailyCall;
   customIntegrations(): DailyCustomIntegrations;
-  startCustomIntegration(id: string): DailyCall;
-  stopCustomIntegration(id: string): DailyCall;
+  startCustomIntegrations(id: string | string[]): DailyCall;
+  stopCustomIntegrations(id: string | string[]): DailyCall;
   setBandwidth(bw: {
     kbs?: number | 'NO_CAP' | null;
     trackConstraints?: MediaTrackConstraints;
