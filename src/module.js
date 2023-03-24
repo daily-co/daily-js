@@ -4239,7 +4239,7 @@ function validateAudioProcessor(p) {
       console.warn(`invalid key inputSettings -> audio -> processor : ${k}`);
       delete p[k];
     });
-  if (p.type && !validateAudioProcessorType(p.type)) return false;
+  if (!validateAudioProcessorType(p.type)) return false;
 
   return true;
 }
@@ -4260,8 +4260,7 @@ function validateVideoProcessor(p) {
   const VALID_PROCESSOR_KEYS = ['type', `config`, 'publish'];
   if (!p) return false;
   if (typeof p !== 'object') return false;
-  if (Object.keys(p).length === 0) return false; // lodash isEmpty did not work well with github workflow for some reason
-  if (p.type && !validateVideoProcessorType(p.type)) return false;
+  if (!validateVideoProcessorType(p.type)) return false;
   if (p.publish !== undefined && typeof p.publish !== 'boolean') return false;
   // publish flag has been deprecated
   if (typeof p.publish === 'boolean') {
