@@ -37,6 +37,7 @@ import {
   DAILY_FATAL_ERROR_EXP_TOKEN,
   DAILY_FATAL_ERROR_MEETING_FULL,
   DAILY_FATAL_ERROR_NOT_ALLOWED,
+  DAILY_FATAL_ERROR_CONNECTION,
   DAILY_CAMERA_ERROR_CAM_IN_USE,
   DAILY_CAMERA_ERROR_MIC_IN_USE,
   DAILY_CAMERA_ERROR_CAM_AND_MIC_IN_USE,
@@ -243,6 +244,7 @@ export {
   DAILY_FATAL_ERROR_EXP_TOKEN,
   DAILY_FATAL_ERROR_MEETING_FULL,
   DAILY_FATAL_ERROR_NOT_ALLOWED,
+  DAILY_FATAL_ERROR_CONNECTION,
   DAILY_CAMERA_ERROR_CAM_IN_USE,
   DAILY_CAMERA_ERROR_MIC_IN_USE,
   DAILY_CAMERA_ERROR_CAM_AND_MIC_IN_USE,
@@ -1119,9 +1121,7 @@ export default class DailyIframe extends EventEmitter {
 
   async destroy() {
     try {
-      if ([DAILY_STATE_JOINED, DAILY_STATE_LOADING].includes(this._callState)) {
-        await this.leave();
-      }
+      await this.leave();
     } catch (e) {
       // no-op
     }
@@ -2393,7 +2393,13 @@ export default class DailyIframe extends EventEmitter {
 
   async leave() {
     return new Promise((resolve) => {
-      if (this._callObjectLoader && !this._callObjectLoader.loaded) {
+      if (
+        this._callState === DAILY_STATE_LEFT ||
+        this._callState === DAILY_STATE_ERROR
+      ) {
+        // nothing to do, here, just resolve
+        resolve();
+      } else if (this._callObjectLoader && !this._callObjectLoader.loaded) {
         // If call object bundle never successfully loaded, cancel load if
         // needed and clean up state immediately (without waiting for call
         // machine to clean up its state).
@@ -2405,12 +2411,6 @@ export default class DailyIframe extends EventEmitter {
         } catch (e) {
           console.log("could not emit 'left-meeting'", e);
         }
-        resolve();
-      } else if (
-        this._callState === DAILY_STATE_LEFT ||
-        this._callState === DAILY_STATE_ERROR
-      ) {
-        // nothing to do, here, just resolve
         resolve();
       } else {
         this._resolveLeave = resolve;

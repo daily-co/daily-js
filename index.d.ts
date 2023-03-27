@@ -124,7 +124,8 @@ export type DailyFatalErrorType =
   | 'exp-token'
   | 'meeting-full'
   | 'end-of-life'
-  | 'not-allowed';
+  | 'not-allowed'
+  | 'connection-error';
 
 export type DailyNonFatalErrorType =
   | 'input-settings-error'
@@ -482,17 +483,32 @@ export interface DailyNetworkStats {
   threshold: 'good' | 'low' | 'very-low';
 }
 
-export interface DailyCpuLoadState {
-  cpuLoadState: 'low' | 'high';
-}
-
 export interface DailyCpuLoadStats {
   cpuLoadState: 'low' | 'high';
+  cpuLoadStateReason: 'encode' | 'decode' | 'scheduleDuration' | 'none'; // We are currently not using the Inter frame Delay to change the cpu load state
   stats: {
-    timestamp: number;
-    avgFrameEncodeTimeSec: number;
-    targetEncodeFrameRate: number;
-    cpuUsageBasedOnTargetEncode: number;
+    latest: {
+      timestamp: number;
+      scheduleDuration: number;
+      frameEncodeTimeSec: number;
+      targetEncodeFrameRate: number;
+      targetDecodeFrameRate: number;
+      targetScheduleDuration: number;
+      cpuUsageBasedOnTargetEncode: number;
+      cpuUsageBasedOnGlobalDecode: number;
+      avgFrameDecodeTimeSec: number;
+      avgInterFrameDelayStandardDeviation: number;
+      totalReceivedVideoTracks: number;
+      cpuInboundVideoStats: {
+        trackId: string;
+        ssrc: number;
+        frameWidth: number;
+        frameHeight: number;
+        fps: number;
+        frameDecodeTimeSec: number;
+        interFrameDelayStandardDeviation: number;
+      }[];
+    };
   };
 }
 
@@ -667,7 +683,6 @@ export interface DailyEventObjectNoPayload {
 
 export type DailyCameraError = {
   msg: string;
-  localizedMsg?: string;
 };
 
 export interface DailyCamPermissionsError extends DailyCameraError {
@@ -726,13 +741,27 @@ export interface DailyEventObjectCameraError {
   error: DailyCameraErrorObject;
 }
 
+export type DailyFatalError = {
+  type: DailyFatalErrorType;
+  msg: string;
+};
+
+export interface DailyFatalConnectionError extends DailyFatalError {
+  type: Extract<DailyFatalConnectionError, 'connection-error'>;
+  details: {
+    on: 'join' | 'reconnect';
+    sourceError: Error;
+    uri?: string;
+  };
+}
+
+export type DailyFatalErrorObject<T extends DailyFatalError = any> =
+  T extends DailyFatalConnectionError['type'] ? DailyFatalConnectionError : any;
+
 export interface DailyEventObjectFatalError {
   action: Extract<DailyEvent, 'error'>;
   errorMsg: string;
-  error?: {
-    type: DailyFatalErrorType;
-    localizedMsg?: string;
-  };
+  error?: DailyFatalErrorObject;
 }
 
 export interface DailyEventObjectNonFatalError {
@@ -891,6 +920,7 @@ export interface DailyEventObjectNetworkQualityEvent {
 export interface DailyEventObjectCpuLoadEvent {
   action: Extract<DailyEvent, 'cpu-load-change'>;
   cpuLoadState: 'low' | 'high';
+  cpuLoadStateReason: 'encode' | 'decode' | 'scheduleDuration' | 'none'; // We are currently not using the Inter frame Delay to change the cpu load state
 }
 
 export type NetworkConnectionType = 'signaling' | 'peer-to-peer' | 'sfu';
@@ -1323,7 +1353,7 @@ export interface DailyCall {
   ): Promise<DailyReceiveSettings>;
   updateInputSettings(
     inputSettings: DailyInputSettings
-  ): Promise<DailyInputSettings>;
+  ): Promise<{ inputSettings: DailyInputSettings }>;
   getInputSettings(): Promise<DailyInputSettings>;
   updateCustomTrayButtons(customTrayButtons: DailyCustomTrayButtons): DailyCall;
   customTrayButtons(): DailyCustomTrayButtons;
