@@ -156,6 +156,8 @@ export const DAILY_EVENT_ERROR = 'error';
 
 export const DAILY_EVENT_CUSTOM_BUTTON_CLICK = 'custom-button-click';
 
+export const DAILY_EVENT_SIDEBAR_VIEW_CHANGED = 'sidebar-view-changed';
+
 //
 // internal
 //
@@ -166,6 +168,16 @@ export const MAX_USER_DATA_SIZE = 1024 * 4;
 
 export const IFRAME_MESSAGE_MARKER = 'iframe-call-message';
 
+export const DAILY_METHOD_GET_SIDEBAR_VIEW =
+  'get-sidebar-view';
+export const DAILY_METHOD_SET_SIDEBAR_VIEW =
+  'set-sidebar-view';
+export const DAILY_METHOD_SET_CUSTOM_INTEGRATIONS =
+  'set-custom-integrations';
+export const DAILY_METHOD_START_CUSTOM_INTEGRATIONS =
+  'start-custom-integrations';
+export const DAILY_METHOD_STOP_CUSTOM_INTEGRATIONS =
+  'stop-custom-integrations';
 export const DAILY_METHOD_UPDATE_CUSTOM_TRAY_BUTTONS =
   'update-custom-tray-buttons';
 export const DAILY_METHOD_SET_THEME = 'set-theme';
