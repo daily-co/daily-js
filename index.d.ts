@@ -296,7 +296,7 @@ export interface DailyCustomIntegration {
    * - false won't share
    * - 'owners' will share with owners only
    * - string[] will share with participants with given list of session ids
-   * 
+   *
    * When the integration is started, it will be started for other participants, too.
    * When it's stopped, it will stop for all participants.
    */
@@ -741,12 +741,30 @@ export interface DailyInputAudioProcessorSettings {
   type: 'none' | 'noise-cancellation';
 }
 
-export interface DailyInputVideoSettings {
-  processor: DailyInputVideoProcessorSettings;
+export interface DailyNoInputSettings {
+  type: 'none';
 }
-export interface DailyInputVideoProcessorSettings {
-  type: 'none' | 'background-blur' | 'background-image';
-  config?: {};
+
+export interface DailyBackgroundBlurInputSettings {
+  type: 'background-blur';
+  config: {
+    strength?: number;
+  };
+}
+
+export interface DailyBackgroundImageInputSettings {
+  type: 'background-image';
+  config: {
+    url?: string;
+    source?: string | number;
+  };
+}
+
+export interface DailyInputVideoSettings {
+  processor?:
+    | DailyNoInputSettings
+    | DailyBackgroundBlurInputSettings
+    | DailyBackgroundImageInputSettings;
 }
 
 export type DailyInputSettingsUpdate = {
@@ -1398,7 +1416,13 @@ export interface DailyTranscriptionDeepgramOptions {
   redact?: Array<string> | boolean;
 }
 
-export type SidebarView = null | 'people' | 'chat' | 'network' | 'breakout' | string;
+export type SidebarView =
+  | null
+  | 'people'
+  | 'chat'
+  | 'network'
+  | 'breakout'
+  | string;
 
 export interface DailyCall {
   iframe(): HTMLIFrameElement | null;
