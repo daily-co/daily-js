@@ -1184,7 +1184,7 @@ export interface DailyUpdateStreamingCustomLayoutConfig {
 
 export interface DailyStartStreamingCustomLayoutConfig
   extends DailyUpdateStreamingCustomLayoutConfig {
-  composition_id: string;
+  composition_id?: string;
   session_assets?: {
     [key: string]: string;
   };
