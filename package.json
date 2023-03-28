@@ -115,82 +115,82 @@
             {
               "type": "feat",
               "scope": "daily-js",
-              "release": "patch"
+              "release": "minor"
             },
             {
               "type": "feat",
               "scope": "dj",
-              "release": "patch"
+              "release": "minor"
             },
             {
               "type": "feat",
               "scope": "call-machine",
-              "release": "patch"
+              "release": "minor"
             },
             {
               "type": "feat",
               "scope": "cm",
-              "release": "patch"
+              "release": "minor"
             },
             {
               "type": "improvement",
               "scope": "daily-js",
-              "release": "patch"
+              "release": "minor"
             },
             {
               "type": "improvement",
               "scope": "dj",
-              "release": "patch"
+              "release": "minor"
             },
             {
               "type": "improvement",
               "scope": "call-machine",
-              "release": "patch"
+              "release": "minor"
             },
             {
               "type": "improvement",
               "scope": "cm",
-              "release": "patch"
+              "release": "minor"
             },
             {
               "type": "imp",
               "scope": "daily-js",
-              "release": "patch"
+              "release": "minor"
             },
             {
               "type": "imp",
               "scope": "dj",
-              "release": "patch"
+              "release": "minor"
             },
             {
               "type": "imp",
               "scope": "call-machine",
-              "release": "patch"
+              "release": "minor"
             },
             {
               "type": "imp",
               "scope": "cm",
-              "release": "patch"
+              "release": "minor"
             },
             {
               "breaking": true,
               "scope": "daily-js",
-              "release": "patch"
+              "release": "minor"
             },
             {
               "breaking": true,
               "scope": "call-machine",
-              "release": "patch"
+              "release": "minor"
             },
             {
               "breaking": true,
               "scope": "dj",
-              "release": "patch"
+              "release": "minor"
             },
             {
               "breaking": true,
               "scope": "cm",
-              "release": "patch"
+              "release": "minor"
             }
           ]
         }
