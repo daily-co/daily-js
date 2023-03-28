@@ -103,6 +103,7 @@ import {
   DAILY_EVENT_RECEIVE_SETTINGS_UPDATED,
   DAILY_EVENT_INPUT_SETTINGS_UPDATED,
   DAILY_EVENT_NONFATAL_ERROR,
+  DAILY_EVENT_SIDEBAR_VIEW_CHANGED,
 
   // internals
   //
@@ -184,6 +185,11 @@ import {
   DAILY_EXIT_FULLSCREEN,
   DAILY_METHOD_TRANSMIT_LOG,
   DAILY_METHOD_GET_CPU_LOAD_STATS,
+  DAILY_METHOD_SET_CUSTOM_INTEGRATIONS,
+  DAILY_METHOD_GET_SIDEBAR_VIEW,
+  DAILY_METHOD_SET_SIDEBAR_VIEW,
+  DAILY_METHOD_START_CUSTOM_INTEGRATIONS,
+  DAILY_METHOD_STOP_CUSTOM_INTEGRATIONS,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -375,7 +381,29 @@ const customTrayButtonsType = {
   },
 };
 
+const customIntegrationsType = {
+  id: {
+    allow: 'string',
+    controlledBy: "'*' | 'owners' | string[]",
+    csp: 'string',
+    iconURL: 'string',
+    label: 'string',
+    loading: "'eager' | 'lazy'",
+    location: "'main' | 'sidebar'",
+    name: 'string',
+    referrerPolicy: 'string',
+    sandbox: 'string',
+    src: 'string',
+    srcdoc: 'string',
+    shared: "string[] | 'owners' | boolean",
+  },
+};
+
 const FRAME_PROPS = {
+  customIntegrations: {
+    validate: validateCustomIntegrations,
+    help: customIntegrationsValidationHelpMsg(),
+  },
   customTrayButtons: {
     validate: validateCustomTrayButtons,
     help: `customTrayButtons should be a dictionary of the type ${JSON.stringify(
@@ -964,6 +992,18 @@ export default class DailyIframe extends EventEmitter {
       }
     } else {
       this._showParticipantsBar = true;
+    }
+
+    if (properties.customIntegrations !== undefined) {
+      if (this._callObjectMode) {
+        console.error(
+          'customIntegrations is not available in call object mode'
+        );
+      } else {
+        this._customIntegrations = properties.customIntegrations;
+      }
+    } else {
+      this._customIntegrations = {};
     }
 
     if (properties.customTrayButtons !== undefined) {
@@ -2776,6 +2816,88 @@ export default class DailyIframe extends EventEmitter {
     return this._showParticipantsBar;
   }
 
+  customIntegrations() {
+    methodNotSupportedInReactNative();
+    methodOnlySupportedInPrebuilt(this._callObjectMode, 'customIntegrations()');
+    return this._customIntegrations;
+  }
+
+  setCustomIntegrations(integrations) {
+    methodNotSupportedInReactNative();
+    methodOnlySupportedInPrebuilt(
+      this._callObjectMode,
+      'setCustomIntegrations()'
+    );
+    methodOnlySupportedAfterJoin(this._callState, 'setCustomIntegrations()');
+    if (!validateCustomIntegrations(integrations)) {
+      return this;
+    }
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_SET_CUSTOM_INTEGRATIONS,
+      integrations,
+    });
+    this._customIntegrations = integrations;
+    return this;
+  }
+
+  startCustomIntegrations(ids) {
+    methodNotSupportedInReactNative();
+    methodOnlySupportedInPrebuilt(
+      this._callObjectMode,
+      'startCustomIntegrations()'
+    );
+    methodOnlySupportedAfterJoin(this._callState, 'startCustomIntegrations()');
+    if (
+      (Array.isArray(ids) && ids.some((id) => typeof id !== 'string')) ||
+      (!Array.isArray(ids) && typeof ids !== 'string')
+    ) {
+      console.error('startCustomIntegrations() only accepts string | string[]');
+      return this;
+    }
+    const _ids = typeof ids === 'string' ? [ids] : ids;
+    const notFound = _ids.filter((id) => !(id in this._customIntegrations));
+    if (notFound.length) {
+      console.error(
+        `Can't find custom integration(s): "${notFound.join(', ')}"`
+      );
+      return this;
+    }
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_START_CUSTOM_INTEGRATIONS,
+      ids: _ids,
+    });
+    return this;
+  }
+
+  stopCustomIntegrations(ids) {
+    methodNotSupportedInReactNative();
+    methodOnlySupportedInPrebuilt(
+      this._callObjectMode,
+      'stopCustomIntegrations()'
+    );
+    methodOnlySupportedAfterJoin(this._callState, 'stopCustomIntegrations()');
+    if (
+      (Array.isArray(ids) && ids.some((id) => typeof id !== 'string')) ||
+      (!Array.isArray(ids) && typeof ids !== 'string')
+    ) {
+      console.error('stopCustomIntegrations() only accepts string | string[]');
+      return this;
+    }
+    const _ids = typeof ids === 'string' ? [ids] : ids;
+    const notFound = _ids.filter((id) => !(id in this._customIntegrations));
+    if (notFound.length) {
+      console.error(
+        `Can't find custom integration(s): "${notFound.join(', ')}"`
+      );
+      return this;
+    }
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_STOP_CUSTOM_INTEGRATIONS,
+      ids: _ids,
+    });
+    return this;
+  }
+
   customTrayButtons() {
     methodOnlySupportedInPrebuilt(this._callObjectMode, 'customTrayButtons()');
     methodNotSupportedInReactNative();
@@ -2888,6 +3010,35 @@ export default class DailyIframe extends EventEmitter {
     } else if (document.webkitFullscreenElement) {
       document.webkitExitFullscreen();
     }
+  }
+
+  async getSidebarView() {
+    if (this._callObjectMode) {
+      console.error('getSidebarView is not available in callObject mode');
+      return Promise.resolve(null);
+    }
+    return new Promise((resolve) => {
+      let k = (msg) => {
+        resolve(msg.view);
+      };
+      this.sendMessageToCallMachine(
+        { action: DAILY_METHOD_GET_SIDEBAR_VIEW },
+        k
+      );
+    });
+  }
+
+  setSidebarView(view) {
+    if (this._callObjectMode) {
+      console.error('setSidebarView is not available in callObject mode');
+      return this;
+    }
+    // Send message to Prebuilt UI Iframe driver
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_SET_SIDEBAR_VIEW,
+      view: view,
+    });
+    return this;
   }
 
   async room({ includeRoomConfigDefaults = true } = {}) {
@@ -3452,6 +3603,9 @@ export default class DailyIframe extends EventEmitter {
         }
         break;
       case DAILY_EVENT_CUSTOM_BUTTON_CLICK:
+        this.emitDailyJSEvent(msg);
+        break;
+      case DAILY_EVENT_SIDEBAR_VIEW_CHANGED:
         this.emitDailyJSEvent(msg);
         break;
       case DAILY_EVENT_MEETING_SESSION_STATE_UPDATED:
@@ -4401,6 +4555,12 @@ function receiveSettingsValidationHelpMsg({ allowAllParticipantsKey }) {
   );
 }
 
+function customIntegrationsValidationHelpMsg() {
+  return `customIntegrations should be an object of type ${JSON.stringify(
+    customIntegrationsType
+  )}.`;
+}
+
 function validateCustomTrayButtons(btns) {
   if ((btns && typeof btns !== 'object') || Array.isArray(btns)) {
     console.error(
@@ -4432,6 +4592,115 @@ function validateCustomTrayButtons(btns) {
             `customTrayButton ${btnKey} should be a ${expectedKey}.`
           );
           return false;
+        }
+      }
+    }
+  }
+
+  return true;
+}
+
+function validateCustomIntegrations(integrations) {
+  if (
+    !integrations ||
+    (integrations && typeof integrations !== 'object') ||
+    Array.isArray(integrations)
+  ) {
+    console.error(customIntegrationsValidationHelpMsg());
+    return false;
+  }
+
+  const keyShouldBeType = (key) =>
+    `${key} should be ${customIntegrationsType.id[key]}`;
+  const logError = (id, msg) =>
+    console.error(`customIntegration ${id}: ${msg}`);
+
+  for (const [key] of Object.entries(integrations)) {
+    if (!('label' in integrations[key])) {
+      logError(key, 'label is required');
+      return false;
+    }
+    if (!('location' in integrations[key])) {
+      logError(key, 'location is required');
+      return false;
+    }
+    if (!('src' in integrations[key]) && !('srcdoc' in integrations[key])) {
+      logError(key, 'src or srcdoc is required');
+      return false;
+    }
+    for (const [iKey, iValue] of Object.entries(integrations[key])) {
+      switch (iKey) {
+        case 'allow':
+        case 'csp':
+        case 'name':
+        case 'referrerPolicy':
+        case 'sandbox':
+          if (typeof iValue !== 'string') {
+            logError(key, keyShouldBeType(iKey));
+            return false;
+          }
+          break;
+        case 'iconURL':
+          if (!validateHttpUrl(iValue)) {
+            logError(key, `${iKey} should be a url`);
+            return false;
+          }
+          break;
+        case 'src':
+          if ('srcdoc' in integrations[key]) {
+            logError(key, `cannot have both src and srcdoc`);
+            return false;
+          }
+          if (!validateHttpUrl(iValue)) {
+            logError(key, `src "${iValue}" is not a valid URL`);
+            return false;
+          }
+          break;
+        case 'srcdoc':
+          if ('src' in integrations[key]) {
+            logError(key, `cannot have both src and srcdoc`);
+            return false;
+          }
+          if (typeof iValue !== 'string') {
+            logError(key, keyShouldBeType(iKey));
+            return false;
+          }
+          break;
+        case 'location':
+          if (!['main', 'sidebar'].includes(iValue)) {
+            logError(key, keyShouldBeType(iKey));
+            return false;
+          }
+          break;
+        case 'controlledBy':
+          if (
+            iValue !== '*' &&
+            iValue !== 'owners' &&
+            (!Array.isArray(iValue) ||
+              iValue.some((s) => typeof s !== 'string'))
+          ) {
+            logError(key, keyShouldBeType(iKey));
+            return false;
+          }
+          break;
+        case 'shared':
+          if (
+            (!Array.isArray(iValue) ||
+              iValue.some((s) => typeof s !== 'string')) &&
+            iValue !== 'owners' &&
+            typeof iValue !== 'boolean'
+          ) {
+            logError(key, keyShouldBeType(iKey));
+            return false;
+          }
+          break;
+        default: {
+          const expectedKey = customIntegrationsType.id[iKey];
+          if (!expectedKey) {
+            console.error(`customIntegration does not support key ${iKey}`);
+            return false;
+          }
+          break;
         }
       }
     }

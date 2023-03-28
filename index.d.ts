@@ -95,7 +95,8 @@ export type DailyEvent =
   | 'input-settings-updated'
   | 'show-local-video-changed'
   | 'selected-devices-updated'
-  | 'custom-button-click';
+  | 'custom-button-click'
+  | 'sidebar-view-changed';
 
 export type DailyMeetingState =
   | 'new'
@@ -226,6 +227,86 @@ export interface DailyCustomTrayButtons {
   [id: string]: DailyCustomTrayButton;
 }
 
+export interface DailyCustomIntegration {
+  /**
+   * Specifies the feature policy for the iframe.
+   * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-allow
+   */
+  allow?: HTMLIFrameElement['allow'];
+  /**
+   * Specifies who in the call is able to start and stop this integration.
+   * - '*' means all participants can start and stop this integration
+   * - 'owners' means only meeting owners can start and stop
+   * - string[] defines the list of participants identified by their session_id
+   * Default: '*'
+   */
+  controlledBy?: '*' | 'owners' | string[];
+  /**
+   * Specifies the [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) for the iframe.
+   * Please check browser support before using this property.
+   * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-csp
+   * https://caniuse.com/mdn-api_htmliframeelement_csp
+   */
+  csp?: string;
+  /**
+   * Specifies a publicly available URL to an icon image file associated with the integration.
+   */
+  iconURL?: string;
+  /**
+   * Used to render the integration's name in Prebuilt.
+   */
+  label: string;
+  /**
+   * By default integrations will be loaded lazily.
+   */
+  loading?: 'eager' | 'lazy';
+  /**
+   * Daily supports two different types of custom integrations:
+   * - Main call area integrations
+   * - Sidebar integrations
+   */
+  location: 'main' | 'sidebar';
+  /**
+   * A unique name for the iframe.
+   * For more info see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-name
+   */
+  name?: HTMLIFrameElement['name'];
+  /**
+   * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-referrerpolicy
+   */
+  referrerPolicy?: HTMLIFrameElement['referrerPolicy'];
+  /**
+   * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-sandbox
+   */
+  sandbox?: string;
+  /**
+   * The iframe's source URL.
+   * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-src
+   */
+  src?: HTMLIFrameElement['src'];
+  /**
+   * Allows to integrate inline HTML in an iframe.
+   * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-srcdoc
+   * https://caniuse.com/iframe-srcdoc
+   */
+  srcdoc?: HTMLIFrameElement['srcdoc'];
+  /**
+   * When configured, shares the integration's state with other participants in the call:
+   * - true will share with all other participants
+   * - false won't share
+   * - 'owners' will share with owners only
+   * - string[] will share with participants with given list of session ids
+   * 
+   * When the integration is started, it will be started for other participants, too.
+   * When it's stopped, it will stop for all participants.
+   */
+  shared?: string[] | 'owners' | boolean;
+}
+
+export interface DailyCustomIntegrations {
+  [id: string]: DailyCustomIntegration;
+}
+
 export interface DailyCallOptions {
   url?: string;
   token?: string;
@@ -237,6 +318,7 @@ export interface DailyCallOptions {
   showFullscreenButton?: boolean;
   showUserNameChangeUI?: boolean;
   iframeStyle?: Partial<CSSStyleDeclaration>;
+  customIntegrations?: DailyCustomIntegrations;
   customLayout?: boolean;
   customTrayButtons?: DailyCustomTrayButtons;
   bodyClass?: string;
@@ -688,17 +770,17 @@ export type DailyCameraError = {
 export interface DailyCamPermissionsError extends DailyCameraError {
   type: Extract<DailyCameraErrorType, 'permissions'>;
   blockedBy: 'user' | 'browser';
-  blockedMedia: Set<'video' | 'audio'>;
+  blockedMedia: Array<'video' | 'audio'>;
 }
 
 export interface DailyCamDeviceNotFoundError extends DailyCameraError {
   type: Extract<DailyCameraErrorType, 'not-found'>;
-  missingMedia: Set<'video' | 'audio'>;
+  missingMedia: Array<'video' | 'audio'>;
 }
 
 export interface DailyCamConstraintsError extends DailyCameraError {
   type: Extract<DailyCameraErrorType, 'constraints'>;
-  reason: Set<'invalid' | 'none-specified'>;
+  reason: 'invalid' | 'none-specified';
 }
 
 export interface DailyCamInUseError extends DailyCameraError {
@@ -716,7 +798,7 @@ export interface DailyCamUnknownError extends DailyCameraError {
   type: Extract<DailyCameraErrorType, 'unknown'>;
 }
 
-export type DailyCameraErrorObject<T extends DailyCameraError = any> =
+export type DailyCameraErrorObject<T extends DailyCameraErrorType> =
   T extends DailyCamPermissionsError['type']
     ? DailyCamPermissionsError
     : T extends DailyCamDeviceNotFoundError['type']
@@ -738,7 +820,7 @@ export interface DailyEventObjectCameraError {
     audioOk?: boolean;
     videoOk?: boolean;
   };
-  error: DailyCameraErrorObject;
+  error: DailyCameraErrorObject<DailyCameraErrorType>;
 }
 
 export type DailyFatalError = {
@@ -984,7 +1066,6 @@ export interface DailyEventObjectInputSettingsUpdated {
 export interface DailyEventObjectLiveStreamingStarted {
   action: Extract<DailyEvent, 'live-streaming-started'>;
   layout?: DailyStreamingLayoutConfig;
-  hlsRecordingId?: string;
   instanceId?: string;
 }
 export interface DailyEventObjectLiveStreamingUpdated {
@@ -1040,6 +1121,11 @@ export interface DailyEventObjectCustomButtonClick {
 export interface DailyEventObjectSelectedDevicesUpdated {
   action: Extract<DailyEvent, 'selected-devices-updated'>;
   devices: DailyDeviceInfos;
+}
+
+export interface DailyEventObjectSidebarViewChanged {
+  action: Extract<DailyEvent, 'sidebar-view-changed'>;
+  view: SidebarView;
 }
 
 export type DailyEventObject<T extends DailyEvent = any> =
@@ -1123,6 +1209,8 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectCustomButtonClick
     : T extends DailyEventObjectSelectedDevicesUpdated['action']
     ? DailyEventObjectSelectedDevicesUpdated
+    : T extends DailyEventObjectSidebarViewChanged['action']
+    ? DailyEventObjectSidebarViewChanged
     : any;
 
 export interface DailyFaceInfo {
@@ -1185,7 +1273,7 @@ export interface DailyUpdateStreamingCustomLayoutConfig {
 
 export interface DailyStartStreamingCustomLayoutConfig
   extends DailyUpdateStreamingCustomLayoutConfig {
-  composition_id: string;
+  composition_id?: string;
   session_assets?: {
     [key: string]: string;
   };
@@ -1306,6 +1394,8 @@ export interface DailyTranscriptionDeepgramOptions {
   redact?: Array<string> | boolean;
 }
 
+export type SidebarView = null | 'people' | 'chat' | 'network' | 'breakout' | string;
+
 export interface DailyCall {
   iframe(): HTMLIFrameElement | null;
   join(properties?: DailyCallOptions): Promise<DailyParticipantsObject | void>;
@@ -1357,6 +1447,10 @@ export interface DailyCall {
   getInputSettings(): Promise<DailyInputSettings>;
   updateCustomTrayButtons(customTrayButtons: DailyCustomTrayButtons): DailyCall;
   customTrayButtons(): DailyCustomTrayButtons;
+  setCustomIntegrations(customIntegrations: DailyCustomIntegrations): DailyCall;
+  customIntegrations(): DailyCustomIntegrations;
+  startCustomIntegrations(id: string | string[]): DailyCall;
+  stopCustomIntegrations(id: string | string[]): DailyCall;
   setBandwidth(bw: {
     kbs?: number | 'NO_CAP' | null;
     trackConstraints?: MediaTrackConstraints;
@@ -1468,6 +1562,8 @@ export interface DailyCall {
     topology: DailyNetworkTopology;
   }): Promise<{ workerId?: string; error?: string }>;
   setPlayNewParticipantSound(sound: boolean | number): void;
+  getSidebarView(): Promise<SidebarView>;
+  setSidebarView(view: SidebarView): DailyCall;
   on<T extends DailyEvent>(
     event: T,
     handler: (event?: DailyEventObject<T>) => void
