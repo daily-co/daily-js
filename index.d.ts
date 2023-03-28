@@ -729,12 +729,12 @@ export interface DailyReceiveSettingsUpdates {
 }
 
 export interface DailyInputSettings {
-  audio?: DailyInputAudioSettings;
-  video?: DailyInputVideoSettings;
+  audio: DailyInputAudioSettings;
+  video: DailyInputVideoSettings;
 }
 
 export interface DailyInputAudioSettings {
-  processor?: DailyInputAudioProcessorSettings;
+  processor: DailyInputAudioProcessorSettings;
 }
 
 export interface DailyInputAudioProcessorSettings {
@@ -742,12 +742,16 @@ export interface DailyInputAudioProcessorSettings {
 }
 
 export interface DailyInputVideoSettings {
-  processor?: DailyInputVideoProcessorSettings;
+  processor: DailyInputVideoProcessorSettings;
 }
 export interface DailyInputVideoProcessorSettings {
   type: 'none' | 'background-blur' | 'background-image';
   config?: {};
 }
+
+export type DailyInputSettingsUpdate = {
+  [Property in keyof DailyInputSettings]+?: DailyInputSettings[Property];
+};
 
 export interface DailyEventObjectNoPayload {
   action: Extract<
@@ -1442,7 +1446,7 @@ export interface DailyCall {
     receiveSettings: DailyReceiveSettingsUpdates
   ): Promise<DailyReceiveSettings>;
   updateInputSettings(
-    inputSettings: DailyInputSettings
+    inputSettings: DailyInputSettingsUpdate
   ): Promise<{ inputSettings: DailyInputSettings }>;
   getInputSettings(): Promise<DailyInputSettings>;
   updateCustomTrayButtons(customTrayButtons: DailyCustomTrayButtons): DailyCall;
