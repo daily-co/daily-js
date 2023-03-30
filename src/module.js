@@ -1537,18 +1537,61 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
+  // Helper for stripping 'none' processor settings that are there by
+  // default and not by explicit user choice.
+  //
+  // Returns a new object, being careful not to mess with the one passed in
+  // (this is important for handling the `input-settings-updated` event)
+  _stripDefaultInputSettings(inputSettings) {
+    if (!inputSettings) {
+      return;
+    }
+
+    const strippedInputSettings = {};
+
+    const shouldStripAudio =
+      inputSettings.audio?.processor?.type === 'none' &&
+      inputSettings.audio?.processor?._isDefaultWhenNone;
+    if (inputSettings.audio && !shouldStripAudio) {
+      const audioProcessor = { ...inputSettings.audio.processor };
+      delete audioProcessor._isDefaultWhenNone;
+      strippedInputSettings.audio = {
+        ...inputSettings.audio,
+        processor: audioProcessor,
+      };
+    }
+
+    const shouldStripVideo =
+      inputSettings.video?.processor?.type === 'none' &&
+      inputSettings.video?.processor?._isDefaultWhenNone;
+    if (inputSettings.video && !shouldStripVideo) {
+      const videoProcessor = { ...inputSettings.video.processor };
+      delete videoProcessor._isDefaultWhenNone;
+      strippedInputSettings.video = {
+        ...inputSettings.video,
+        processor: videoProcessor,
+      };
+    }
+
+    return strippedInputSettings;
+  }
+
   // Input Settings Getter
   // { video: { processor } }
   // In the future:
   // { video: {...}, audio: {...}, screenVideo: {...}, screenAudio: {...} }
   getInputSettings() {
     return new Promise((resolve) => {
-      const defaultSettings = { processor: { type: 'none' } };
+      const defaultSettings = {
+        processor: { type: 'none', _isDefaultWhenNone: true },
+      };
 
+      // Get settings
+      let videoSettings, audioSettings;
       if (this.needsLoad()) {
         // If not fully loaded yet, also look at the preload cache.
-        let _videoSettings = defaultSettings;
-        let _audioSettings = defaultSettings;
+        videoSettings = defaultSettings;
+        audioSettings = defaultSettings;
         let haveInputSettingsVideo = false;
         let haveInputSettingsAudio = false;
 
@@ -1557,7 +1600,7 @@ export default class DailyIframe extends EventEmitter {
           this._inputSettings.video &&
           Object.keys(this._inputSettings.video).length > 0
         ) {
-          _videoSettings = this._inputSettings.video;
+          videoSettings = this._inputSettings.video;
           haveInputSettingsVideo = true;
         }
 
@@ -1566,7 +1609,7 @@ export default class DailyIframe extends EventEmitter {
           this._inputSettings.audio &&
           Object.keys(this._inputSettings.audio).length > 0
         ) {
-          _audioSettings = this._inputSettings.audio;
+          audioSettings = this._inputSettings.audio;
           haveInputSettingsAudio = true;
         }
 
@@ -1585,22 +1628,26 @@ export default class DailyIframe extends EventEmitter {
         // If we have no input settings, but we have input settings in the preload
         // cache, then resolve with the preload cache.
         if (!haveInputSettingsVideo && havePreloadCacheInputSettingsVideo) {
-          _videoSettings = this._preloadCache.inputSettings.video;
+          videoSettings = this._preloadCache.inputSettings.video;
         }
 
         if (!haveInputSettingsAudio && havePreloadCacheInputSettingsAudio) {
-          _audioSettings = this._preloadCache.inputSettings.audio;
+          audioSettings = this._preloadCache.inputSettings.audio;
         }
-
-        let _inputSettings = { audio: _audioSettings, video: _videoSettings };
-        resolve(_inputSettings);
       } else {
-        // return the current input settings
-        let _videoSettings = this._inputSettings?.video || defaultSettings;
-        let _audioSettings = this._inputSettings?.audio || defaultSettings;
-        let _inputSettings = { audio: _audioSettings, video: _videoSettings };
-        resolve(_inputSettings);
+        // use the current input settings
+        videoSettings = this._inputSettings?.video || defaultSettings;
+        audioSettings = this._inputSettings?.audio || defaultSettings;
       }
+
+      // Return settings
+      let inputSettings = { audio: audioSettings, video: videoSettings };
+      // TODO: whether or not we strip default settings should eventually be
+      // controllable by a `showDefaultValues` argument to `getInputSettings()`,
+      // just like the `showInheritedValues` argument to `getReceiveSettings()`.
+      // The `input-settings-updated` payload should probably align with what
+      // this getter will do by default (`showDefaultValues = false`).
+      resolve(this._stripDefaultInputSettings(inputSettings));
     });
   }
 
@@ -1640,7 +1687,9 @@ export default class DailyIframe extends EventEmitter {
         if (msg.error) {
           reject(msg.error);
         } else {
-          resolve({ inputSettings: msg.inputSettings });
+          resolve({
+            inputSettings: this._stripDefaultInputSettings(msg.inputSettings),
+          });
         }
       };
       this.sendMessageToCallMachine(
@@ -3575,15 +3624,25 @@ export default class DailyIframe extends EventEmitter {
         // the first place from call machine, to simplify handling initial
         // input settings
         if (!deepEqual(this._inputSettings, msg.inputSettings)) {
+          const prevInputSettings = this._inputSettings;
           this._inputSettings = msg.inputSettings;
           this._preloadCache.inputSettings = {}; // clear cache, if any
-          try {
-            this.emit(msg.action, {
-              action: msg.action,
-              inputSettings: msg.inputSettings,
-            });
-          } catch (e) {
-            console.log('could not emit', msg, e);
+          if (
+            !deepEqual(
+              this._stripDefaultInputSettings(this._inputSettings),
+              this._stripDefaultInputSettings(prevInputSettings)
+            )
+          ) {
+            try {
+              this.emit(msg.action, {
+                action: msg.action,
+                inputSettings: this._stripDefaultInputSettings(
+                  msg.inputSettings
+                ),
+              });
+            } catch (e) {
+              console.log('could not emit', msg, e);
+            }
           }
         }
         break;
