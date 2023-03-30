@@ -644,6 +644,7 @@ const FRAME_PROPS = {
         if (!callObject._preloadCache.inputSettings) {
           callObject._preloadCache.inputSettings = {};
         }
+        stripInputSettingsForUnsupportedPlatforms(settings);
         if (settings.audio) {
           callObject._preloadCache.inputSettings.audio = settings.audio;
         }
@@ -1542,10 +1543,12 @@ export default class DailyIframe extends EventEmitter {
   // { video: {...}, audio: {...}, screenVideo: {...}, screenAudio: {...} }
   getInputSettings() {
     return new Promise((resolve) => {
+      const defaultSettings = { processor: { type: 'none' } };
+
       if (this.needsLoad()) {
         // If not fully loaded yet, also look at the preload cache.
-        let _videoSettings = { processor: { type: 'none' } };
-        let _audioSettings = { processor: { type: 'none' } };
+        let _videoSettings = defaultSettings;
+        let _audioSettings = defaultSettings;
         let haveInputSettingsVideo = false;
         let haveInputSettingsAudio = false;
 
@@ -1593,7 +1596,10 @@ export default class DailyIframe extends EventEmitter {
         resolve(_inputSettings);
       } else {
         // return the current input settings
-        resolve(this._inputSettings);
+        let _videoSettings = this._inputSettings?.video || defaultSettings;
+        let _audioSettings = this._inputSettings?.audio || defaultSettings;
+        let _inputSettings = { audio: _audioSettings, video: _videoSettings };
+        resolve(_inputSettings);
       }
     });
   }
@@ -1608,6 +1614,7 @@ export default class DailyIframe extends EventEmitter {
       if (!this._preloadCache.inputSettings) {
         this._preloadCache.inputSettings = {};
       }
+      stripInputSettingsForUnsupportedPlatforms(inputSettings);
       if (inputSettings.audio) {
         this._preloadCache.inputSettings.audio = inputSettings.audio;
       }
@@ -1615,9 +1622,16 @@ export default class DailyIframe extends EventEmitter {
         this._preloadCache.inputSettings.video = inputSettings.video;
       }
     }
+
+    // now that input settings may have been stripped of platform-unsupported
+    // settings, check again for validity (it may now be empty)
+    if (!validateInputSettings(inputSettings)) {
+      return await this.getInputSettings();
+    }
+
     // if we're in callObject mode and not loaded yet, don't do anything
     if (this._callObjectMode && this.needsLoad()) {
-      return { inputSettings: this._preloadCache.inputSettings };
+      return await this.getInputSettings();
     }
 
     // Ask call machine to update input settings, then await callback.
@@ -4378,6 +4392,28 @@ function validateInputSettings(settings) {
   return true;
 }
 
+// Assumes `settings` is otherwise valid (passes `validateInputSettings()`).
+// Note: currently `processor` is required for `settings` to be valid, so we can
+// strip out the entire `video` or `audio` if processing isn't supported.
+function stripInputSettingsForUnsupportedPlatforms(settings) {
+  const unsupportedProcessors = [];
+  if (settings.video && !isVideoProcessingSupported()) {
+    delete settings.video;
+    unsupportedProcessors.push('video');
+  }
+  if (settings.audio && !isAudioProcessingSupported()) {
+    delete settings.audio;
+    unsupportedProcessors.push('audio');
+  }
+  if (unsupportedProcessors.length > 0) {
+    console.error(
+      `Ignoring browser- or platform-unsupported input processors(s): ${unsupportedProcessors.join(
+        ', '
+      )}`
+    );
+  }
+}
+
 function validateAudioProcessor(p) {
   const VALID_PROCESSOR_KEYS = ['type'];
   if (!p) return false;
@@ -4388,7 +4424,7 @@ function validateAudioProcessor(p) {
       console.warn(`invalid key inputSettings -> audio -> processor : ${k}`);
       delete p[k];
     });
-  if (p.type && !validateAudioProcessorType(p.type)) return false;
+  if (!validateAudioProcessorType(p.type)) return false;
 
   return true;
 }
@@ -4409,8 +4445,7 @@ function validateVideoProcessor(p) {
   const VALID_PROCESSOR_KEYS = ['type', `config`, 'publish'];
   if (!p) return false;
   if (typeof p !== 'object') return false;
-  if (Object.keys(p).length === 0) return false; // lodash isEmpty did not work well with github workflow for some reason
-  if (p.type && !validateVideoProcessorType(p.type)) return false;
+  if (!validateVideoProcessorType(p.type)) return false;
   if (p.publish !== undefined && typeof p.publish !== 'boolean') return false;
   // publish flag has been deprecated
   if (typeof p.publish === 'boolean') {
