@@ -1537,12 +1537,20 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  // Helper for stripping 'none' processor settings that are there by
-  // default and not by explicit user choice.
+  // Helper for getting input settings ready to present to the user via the
+  // daily-js API (`getInputSettings()` or the `input-settings-updated` event).
+  //
+  // Strips any 'none' processor settings that are there by default and not by
+  // explicit user choice.
+  // TODO: whether or not we strip default settings should eventually be
+  // controllable by a `showDefaultValues` argument to `getInputSettings()`,
+  // just like the `showInheritedValues` argument to `getReceiveSettings()`.
+  // The `input-settings-updated` payload should probably align with what
+  // `getInputSettings()` will do by default (`showDefaultValues = false`).
   //
   // Returns a new object, being careful not to mess with the one passed in
   // (this is important for handling the `input-settings-updated` event)
-  _stripDefaultInputSettings(inputSettings) {
+  _prepInputSettingsToPresentToUser(inputSettings) {
     if (!inputSettings) {
       return;
     }
@@ -1577,78 +1585,42 @@ export default class DailyIframe extends EventEmitter {
   }
 
   // Input Settings Getter
-  // { video: { processor } }
+  // { video: { processor }, audio: { processor } }
   // In the future:
   // { video: {...}, audio: {...}, screenVideo: {...}, screenAudio: {...} }
   getInputSettings() {
     return new Promise((resolve) => {
-      const defaultSettings = {
-        processor: { type: 'none', _isDefaultWhenNone: true },
-      };
-
-      // Get settings
-      let videoSettings, audioSettings;
-      if (this.needsLoad()) {
-        // If not fully loaded yet, also look at the preload cache.
-        videoSettings = defaultSettings;
-        audioSettings = defaultSettings;
-        let haveInputSettingsVideo = false;
-        let haveInputSettingsAudio = false;
-
-        if (
-          this._inputSettings &&
-          this._inputSettings.video &&
-          Object.keys(this._inputSettings.video).length > 0
-        ) {
-          videoSettings = this._inputSettings.video;
-          haveInputSettingsVideo = true;
-        }
-
-        if (
-          this._inputSettings &&
-          this._inputSettings.audio &&
-          Object.keys(this._inputSettings.audio).length > 0
-        ) {
-          audioSettings = this._inputSettings.audio;
-          haveInputSettingsAudio = true;
-        }
-
-        const havePreloadCacheInputSettingsVideo =
-          this._preloadCache &&
-          this._preloadCache.inputSettings &&
-          this._preloadCache.inputSettings.video &&
-          Object.keys(this._preloadCache.inputSettings.video).length > 0;
-
-        const havePreloadCacheInputSettingsAudio =
-          this._preloadCache &&
-          this._preloadCache.inputSettings &&
-          this._preloadCache.inputSettings.audio &&
-          Object.keys(this._preloadCache.inputSettings.audio).length > 0;
-
-        // If we have no input settings, but we have input settings in the preload
-        // cache, then resolve with the preload cache.
-        if (!haveInputSettingsVideo && havePreloadCacheInputSettingsVideo) {
-          videoSettings = this._preloadCache.inputSettings.video;
-        }
-
-        if (!haveInputSettingsAudio && havePreloadCacheInputSettingsAudio) {
-          audioSettings = this._preloadCache.inputSettings.audio;
-        }
-      } else {
-        // use the current input settings
-        videoSettings = this._inputSettings?.video || defaultSettings;
-        audioSettings = this._inputSettings?.audio || defaultSettings;
-      }
-
-      // Return settings
-      let inputSettings = { audio: audioSettings, video: videoSettings };
-      // TODO: whether or not we strip default settings should eventually be
-      // controllable by a `showDefaultValues` argument to `getInputSettings()`,
-      // just like the `showInheritedValues` argument to `getReceiveSettings()`.
-      // The `input-settings-updated` payload should probably align with what
-      // this getter will do by default (`showDefaultValues = false`).
-      resolve(this._stripDefaultInputSettings(inputSettings));
+      resolve(this._getInputSettings());
     });
+  }
+
+  // Synchronus function to get input settings.
+  // `getInputSettings()` is just an async wrapper around this.
+  // TODO: `getInputSettings()` is only async for legacy reasons. Someday this
+  // synchronous method could be promoted and replace `getInputSettings()`.
+  _getInputSettings() {
+    const defaultSettings = {
+      processor: { type: 'none', _isDefaultWhenNone: true },
+    };
+
+    // Get settings
+    let videoSettings, audioSettings;
+
+    if (!this._inputSettings) {
+      // use preload cache input settings
+      videoSettings =
+        this._preloadCache?.inputSettings?.video || defaultSettings;
+      audioSettings =
+        this._preloadCache?.inputSettings?.audio || defaultSettings;
+    } else {
+      // use call-machine-provided input settings
+      videoSettings = this._inputSettings?.video || defaultSettings;
+      audioSettings = this._inputSettings?.audio || defaultSettings;
+    }
+
+    // Return settings
+    let inputSettings = { audio: audioSettings, video: videoSettings };
+    return this._prepInputSettingsToPresentToUser(inputSettings);
   }
 
   async updateInputSettings(inputSettings) {
@@ -1673,12 +1645,12 @@ export default class DailyIframe extends EventEmitter {
     // now that input settings may have been stripped of platform-unsupported
     // settings, check again for validity (it may now be empty)
     if (!validateInputSettings(inputSettings)) {
-      return await this.getInputSettings();
+      return this._getInputSettings();
     }
 
     // if we're in callObject mode and not loaded yet, don't do anything
     if (this._callObjectMode && this.needsLoad()) {
-      return await this.getInputSettings();
+      return this._getInputSettings();
     }
 
     // Ask call machine to update input settings, then await callback.
@@ -1688,7 +1660,9 @@ export default class DailyIframe extends EventEmitter {
           reject(msg.error);
         } else {
           resolve({
-            inputSettings: this._stripDefaultInputSettings(msg.inputSettings),
+            inputSettings: this._prepInputSettingsToPresentToUser(
+              msg.inputSettings
+            ),
           });
         }
       };
@@ -3624,21 +3598,14 @@ export default class DailyIframe extends EventEmitter {
         // the first place from call machine, to simplify handling initial
         // input settings
         if (!deepEqual(this._inputSettings, msg.inputSettings)) {
-          const prevInputSettings = this._inputSettings;
+          const prevInputSettings = this._getInputSettings();
           this._inputSettings = msg.inputSettings;
           this._preloadCache.inputSettings = {}; // clear cache, if any
-          if (
-            !deepEqual(
-              this._stripDefaultInputSettings(this._inputSettings),
-              this._stripDefaultInputSettings(prevInputSettings)
-            )
-          ) {
+          if (!deepEqual(prevInputSettings, this._getInputSettings())) {
             try {
               this.emit(msg.action, {
                 action: msg.action,
-                inputSettings: this._stripDefaultInputSettings(
-                  msg.inputSettings
-                ),
+                inputSettings: this._getInputSettings(),
               });
             } catch (e) {
               console.log('could not emit', msg, e);
@@ -3953,7 +3920,7 @@ export default class DailyIframe extends EventEmitter {
       this._callObjectMode
     );
     this._receiveSettings = {};
-    this._inputSettings = {};
+    this._inputSettings = undefined;
     resetPreloadCache(this._preloadCache);
   }
 
@@ -4466,7 +4433,7 @@ function stripInputSettingsForUnsupportedPlatforms(settings) {
   }
   if (unsupportedProcessors.length > 0) {
     console.error(
-      `Ignoring browser- or platform-unsupported input processors(s): ${unsupportedProcessors.join(
+      `Ignoring settings for browser- or platform-unsupported input processor(s): ${unsupportedProcessors.join(
         ', '
       )}`
     );
