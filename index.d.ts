@@ -360,7 +360,6 @@ export interface DailyMicAudioModeSettings {
 export interface DailyAdvancedConfig {
   camSimulcastEncodings?: any[];
   disableSimulcast?: boolean;
-  experimentalChromeVideoMuteLightOff?: boolean;
   keepCamIndicatorLightOn?: boolean;
   experimentalGetUserMediaConstraintsModify?: (
     constraints: MediaStreamConstraints
