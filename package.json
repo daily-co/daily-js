@@ -41,7 +41,6 @@
     "babel-jest": "^27.4.6",
     "babel-loader": "^8.0.6",
     "babel-plugin-rewire": "^1.2.0",
-    "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
     "conventional-changelog-conventionalcommits": "^5.0.0",
     "dotenv": "^16.0.3",
     "jest": "^27.4.7",
