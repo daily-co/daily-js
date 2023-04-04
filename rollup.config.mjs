@@ -6,7 +6,11 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import babel from '@rollup/plugin-babel';
 import commonJS from '@rollup/plugin-commonjs';
 import terser from '@rollup/plugin-terser';
-import packageLock from './package-lock.json' assert { type: 'json' };
+
+import { readFileSync } from "fs";
+const packageLock = JSON.parse(readFileSync('package-lock.json', {encoding: 'utf8'}));
+// This works fine after node 16.15, but does not work previous to that with the recent versions of rollup
+//import packageLock from './package-lock.json' assert { type: 'json' };
 const version = packageLock.version
 
 const mode = process.env.NODE_ENV || 'production';
