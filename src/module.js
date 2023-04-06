@@ -4012,6 +4012,10 @@ export default class DailyIframe extends EventEmitter {
   };
 
   handleDeviceChange = (newDevices) => {
+    // First convert `newDevices` from an array of `MediaDeviceInfo`s to plain
+    // JS objects, since that's what the user would get from a call to
+    // `call.enumerateDevices()` (and that method is constrainted to returning
+    // structured-clonable values due to the call machine message channel).
     newDevices = newDevices.map((d) => JSON.parse(JSON.stringify(d)));
     this.emit(DAILY_EVENT_AVAILABLE_DEVICES_UPDATED, {
       action: DAILY_EVENT_AVAILABLE_DEVICES_UPDATED,
