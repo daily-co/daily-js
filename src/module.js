@@ -206,6 +206,10 @@ import { SessionDataUpdate } from './shared-with-pluot-core/SessionData.js';
 import CallObjectLoader from './CallObjectLoader';
 import { randomStringId, validateHttpUrl } from './utils.js';
 import * as Participant from './Participant';
+import {
+  addDeviceChangeListener,
+  removeDeviceChangeListener,
+} from './shared-with-pluot-core/DeviceChange.js';
 
 // call states
 export {
@@ -4000,74 +4004,23 @@ export default class DailyIframe extends EventEmitter {
   }
 
   startListeningForDeviceChanges = () => {
-    if (
-      typeof navigator.mediaDevices.ondevicechange !== 'undefined' ||
-      isReactNative()
-    ) {
-      // Desktop web, iOS web, and React Native support the 'devicechange' event
-      navigator.mediaDevices.addEventListener(
-        'devicechange',
-        this.deviceChangeListener
-      );
-    } else {
-      // Android Chrome/Samsung Internet doesn't support the 'devicechange'
-      // event, so do polling instead
-      this.startPollingForDeviceChanges();
-    }
+    addDeviceChangeListener(this.handleDeviceChange);
   };
 
   stopListeningForDeviceChanges = () => {
-    if (
-      typeof navigator.mediaDevices.ondevicechange !== 'undefined' ||
-      isReactNative()
-    ) {
-      // Desktop web, iOS web, and React Native support the 'devicechange' event
-      navigator.mediaDevices.removeEventListener(
-        'devicechange',
-        this.deviceChangeListener
-      );
-    } else {
-      // Android Chrome/Samsung Internet doesn't support the 'devicechange'
-      // event, so do polling instead
-      this.stopPollingForDeviceChanges();
-    }
-  };
-
-  deviceChangeListener = async () => {
-    // Let our own enumerateDevices() method be the source of truth
-    const devicesInfo = await this.enumerateDevices();
-    this.handleDeviceChange(devicesInfo.devices);
+    removeDeviceChangeListener(this.handleDeviceChange);
   };
 
   handleDeviceChange = (newDevices) => {
+    // First convert `newDevices` from an array of `MediaDeviceInfo`s to plain
+    // JS objects, since that's what the user would get from a call to
+    // `call.enumerateDevices()` (and that method is constrainted to returning
+    // structured-clonable values due to the call machine message channel).
+    newDevices = newDevices.map((d) => JSON.parse(JSON.stringify(d)));
     this.emit(DAILY_EVENT_AVAILABLE_DEVICES_UPDATED, {
       action: DAILY_EVENT_AVAILABLE_DEVICES_UPDATED,
       availableDevices: newDevices,
     });
-  };
-
-  // Only for Android web, where the 'devicechange' event isn't supported
-  // (See startListeningForDeviceChanges())
-  startPollingForDeviceChanges = () => {
-    if (this._deviceChangeInterval) return;
-    this._deviceChangeInterval = setInterval(async () => {
-      // Let our own enumerateDevices() method be the source of truth
-      const devicesInfo = await this.enumerateDevices();
-      const devicesJSON = JSON.stringify(devicesInfo);
-      if (this._lastDevicesJSON && devicesJSON !== this._lastDevicesJSON) {
-        this.handleDeviceChange(devicesInfo.devices);
-      }
-      this._lastDevicesJSON = devicesJSON;
-    }, 3000);
-  };
-
-  // Only for Android web, where the 'devicechange' event isn't supported
-  // (See stopListeningForDeviceChanges())
-  stopPollingForDeviceChanges = () => {
-    if (!this._deviceChangeInterval) return;
-    clearInterval(this._deviceChangeInterval);
-    this._deviceChangeInterval = null;
-    this._lastDevicesJSON = null;
   };
 
   handleNativeAppActiveStateChange = (isActive) => {
