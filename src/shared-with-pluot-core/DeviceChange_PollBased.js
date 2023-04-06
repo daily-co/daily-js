@@ -55,8 +55,10 @@ export function removeDeviceChangeListener(deviceChangeListener) {
   // Remove the `deviceChangeListeners` entry for the listener
   deviceChangeListeners.delete(deviceChangeListener);
 
-  // If there are no more listeners, stop the polling
-  if (deviceChangeListeners.size === 0) {
+  // If there are no more listeners, stop the polling.
+  // (First check if the poll interval was ever started, since we may be
+  // removing this listener before then)
+  if (deviceChangeListeners.size === 0 && deviceChangePollInterval) {
     clearInterval(deviceChangePollInterval);
     deviceChangePollInterval = null;
   }

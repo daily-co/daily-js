@@ -1,4 +1,5 @@
 let deviceChangeListeners = new Map();
+let systemListener = null;
 
 export function addDeviceChangeListener(deviceChangeListener) {
   // If the given listener was already added, skip
@@ -20,36 +21,32 @@ export function addDeviceChangeListener(deviceChangeListener) {
     deviceChangeListeners.get(deviceChangeListener).lastDevicesString =
       JSON.stringify(devices);
 
-    // Create the "wrapped listener" that will do the `enumerateDevices()` call
-    // and pass the devices to the given listener
-    const wrappedListener = async () => {
+    // Create the single "system listener" that the system/browser will
+    // invoke when it detects a device change.
+    // The system listener will be responsible for iterating through all the
+    // listeners and invoking them with the latest devices.
+    // and pass the devices to all the listeners
+    if (systemListener) {
+      return;
+    }
+    systemListener = async () => {
       const devices = await navigator.mediaDevices.enumerateDevices();
 
-      // If `deviceChangeListeners` entry has been removed while we were
-      // waiting for `enumerateDevices()`, bail
-      if (!deviceChangeListeners.has(deviceChangeListener)) {
-        return;
-      }
-
-      // Only invoke the listener if devices have changed.
-      // We need to do this check because the browser 'devicechange' event fires
-      // twice back-to-back in the case of an input/output device (i.e. a
-      // headset) being plugged in or unplugged.
-      const devicesString = JSON.stringify(devices);
-      if (
-        devicesString !==
-        deviceChangeListeners.get(deviceChangeListener).lastDevicesString
-      ) {
-        deviceChangeListeners.get(deviceChangeListener).lastDevicesString =
-          devicesString;
-        deviceChangeListener(devices);
+      for (const listener of deviceChangeListeners.keys()) {
+        // If devices have changed since the listener was last invoked, run it
+        const devicesString = JSON.stringify(devices);
+        if (
+          devicesString !==
+          deviceChangeListeners.get(listener).lastDevicesString
+        ) {
+          deviceChangeListeners.get(listener).lastDevicesString = devicesString;
+          listener(devices);
+        }
       }
     };
-    deviceChangeListeners.get(deviceChangeListener).wrappedListener =
-      wrappedListener;
 
-    // Add "wrapped listener" as browser/system event listener
-    navigator.mediaDevices.addEventListener('devicechange', wrappedListener);
+    // Register our "system listener" as the browser/system event listener
+    navigator.mediaDevices.addEventListener('devicechange', systemListener);
   });
 }
 
@@ -59,17 +56,14 @@ export function removeDeviceChangeListener(deviceChangeListener) {
     return;
   }
 
-  // Retrieve the "wrapped listener"
-  const wrappedListener =
-    deviceChangeListeners.get(deviceChangeListener).wrappedListener;
-
   // Remove the `deviceChangeListeners` entry for the listener
   deviceChangeListeners.delete(deviceChangeListener);
 
-  // Remove "wrapped listener" from browser/system
-  // (Check first, since we may be removing a listener before it finished
-  // getting added)
-  if (wrappedListener) {
-    navigator.mediaDevices.removeEventListener('devicechange', wrappedListener);
+  // If there are no more listeners, unregister our "system listener" as the
+  // browser/system event listener.
+  // (First check if the listener was ever created, since we may be removing
+  // this listener before then)
+  if (deviceChangeListeners.size === 0 && systemListener) {
+    navigator.mediaDevices.removeEventListener('devicechange', systemListener);
   }
 }
