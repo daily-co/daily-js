@@ -1,6 +1,8 @@
 let deviceChangeListeners = new Map();
 let deviceChangePollInterval = null;
 
+const POLL_INTERVAL_MS = 3000;
+
 export function addDeviceChangeListener(deviceChangeListener) {
   // If the given listener was already added, skip
   if (deviceChangeListeners.has(deviceChangeListener)) {
@@ -41,7 +43,7 @@ export function addDeviceChangeListener(deviceChangeListener) {
           listener(devices);
         }
       }
-    }, 3000);
+    }, POLL_INTERVAL_MS);
   });
 }
 
