@@ -1,7 +1,7 @@
 // We need to mock the MediaStreamTrack claas and the mediaDevices which are provided by the browser
 class MockMediaStreamTrack {}
 global.MediaStreamTrack = MockMediaStreamTrack;
-global.navigator.mediaDevices = jest.fn();
+global.navigator.mediaDevices = { enumerateDevices: async () => [] };
 global.__dailyJsVersion__ = '*';
 
 import DailyIframe from '../module';
