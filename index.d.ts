@@ -740,12 +740,30 @@ export interface DailyInputAudioProcessorSettings {
   type: 'none' | 'noise-cancellation';
 }
 
-export interface DailyInputVideoSettings {
-  processor: DailyInputVideoProcessorSettings;
+export interface DailyNoInputSettings {
+  type: 'none';
 }
-export interface DailyInputVideoProcessorSettings {
-  type: 'none' | 'background-blur' | 'background-image';
-  config?: {};
+
+export interface DailyBackgroundBlurInputSettings {
+  type: 'background-blur';
+  config: {
+    strength?: number;
+  };
+}
+
+export interface DailyBackgroundImageInputSettings {
+  type: 'background-image';
+  config: {
+    url?: string;
+    source?: string | number;
+  };
+}
+
+export interface DailyInputVideoSettings {
+  processor?:
+    | DailyNoInputSettings
+    | DailyBackgroundBlurInputSettings
+    | DailyBackgroundImageInputSettings;
 }
 
 export interface DailyEventObjectNoPayload {
