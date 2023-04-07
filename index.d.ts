@@ -759,11 +759,13 @@ export interface DailyBackgroundImageInputSettings {
   };
 }
 
+export type DailyInputVideoProcessorSettings =
+  | DailyNoInputSettings
+  | DailyBackgroundBlurInputSettings
+  | DailyBackgroundImageInputSettings;
+
 export interface DailyInputVideoSettings {
-  processor?:
-    | DailyNoInputSettings
-    | DailyBackgroundBlurInputSettings
-    | DailyBackgroundImageInputSettings;
+  processor?: DailyInputVideoProcessorSettings;
 }
 
 export interface DailyEventObjectNoPayload {
