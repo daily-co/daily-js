@@ -848,7 +848,7 @@ export type DailyFatalError = {
 };
 
 export interface DailyFatalConnectionError extends DailyFatalError {
-  type: Extract<DailyFatalConnectionError, 'connection-error'>;
+  type: Extract<DailyFatalErrorType, 'connection-error'>;
   details: {
     on: 'join' | 'reconnect';
     sourceError: Error;
@@ -856,13 +856,13 @@ export interface DailyFatalConnectionError extends DailyFatalError {
   };
 }
 
-export type DailyFatalErrorObject<T extends DailyFatalError = any> =
+export type DailyFatalErrorObject<T extends DailyFatalErrorType> =
   T extends DailyFatalConnectionError['type'] ? DailyFatalConnectionError : any;
 
 export interface DailyEventObjectFatalError {
   action: Extract<DailyEvent, 'error'>;
   errorMsg: string;
-  error?: DailyFatalErrorObject;
+  error?: DailyFatalErrorObject<DailyFatalErrorType>;
 }
 
 export interface DailyEventObjectNonFatalError {
