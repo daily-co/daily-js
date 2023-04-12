@@ -296,7 +296,7 @@ export interface DailyCustomIntegration {
    * - false won't share
    * - 'owners' will share with owners only
    * - string[] will share with participants with given list of session ids
-   * 
+   *
    * When the integration is started, it will be started for other participants, too.
    * When it's stopped, it will stop for all participants.
    */
@@ -360,7 +360,6 @@ export interface DailyMicAudioModeSettings {
 export interface DailyAdvancedConfig {
   camSimulcastEncodings?: any[];
   disableSimulcast?: boolean;
-  experimentalChromeVideoMuteLightOff?: boolean;
   keepCamIndicatorLightOn?: boolean;
   experimentalGetUserMediaConstraintsModify?: (
     constraints: MediaStreamConstraints
@@ -734,19 +733,39 @@ export interface DailyInputSettings {
 }
 
 export interface DailyInputAudioSettings {
-  processor?: DailyInputAudioProcessorSettings;
+  processor: DailyInputAudioProcessorSettings;
 }
 
 export interface DailyInputAudioProcessorSettings {
   type: 'none' | 'noise-cancellation';
 }
 
+export interface DailyNoInputSettings {
+  type: 'none';
+}
+
+export interface DailyBackgroundBlurInputSettings {
+  type: 'background-blur';
+  config: {
+    strength?: number;
+  };
+}
+
+export interface DailyBackgroundImageInputSettings {
+  type: 'background-image';
+  config: {
+    url?: string;
+    source?: string | number;
+  };
+}
+
+export type DailyInputVideoProcessorSettings =
+  | DailyNoInputSettings
+  | DailyBackgroundBlurInputSettings
+  | DailyBackgroundImageInputSettings;
+
 export interface DailyInputVideoSettings {
   processor?: DailyInputVideoProcessorSettings;
-}
-export interface DailyInputVideoProcessorSettings {
-  type: 'none' | 'background-blur' | 'background-image';
-  config?: {};
 }
 
 export interface DailyEventObjectNoPayload {
@@ -829,7 +848,7 @@ export type DailyFatalError = {
 };
 
 export interface DailyFatalConnectionError extends DailyFatalError {
-  type: Extract<DailyFatalConnectionError, 'connection-error'>;
+  type: Extract<DailyFatalErrorType, 'connection-error'>;
   details: {
     on: 'join' | 'reconnect';
     sourceError: Error;
@@ -837,13 +856,13 @@ export interface DailyFatalConnectionError extends DailyFatalError {
   };
 }
 
-export type DailyFatalErrorObject<T extends DailyFatalError = any> =
+export type DailyFatalErrorObject<T extends DailyFatalErrorType> =
   T extends DailyFatalConnectionError['type'] ? DailyFatalConnectionError : any;
 
 export interface DailyEventObjectFatalError {
   action: Extract<DailyEvent, 'error'>;
   errorMsg: string;
-  error?: DailyFatalErrorObject;
+  error?: DailyFatalErrorObject<DailyFatalErrorType>;
 }
 
 export interface DailyEventObjectNonFatalError {
@@ -1394,7 +1413,13 @@ export interface DailyTranscriptionDeepgramOptions {
   redact?: Array<string> | boolean;
 }
 
-export type SidebarView = null | 'people' | 'chat' | 'network' | 'breakout' | string;
+export type SidebarView =
+  | null
+  | 'people'
+  | 'chat'
+  | 'network'
+  | 'breakout'
+  | string;
 
 export interface DailyCall {
   iframe(): HTMLIFrameElement | null;

@@ -7,19 +7,11 @@ Please check our [our documentation site](https://docs.daily.co/) to get started
 
 # ⚠ Upcoming changes that may require action
 
-## Turning off the camera will turn off the indicator light by default
-
-Today, calls are by default configured to leave the camera indicator light on even after the camera has been turned off. Starting in 0.43.0, the default behavior will switch, so that turning off the camera turns off the indicator light. This is usually a much better experience for users and worth the tradeoff of slightly slower camera toggling.
-
-To test the change that will be coming in 0.43.0, you can specify `dailyConfig: { experimentalChromeVideoMuteLightOff: true }`. Once the switch to the new default behavior happens, `experimentalChromeVideoMuteLightOff` won't be needed anymore and so will be deprecated.
-
-For those who want to keep the current default behavior of leaving the indicator light on to speed up camera toggling, they can specify `dailyConfig: { keepCamIndicatorLightOn: true }`. This flag is available today.
-
 ## Duplicate call instances will not be allowed
 
-Today we do not support multiple call objects to be instantiated and running simultaneously. Doing so causes a smorgasbord of issues, some more obvious than others. After detecting this to be a common issue in development we will be making this setup impossible. Starting in 0.43.0, two currently unsupported behaviors will now throw an `Error` instead of silently failing or simply logging the error. The constructor of a call will throw an `Error` if another one exists and has not been destroyed. And attempting to use a call instance that has been destroyed will throw an `Error`. To see if you are using multiple call objects or using a call after it has been detroyed, check your logs for `Dual call object instances detected`, `Duplicate call object instances detected`, or `You are attempting to use a call instance that was previously destroyed`.
+Today we do not support multiple call objects to be instantiated and running simultaneously. Doing so causes a smorgasbord of issues, some more obvious than others. After detecting this to be a common issue in development we will be making this setup impossible. Starting in 0.45.0, two currently unsupported behaviors will now throw an `Error` instead of silently failing or simply logging the error. The constructor of a call will throw an `Error` if another one exists and has not been destroyed. And attempting to use a call instance that has been destroyed will throw an `Error`. To see if you are using multiple call objects or using a call after it has been detroyed, check your logs for `Dual call object instances detected`, `Duplicate call object instances detected`, or `You are attempting to use a call instance that was previously destroyed`.
 
-If you think this will affect you, you can turn on the 0.43.0 behavior and have an `Error` thrown by passing adding `strictMode: true` to your iframe properties passed in at construction:
+If you think this will affect you, you can turn on the 0.45.0 behavior and have an `Error` thrown by passing adding `strictMode: true` to your iframe properties passed in at construction:
 
 ```
 try {

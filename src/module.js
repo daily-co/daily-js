@@ -206,6 +206,10 @@ import { SessionDataUpdate } from './shared-with-pluot-core/SessionData.js';
 import CallObjectLoader from './CallObjectLoader';
 import { randomStringId, validateHttpUrl } from './utils.js';
 import * as Participant from './Participant';
+import {
+  addDeviceChangeListener,
+  removeDeviceChangeListener,
+} from './shared-with-pluot-core/DeviceChange.js';
 
 // call states
 export {
@@ -644,6 +648,7 @@ const FRAME_PROPS = {
         if (!callObject._preloadCache.inputSettings) {
           callObject._preloadCache.inputSettings = {};
         }
+        stripInputSettingsForUnsupportedPlatforms(settings);
         if (settings.audio) {
           callObject._preloadCache.inputSettings.audio = settings.audio;
         }
@@ -1536,66 +1541,90 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
+  // Helper for getting input settings ready to present to the user via the
+  // daily-js API (`getInputSettings()` or the `input-settings-updated` event).
+  //
+  // Strips any 'none' processor settings that are there by default and not by
+  // explicit user choice.
+  // TODO: whether or not we strip default settings should eventually be
+  // controllable by a `showDefaultValues` argument to `getInputSettings()`,
+  // just like the `showInheritedValues` argument to `getReceiveSettings()`.
+  // The `input-settings-updated` payload should probably align with what
+  // `getInputSettings()` will do by default (`showDefaultValues = false`).
+  //
+  // Returns a new object, being careful not to mess with the one passed in
+  // (this is important for handling the `input-settings-updated` event)
+  _prepInputSettingsToPresentToUser(inputSettings) {
+    if (!inputSettings) {
+      return;
+    }
+
+    const strippedInputSettings = {};
+
+    const shouldStripAudio =
+      inputSettings.audio?.processor?.type === 'none' &&
+      inputSettings.audio?.processor?._isDefaultWhenNone;
+    if (inputSettings.audio && !shouldStripAudio) {
+      const audioProcessor = { ...inputSettings.audio.processor };
+      delete audioProcessor._isDefaultWhenNone;
+      strippedInputSettings.audio = {
+        ...inputSettings.audio,
+        processor: audioProcessor,
+      };
+    }
+
+    const shouldStripVideo =
+      inputSettings.video?.processor?.type === 'none' &&
+      inputSettings.video?.processor?._isDefaultWhenNone;
+    if (inputSettings.video && !shouldStripVideo) {
+      const videoProcessor = { ...inputSettings.video.processor };
+      delete videoProcessor._isDefaultWhenNone;
+      strippedInputSettings.video = {
+        ...inputSettings.video,
+        processor: videoProcessor,
+      };
+    }
+
+    return strippedInputSettings;
+  }
+
   // Input Settings Getter
-  // { video: { processor } }
+  // { video: { processor }, audio: { processor } }
   // In the future:
   // { video: {...}, audio: {...}, screenVideo: {...}, screenAudio: {...} }
   getInputSettings() {
     return new Promise((resolve) => {
-      if (this.needsLoad()) {
-        // If not fully loaded yet, also look at the preload cache.
-        let _videoSettings = { processor: { type: 'none' } };
-        let _audioSettings = { processor: { type: 'none' } };
-        let haveInputSettingsVideo = false;
-        let haveInputSettingsAudio = false;
-
-        if (
-          this._inputSettings &&
-          this._inputSettings.video &&
-          Object.keys(this._inputSettings.video).length > 0
-        ) {
-          _videoSettings = this._inputSettings.video;
-          haveInputSettingsVideo = true;
-        }
-
-        if (
-          this._inputSettings &&
-          this._inputSettings.audio &&
-          Object.keys(this._inputSettings.audio).length > 0
-        ) {
-          _audioSettings = this._inputSettings.audio;
-          haveInputSettingsAudio = true;
-        }
-
-        const havePreloadCacheInputSettingsVideo =
-          this._preloadCache &&
-          this._preloadCache.inputSettings &&
-          this._preloadCache.inputSettings.video &&
-          Object.keys(this._preloadCache.inputSettings.video).length > 0;
-
-        const havePreloadCacheInputSettingsAudio =
-          this._preloadCache &&
-          this._preloadCache.inputSettings &&
-          this._preloadCache.inputSettings.audio &&
-          Object.keys(this._preloadCache.inputSettings.audio).length > 0;
-
-        // If we have no input settings, but we have input settings in the preload
-        // cache, then resolve with the preload cache.
-        if (!haveInputSettingsVideo && havePreloadCacheInputSettingsVideo) {
-          _videoSettings = this._preloadCache.inputSettings.video;
-        }
-
-        if (!haveInputSettingsAudio && havePreloadCacheInputSettingsAudio) {
-          _audioSettings = this._preloadCache.inputSettings.audio;
-        }
-
-        let _inputSettings = { audio: _audioSettings, video: _videoSettings };
-        resolve(_inputSettings);
-      } else {
-        // return the current input settings
-        resolve(this._inputSettings);
-      }
+      resolve(this._getInputSettings());
     });
+  }
+
+  // Synchronus function to get input settings.
+  // `getInputSettings()` is just an async wrapper around this.
+  // TODO: `getInputSettings()` is only async for legacy reasons. Someday this
+  // synchronous method could be promoted and replace `getInputSettings()`.
+  _getInputSettings() {
+    const defaultSettings = {
+      processor: { type: 'none', _isDefaultWhenNone: true },
+    };
+
+    // Get settings
+    let videoSettings, audioSettings;
+
+    if (!this._inputSettings) {
+      // use preload cache input settings
+      videoSettings =
+        this._preloadCache?.inputSettings?.video || defaultSettings;
+      audioSettings =
+        this._preloadCache?.inputSettings?.audio || defaultSettings;
+    } else {
+      // use call-machine-provided input settings
+      videoSettings = this._inputSettings?.video || defaultSettings;
+      audioSettings = this._inputSettings?.audio || defaultSettings;
+    }
+
+    // Return settings
+    let inputSettings = { audio: audioSettings, video: videoSettings };
+    return this._prepInputSettingsToPresentToUser(inputSettings);
   }
 
   async updateInputSettings(inputSettings) {
@@ -1608,6 +1637,7 @@ export default class DailyIframe extends EventEmitter {
       if (!this._preloadCache.inputSettings) {
         this._preloadCache.inputSettings = {};
       }
+      stripInputSettingsForUnsupportedPlatforms(inputSettings);
       if (inputSettings.audio) {
         this._preloadCache.inputSettings.audio = inputSettings.audio;
       }
@@ -1615,9 +1645,16 @@ export default class DailyIframe extends EventEmitter {
         this._preloadCache.inputSettings.video = inputSettings.video;
       }
     }
+
+    // now that input settings may have been stripped of platform-unsupported
+    // settings, check again for validity (it may now be empty)
+    if (!validateInputSettings(inputSettings)) {
+      return this._getInputSettings();
+    }
+
     // if we're in callObject mode and not loaded yet, don't do anything
     if (this._callObjectMode && this.needsLoad()) {
-      return { inputSettings: this._preloadCache.inputSettings };
+      return this._getInputSettings();
     }
 
     // Ask call machine to update input settings, then await callback.
@@ -1626,7 +1663,11 @@ export default class DailyIframe extends EventEmitter {
         if (msg.error) {
           reject(msg.error);
         } else {
-          resolve({ inputSettings: msg.inputSettings });
+          resolve({
+            inputSettings: this._prepInputSettingsToPresentToUser(
+              msg.inputSettings
+            ),
+          });
         }
       };
       this.sendMessageToCallMachine(
@@ -3561,15 +3602,18 @@ export default class DailyIframe extends EventEmitter {
         // the first place from call machine, to simplify handling initial
         // input settings
         if (!deepEqual(this._inputSettings, msg.inputSettings)) {
+          const prevInputSettings = this._getInputSettings();
           this._inputSettings = msg.inputSettings;
           this._preloadCache.inputSettings = {}; // clear cache, if any
-          try {
-            this.emit(msg.action, {
-              action: msg.action,
-              inputSettings: msg.inputSettings,
-            });
-          } catch (e) {
-            console.log('could not emit', msg, e);
+          if (!deepEqual(prevInputSettings, this._getInputSettings())) {
+            try {
+              this.emit(msg.action, {
+                action: msg.action,
+                inputSettings: this._getInputSettings(),
+              });
+            } catch (e) {
+              console.log('could not emit', msg, e);
+            }
           }
         }
         break;
@@ -3880,7 +3924,7 @@ export default class DailyIframe extends EventEmitter {
       this._callObjectMode
     );
     this._receiveSettings = {};
-    this._inputSettings = {};
+    this._inputSettings = undefined;
     resetPreloadCache(this._preloadCache);
   }
 
@@ -3960,74 +4004,23 @@ export default class DailyIframe extends EventEmitter {
   }
 
   startListeningForDeviceChanges = () => {
-    if (
-      typeof navigator.mediaDevices.ondevicechange !== 'undefined' ||
-      isReactNative()
-    ) {
-      // Desktop web, iOS web, and React Native support the 'devicechange' event
-      navigator.mediaDevices.addEventListener(
-        'devicechange',
-        this.deviceChangeListener
-      );
-    } else {
-      // Android Chrome/Samsung Internet doesn't support the 'devicechange'
-      // event, so do polling instead
-      this.startPollingForDeviceChanges();
-    }
+    addDeviceChangeListener(this.handleDeviceChange);
   };
 
   stopListeningForDeviceChanges = () => {
-    if (
-      typeof navigator.mediaDevices.ondevicechange !== 'undefined' ||
-      isReactNative()
-    ) {
-      // Desktop web, iOS web, and React Native support the 'devicechange' event
-      navigator.mediaDevices.removeEventListener(
-        'devicechange',
-        this.deviceChangeListener
-      );
-    } else {
-      // Android Chrome/Samsung Internet doesn't support the 'devicechange'
-      // event, so do polling instead
-      this.stopPollingForDeviceChanges();
-    }
-  };
-
-  deviceChangeListener = async () => {
-    // Let our own enumerateDevices() method be the source of truth
-    const devicesInfo = await this.enumerateDevices();
-    this.handleDeviceChange(devicesInfo.devices);
+    removeDeviceChangeListener(this.handleDeviceChange);
   };
 
   handleDeviceChange = (newDevices) => {
+    // First convert `newDevices` from an array of `MediaDeviceInfo`s to plain
+    // JS objects, since that's what the user would get from a call to
+    // `call.enumerateDevices()` (and that method is constrainted to returning
+    // structured-clonable values due to the call machine message channel).
+    newDevices = newDevices.map((d) => JSON.parse(JSON.stringify(d)));
     this.emit(DAILY_EVENT_AVAILABLE_DEVICES_UPDATED, {
       action: DAILY_EVENT_AVAILABLE_DEVICES_UPDATED,
       availableDevices: newDevices,
     });
-  };
-
-  // Only for Android web, where the 'devicechange' event isn't supported
-  // (See startListeningForDeviceChanges())
-  startPollingForDeviceChanges = () => {
-    if (this._deviceChangeInterval) return;
-    this._deviceChangeInterval = setInterval(async () => {
-      // Let our own enumerateDevices() method be the source of truth
-      const devicesInfo = await this.enumerateDevices();
-      const devicesJSON = JSON.stringify(devicesInfo);
-      if (this._lastDevicesJSON && devicesJSON !== this._lastDevicesJSON) {
-        this.handleDeviceChange(devicesInfo.devices);
-      }
-      this._lastDevicesJSON = devicesJSON;
-    }, 3000);
-  };
-
-  // Only for Android web, where the 'devicechange' event isn't supported
-  // (See stopListeningForDeviceChanges())
-  stopPollingForDeviceChanges = () => {
-    if (!this._deviceChangeInterval) return;
-    clearInterval(this._deviceChangeInterval);
-    this._deviceChangeInterval = null;
-    this._lastDevicesJSON = null;
   };
 
   handleNativeAppActiveStateChange = (isActive) => {
@@ -4146,7 +4139,7 @@ export default class DailyIframe extends EventEmitter {
       const errMsg =
         'You are attempting to use a call instance that was previously ' +
         'destroyed. This is unsupported and will not be allowed beginning in ' +
-        '0.43.0. Add `strictMode: true` to your call frame constructor ' +
+        '0.45.0. Add `strictMode: true` to your call frame constructor ' +
         'properties to debug and catch the error now.';
       console.error(errMsg);
     }
@@ -4164,7 +4157,7 @@ export default class DailyIframe extends EventEmitter {
         'Duplicate call object instances detected. Please ensure the ' +
         'previous instance has been destroyed before creating a new one. ' +
         'This is unsupported and will result in unknown errors. This will ' +
-        'not be allowed beginning in 0.43.0. Add `strictMode: true` to your ' +
+        'not be allowed beginning in 0.45.0. Add `strictMode: true` to your ' +
         'call frame constructor properties to debug and catch the error now.';
       console.error(errMsg);
     }
@@ -4378,6 +4371,28 @@ function validateInputSettings(settings) {
   return true;
 }
 
+// Assumes `settings` is otherwise valid (passes `validateInputSettings()`).
+// Note: currently `processor` is required for `settings` to be valid, so we can
+// strip out the entire `video` or `audio` if processing isn't supported.
+function stripInputSettingsForUnsupportedPlatforms(settings) {
+  const unsupportedProcessors = [];
+  if (settings.video && !isVideoProcessingSupported()) {
+    delete settings.video;
+    unsupportedProcessors.push('video');
+  }
+  if (settings.audio && !isAudioProcessingSupported()) {
+    delete settings.audio;
+    unsupportedProcessors.push('audio');
+  }
+  if (unsupportedProcessors.length > 0) {
+    console.error(
+      `Ignoring settings for browser- or platform-unsupported input processor(s): ${unsupportedProcessors.join(
+        ', '
+      )}`
+    );
+  }
+}
+
 function validateAudioProcessor(p) {
   const VALID_PROCESSOR_KEYS = ['type'];
   if (!p) return false;
@@ -4388,7 +4403,7 @@ function validateAudioProcessor(p) {
       console.warn(`invalid key inputSettings -> audio -> processor : ${k}`);
       delete p[k];
     });
-  if (p.type && !validateAudioProcessorType(p.type)) return false;
+  if (!validateAudioProcessorType(p.type)) return false;
 
   return true;
 }
@@ -4409,8 +4424,7 @@ function validateVideoProcessor(p) {
   const VALID_PROCESSOR_KEYS = ['type', `config`, 'publish'];
   if (!p) return false;
   if (typeof p !== 'object') return false;
-  if (Object.keys(p).length === 0) return false; // lodash isEmpty did not work well with github workflow for some reason
-  if (p.type && !validateVideoProcessorType(p.type)) return false;
+  if (!validateVideoProcessorType(p.type)) return false;
   if (p.publish !== undefined && typeof p.publish !== 'boolean') return false;
   // publish flag has been deprecated
   if (typeof p.publish === 'boolean') {
