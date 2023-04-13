@@ -45,7 +45,7 @@ describe('Custom tracks', () => {
     ];
     const mode = undefined;
     const expectedError =
-      'Custom track `trackName` must not match a track name already used by daily: cam-audio, cam-video, screen-video, screen-audio, rmpAudio, rmpVideo';
+      'Custom track `trackName` must not match a track name already used by daily: cam-audio, cam-video, customVideoDefaults, screen-video, screen-audio, rmpAudio, rmpVideo';
     reservedNames.forEach((trackName) => {
       expect(() =>
         callObject.validateCustomTrack(track, mode, trackName)

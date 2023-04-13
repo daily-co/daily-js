@@ -93,6 +93,7 @@ export type DailyEvent =
   | 'available-devices-updated'
   | 'receive-settings-updated'
   | 'input-settings-updated'
+  | 'send-settings-updated'
   | 'show-local-video-changed'
   | 'selected-devices-updated'
   | 'custom-button-click'
@@ -593,6 +594,30 @@ export interface DailyCpuLoadStats {
   };
 }
 
+interface DailySendSettings {
+  video?: DailyVideoSendSettings | DailyVideoSendSettingsPreset;
+  customVideoDefaults?: DailyVideoSendSettings | DailyVideoSendSettingsPreset;
+  [customKey: string]:
+    | DailyVideoSendSettings
+    | DailyVideoSendSettingsPreset
+    | undefined;
+}
+
+export type DailyVideoSendSettingsPreset =
+  | 'default'
+  | 'bandwidth-optimized'
+  | 'quality-optimized';
+
+// Media Track Send Settings
+interface DailyVideoSendSettings {
+  maxQuality?: 'low' | 'medium' | 'high';
+  encodings?: {
+    low: RTCRtpEncodingParameters;
+    medium: RTCRtpEncodingParameters;
+    high: RTCRtpEncodingParameters;
+  };
+}
+
 export interface DailyPendingRoomInfo {
   roomUrlPendingJoin: string;
 }
@@ -1082,6 +1107,11 @@ export interface DailyEventObjectInputSettingsUpdated {
   inputSettings: DailyInputSettings;
 }
 
+export interface DailyEventObjectSendSettingsUpdated {
+  action: Extract<DailyEvent, 'send-settings-updated'>;
+  sendSettings: DailySendSettings;
+}
+
 export interface DailyEventObjectLiveStreamingStarted {
   action: Extract<DailyEvent, 'live-streaming-started'>;
   layout?: DailyStreamingLayoutConfig;
@@ -1224,6 +1254,8 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectShowLocalVideoChanged
     : T extends DailyEventObjectInputSettingsUpdated['action']
     ? DailyEventObjectInputSettingsUpdated
+    : T extends DailyEventObjectSendSettingsUpdated['action']
+    ? DailyEventObjectSendSettingsUpdated
     : T extends DailyEventObjectCustomButtonClick['action']
     ? DailyEventObjectCustomButtonClick
     : T extends DailyEventObjectSelectedDevicesUpdated['action']
@@ -1555,6 +1587,8 @@ export interface DailyCall {
   stopTranscription(): void;
   getNetworkStats(): Promise<DailyNetworkStats>;
   getCpuLoadStats(): Promise<DailyCpuLoadStats>;
+  updateSendSettings(settings: DailySendSettings): Promise<DailySendSettings>;
+  getSendSettings(): DailySendSettings;
   getActiveSpeaker(): { peerId?: string };
   setActiveSpeakerMode(enabled: boolean): DailyCall;
   activeSpeakerMode(): boolean;
