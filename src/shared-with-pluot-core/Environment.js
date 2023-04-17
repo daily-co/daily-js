@@ -133,7 +133,7 @@ export function isAndroidWeb() {
 export function browserMobile_p() {
   const userAgent = getUserAgent();
   // Testing on iOS and iPad both return 05 touch points.
-  const isIosMobile = userAgent.match(/Apple/) && getMaxTouchPoints() >= 5;
+  const isIosMobile = userAgent.match(/Mac/) && getMaxTouchPoints() >= 5;
   if (userAgent.match(/Mobi/) || userAgent.match(/Android/) || isIosMobile) {
     return true;
   }
