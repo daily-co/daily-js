@@ -17,6 +17,19 @@ export function getUserAgent() {
   return '';
 }
 
+// This method should be used instead of window.navigator.maxTouchPoints, which
+// is not defined in React Native and results in an error.
+export function getMaxTouchPoints() {
+  if (
+    !isReactNative() &&
+    typeof window !== 'undefined' &&
+    window?.navigator?.maxTouchPoints
+  ) {
+    return window.navigator.maxTouchPoints;
+  }
+  return 0;
+}
+
 export function isReactNative() {
   return (
     typeof navigator !== 'undefined' &&
@@ -119,7 +132,9 @@ export function isAndroidWeb() {
 
 export function browserMobile_p() {
   const userAgent = getUserAgent();
-  if (userAgent.match(/Mobi/) || userAgent.match(/Android/)) {
+  // Testing on iOS and iPad both return 05 touch points.
+  const isIosMobile = userAgent.match(/Mac/) && getMaxTouchPoints() >= 5;
+  if (userAgent.match(/Mobi/) || userAgent.match(/Android/) || isIosMobile) {
     return true;
   }
   if (isAndroidApp()) {
