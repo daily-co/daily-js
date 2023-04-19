@@ -2791,9 +2791,6 @@ export default class DailyIframe extends EventEmitter {
   }
 
   updateSendSettings(sendSettings) {
-    //FIXME Filipi: leaving It here until we properly add support for RN
-    //We are going to do this in a follow up PR:https://github.com/daily-co/pluot-core/pull/8075
-    methodNotSupportedInReactNative();
     this.validateUpdateSendSettings(sendSettings);
     if (this.needsLoad()) {
       this._preloadCache.sendSettings = sendSettings;

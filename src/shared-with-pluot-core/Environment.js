@@ -38,6 +38,10 @@ export function isReactNative() {
   );
 }
 
+export function isReactNativeUnifiedPlan() {
+  return isReactNative() && typeof RTCRtpTransceiver !== 'undefined';
+}
+
 export function isIOS() {
   const userAgent = getUserAgent();
   return !!userAgent.match(/iPad|iPhone|iPod/i);
