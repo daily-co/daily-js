@@ -1311,7 +1311,16 @@ export type DailyAccessRequest = {
   name: string;
 };
 
-export interface DailyStreamingDefaultLayoutConfig {
+type DailyStreamingParticipantsSortMethod = 'active';
+
+export interface DailyStreamingParticipantsConfig {
+  video?: string[];
+  audio?: string[];
+  sort?: DailyStreamingParticipantsSortMethod;
+}
+
+export interface DailyStreamingDefaultLayoutConfig
+  extends DailyStreamingParticipantsConfig {
   preset: 'default';
   max_cam_streams?: number;
 }
@@ -1321,7 +1330,8 @@ export interface DailyStreamingSingleParticipantLayoutConfig {
   session_id: string;
 }
 
-export interface DailyStreamingActiveParticipantLayoutConfig {
+export interface DailyStreamingActiveParticipantLayoutConfig
+  extends DailyStreamingParticipantsConfig {
   preset: 'active-participant';
 }
 
@@ -1331,13 +1341,15 @@ export interface DailyStreamingAudioOnlyLayoutConfig {
 
 export type DailyStreamingPortraitLayoutVariant = 'vertical' | 'inset';
 
-export interface DailyStreamingPortraitLayoutConfig {
+export interface DailyStreamingPortraitLayoutConfig
+  extends DailyStreamingParticipantsConfig {
   preset: 'portrait';
   variant?: DailyStreamingPortraitLayoutVariant;
   max_cam_streams?: number;
 }
 
-export interface DailyUpdateStreamingCustomLayoutConfig {
+export interface DailyUpdateStreamingCustomLayoutConfig
+  extends DailyStreamingParticipantsConfig {
   preset: 'custom';
   composition_params?: {
     [key: string]: boolean | number | string;
@@ -1345,7 +1357,8 @@ export interface DailyUpdateStreamingCustomLayoutConfig {
 }
 
 export interface DailyStartStreamingCustomLayoutConfig
-  extends DailyUpdateStreamingCustomLayoutConfig {
+  extends DailyUpdateStreamingCustomLayoutConfig,
+    DailyStreamingParticipantsConfig {
   composition_id?: string;
   session_assets?: {
     [key: string]: string;
