@@ -606,6 +606,7 @@ interface DailySendSettings {
 export type DailyVideoSendSettingsPreset =
   | 'default'
   | 'bandwidth-optimized'
+  | 'bandwidth-and-quality-balanced'
   | 'quality-optimized';
 
 // Media Track Send Settings

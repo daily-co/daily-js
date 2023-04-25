@@ -195,6 +195,7 @@ import {
   DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY,
   LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
   HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
+  MEDIUM_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -2723,21 +2724,20 @@ export default class DailyIframe extends EventEmitter {
   }
 
   _validateVideoSendSettings(videoSendSettings) {
+    const supportedPresets = [
+      DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY,
+      LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
+      MEDIUM_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
+      HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
+    ];
+    const supportedVideoSendSettingsErrorMsg = `Video send settings should be either an object or one of the supported presets: ${supportedPresets.join()}`;
     if (typeof videoSendSettings === 'string') {
-      if (
-        videoSendSettings !== DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY &&
-        videoSendSettings !== LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY &&
-        videoSendSettings !== HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY
-      ) {
-        throw new Error(
-          `Video send settings should be either ${DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY}, ${LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY} or ${HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY}`
-        );
+      if (!supportedPresets.includes(videoSendSettings)) {
+        throw new Error(supportedVideoSendSettingsErrorMsg);
       }
     } else {
       if (typeof videoSendSettings !== 'object') {
-        throw new Error(
-          `Video send settings should be either a preset (${LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY}, ${DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY}, ${HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY}) or an object`
-        );
+        throw new Error(supportedVideoSendSettingsErrorMsg);
       }
       if (!videoSendSettings.maxQuality && !videoSendSettings.encodings) {
         throw new Error(
