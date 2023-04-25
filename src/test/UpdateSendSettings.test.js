@@ -1,7 +1,9 @@
 // We need to mock the MediaStreamTrack class and the mediaDevices which are provided by the browser
 import {
   DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY,
+  HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
   LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
+  MEDIUM_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
 } from '../shared-with-pluot-core/CommonIncludes';
 
 class MockMediaStreamTrack {}
@@ -48,7 +50,7 @@ describe('UpdateSendSettings', () => {
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
     ).toThrowError(
-      'Video send settings should be either default, bandwidth-optimized or quality-optimized'
+      'Video send settings should be either an object or one of the supported presets: default,bandwidth-optimized,bandwidth-and-quality-balanced,quality-optimized'
     );
     updateSendSettings = {
       video: DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY,
@@ -62,6 +64,18 @@ describe('UpdateSendSettings', () => {
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
     ).not.toThrow();
+    updateSendSettings = {
+      video: MEDIUM_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
+    };
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).not.toThrow();
+    updateSendSettings = {
+      video: HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
+    };
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).not.toThrow();
   });
 
   test('DailyVideoSendSettings must be an object or preset', () => {
@@ -71,7 +85,7 @@ describe('UpdateSendSettings', () => {
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
     ).toThrowError(
-      'Video send settings should be either a preset (bandwidth-optimized, default, quality-optimized) or an object'
+      'Video send settings should be either an object or one of the supported presets: default,bandwidth-optimized,bandwidth-and-quality-balanced,quality-optimized'
     );
   });
 
