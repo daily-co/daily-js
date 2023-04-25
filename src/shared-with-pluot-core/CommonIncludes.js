@@ -33,6 +33,13 @@ export const DAILY_ACCESS_LEVEL_NONE = 'none';
 export const DAILY_RECEIVE_SETTINGS_BASE_KEY = 'base';
 export const DAILY_RECEIVE_SETTINGS_ALL_PARTICIPANTS_KEY = '*';
 
+// send settings
+export const HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY =
+  'quality-optimized';
+export const LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY =
+  'bandwidth-optimized';
+export const DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY = 'default';
+
 // error types
 
 export const DAILY_FATAL_ERROR_EJECTED = 'ejected';
@@ -146,6 +153,7 @@ export const DAILY_EVENT_SHOW_LOCAL_VIDEO_CHANGED = 'show-local-video-changed';
 export const DAILY_EVENT_RECEIVE_SETTINGS_UPDATED = 'receive-settings-updated';
 
 export const DAILY_EVENT_INPUT_SETTINGS_UPDATED = 'input-settings-updated';
+export const DAILY_EVENT_SEND_SETTINGS_UPDATED = 'send-settings-updated';
 export const DAILY_EVENT_NONFATAL_ERROR = 'nonfatal-error';
 export const DAILY_INPUT_SETTINGS_ERROR_TYPE = 'input-settings-error';
 export const DAILY_SCREEN_SHARE_ERROR_TYPE = 'screen-share-error';
@@ -168,16 +176,12 @@ export const MAX_USER_DATA_SIZE = 1024 * 4;
 
 export const IFRAME_MESSAGE_MARKER = 'iframe-call-message';
 
-export const DAILY_METHOD_GET_SIDEBAR_VIEW =
-  'get-sidebar-view';
-export const DAILY_METHOD_SET_SIDEBAR_VIEW =
-  'set-sidebar-view';
-export const DAILY_METHOD_SET_CUSTOM_INTEGRATIONS =
-  'set-custom-integrations';
+export const DAILY_METHOD_GET_SIDEBAR_VIEW = 'get-sidebar-view';
+export const DAILY_METHOD_SET_SIDEBAR_VIEW = 'set-sidebar-view';
+export const DAILY_METHOD_SET_CUSTOM_INTEGRATIONS = 'set-custom-integrations';
 export const DAILY_METHOD_START_CUSTOM_INTEGRATIONS =
   'start-custom-integrations';
-export const DAILY_METHOD_STOP_CUSTOM_INTEGRATIONS =
-  'stop-custom-integrations';
+export const DAILY_METHOD_STOP_CUSTOM_INTEGRATIONS = 'stop-custom-integrations';
 export const DAILY_METHOD_UPDATE_CUSTOM_TRAY_BUTTONS =
   'update-custom-tray-buttons';
 export const DAILY_METHOD_SET_THEME = 'set-theme';
@@ -256,6 +260,7 @@ export const DAILY_METHOD_GET_SINGLE_PARTICIPANT_RECEIVE_SETTINGS =
   'get-single-participant-receive-settings';
 export const DAILY_METHOD_UPDATE_RECEIVE_SETTINGS = 'update-receive-settings';
 export const DAILY_METHOD_UPDATE_INPUT_SETTINGS = 'update-input-settings';
+export const DAILY_METHOD_UPDATE_SEND_SETTINGS = 'update-send-settings';
 export const DAILY_METHOD_TRANSMIT_LOG = 'transmit-log';
 
 export const DAILY_CUSTOM_TRACK = 'daily-custom-track';

@@ -1,0 +1,158 @@
+// We need to mock the MediaStreamTrack class and the mediaDevices which are provided by the browser
+import {
+  DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY,
+  LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
+} from '../shared-with-pluot-core/CommonIncludes';
+
+class MockMediaStreamTrack {}
+global.navigator.mediaDevices = { enumerateDevices: async () => [] };
+global.__dailyJsVersion__ = '*';
+
+import DailyIframe from '../module';
+
+describe('UpdateSendSettings', () => {
+  let callObject;
+
+  beforeEach(() => {
+    callObject = DailyIframe.createCallObject();
+  });
+
+  test('updateSendSettings object must not be null or empty', () => {
+    let updateSendSettings = null;
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).toThrowError(
+      'Send settings must contain at least information for one track!'
+    );
+    updateSendSettings = {};
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).toThrowError(
+      'Send settings must contain at least information for one track!'
+    );
+  });
+
+  test('DailyVideoSendSettings object must not be empty', () => {
+    let updateSendSettings = { video: {} };
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).toThrowError(
+      'Video send settings must contain at least maxQuality or encodings attribute'
+    );
+  });
+
+  test('DailyVideoSendSettingsPreset must contain only the allowed values', () => {
+    let updateSendSettings = {
+      video: 'fakePreset',
+    };
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).toThrowError(
+      'Video send settings should be either default, bandwidth-optimized or quality-optimized'
+    );
+    updateSendSettings = {
+      video: DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY,
+    };
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).not.toThrow();
+    updateSendSettings = {
+      video: LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
+    };
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).not.toThrow();
+  });
+
+  test('DailyVideoSendSettings must be an object or preset', () => {
+    let updateSendSettings = {
+      video: 22,
+    };
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).toThrowError(
+      'Video send settings should be either a preset (bandwidth-optimized, default, quality-optimized) or an object'
+    );
+  });
+
+  test('DailyVideoSendSettings maxQuality', () => {
+    let updateSendSettings = {
+      video: {
+        maxQuality: 'invalid',
+      },
+    };
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).toThrowError('maxQuality must be either low, medium or high');
+    updateSendSettings = {
+      video: {
+        maxQuality: 'low',
+      },
+    };
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).not.toThrow();
+    updateSendSettings = {
+      video: {
+        maxQuality: 'medium',
+      },
+    };
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).not.toThrow();
+    updateSendSettings = {
+      video: {
+        maxQuality: 'high',
+      },
+    };
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).not.toThrow();
+  });
+
+  test('DailyVideoSendSettings encodings', () => {
+    let updateSendSettings = {
+      video: {
+        encodings: {},
+      },
+    };
+    const expectedEncodingErrorMsg =
+      'Encodings must be defined as: low, low and medium, or low, medium and high.';
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).toThrowError(expectedEncodingErrorMsg);
+    updateSendSettings = {
+      video: {
+        encodings: {
+          medium: {},
+        },
+      },
+    };
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).toThrowError(expectedEncodingErrorMsg);
+    updateSendSettings = {
+      video: {
+        encodings: {
+          medium: {},
+          high: {},
+        },
+      },
+    };
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).toThrowError(expectedEncodingErrorMsg);
+    updateSendSettings = {
+      video: {
+        encodings: {
+          low: {},
+          medium: {},
+          high: {},
+        },
+      },
+    };
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).not.toThrow();
+  });
+});

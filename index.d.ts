@@ -93,6 +93,7 @@ export type DailyEvent =
   | 'available-devices-updated'
   | 'receive-settings-updated'
   | 'input-settings-updated'
+  | 'send-settings-updated'
   | 'show-local-video-changed'
   | 'selected-devices-updated'
   | 'custom-button-click'
@@ -593,6 +594,30 @@ export interface DailyCpuLoadStats {
   };
 }
 
+interface DailySendSettings {
+  video?: DailyVideoSendSettings | DailyVideoSendSettingsPreset;
+  customVideoDefaults?: DailyVideoSendSettings | DailyVideoSendSettingsPreset;
+  [customKey: string]:
+    | DailyVideoSendSettings
+    | DailyVideoSendSettingsPreset
+    | undefined;
+}
+
+export type DailyVideoSendSettingsPreset =
+  | 'default'
+  | 'bandwidth-optimized'
+  | 'quality-optimized';
+
+// Media Track Send Settings
+interface DailyVideoSendSettings {
+  maxQuality?: 'low' | 'medium' | 'high';
+  encodings?: {
+    low: RTCRtpEncodingParameters;
+    medium: RTCRtpEncodingParameters;
+    high: RTCRtpEncodingParameters;
+  };
+}
+
 export interface DailyPendingRoomInfo {
   roomUrlPendingJoin: string;
 }
@@ -954,7 +979,7 @@ export interface DailyEventObjectRecordingStarted {
   recordingId?: string;
   startedBy?: string;
   type?: string;
-  layout?: DailyStreamingLayoutConfig;
+  layout?: DailyStreamingLayoutConfig<'start'>;
   instanceId?: string;
 }
 
@@ -1082,9 +1107,14 @@ export interface DailyEventObjectInputSettingsUpdated {
   inputSettings: DailyInputSettings;
 }
 
+export interface DailyEventObjectSendSettingsUpdated {
+  action: Extract<DailyEvent, 'send-settings-updated'>;
+  sendSettings: DailySendSettings;
+}
+
 export interface DailyEventObjectLiveStreamingStarted {
   action: Extract<DailyEvent, 'live-streaming-started'>;
-  layout?: DailyStreamingLayoutConfig;
+  layout?: DailyLiveStreamingLayoutConfig<'start'>;
   instanceId?: string;
 }
 export interface DailyEventObjectLiveStreamingUpdated {
@@ -1114,6 +1144,10 @@ export interface DailyEventObjectTranscriptionStopped {
   action: Extract<DailyEvent, 'transcription-stopped'>;
   updatedBy: string;
 }
+
+export type DailyRemoteMediaPlayerStopReason =
+  | DailyRemoteMediaPlayerEOS
+  | DailyRemoteMediaPlayerPeerStopped;
 
 export interface DailyEventObjectRemoteMediaPlayerUpdate {
   action: Extract<
@@ -1224,6 +1258,8 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectShowLocalVideoChanged
     : T extends DailyEventObjectInputSettingsUpdated['action']
     ? DailyEventObjectInputSettingsUpdated
+    : T extends DailyEventObjectSendSettingsUpdated['action']
+    ? DailyEventObjectSendSettingsUpdated
     : T extends DailyEventObjectCustomButtonClick['action']
     ? DailyEventObjectCustomButtonClick
     : T extends DailyEventObjectSelectedDevicesUpdated['action']
@@ -1261,72 +1297,6 @@ export interface DailyCallStaticUtils {
   version(): string;
 }
 
-export interface DailyStreamingDefaultLayoutConfig {
-  preset: 'default';
-  max_cam_streams?: number;
-}
-
-export interface DailyStreamingSingleParticipantLayoutConfig {
-  preset: 'single-participant';
-  session_id: string;
-}
-
-export interface DailyStreamingActiveParticipantLayoutConfig {
-  preset: 'active-participant';
-}
-
-export type DailyStreamingPortraitLayoutVariant = 'vertical' | 'inset';
-
-export interface DailyStreamingPortraitLayoutConfig {
-  preset: 'portrait';
-  variant?: DailyStreamingPortraitLayoutVariant;
-  max_cam_streams?: number;
-}
-
-export interface DailyUpdateStreamingCustomLayoutConfig {
-  preset: 'custom';
-  composition_params?: {
-    [key: string]: boolean | number | string;
-  };
-}
-
-export interface DailyStartStreamingCustomLayoutConfig
-  extends DailyUpdateStreamingCustomLayoutConfig {
-  composition_id?: string;
-  session_assets?: {
-    [key: string]: string;
-  };
-}
-
-type DailyStreamingLayoutConfigType = 'start' | 'update';
-
-export type DailyStreamingLayoutConfig<
-  Type extends DailyStreamingLayoutConfigType = 'start'
-> =
-  | DailyStreamingDefaultLayoutConfig
-  | DailyStreamingSingleParticipantLayoutConfig
-  | DailyStreamingActiveParticipantLayoutConfig
-  | DailyStreamingPortraitLayoutConfig
-  | (Type extends 'start'
-      ? DailyStartStreamingCustomLayoutConfig
-      : DailyUpdateStreamingCustomLayoutConfig);
-
-export type DailyStreamingState = 'connected' | 'interrupted';
-
-export type DailyRemoteMediaPlayerSettingPlay = 'play';
-export type DailyRemoteMediaPlayerSettingPause = 'pause';
-
-export type DailyRemoteMediaPlayerStatePlaying = 'playing';
-export type DailyRemoteMediaPlayerStatePaused = 'paused';
-export type DailyRemoteMediaPlayerStateBuffering = 'buffering';
-
-export type DailyRemoteMediaPlayerEOS = 'EOS';
-export type DailyRemoteMediaPlayerPeerStopped = 'stopped-by-peer';
-
-export type DailyRemoteMediaPlayerStopReason =
-  | DailyRemoteMediaPlayerEOS
-  | DailyRemoteMediaPlayerPeerStopped;
-
 export type DailyAccess = 'unknown' | SpecifiedDailyAccess;
 
 export type SpecifiedDailyAccess = { level: 'none' | 'lobby' | 'full' };
@@ -1341,7 +1311,96 @@ export type DailyAccessRequest = {
   name: string;
 };
 
+type DailyStreamingParticipantsSortMethod = 'active';
+
+export interface DailyStreamingParticipantsConfig {
+  video?: string[];
+  audio?: string[];
+  sort?: DailyStreamingParticipantsSortMethod;
+}
+
+export interface DailyStreamingDefaultLayoutConfig
+  extends DailyStreamingParticipantsConfig {
+  preset: 'default';
+  max_cam_streams?: number;
+}
+
+export interface DailyStreamingSingleParticipantLayoutConfig {
+  preset: 'single-participant';
+  session_id: string;
+}
+
+export interface DailyStreamingActiveParticipantLayoutConfig
+  extends DailyStreamingParticipantsConfig {
+  preset: 'active-participant';
+}
+
+export interface DailyStreamingAudioOnlyLayoutConfig {
+  preset: 'audio-only';
+}
+
+export type DailyStreamingPortraitLayoutVariant = 'vertical' | 'inset';
+
+export interface DailyStreamingPortraitLayoutConfig
+  extends DailyStreamingParticipantsConfig {
+  preset: 'portrait';
+  variant?: DailyStreamingPortraitLayoutVariant;
+  max_cam_streams?: number;
+}
+
+export interface DailyUpdateStreamingCustomLayoutConfig
+  extends DailyStreamingParticipantsConfig {
+  preset: 'custom';
+  composition_params?: {
+    [key: string]: boolean | number | string;
+  };
+}
+
+export interface DailyStartStreamingCustomLayoutConfig
+  extends DailyUpdateStreamingCustomLayoutConfig,
+    DailyStreamingParticipantsConfig {
+  composition_id?: string;
+  session_assets?: {
+    [key: string]: string;
+  };
+}
+
+type DailyStreamingLayoutConfigType = 'start' | 'update';
+type DailyStartStreamingMethod = 'liveStreaming' | 'recording';
+
+export type DailyStreamingLayoutConfig<
+  Type extends DailyStreamingLayoutConfigType = 'start'
+> =
+  | DailyStreamingDefaultLayoutConfig
+  | DailyStreamingSingleParticipantLayoutConfig
+  | DailyStreamingActiveParticipantLayoutConfig
+  | DailyStreamingPortraitLayoutConfig
+  | DailyStreamingAudioOnlyLayoutConfig
+  | (Type extends 'start'
+      ? DailyStartStreamingCustomLayoutConfig
+      : DailyUpdateStreamingCustomLayoutConfig);
+
+export type DailyLiveStreamingLayoutConfig<
+  Type extends DailyStreamingLayoutConfigType = 'start'
+> = Exclude<
+  DailyStreamingLayoutConfig<Type>,
+  DailyStreamingAudioOnlyLayoutConfig
+>;
+
+export type DailyStreamingState = 'connected' | 'interrupted';
+
+export type DailyRemoteMediaPlayerSettingPlay = 'play';
+export type DailyRemoteMediaPlayerSettingPause = 'pause';
+
+export type DailyRemoteMediaPlayerStatePlaying = 'playing';
+export type DailyRemoteMediaPlayerStatePaused = 'paused';
+export type DailyRemoteMediaPlayerStateBuffering = 'buffering';
+
+export type DailyRemoteMediaPlayerEOS = 'EOS';
+export type DailyRemoteMediaPlayerPeerStopped = 'stopped-by-peer';
+
 export interface DailyStreamingOptions<
+  Method extends DailyStartStreamingMethod,
   Type extends DailyStreamingLayoutConfigType = 'start'
 > {
   width?: number;
@@ -1353,7 +1412,9 @@ export interface DailyStreamingOptions<
   maxDuration?: number;
   backgroundColor?: string;
   instanceId?: string;
-  layout?: DailyStreamingLayoutConfig<Type>;
+  layout?: Method extends 'recording'
+    ? DailyStreamingLayoutConfig<Type>
+    : DailyLiveStreamingLayoutConfig<Type>;
 }
 
 export interface DailyStreamingEndpoint {
@@ -1362,7 +1423,7 @@ export interface DailyStreamingEndpoint {
 
 export interface DailyLiveStreamingOptions<
   Type extends DailyStreamingLayoutConfigType = 'start'
-> extends DailyStreamingOptions<Type> {
+> extends DailyStreamingOptions<'liveStreaming', Type> {
   rtmpUrl?: string | string[];
   endpoints?: DailyStreamingEndpoint[];
 }
@@ -1524,7 +1585,7 @@ export interface DailyCall {
   load(properties?: DailyLoadOptions): Promise<void>;
   startScreenShare(captureOptions?: DailyScreenCaptureOptions): void;
   stopScreenShare(): void;
-  startRecording(options?: DailyStreamingOptions<'start'>): void;
+  startRecording(options?: DailyStreamingOptions<'recording', 'start'>): void;
   updateRecording(options: {
     layout?: DailyStreamingLayoutConfig<'update'>;
     instanceId?: string;
@@ -1532,7 +1593,7 @@ export interface DailyCall {
   stopRecording(options?: { instanceId: string }): void;
   startLiveStreaming(options: DailyLiveStreamingOptions<'start'>): void;
   updateLiveStreaming(options: {
-    layout?: DailyStreamingLayoutConfig<'update'>;
+    layout?: DailyLiveStreamingLayoutConfig<'update'>;
     instanceId?: string;
   }): void;
   addLiveStreamingEndpoints(options: {
@@ -1555,6 +1616,8 @@ export interface DailyCall {
   stopTranscription(): void;
   getNetworkStats(): Promise<DailyNetworkStats>;
   getCpuLoadStats(): Promise<DailyCpuLoadStats>;
+  updateSendSettings(settings: DailySendSettings): Promise<DailySendSettings>;
+  getSendSettings(): DailySendSettings;
   getActiveSpeaker(): { peerId?: string };
   setActiveSpeakerMode(enabled: boolean): DailyCall;
   activeSpeakerMode(): boolean;

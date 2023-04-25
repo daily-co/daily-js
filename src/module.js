@@ -190,6 +190,11 @@ import {
   DAILY_METHOD_SET_SIDEBAR_VIEW,
   DAILY_METHOD_START_CUSTOM_INTEGRATIONS,
   DAILY_METHOD_STOP_CUSTOM_INTEGRATIONS,
+  DAILY_EVENT_SEND_SETTINGS_UPDATED,
+  DAILY_METHOD_UPDATE_SEND_SETTINGS,
+  DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY,
+  LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
+  HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -1879,12 +1884,13 @@ export default class DailyIframe extends EventEmitter {
           'screen-audio',
           'rmpAudio',
           'rmpVideo',
+          'customVideoDefaults',
         ].includes(trackName)
       : false;
     if (isUsingReservedTrackName) {
       throw new Error(
         'Custom track `trackName` must not match a track name already used by daily: ' +
-          'cam-audio, cam-video, screen-video, screen-audio, rmpAudio, rmpVideo'
+          'cam-audio, cam-video, customVideoDefaults, screen-video, screen-audio, rmpAudio, rmpVideo'
       );
     }
     if (!(track instanceof MediaStreamTrack)) {
@@ -2714,6 +2720,104 @@ export default class DailyIframe extends EventEmitter {
         k
       );
     });
+  }
+
+  _validateVideoSendSettings(videoSendSettings) {
+    if (typeof videoSendSettings === 'string') {
+      if (
+        videoSendSettings !== DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY &&
+        videoSendSettings !== LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY &&
+        videoSendSettings !== HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY
+      ) {
+        throw new Error(
+          `Video send settings should be either ${DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY}, ${LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY} or ${HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY}`
+        );
+      }
+    } else {
+      if (typeof videoSendSettings !== 'object') {
+        throw new Error(
+          `Video send settings should be either a preset (${LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY}, ${DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY}, ${HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY}) or an object`
+        );
+      }
+      if (!videoSendSettings.maxQuality && !videoSendSettings.encodings) {
+        throw new Error(
+          `Video send settings must contain at least maxQuality or encodings attribute`
+        );
+      }
+      if (
+        videoSendSettings.maxQuality &&
+        ['low', 'medium', 'high'].indexOf(videoSendSettings.maxQuality) === -1
+      ) {
+        throw new Error(`maxQuality must be either low, medium or high`);
+      }
+      if (videoSendSettings.encodings) {
+        let trowEncodingValidationError = false;
+        switch (Object.keys(videoSendSettings.encodings).length) {
+          case 1:
+            trowEncodingValidationError = !videoSendSettings.encodings.low;
+            break;
+          case 2:
+            trowEncodingValidationError =
+              !videoSendSettings.encodings.low ||
+              !videoSendSettings.encodings.medium;
+            break;
+          case 3:
+            trowEncodingValidationError =
+              !videoSendSettings.encodings.low ||
+              !videoSendSettings.encodings.medium ||
+              !videoSendSettings.encodings.high;
+            break;
+          default:
+            trowEncodingValidationError = true;
+        }
+        if (trowEncodingValidationError) {
+          throw new Error(
+            `Encodings must be defined as: low, low and medium, or low, medium and high.`
+          );
+        }
+      }
+    }
+  }
+
+  validateUpdateSendSettings(sendSettings) {
+    if (!sendSettings || Object.keys(sendSettings).length === 0) {
+      throw new Error(
+        'Send settings must contain at least information for one track!'
+      );
+    }
+    Object.values(sendSettings).forEach((videoSendSettings) => {
+      this._validateVideoSendSettings(videoSendSettings);
+    });
+  }
+
+  updateSendSettings(sendSettings) {
+    this.validateUpdateSendSettings(sendSettings);
+    if (this.needsLoad()) {
+      this._preloadCache.sendSettings = sendSettings;
+      return { sendSettings: this._preloadCache.sendSettings };
+    }
+    // Ask call machine to update settings, then await callback.
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve(msg.sendSettings);
+        }
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_UPDATE_SEND_SETTINGS,
+          sendSettings,
+        },
+        k
+      );
+    });
+  }
+
+  getSendSettings() {
+    // Returns null if the user has never invoked updateSendSettings or joined a call
+    return this._sendSettings || this._preloadCache.sendSettings;
   }
 
   getActiveSpeaker() {
@@ -3617,6 +3721,22 @@ export default class DailyIframe extends EventEmitter {
           }
         }
         break;
+      case DAILY_EVENT_SEND_SETTINGS_UPDATED:
+        {
+          if (!deepEqual(this._sendSettings, msg.sendSettings)) {
+            this._sendSettings = msg.sendSettings;
+            this._preloadCache.sendSettings = {}; // clear cache, if any
+            try {
+              this.emit(msg.action, {
+                action: msg.action,
+                sendSettings: msg.sendSettings,
+              });
+            } catch (e) {
+              console.log('could not emit', msg, e);
+            }
+          }
+        }
+        break;
       case DAILY_EVENT_REMOTE_MEDIA_PLAYER_STARTED:
         {
           let participantId = msg.session_id;
@@ -3925,6 +4045,7 @@ export default class DailyIframe extends EventEmitter {
     );
     this._receiveSettings = {};
     this._inputSettings = undefined;
+    this._sendSettings = {};
     resetPreloadCache(this._preloadCache);
   }
 
@@ -4171,6 +4292,7 @@ function initializePreloadCache() {
     videoDeviceId: null,
     outputDeviceId: null,
     inputSettings: null,
+    sendSettings: null,
   };
 }
 
