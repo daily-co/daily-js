@@ -1824,7 +1824,7 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  startCamera(properties = {}) {
+  async startCamera(properties = {}) {
     // Validate mode.
     methodOnlySupportedInCallObject(this._callObjectMode, 'startCamera()');
 
@@ -1836,22 +1836,40 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
-    return new Promise(async (resolve, reject) => {
+    if (this.needsLoad()) {
+      try {
+        await this.load(properties);
+      } catch (e) {
+        return Promise.reject(e);
+      }
+    } else {
+      // even if is already loaded, needs to validate the properties, so the dailyConfig properties can be inserted inside window._dailyConfig
+      // Validate that any provided url or token doesn't conflict with url or
+      // token already used to preAuth()
+      if (this._didPreAuth) {
+        if (properties.url && properties.url !== this.properties.url) {
+          console.error(
+            `url in startCamera() is different than the one used in preAuth()`
+          );
+          return Promise.reject();
+        }
+        if (properties.token && properties.token !== this.properties.token) {
+          console.error(
+            `token in startCamera() is different than the one used in preAuth()`
+          );
+          return Promise.reject();
+        }
+      }
+      this.validateProperties(properties);
+      this.properties = { ...this.properties, ...properties };
+    }
+
+    return new Promise((resolve) => {
       let k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
         resolve(msg);
       };
-      if (this.needsLoad()) {
-        try {
-          await this.load(properties);
-        } catch (e) {
-          reject(e);
-        }
-      } else {
-        // even if is already loaded, needs to validate the properties, so the dailyConfig properties can be inserted inside window._dailyConfig
-        this.validateProperties(properties);
-      }
       this.sendMessageToCallMachine(
         {
           action: DAILY_METHOD_START_CAMERA,
