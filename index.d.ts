@@ -332,6 +332,7 @@ export interface DailyCallOptions {
   theme?: DailyThemeConfig;
   layoutConfig?: DailyLayoutConfig;
   receiveSettings?: DailyReceiveSettings;
+  sendSettings?: DailySendSettings;
   inputSettings?: DailyInputSettings;
   userName?: string;
   userData?: unknown;
