@@ -648,6 +648,16 @@ const FRAME_PROPS = {
       allowAllParticipantsKey: false,
     }),
   },
+  sendSettings: {
+    validate: (sendSettings, callObject) => {
+      if (validateSendSettings(sendSettings, callObject)) {
+        callObject._preloadCache.sendSettings = sendSettings;
+        return true;
+      }
+      return false;
+    },
+    help: 'Invalid sendSettings provided. Check error logs for detailed info.',
+  },
   inputSettings: {
     validate: (settings, callObject) => {
       if (validateInputSettings(settings)) {
@@ -4493,6 +4503,16 @@ function validateReceiveSettings(
     }
   }
   return true;
+}
+
+function validateSendSettings(sendSettings, callObject) {
+  try {
+    callObject.validateUpdateSendSettings(sendSettings);
+    return true;
+  } catch (e) {
+    console.error('Failed to validate send settings', e);
+    return false;
+  }
 }
 
 function validateInputSettings(settings) {
