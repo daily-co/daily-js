@@ -358,11 +358,17 @@ const DEFAULT_SESSION_STATE = isReactNative()
 
 const EMPTY_PARTICIPANT_COUNTS = { present: 0, hidden: 0 };
 
-const simulcastEncodingsValidRanges = {
+// Valid ranges for simulcast encodings settings specifically for RMP
+const rmpSimulcastEncodingsValidRanges = {
   maxBitrate: { min: MIN_LAYER_BITRATE, max: MAX_LAYER_BITRATE },
   maxFramerate: { min: MIN_RMP_FPS, max: MAX_RMP_FPS },
   scaleResolutionDownBy: { min: 1, max: MAX_SCALE_RESOLUTION_BY },
 };
+
+// Valid keys for simulcast encoding settings, generally
+const simulcastEncodingsValidKeys = Object.keys(
+  rmpSimulcastEncodingsValidRanges
+);
 
 const startRmpSettingsValidKeys = ['state', 'volume', 'simulcastEncodings'];
 //
@@ -2622,7 +2628,7 @@ export default class DailyIframe extends EventEmitter {
 
   validateSimulcastEncodings(
     encodings,
-    validateRange = false,
+    validEncodingRanges = null,
     isMaxBitrateMandatory = false
   ) {
     if (!encodings) return;
@@ -2641,10 +2647,10 @@ export default class DailyIframe extends EventEmitter {
       const layer = encodings[i];
       for (let prop in layer) {
         // check property is valid
-        if (!simulcastEncodingsValidRanges.hasOwnProperty(prop)) {
+        if (!simulcastEncodingsValidKeys.includes(prop)) {
           throw new Error(
             `Invalid key ${prop}, valid keys are:` +
-              Object.keys(simulcastEncodingsValidRanges)
+              Object.values(simulcastEncodingsValidKeys)
           );
         }
         // property must be number
@@ -2652,9 +2658,9 @@ export default class DailyIframe extends EventEmitter {
           throw new Error(`${prop} must be a number`);
         }
 
-        if (validateRange) {
+        if (validEncodingRanges) {
           // property must be within range
-          let { min, max } = simulcastEncodingsValidRanges[prop];
+          let { min, max } = validEncodingRanges[prop];
           if (!isValueInRange(layer[prop], min, max)) {
             throw new Error(
               `${prop} value not in range. valid range:\ ${min} to ${max}`
@@ -5026,7 +5032,7 @@ function validateRemotePlayerEncodingSettings(playerSettings) {
   if (playerSettings.simulcastEncodings) {
     this.validateSimulcastEncodings(
       playerSettings.simulcastEncodings,
-      true,
+      rmpSimulcastEncodingsValidRanges,
       true
     );
   }
