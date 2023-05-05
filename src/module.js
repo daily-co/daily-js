@@ -1186,6 +1186,7 @@ export default class DailyIframe extends EventEmitter {
     } catch (e) {
       // no-op
     }
+
     let iframe = this._iframe;
     if (iframe) {
       let parent = iframe.parentElement;
@@ -1212,7 +1213,17 @@ export default class DailyIframe extends EventEmitter {
     }
 
     this.resetMeetingDependentVars();
+
     this._destroyed = true;
+    // fire call-instance-destroyed event here
+    try {
+      this.emit('call-instance-destroyed', {
+        action: 'call-instance-destroyed',
+      });
+    } catch (e) {
+      console.log('could not emit call-instance-destroyed');
+    }
+
     if (this.strictMode) {
       // we set this to undefined in strictMode so that all calls to
       // the underlying channel's sendMessageToCallMachine will fail
@@ -1222,7 +1233,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   isDestroyed() {
-    return this._destroyed;
+    return !!this._destroyed;
   }
 
   loadCss({ bodyClass, cssFile, cssText }) {
