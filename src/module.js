@@ -435,20 +435,27 @@ const FRAME_PROPS = {
   },
   dailyConfig: {
     // only for call object mode, for now
-    validate: (config) => {
-      if (!window._dailyConfig) {
-        window._dailyConfig = {};
+    validate: (config, callObject) => {
+      try {
+        callObject.validateDailyConfig(config);
+        if (!window._dailyConfig) {
+          window._dailyConfig = {};
+        }
+        window._dailyConfig.experimentalGetUserMediaConstraintsModify =
+          config.experimentalGetUserMediaConstraintsModify;
+        window._dailyConfig.userMediaVideoConstraints =
+          config.userMediaVideoConstraints;
+        window._dailyConfig.userMediaAudioConstraints =
+          config.userMediaAudioConstraints;
+        window._dailyConfig.callObjectBundleUrlOverride =
+          config.callObjectBundleUrlOverride;
+        return true;
+      } catch (e) {
+        console.error('Failed to validate dailyConfig', e);
       }
-      window._dailyConfig.experimentalGetUserMediaConstraintsModify =
-        config.experimentalGetUserMediaConstraintsModify;
-      window._dailyConfig.userMediaVideoConstraints =
-        config.userMediaVideoConstraints;
-      window._dailyConfig.userMediaAudioConstraints =
-        config.userMediaAudioConstraints;
-      window._dailyConfig.callObjectBundleUrlOverride =
-        config.callObjectBundleUrlOverride;
-      return true;
+      return false;
     },
+    help: 'Unsupported dailyConfig. Check error logs for detailed info.',
   },
   reactNativeConfig: {
     validate: validateReactNativeConfig,
@@ -2604,6 +2611,62 @@ export default class DailyIframe extends EventEmitter {
       action: DAILY_METHOD_STOP_LIVE_STREAMING,
       ...args,
     });
+  }
+
+  validateDailyConfig(dailyConfig) {
+    // validate simulcastEncodings
+    if (dailyConfig.camSimulcastEncodings) {
+      this.validateSimulcastEncodings(dailyConfig.camSimulcastEncodings);
+    }
+  }
+
+  validateSimulcastEncodings(
+    encodings,
+    validateRange = false,
+    isMaxBitrateMandatory = false
+  ) {
+    if (!encodings) return;
+    // validate simulcastEncodings
+    if (!(encodings instanceof Array)) {
+      throw new Error(`encodings must be an Array`);
+    }
+    // max 3 layers
+    if (!isValueInRange(encodings.length, 1, MAX_SIMULCAST_LAYERS)) {
+      throw new Error(
+        `encodings must be an Array with between 1 to ${MAX_SIMULCAST_LAYERS} layers`
+      );
+    }
+    // check value within each simulcast layer
+    for (let i = 0; i < encodings.length; i++) {
+      const layer = encodings[i];
+      for (let prop in layer) {
+        // check property is valid
+        if (!simulcastEncodingsValidRanges.hasOwnProperty(prop)) {
+          throw new Error(
+            `Invalid key ${prop}, valid keys are:` +
+              Object.keys(simulcastEncodingsValidRanges)
+          );
+        }
+        // property must be number
+        if (typeof layer[prop] !== 'number') {
+          throw new Error(`${prop} must be a number`);
+        }
+
+        if (validateRange) {
+          // property must be within range
+          let { min, max } = simulcastEncodingsValidRanges[prop];
+          if (!isValueInRange(layer[prop], min, max)) {
+            throw new Error(
+              `${prop} value not in range. valid range:\ ${min} to ${max}`
+            );
+          }
+        }
+      }
+      // maxBitrate is sometimes mandatory
+      if (isMaxBitrateMandatory && !layer.hasOwnProperty('maxBitrate')) {
+        throw new Error(`maxBitrate is not specified`);
+      }
+    }
   }
 
   async startRemoteMediaPlayer({
@@ -4961,47 +5024,11 @@ function validateRemotePlayerEncodingSettings(playerSettings) {
   }
   // validate simulcastEncodings
   if (playerSettings.simulcastEncodings) {
-    if (!(playerSettings.simulcastEncodings instanceof Array)) {
-      throw new Error(`simulcastEncodings must be "Array"`);
-    }
-    // max 3 layers
-    if (
-      !isValueInRange(
-        playerSettings.simulcastEncodings.length,
-        0,
-        MAX_SIMULCAST_LAYERS
-      )
-    ) {
-      throw new Error(
-        `"simulcastEncodings" not in range. valid range 1 to 3 layers`
-      );
-    }
-    // check value within each simulcast layer
-    playerSettings.simulcastEncodings.every((layer) => {
-      for (let prop in layer) {
-        // check property is valid
-        if (!simulcastEncodingsValidRanges.hasOwnProperty(prop)) {
-          throw new Error(
-            `Invalid key ${prop}, valid keys are:` +
-              Object.keys(simulcastEncodingsValidRanges)
-          );
-        }
-        // property must be number
-        if (typeof layer[prop] !== 'number') {
-          throw new Error(`simulcastEncodings[].${prop} must be "number"`);
-        }
-        // property must be within range
-        let { min, max } = simulcastEncodingsValidRanges[prop];
-        if (!isValueInRange(layer[prop], min, max)) {
-          throw new Error(`simulcastEncodings[].${prop} value not in range. valid range:\
-        ${min} to ${max}`);
-        }
-      }
-      // maxBitrate is mandatory
-      if (!layer.hasOwnProperty('maxBitrate')) {
-        throw new Error(`simulcastEncodings[].maxBitrate is not specified`);
-      }
-    });
+    this.validateSimulcastEncodings(
+      playerSettings.simulcastEncodings,
+      true,
+      true
+    );
   }
 }
 
