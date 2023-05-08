@@ -65,5 +65,6 @@ export function removeDeviceChangeListener(deviceChangeListener) {
   // this listener before then)
   if (deviceChangeListeners.size === 0 && systemListener) {
     navigator.mediaDevices.removeEventListener('devicechange', systemListener);
+    systemListener = null;
   }
 }
