@@ -3657,7 +3657,7 @@ export default class DailyIframe extends EventEmitter {
           }
         }
         break;
-      case DAILY_EVENT_ERROR:
+      case DAILY_EVENT_ERROR: {
         if (this._iframe && !msg.preserveIframe) {
           this._iframe.src = '';
         }
@@ -3667,17 +3667,23 @@ export default class DailyIframe extends EventEmitter {
           this._loadedCallback(msg.errorMsg);
           this._loadedCallback = null;
         }
+        let { preserveIframe, ...event } = msg;
+        if (event?.error?.details?.sourceError) {
+          event.error.details.sourceError = JSON.parse(
+            event.error.details.sourceError
+          );
+        }
         if (this._joinedCallback) {
-          this._joinedCallback(null, msg.errorMsg);
+          this._joinedCallback(null, event);
           this._joinedCallback = null;
         }
         try {
-          let { preserveIframe, ...event } = msg;
           this.emit(msg.action, event);
         } catch (e) {
           console.log('could not emit', msg, e);
         }
         break;
+      }
       case DAILY_EVENT_LEFT_MEETING:
         // if we've left due to error, the error msg should have
         // already been handled and we do not want to override
