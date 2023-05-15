@@ -988,7 +988,10 @@ export default class DailyIframe extends EventEmitter {
 
   constructor(iframeish, properties = {}) {
     super();
-    this.strictMode = properties.strictMode;
+    this.strictMode =
+      typeof properties.strictMode !== 'undefined'
+        ? properties.strictMode
+        : true;
     if (_callInstance) {
       this._logDuplicateInstanceAttempt();
       if (this.strictMode) {
@@ -4355,7 +4358,7 @@ export default class DailyIframe extends EventEmitter {
       const logMsg = {
         action: DAILY_METHOD_TRANSMIT_LOG,
         level: 'error',
-        code: this.strictMode ? 9995 : 9996,
+        code: this.strictMode ? 9995 : 9997,
       };
       this._messageChannel.sendMessageToCallMachine(
         logMsg,
@@ -4367,15 +4370,15 @@ export default class DailyIframe extends EventEmitter {
       const logMsg = {
         action: DAILY_METHOD_TRANSMIT_LOG,
         level: 'error',
-        code: this.strictMode ? 9995 : 9996,
+        code: this.strictMode ? 9995 : 9997,
       };
       _callInstance.sendMessageToCallMachine(logMsg);
     } else if (!this.strictMode) {
       const errMsg =
-        'You are attempting to use a call instance that was previously ' +
-        'destroyed. This is unsupported and will not be allowed beginning in ' +
-        '0.45.0. Add `strictMode: true` to your call frame constructor ' +
-        'properties to debug and catch the error now.';
+        'You are are attempting to use a call instance that was previously ' +
+        'destroyed, which is unsupported. Please remove `strictMode: false` ' +
+        'from your constructor properties to enable strict mode to track ' +
+        'down and fix this unsupported usage.';
       console.error(errMsg);
     }
   }
@@ -4385,15 +4388,15 @@ export default class DailyIframe extends EventEmitter {
       _callInstance.sendMessageToCallMachine({
         action: DAILY_METHOD_TRANSMIT_LOG,
         level: 'error',
-        code: this.strictMode ? 9990 : 9991,
+        code: this.strictMode ? 9990 : 9992,
       });
     } else if (!this.strictMode) {
       const errMsg =
-        'Duplicate call object instances detected. Please ensure the ' +
-        'previous instance has been destroyed before creating a new one. ' +
-        'This is unsupported and will result in unknown errors. This will ' +
-        'not be allowed beginning in 0.45.0. Add `strictMode: true` to your ' +
-        'call frame constructor properties to debug and catch the error now.';
+        'You are attempting to use multiple call instances simultaneously. ' +
+        'This is unsupported and will result in unknown errors. Previous ' +
+        'instances should be destroyed before creating new ones. Please ' +
+        'remove `strictMode: false` from your constructor properties to ' +
+        'enable strict mode to track down and fix these attempts.';
       console.error(errMsg);
     }
   }
