@@ -4375,10 +4375,10 @@ export default class DailyIframe extends EventEmitter {
       _callInstance.sendMessageToCallMachine(logMsg);
     } else if (!this.strictMode) {
       const errMsg =
-        'You are attempting to use a call instance that was previously ' +
-        'destroyed. This is unsupported and not allowed. Please remove ' +
-        '`strictMode` from your constructor properties to catch and fix ' +
-        'these attempts.';
+        'You are are attempting to use a call instance that was previously ' +
+        'destroyed, which is unsupported. Please remove `strictMode: false` ' +
+        'from your constructor properties to enable strict mode to track ' +
+        'down and fix this unsupported usage.';
       console.error(errMsg);
     }
   }
@@ -4392,11 +4392,11 @@ export default class DailyIframe extends EventEmitter {
       });
     } else if (!this.strictMode) {
       const errMsg =
-        'Duplicate call object instances detected. Please ensure the ' +
-        'previous instance has been destroyed before creating a new one. ' +
-        'This is unsupported and not allowed and will result in unknown ' +
-        'errors. Please remove `strictMode` from your constructor properties ' +
-        'to catch and fix these attempts.';
+        'You are attempting to use multiple call instances simultaneously. ' +
+        'This is unsupported and will result in unknown errors. Previous ' +
+        'instances should be destroyed before creating new ones. Please ' +
+        'remove `strictMode: false` from your constructor properties to ' +
+        'enable strict mode to track down and fix these attempts.';
       console.error(errMsg);
     }
   }
