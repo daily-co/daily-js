@@ -38,6 +38,8 @@ export const HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY =
   'quality-optimized';
 export const LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY =
   'bandwidth-optimized';
+export const MEDIUM_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY =
+  'bandwidth-and-quality-balanced';
 export const DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY = 'default';
 
 // error types

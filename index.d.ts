@@ -40,6 +40,7 @@ export type DailyEvent =
   | 'joining-meeting'
   | 'joined-meeting'
   | 'left-meeting'
+  | 'call-instance-destroyed'
   | 'participant-joined'
   | 'participant-updated'
   | 'participant-left'
@@ -332,6 +333,7 @@ export interface DailyCallOptions {
   theme?: DailyThemeConfig;
   layoutConfig?: DailyLayoutConfig;
   receiveSettings?: DailyReceiveSettings;
+  sendSettings?: DailySendSettings;
   inputSettings?: DailyInputSettings;
   userName?: string;
   userData?: unknown;
@@ -606,6 +608,7 @@ interface DailySendSettings {
 export type DailyVideoSendSettingsPreset =
   | 'default'
   | 'bandwidth-optimized'
+  | 'bandwidth-and-quality-balanced'
   | 'quality-optimized';
 
 // Media Track Send Settings
@@ -800,6 +803,7 @@ export interface DailyEventObjectNoPayload {
     | 'loaded'
     | 'joining-meeting'
     | 'left-meeting'
+    | 'call-instance-destroyed'
     | 'recording-stats'
     | 'recording-upload-completed'
     | 'fullscreen'
