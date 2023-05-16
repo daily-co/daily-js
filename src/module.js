@@ -195,6 +195,7 @@ import {
   DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY,
   LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
   HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
+  MEDIUM_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -357,11 +358,17 @@ const DEFAULT_SESSION_STATE = isReactNative()
 
 const EMPTY_PARTICIPANT_COUNTS = { present: 0, hidden: 0 };
 
-const simulcastEncodingsValidRanges = {
+// Valid ranges for simulcast encodings settings specifically for RMP
+const rmpSimulcastEncodingsValidRanges = {
   maxBitrate: { min: MIN_LAYER_BITRATE, max: MAX_LAYER_BITRATE },
   maxFramerate: { min: MIN_RMP_FPS, max: MAX_RMP_FPS },
   scaleResolutionDownBy: { min: 1, max: MAX_SCALE_RESOLUTION_BY },
 };
+
+// Valid keys for simulcast encoding settings, generally
+const simulcastEncodingsValidKeys = Object.keys(
+  rmpSimulcastEncodingsValidRanges
+);
 
 const startRmpSettingsValidKeys = ['state', 'volume', 'simulcastEncodings'];
 //
@@ -434,20 +441,27 @@ const FRAME_PROPS = {
   },
   dailyConfig: {
     // only for call object mode, for now
-    validate: (config) => {
-      if (!window._dailyConfig) {
-        window._dailyConfig = {};
+    validate: (config, callObject) => {
+      try {
+        callObject.validateDailyConfig(config);
+        if (!window._dailyConfig) {
+          window._dailyConfig = {};
+        }
+        window._dailyConfig.experimentalGetUserMediaConstraintsModify =
+          config.experimentalGetUserMediaConstraintsModify;
+        window._dailyConfig.userMediaVideoConstraints =
+          config.userMediaVideoConstraints;
+        window._dailyConfig.userMediaAudioConstraints =
+          config.userMediaAudioConstraints;
+        window._dailyConfig.callObjectBundleUrlOverride =
+          config.callObjectBundleUrlOverride;
+        return true;
+      } catch (e) {
+        console.error('Failed to validate dailyConfig', e);
       }
-      window._dailyConfig.experimentalGetUserMediaConstraintsModify =
-        config.experimentalGetUserMediaConstraintsModify;
-      window._dailyConfig.userMediaVideoConstraints =
-        config.userMediaVideoConstraints;
-      window._dailyConfig.userMediaAudioConstraints =
-        config.userMediaAudioConstraints;
-      window._dailyConfig.callObjectBundleUrlOverride =
-        config.callObjectBundleUrlOverride;
-      return true;
+      return false;
     },
+    help: 'Unsupported dailyConfig. Check error logs for detailed info.',
   },
   reactNativeConfig: {
     validate: validateReactNativeConfig,
@@ -646,6 +660,16 @@ const FRAME_PROPS = {
     help: receiveSettingsValidationHelpMsg({
       allowAllParticipantsKey: false,
     }),
+  },
+  sendSettings: {
+    validate: (sendSettings, callObject) => {
+      if (validateSendSettings(sendSettings, callObject)) {
+        callObject._preloadCache.sendSettings = sendSettings;
+        return true;
+      }
+      return false;
+    },
+    help: 'Invalid sendSettings provided. Check error logs for detailed info.',
   },
   inputSettings: {
     validate: (settings, callObject) => {
@@ -964,7 +988,10 @@ export default class DailyIframe extends EventEmitter {
 
   constructor(iframeish, properties = {}) {
     super();
-    this.strictMode = properties.strictMode;
+    this.strictMode =
+      typeof properties.strictMode !== 'undefined'
+        ? properties.strictMode
+        : true;
     if (_callInstance) {
       this._logDuplicateInstanceAttempt();
       if (this.strictMode) {
@@ -1175,6 +1202,7 @@ export default class DailyIframe extends EventEmitter {
     } catch (e) {
       // no-op
     }
+
     let iframe = this._iframe;
     if (iframe) {
       let parent = iframe.parentElement;
@@ -1201,7 +1229,17 @@ export default class DailyIframe extends EventEmitter {
     }
 
     this.resetMeetingDependentVars();
+
     this._destroyed = true;
+    // fire call-instance-destroyed event here
+    try {
+      this.emit('call-instance-destroyed', {
+        action: 'call-instance-destroyed',
+      });
+    } catch (e) {
+      console.log('could not emit call-instance-destroyed');
+    }
+
     if (this.strictMode) {
       // we set this to undefined in strictMode so that all calls to
       // the underlying channel's sendMessageToCallMachine will fail
@@ -1211,7 +1249,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   isDestroyed() {
-    return this._destroyed;
+    return !!this._destroyed;
   }
 
   loadCss({ bodyClass, cssFile, cssText }) {
@@ -1823,7 +1861,7 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  startCamera(properties = {}) {
+  async startCamera(properties = {}) {
     // Validate mode.
     methodOnlySupportedInCallObject(this._callObjectMode, 'startCamera()');
 
@@ -1835,22 +1873,40 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
-    return new Promise(async (resolve, reject) => {
+    if (this.needsLoad()) {
+      try {
+        await this.load(properties);
+      } catch (e) {
+        return Promise.reject(e);
+      }
+    } else {
+      // even if is already loaded, needs to validate the properties, so the dailyConfig properties can be inserted inside window._dailyConfig
+      // Validate that any provided url or token doesn't conflict with url or
+      // token already used to preAuth()
+      if (this._didPreAuth) {
+        if (properties.url && properties.url !== this.properties.url) {
+          console.error(
+            `url in startCamera() is different than the one used in preAuth()`
+          );
+          return Promise.reject();
+        }
+        if (properties.token && properties.token !== this.properties.token) {
+          console.error(
+            `token in startCamera() is different than the one used in preAuth()`
+          );
+          return Promise.reject();
+        }
+      }
+      this.validateProperties(properties);
+      this.properties = { ...this.properties, ...properties };
+    }
+
+    return new Promise((resolve) => {
       let k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
         resolve(msg);
       };
-      if (this.needsLoad()) {
-        try {
-          await this.load(properties);
-        } catch (e) {
-          reject(e);
-        }
-      } else {
-        // even if is already loaded, needs to validate the properties, so the dailyConfig properties can be inserted inside window._dailyConfig
-        this.validateProperties(properties);
-      }
       this.sendMessageToCallMachine(
         {
           action: DAILY_METHOD_START_CAMERA,
@@ -2587,6 +2643,62 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
+  validateDailyConfig(dailyConfig) {
+    // validate simulcastEncodings
+    if (dailyConfig.camSimulcastEncodings) {
+      this.validateSimulcastEncodings(dailyConfig.camSimulcastEncodings);
+    }
+  }
+
+  validateSimulcastEncodings(
+    encodings,
+    validEncodingRanges = null,
+    isMaxBitrateMandatory = false
+  ) {
+    if (!encodings) return;
+    // validate simulcastEncodings
+    if (!(encodings instanceof Array)) {
+      throw new Error(`encodings must be an Array`);
+    }
+    // max 3 layers
+    if (!isValueInRange(encodings.length, 1, MAX_SIMULCAST_LAYERS)) {
+      throw new Error(
+        `encodings must be an Array with between 1 to ${MAX_SIMULCAST_LAYERS} layers`
+      );
+    }
+    // check value within each simulcast layer
+    for (let i = 0; i < encodings.length; i++) {
+      const layer = encodings[i];
+      for (let prop in layer) {
+        // check property is valid
+        if (!simulcastEncodingsValidKeys.includes(prop)) {
+          throw new Error(
+            `Invalid key ${prop}, valid keys are:` +
+              Object.values(simulcastEncodingsValidKeys)
+          );
+        }
+        // property must be number
+        if (typeof layer[prop] !== 'number') {
+          throw new Error(`${prop} must be a number`);
+        }
+
+        if (validEncodingRanges) {
+          // property must be within range
+          let { min, max } = validEncodingRanges[prop];
+          if (!isValueInRange(layer[prop], min, max)) {
+            throw new Error(
+              `${prop} value not in range. valid range:\ ${min} to ${max}`
+            );
+          }
+        }
+      }
+      // maxBitrate is sometimes mandatory
+      if (isMaxBitrateMandatory && !layer.hasOwnProperty('maxBitrate')) {
+        throw new Error(`maxBitrate is not specified`);
+      }
+    }
+  }
+
   async startRemoteMediaPlayer({
     url,
     settings = {
@@ -2723,21 +2835,20 @@ export default class DailyIframe extends EventEmitter {
   }
 
   _validateVideoSendSettings(videoSendSettings) {
+    const supportedPresets = [
+      DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY,
+      LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
+      MEDIUM_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
+      HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
+    ];
+    const supportedVideoSendSettingsErrorMsg = `Video send settings should be either an object or one of the supported presets: ${supportedPresets.join()}`;
     if (typeof videoSendSettings === 'string') {
-      if (
-        videoSendSettings !== DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY &&
-        videoSendSettings !== LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY &&
-        videoSendSettings !== HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY
-      ) {
-        throw new Error(
-          `Video send settings should be either ${DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY}, ${LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY} or ${HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY}`
-        );
+      if (!supportedPresets.includes(videoSendSettings)) {
+        throw new Error(supportedVideoSendSettingsErrorMsg);
       }
     } else {
       if (typeof videoSendSettings !== 'object') {
-        throw new Error(
-          `Video send settings should be either a preset (${LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY}, ${DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY}, ${HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY}) or an object`
-        );
+        throw new Error(supportedVideoSendSettingsErrorMsg);
       }
       if (!videoSendSettings.maxQuality && !videoSendSettings.encodings) {
         throw new Error(
@@ -3549,7 +3660,7 @@ export default class DailyIframe extends EventEmitter {
           }
         }
         break;
-      case DAILY_EVENT_ERROR:
+      case DAILY_EVENT_ERROR: {
         if (this._iframe && !msg.preserveIframe) {
           this._iframe.src = '';
         }
@@ -3559,17 +3670,23 @@ export default class DailyIframe extends EventEmitter {
           this._loadedCallback(msg.errorMsg);
           this._loadedCallback = null;
         }
+        let { preserveIframe, ...event } = msg;
+        if (event?.error?.details?.sourceError) {
+          event.error.details.sourceError = JSON.parse(
+            event.error.details.sourceError
+          );
+        }
         if (this._joinedCallback) {
-          this._joinedCallback(null, msg.errorMsg);
+          this._joinedCallback(null, event);
           this._joinedCallback = null;
         }
         try {
-          let { preserveIframe, ...event } = msg;
           this.emit(msg.action, event);
         } catch (e) {
           console.log('could not emit', msg, e);
         }
         break;
+      }
       case DAILY_EVENT_LEFT_MEETING:
         // if we've left due to error, the error msg should have
         // already been handled and we do not want to override
@@ -4241,7 +4358,7 @@ export default class DailyIframe extends EventEmitter {
       const logMsg = {
         action: DAILY_METHOD_TRANSMIT_LOG,
         level: 'error',
-        code: this.strictMode ? 9995 : 9996,
+        code: this.strictMode ? 9995 : 9997,
       };
       this._messageChannel.sendMessageToCallMachine(
         logMsg,
@@ -4253,15 +4370,15 @@ export default class DailyIframe extends EventEmitter {
       const logMsg = {
         action: DAILY_METHOD_TRANSMIT_LOG,
         level: 'error',
-        code: this.strictMode ? 9995 : 9996,
+        code: this.strictMode ? 9995 : 9997,
       };
       _callInstance.sendMessageToCallMachine(logMsg);
     } else if (!this.strictMode) {
       const errMsg =
-        'You are attempting to use a call instance that was previously ' +
-        'destroyed. This is unsupported and will not be allowed beginning in ' +
-        '0.45.0. Add `strictMode: true` to your call frame constructor ' +
-        'properties to debug and catch the error now.';
+        'You are are attempting to use a call instance that was previously ' +
+        'destroyed, which is unsupported. Please remove `strictMode: false` ' +
+        'from your constructor properties to enable strict mode to track ' +
+        'down and fix this unsupported usage.';
       console.error(errMsg);
     }
   }
@@ -4271,15 +4388,15 @@ export default class DailyIframe extends EventEmitter {
       _callInstance.sendMessageToCallMachine({
         action: DAILY_METHOD_TRANSMIT_LOG,
         level: 'error',
-        code: this.strictMode ? 9990 : 9991,
+        code: this.strictMode ? 9990 : 9992,
       });
     } else if (!this.strictMode) {
       const errMsg =
-        'Duplicate call object instances detected. Please ensure the ' +
-        'previous instance has been destroyed before creating a new one. ' +
-        'This is unsupported and will result in unknown errors. This will ' +
-        'not be allowed beginning in 0.45.0. Add `strictMode: true` to your ' +
-        'call frame constructor properties to debug and catch the error now.';
+        'You are attempting to use multiple call instances simultaneously. ' +
+        'This is unsupported and will result in unknown errors. Previous ' +
+        'instances should be destroyed before creating new ones. Please ' +
+        'remove `strictMode: false` from your constructor properties to ' +
+        'enable strict mode to track down and fix these attempts.';
       console.error(errMsg);
     }
   }
@@ -4475,6 +4592,16 @@ function validateReceiveSettings(
     }
   }
   return true;
+}
+
+function validateSendSettings(sendSettings, callObject) {
+  try {
+    callObject.validateUpdateSendSettings(sendSettings);
+    return true;
+  } catch (e) {
+    console.error('Failed to validate send settings', e);
+    return false;
+  }
 }
 
 function validateInputSettings(settings) {
@@ -4943,47 +5070,11 @@ function validateRemotePlayerEncodingSettings(playerSettings) {
   }
   // validate simulcastEncodings
   if (playerSettings.simulcastEncodings) {
-    if (!(playerSettings.simulcastEncodings instanceof Array)) {
-      throw new Error(`simulcastEncodings must be "Array"`);
-    }
-    // max 3 layers
-    if (
-      !isValueInRange(
-        playerSettings.simulcastEncodings.length,
-        0,
-        MAX_SIMULCAST_LAYERS
-      )
-    ) {
-      throw new Error(
-        `"simulcastEncodings" not in range. valid range 1 to 3 layers`
-      );
-    }
-    // check value within each simulcast layer
-    playerSettings.simulcastEncodings.every((layer) => {
-      for (let prop in layer) {
-        // check property is valid
-        if (!simulcastEncodingsValidRanges.hasOwnProperty(prop)) {
-          throw new Error(
-            `Invalid key ${prop}, valid keys are:` +
-              Object.keys(simulcastEncodingsValidRanges)
-          );
-        }
-        // property must be number
-        if (typeof layer[prop] !== 'number') {
-          throw new Error(`simulcastEncodings[].${prop} must be "number"`);
-        }
-        // property must be within range
-        let { min, max } = simulcastEncodingsValidRanges[prop];
-        if (!isValueInRange(layer[prop], min, max)) {
-          throw new Error(`simulcastEncodings[].${prop} value not in range. valid range:\
-        ${min} to ${max}`);
-        }
-      }
-      // maxBitrate is mandatory
-      if (!layer.hasOwnProperty('maxBitrate')) {
-        throw new Error(`simulcastEncodings[].maxBitrate is not specified`);
-      }
-    });
+    this.validateSimulcastEncodings(
+      playerSettings.simulcastEncodings,
+      rmpSimulcastEncodingsValidRanges,
+      true
+    );
   }
 }
 
