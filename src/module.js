@@ -196,6 +196,10 @@ import {
   LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
   HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
   MEDIUM_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
+  DETAIL_OPTIMIZED_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY,
+  MOTION_OPTIMIZED_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY,
+  MOTION_AND_DETAIL_BALANCED_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY,
+  DEFAULT_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -2566,6 +2570,12 @@ export default class DailyIframe extends EventEmitter {
 
   startScreenShare(captureOptions = {}) {
     methodNotSupportedInReactNative();
+    if (captureOptions.screenVideoSendSettings) {
+      this._validateVideoSendSettings(
+        'screenVideo',
+        captureOptions.screenVideoSendSettings
+      );
+    }
     if (captureOptions.mediaStream) {
       this._preloadCache.screenMediaStream = captureOptions.mediaStream;
       captureOptions.mediaStream = DAILY_CUSTOM_TRACK;
@@ -2834,13 +2844,23 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  _validateVideoSendSettings(videoSendSettings) {
-    const supportedPresets = [
+  _validateVideoSendSettings(trackName, videoSendSettings) {
+    const videoSupportedPresets = [
       DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY,
       LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
       MEDIUM_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
       HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
     ];
+    const screenVideoSupportedPresets = [
+      DEFAULT_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY,
+      DETAIL_OPTIMIZED_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY,
+      MOTION_OPTIMIZED_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY,
+      MOTION_AND_DETAIL_BALANCED_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY,
+    ];
+    const supportedPresets =
+      trackName === 'screenVideo'
+        ? screenVideoSupportedPresets
+        : videoSupportedPresets;
     const supportedVideoSendSettingsErrorMsg = `Video send settings should be either an object or one of the supported presets: ${supportedPresets.join()}`;
     if (typeof videoSendSettings === 'string') {
       if (!supportedPresets.includes(videoSendSettings)) {
@@ -2896,8 +2916,8 @@ export default class DailyIframe extends EventEmitter {
         'Send settings must contain at least information for one track!'
       );
     }
-    Object.values(sendSettings).forEach((videoSendSettings) => {
-      this._validateVideoSendSettings(videoSendSettings);
+    Object.entries(sendSettings).forEach(([trackName, videoSendSettings]) => {
+      this._validateVideoSendSettings(trackName, videoSendSettings);
     });
   }
 
