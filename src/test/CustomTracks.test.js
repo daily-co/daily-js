@@ -13,6 +13,10 @@ describe('Custom tracks', () => {
     callObject = DailyIframe.createCallObject();
   });
 
+  afterEach(() => {
+    callObject.destroy();
+  });
+
   test('Track name must not have more than 50 characters', () => {
     const track = new MediaStreamTrack();
     const trackName = '51_characters_string_000000000000000000000000000000';

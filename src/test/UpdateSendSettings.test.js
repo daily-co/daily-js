@@ -19,6 +19,10 @@ describe('UpdateSendSettings', () => {
     callObject = DailyIframe.createCallObject();
   });
 
+  afterEach(() => {
+    callObject.destroy();
+  });
+
   test('updateSendSettings object must not be null or empty', () => {
     let updateSendSettings = null;
     expect(() =>

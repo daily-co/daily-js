@@ -11,6 +11,10 @@ describe('DailyConfig', () => {
     callObject = DailyIframe.createCallObject();
   });
 
+  afterEach(() => {
+    callObject.destroy();
+  });
+
   test('Not throw error with empty config', () => {
     const dailyConfig = {};
     expect(() => callObject.validateDailyConfig(dailyConfig)).not.toThrow();
