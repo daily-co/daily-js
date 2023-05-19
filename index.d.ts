@@ -362,6 +362,9 @@ export interface DailyMicAudioModeSettings {
 
 export interface DailyAdvancedConfig {
   camSimulcastEncodings?: any[];
+  /**
+   * @deprecated This property will be removed. Use the method updateSendSettings instead.
+   */
   disableSimulcast?: boolean;
   keepCamIndicatorLightOn?: boolean;
   experimentalGetUserMediaConstraintsModify?: (
@@ -539,13 +542,65 @@ export interface DailyDeviceInfos {
   speaker: {} | MediaDeviceInfo;
 }
 
+/**
+ * @deprecated
+ * Almost all the properties in this type were just used by Electron.
+ * And the mediaStream can be replaced to use custom tracks.
+ */
 export interface DailyScreenCaptureOptions {
+  /**
+   * @deprecated This property will be removed. It is only used for Electron.
+   */
   audio?: boolean;
+  /**
+   * @deprecated This property will be removed. It is only used for Electron.
+   */
   maxWidth?: number;
+  /**
+   * @deprecated This property will be removed. It is only used for Electron.
+   */
   maxHeight?: number;
+  /**
+   * @deprecated This property will be removed. It is only used for Electron.
+   */
   chromeMediaSourceId?: string;
+  /**
+   * @deprecated This property will be removed. It is recommended to use our custom tracks API.
+   */
   mediaStream?: MediaStream;
 }
+
+// More details about all the possible options
+// https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getDisplayMedia
+export interface DailyDisplayMediaStreamOptions {
+  audio?: boolean | MediaTrackConstraints;
+  video?: boolean | MediaTrackConstraints;
+  selfBrowserSurface?: 'include' | 'exclude';
+  surfaceSwitching?: 'include' | 'exclude';
+  systemAudio?: 'include' | 'exclude';
+}
+
+export interface DailyDisplayMediaStreamOptionsElectron {
+  audio?: boolean;
+  video: {
+    maxWidth?: number;
+    maxHeight?: number;
+  };
+  chromeMediaSourceId?: string;
+}
+
+export interface DailyStartScreenShare {
+  displayMediaOptions?:
+    | DailyDisplayMediaStreamOptions
+    | DailyDisplayMediaStreamOptionsElectron;
+  screenVideoSendSettings?:
+    | DailyVideoSendSettings
+    | DailyScreenVideoSendSettingsPreset;
+}
+
+export type DailyStartScreenShareOptions =
+  | DailyScreenCaptureOptions
+  | DailyStartScreenShare;
 
 export interface DailyNetworkStats {
   quality: number;
@@ -599,14 +654,16 @@ export interface DailyCpuLoadStats {
 interface DailySendSettings {
   video?: DailyVideoSendSettings | DailyVideoSendSettingsPreset;
   customVideoDefaults?: DailyVideoSendSettings | DailyVideoSendSettingsPreset;
+  screenVideo?: DailyVideoSendSettings | DailyScreenVideoSendSettingsPreset;
   [customKey: string]:
     | DailyVideoSendSettings
     | DailyVideoSendSettingsPreset
+    | DailyScreenVideoSendSettingsPreset
     | undefined;
 }
 
 export type DailyVideoSendSettingsPreset =
-  | 'default'
+  | 'default-video'
   | 'bandwidth-optimized'
   | 'bandwidth-and-quality-balanced'
   | 'quality-optimized';
@@ -620,6 +677,12 @@ interface DailyVideoSendSettings {
     high: RTCRtpEncodingParameters;
   };
 }
+
+export type DailyScreenVideoSendSettingsPreset =
+  | 'default-screen-video'
+  | 'detail-optimized'
+  | 'motion-optimized'
+  | 'motion-and-detail-balanced';
 
 export interface DailyPendingRoomInfo {
   roomUrlPendingJoin: string;
@@ -1587,7 +1650,7 @@ export interface DailyCall {
   getInputDevices(): Promise<DailyDeviceInfos>;
   preAuth(properties?: DailyCallOptions): Promise<{ access: DailyAccess }>;
   load(properties?: DailyLoadOptions): Promise<void>;
-  startScreenShare(captureOptions?: DailyScreenCaptureOptions): void;
+  startScreenShare(properties?: DailyStartScreenShareOptions): void;
   stopScreenShare(): void;
   startRecording(options?: DailyStreamingOptions<'recording', 'start'>): void;
   updateRecording(options: {
