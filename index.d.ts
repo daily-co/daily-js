@@ -367,6 +367,7 @@ export interface DailyAdvancedConfig {
    */
   disableSimulcast?: boolean;
   keepCamIndicatorLightOn?: boolean;
+  v2CamAndMic?: boolean;
   experimentalGetUserMediaConstraintsModify?: (
     constraints: MediaStreamConstraints
   ) => void;
