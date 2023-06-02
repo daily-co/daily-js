@@ -437,18 +437,37 @@ export type DailyParticipantPermissionsUpdate = {
 };
 
 export interface DailyParticipant {
-  // tracks
-  audioTrack?: MediaStreamTrack;
-  videoTrack?: MediaStreamTrack;
-  screenVideoTrack?: MediaStreamTrack;
-  screenAudioTrack?: MediaStreamTrack;
+  /**
+   * @deprecated This property will be removed. Use tracks.audio.persistentTrack instead.
+   */
+  audioTrack?: MediaStreamTrack | false;
+  /**
+   * @deprecated This property will be removed. Use tracks.video.persistentTrack instead.
+   */
+  videoTrack?: MediaStreamTrack | false;
+  /**
+   * @deprecated This property will be removed. Use tracks.screenVideo.persistentTrack instead.
+   */
+  screenVideoTrack?: MediaStreamTrack | false;
+  /**
+   * @deprecated This property will be removed. Use tracks.screenAudio.persistentTrack instead.
+   */
+  screenAudioTrack?: MediaStreamTrack | false;
 
-  // legacy track state
+  /**
+   * @deprecated This property will be removed. Use tracks.audio.state instead.
+   */
   audio: boolean;
+  /**
+   * @deprecated This property will be removed. Use tracks.video.state instead.
+   */
   video: boolean;
+  /**
+   * @deprecated This property will be removed. Use tracks.screenVideo.state instead.
+   */
   screen: boolean;
 
-  // new track state
+  // track state
   tracks: {
     audio: DailyTrackState;
     video: DailyTrackState;
