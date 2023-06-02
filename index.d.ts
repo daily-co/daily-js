@@ -440,19 +440,19 @@ export interface DailyParticipant {
   /**
    * @deprecated This property will be removed. Use tracks.audio.persistentTrack instead.
    */
-  audioTrack?: MediaStreamTrack | boolean | undefined;
+  audioTrack?: MediaStreamTrack | false;
   /**
    * @deprecated This property will be removed. Use tracks.video.persistentTrack instead.
    */
-  videoTrack?: MediaStreamTrack | boolean | undefined;
+  videoTrack?: MediaStreamTrack | false;
   /**
    * @deprecated This property will be removed. Use tracks.screenVideo.persistentTrack instead.
    */
-  screenVideoTrack?: MediaStreamTrack | boolean | undefined;
+  screenVideoTrack?: MediaStreamTrack | false;
   /**
    * @deprecated This property will be removed. Use tracks.screenAudio.persistentTrack instead.
    */
-  screenAudioTrack?: MediaStreamTrack | boolean | undefined;
+  screenAudioTrack?: MediaStreamTrack | false;
 
   /**
    * @deprecated This property will be removed. Use tracks.audio.state instead.
