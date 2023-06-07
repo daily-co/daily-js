@@ -19,6 +19,10 @@ describe('UpdateSendSettings', () => {
     callObject = DailyIframe.createCallObject();
   });
 
+  afterEach(() => {
+    callObject.destroy();
+  });
+
   test('updateSendSettings object must not be null or empty', () => {
     let updateSendSettings = null;
     expect(() =>
@@ -50,7 +54,7 @@ describe('UpdateSendSettings', () => {
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
     ).toThrowError(
-      'Video send settings should be either an object or one of the supported presets: default,bandwidth-optimized,bandwidth-and-quality-balanced,quality-optimized'
+      'Video send settings should be either an object or one of the supported presets: default-video,bandwidth-optimized,bandwidth-and-quality-balanced,quality-optimized'
     );
     updateSendSettings = {
       video: DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY,
@@ -85,7 +89,7 @@ describe('UpdateSendSettings', () => {
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
     ).toThrowError(
-      'Video send settings should be either an object or one of the supported presets: default,bandwidth-optimized,bandwidth-and-quality-balanced,quality-optimized'
+      'Video send settings should be either an object or one of the supported presets: default-video,bandwidth-optimized,bandwidth-and-quality-balanced,quality-optimized'
     );
   });
 

@@ -40,7 +40,16 @@ export const LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY =
   'bandwidth-optimized';
 export const MEDIUM_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY =
   'bandwidth-and-quality-balanced';
-export const DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY = 'default';
+export const DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY = 'default-video';
+export const DEFAULT_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY =
+  'default-screen-video';
+
+export const DETAIL_OPTIMIZED_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY =
+  'detail-optimized';
+export const MOTION_OPTIMIZED_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY =
+  'motion-optimized';
+export const MOTION_AND_DETAIL_BALANCED_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY =
+  'motion-and-detail-balanced';
 
 // error types
 
