@@ -671,7 +671,7 @@ export interface DailyCpuLoadStats {
   };
 }
 
-interface DailySendSettings {
+export interface DailySendSettings {
   video?: DailyVideoSendSettings | DailyVideoSendSettingsPreset;
   customVideoDefaults?: DailyVideoSendSettings | DailyVideoSendSettingsPreset;
   screenVideo?: DailyVideoSendSettings | DailyScreenVideoSendSettingsPreset;
@@ -689,7 +689,7 @@ export type DailyVideoSendSettingsPreset =
   | 'quality-optimized';
 
 // Media Track Send Settings
-interface DailyVideoSendSettings {
+export interface DailyVideoSendSettings {
   maxQuality?: 'low' | 'medium' | 'high';
   encodings?: {
     low: RTCRtpEncodingParameters;
@@ -1704,7 +1704,7 @@ export interface DailyCall {
   getNetworkStats(): Promise<DailyNetworkStats>;
   getCpuLoadStats(): Promise<DailyCpuLoadStats>;
   updateSendSettings(settings: DailySendSettings): Promise<DailySendSettings>;
-  getSendSettings(): DailySendSettings;
+  getSendSettings(): DailySendSettings | null;
   getActiveSpeaker(): { peerId?: string };
   setActiveSpeakerMode(enabled: boolean): DailyCall;
   activeSpeakerMode(): boolean;
