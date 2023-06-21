@@ -823,13 +823,29 @@ const PARTICIPANT_PROPS = {
               return false;
             }
             break;
+          case 'canAdmin':
+            if (permission instanceof Set) {
+              const knownAdminTypes = ['participants', 'streaming'];
+              for (const adminType of permission) {
+                if (!knownAdminTypes.includes(adminType)) {
+                  return false;
+                }
+              }
+            } else if (typeof permission !== 'boolean') {
+              return false;
+            }
+            break;
           default:
             return false;
         }
       }
       return true;
     },
-    help: 'updatePermissions can take hasPresence and canSend permissions. hasPresence must be a boolean. canSend can be a boolean or an array of media types (video, audio, screenVideo, screenAudio, customVideo, customAudio).',
+    help:
+      'updatePermissions can take hasPresence, canSend, and canAdmin permissions. ' +
+      'hasPresence must be a boolean. ' +
+      'canSend can be a boolean or an array of media types (video, audio, screenVideo, screenAudio, customVideo, customAudio). ' +
+      'canAdmin can be a boolean or an array of admin types (participants, streaming).',
   },
 };
 
