@@ -825,7 +825,11 @@ const PARTICIPANT_PROPS = {
             break;
           case 'canAdmin':
             if (permission instanceof Set) {
-              const knownAdminTypes = ['participants', 'streaming'];
+              const knownAdminTypes = [
+                'participants',
+                'streaming',
+                'transcription',
+              ];
               for (const adminType of permission) {
                 if (!knownAdminTypes.includes(adminType)) {
                   return false;
@@ -845,7 +849,7 @@ const PARTICIPANT_PROPS = {
       'updatePermissions can take hasPresence, canSend, and canAdmin permissions. ' +
       'hasPresence must be a boolean. ' +
       'canSend can be a boolean or an array of media types (video, audio, screenVideo, screenAudio, customVideo, customAudio). ' +
-      'canAdmin can be a boolean or an array of admin types (participants, streaming).',
+      'canAdmin can be a boolean or an array of admin types (participants, streaming, transcription).',
   },
 };
 
