@@ -3862,7 +3862,7 @@ export default class DailyIframe extends EventEmitter {
         {
           if (!deepEqual(this._sendSettings, msg.sendSettings)) {
             this._sendSettings = msg.sendSettings;
-            this._preloadCache.sendSettings = {}; // clear cache, if any
+            this._preloadCache.sendSettings = null; // clear cache, if any
             try {
               this.emit(msg.action, {
                 action: msg.action,
