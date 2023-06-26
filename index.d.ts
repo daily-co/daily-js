@@ -430,7 +430,7 @@ export interface DailyParticipantPermissions {
         | 'customAudio'
       >
     | boolean;
-  canAdmin: Set<'participant' | 'streaming' | 'transcription'> | boolean;
+  canAdmin: Set<'participants' | 'streaming' | 'transcription'> | boolean;
 }
 
 export type DailyParticipantPermissionsUpdate = {
