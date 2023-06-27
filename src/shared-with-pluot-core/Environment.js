@@ -31,6 +31,13 @@ export function getMaxTouchPoints() {
 }
 
 export function isReactNative() {
+  // Wondering why we're relying on navigator.product instead of changing the
+  // below check to read isReactNativeIOS() || isReactNativeAndroid()?
+  // Two reasons:
+  // 1. Juuuust in case of other platforms someday!
+  // 2. isReactNativeIOS/Android() only work in newer versions of
+  //    react-native-daily-js; we wouldn't want to unintentionally break older
+  //    versions
   return (
     typeof navigator !== 'undefined' &&
     navigator.product &&
@@ -40,6 +47,26 @@ export function isReactNative() {
 
 export function isReactNativeUnifiedPlan() {
   return isReactNative() && typeof RTCRtpTransceiver !== 'undefined';
+}
+
+export function isReactNativeIOS() {
+  if (
+    typeof DailyNativeUtils === 'undefined' ||
+    DailyNativeUtils.isIOS === undefined
+  ) {
+    return false;
+  }
+  return DailyNativeUtils.isIOS;
+}
+
+export function isReactNativeAndroid() {
+  if (
+    typeof DailyNativeUtils === 'undefined' ||
+    DailyNativeUtils.isAndroid === undefined
+  ) {
+    return false;
+  }
+  return DailyNativeUtils.isAndroid;
 }
 
 export function isIOS() {
@@ -64,7 +91,7 @@ export function isUserMediaAccessible() {
 // check whether we're a browser that only supports the older Plan B SDP format (see below).
 // Additionally, limiting screen sharing this way reduces our test matrix.
 export function isScreenSharingSupported() {
-  return isDisplayMediaAccessible() && canUnifiedPlan();
+  return isDisplayMediaAccessible() && (canUnifiedPlan() || isReactNative());
 }
 
 export function isFullscreenSupported() {
