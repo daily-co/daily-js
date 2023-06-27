@@ -2,7 +2,7 @@
   "name": "@daily-co/daily-js",
   "private": true,
   "//": "^ COMMENT OUT 'private: true' BEFORE RUNNING NPM PUBLISH",
-  "version": "0.47.1-internal.3",
+  "version": "0.48.0-internal.1",
   "engines": {
     "node": ">=10.0.0"
   },
