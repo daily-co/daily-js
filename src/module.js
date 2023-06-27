@@ -2312,6 +2312,7 @@ export default class DailyIframe extends EventEmitter {
         {
           action: DAILY_METHOD_PREAUTH,
           properties: makeSafeForPostMessage(this.properties),
+          preloadCache: makeSafeForPostMessage(this._preloadCache),
         },
         k
       );
