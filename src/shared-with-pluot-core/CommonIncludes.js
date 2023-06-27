@@ -278,12 +278,6 @@ export const DAILY_CUSTOM_TRACK = 'daily-custom-track';
 export const DAILY_REQUEST_FULLSCREEN = 'request-fullscreen';
 export const DAILY_EXIT_FULLSCREEN = 'request-exit-fullscreen';
 
-export const DAILY_JS_NETWORK_QUALITY = {
-  VERY_LOW: 'very-low',
-  LOW: 'low',
-  HIGH: 'high',
-};
-
 export const DAILY_JS_NETWORK_THRESHOLDS = {
   VERY_LOW: 'very-low',
   LOW: 'low',
