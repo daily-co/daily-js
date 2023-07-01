@@ -792,6 +792,7 @@ export interface DailyRoomInfo {
     start_video_off?: boolean;
     start_audio_off?: boolean;
     enable_recording?: string;
+    start_cloud_recording_opts?: DailyStreamingOptions<'recording', 'start'>;
     enable_recording_ui?: boolean;
     start_cloud_recording?: boolean;
     close_tab_on_exit?: boolean;
