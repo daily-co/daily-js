@@ -137,6 +137,7 @@ import {
   DAILY_METHOD_SET_ACTIVE_SPEAKER_MODE,
   DAILY_METHOD_GET_LANG,
   DAILY_METHOD_SET_LANG,
+  DAILY_METHOD_SET_PROXYURL,
   DAILY_METHOD_GET_MEETING_SESSION,
   DAILY_METHOD_SET_SESSION_DATA,
   DAILY_METHOD_REGISTER_INPUT_HANDLER,
@@ -1784,6 +1785,14 @@ export default class DailyIframe extends EventEmitter {
   setDailyLang(lang) {
     methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({ action: DAILY_METHOD_SET_LANG, lang });
+    return this;
+  }
+
+  setProxyUrl(proxyUrl) {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_SET_PROXYURL,
+      proxyUrl,
+    });
     return this;
   }
 
