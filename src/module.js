@@ -200,9 +200,11 @@ import {
   MOTION_OPTIMIZED_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY,
   MOTION_AND_DETAIL_BALANCED_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY,
   DEFAULT_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY,
+  DAILY_SCREEN_SHARE_ERROR_TYPE,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
+  isReactNativeIOS,
   browserVideoSupported_p,
   getUserAgent,
   isFullscreenSupported,
@@ -823,13 +825,33 @@ const PARTICIPANT_PROPS = {
               return false;
             }
             break;
+          case 'canAdmin':
+            if (permission instanceof Set) {
+              const knownAdminTypes = [
+                'participants',
+                'streaming',
+                'transcription',
+              ];
+              for (const adminType of permission) {
+                if (!knownAdminTypes.includes(adminType)) {
+                  return false;
+                }
+              }
+            } else if (typeof permission !== 'boolean') {
+              return false;
+            }
+            break;
           default:
             return false;
         }
       }
       return true;
     },
-    help: 'updatePermissions can take hasPresence and canSend permissions. hasPresence must be a boolean. canSend can be a boolean or an array of media types (video, audio, screenVideo, screenAudio, customVideo, customAudio).',
+    help:
+      'updatePermissions can take hasPresence, canSend, and canAdmin permissions. ' +
+      'hasPresence must be a boolean. ' +
+      'canSend can be a boolean or an array of media types (video, audio, screenVideo, screenAudio, customVideo, customAudio). ' +
+      'canAdmin can be a boolean or an array of admin types (participants, streaming, transcription).',
   },
 };
 
@@ -1164,14 +1186,16 @@ export default class DailyIframe extends EventEmitter {
           nativeUtils.addAudioFocusChangeListener &&
           nativeUtils.removeAudioFocusChangeListener &&
           nativeUtils.addAppActiveStateChangeListener &&
-          nativeUtils.removeAppActiveStateChangeListener
+          nativeUtils.removeAppActiveStateChangeListener &&
+          nativeUtils.addSystemScreenCaptureStopListener &&
+          nativeUtils.removeSystemScreenCaptureStopListener
         )
       ) {
         console.warn(
-          'expected (add|remove)(AudioFocus|AppActiveState)ChangeListener to be available in React Native'
+          'expected (add|remove)(AudioFocusChange|AppActiveStateChange|SystemScreenCaptureStop)Listener to be available in React Native'
         );
       }
-      // audio focus event, used for auto-muting mic
+      // audio focus event, used for auto-muting mic (on android)
       this._hasNativeAudioFocus = true;
       nativeUtils.addAudioFocusChangeListener(
         this.handleNativeAudioFocusChange
@@ -1179,6 +1203,11 @@ export default class DailyIframe extends EventEmitter {
       // app active state event, used for auto-muting cam
       nativeUtils.addAppActiveStateChangeListener(
         this.handleNativeAppActiveStateChange
+      );
+      // system screen capture stop event, used for syncing system screen share
+      // stop (on iOS)
+      nativeUtils.addSystemScreenCaptureStopListener(
+        this.handleNativeSystemScreenCaptureStop
       );
     }
 
@@ -1224,6 +1253,9 @@ export default class DailyIframe extends EventEmitter {
       );
       nativeUtils.removeAppActiveStateChangeListener(
         this.handleNativeAppActiveStateChange
+      );
+      nativeUtils.removeSystemScreenCaptureStopListener(
+        this.handleNativeSystemScreenCaptureStop
       );
     }
 
@@ -2312,6 +2344,7 @@ export default class DailyIframe extends EventEmitter {
         {
           action: DAILY_METHOD_PREAUTH,
           properties: makeSafeForPostMessage(this.properties),
+          preloadCache: makeSafeForPostMessage(this._preloadCache),
         },
         k
       );
@@ -2568,8 +2601,7 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  startScreenShare(captureOptions = {}) {
-    methodNotSupportedInReactNative();
+  async startScreenShare(captureOptions = {}) {
     if (captureOptions.screenVideoSendSettings) {
       this._validateVideoSendSettings(
         'screenVideo',
@@ -2580,14 +2612,38 @@ export default class DailyIframe extends EventEmitter {
       this._preloadCache.screenMediaStream = captureOptions.mediaStream;
       captureOptions.mediaStream = DAILY_CUSTOM_TRACK;
     }
-    this.sendMessageToCallMachine({
-      action: DAILY_METHOD_START_SCREENSHARE,
-      captureOptions,
-    });
+    if (isReactNativeIOS()) {
+      const nativeUtils = this.nativeUtils();
+      const isScreenBeingCaptured = await nativeUtils.isScreenBeingCaptured();
+      if (isScreenBeingCaptured) {
+        this.emit(DAILY_EVENT_NONFATAL_ERROR, {
+          action: DAILY_EVENT_NONFATAL_ERROR,
+          type: DAILY_SCREEN_SHARE_ERROR_TYPE,
+          errorMsg:
+            'Could not start the screen sharing. The screen is already been captured!',
+        });
+        return;
+      }
+      const screenCaptureStartCallback = () => {
+        nativeUtils.setSystemScreenCaptureStartCallback(null);
+        this.sendMessageToCallMachine({
+          action: DAILY_METHOD_START_SCREENSHARE,
+          captureOptions,
+        });
+      };
+      nativeUtils.setSystemScreenCaptureStartCallback(
+        screenCaptureStartCallback
+      );
+      nativeUtils.presentSystemScreenCapturePrompt();
+    } else {
+      this.sendMessageToCallMachine({
+        action: DAILY_METHOD_START_SCREENSHARE,
+        captureOptions,
+      });
+    }
   }
 
   stopScreenShare() {
-    methodNotSupportedInReactNative();
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_SCREENSHARE });
   }
 
@@ -4324,6 +4380,10 @@ export default class DailyIframe extends EventEmitter {
       this.micUnmutedBeforeLosingNativeAudioFocus = this.localAudio();
       this.setLocalAudio(false);
     }
+  };
+
+  handleNativeSystemScreenCaptureStop = () => {
+    this.stopScreenShare();
   };
 
   toggleParticipantAudioBasedOnNativeAudioFocus() {
