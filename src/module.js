@@ -462,6 +462,7 @@ const FRAME_PROPS = {
           config.userMediaAudioConstraints;
         window._dailyConfig.callObjectBundleUrlOverride =
           config.callObjectBundleUrlOverride;
+        window._dailyConfig.proxyUrl = config.proxyUrl;
         return true;
       } catch (e) {
         console.error('Failed to validate dailyConfig', e);
