@@ -360,6 +360,11 @@ export interface DailyMicAudioModeSettings {
   stereo?: boolean;
 }
 
+export interface DailyIceConfig {
+  iceServers?: RTCIceServer[];
+  placement?: 'front' | 'back' | 'replace';
+}
+
 export interface DailyAdvancedConfig {
   camSimulcastEncodings?: any[];
   /**
@@ -386,6 +391,7 @@ export interface DailyAdvancedConfig {
   callObjectBundleUrlOverride?: string;
   enableIndependentDevicePermissionPrompts?: boolean;
   proxyUrl?: string;
+  iceConfig?: DailyIceConfig;
 }
 
 export interface DailyTrackState {
@@ -1637,6 +1643,7 @@ export interface DailyCall {
   }>;
   setDailyLang(lang: DailyLanguageSetting): DailyCall;
   setProxyUrl(proxyUrl?: string): DailyCall;
+  setIceConfig(iceConfig?: DailyIceConfig): DailyCall;
   getMeetingSession(): Promise<{
     meetingSession: DailyMeetingSession;
   }>;
