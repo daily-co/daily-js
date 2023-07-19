@@ -232,6 +232,7 @@ export const DAILY_METHOD_SET_ACTIVE_SPEAKER_MODE = 'set-active-speaker-mode';
 export const DAILY_METHOD_REGISTER_INPUT_HANDLER = 'register-input-handler';
 export const DAILY_METHOD_GET_LANG = 'get-daily-lang';
 export const DAILY_METHOD_SET_LANG = 'set-daily-lang';
+export const DAILY_METHOD_SET_PROXYURL = 'set-proxy-url';
 export const DAILY_METHOD_GET_MEETING_SESSION = 'get-meeting-session';
 export const DAILY_METHOD_SET_SESSION_DATA = 'set-session-data';
 export const DAILY_METHOD_SET_USER_NAME = 'set-user-name';

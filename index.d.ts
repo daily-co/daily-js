@@ -385,6 +385,7 @@ export interface DailyAdvancedConfig {
   avoidEval?: boolean;
   callObjectBundleUrlOverride?: string;
   enableIndependentDevicePermissionPrompts?: boolean;
+  proxyUrl?: string;
 }
 
 export interface DailyTrackState {
@@ -1635,6 +1636,7 @@ export interface DailyCall {
     langSetting: DailyLanguageSetting;
   }>;
   setDailyLang(lang: DailyLanguageSetting): DailyCall;
+  setProxyUrl(proxyUrl?: string): DailyCall;
   getMeetingSession(): Promise<{
     meetingSession: DailyMeetingSession;
   }>;
