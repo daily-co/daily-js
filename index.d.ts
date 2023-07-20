@@ -363,6 +363,7 @@ export interface DailyMicAudioModeSettings {
 export interface DailyIceConfig {
   iceServers?: RTCIceServer[];
   placement?: 'front' | 'back' | 'replace';
+  iceTransportPolicy?: RTCIceTransportPolicy;
 }
 
 export interface DailyAdvancedConfig {
