@@ -138,6 +138,7 @@ import {
   DAILY_METHOD_GET_LANG,
   DAILY_METHOD_SET_LANG,
   DAILY_METHOD_SET_PROXYURL,
+  DAILY_METHOD_SET_ICE_CONFIG,
   DAILY_METHOD_GET_MEETING_SESSION,
   DAILY_METHOD_SET_SESSION_DATA,
   DAILY_METHOD_REGISTER_INPUT_HANDLER,
@@ -463,6 +464,7 @@ const FRAME_PROPS = {
         window._dailyConfig.callObjectBundleUrlOverride =
           config.callObjectBundleUrlOverride;
         window._dailyConfig.proxyUrl = config.proxyUrl;
+        window._dailyConfig.iceConfig = config.iceConfig;
         return true;
       } catch (e) {
         console.error('Failed to validate dailyConfig', e);
@@ -1793,6 +1795,14 @@ export default class DailyIframe extends EventEmitter {
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_SET_PROXYURL,
       proxyUrl,
+    });
+    return this;
+  }
+
+  setIceConfig(iceConfig) {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_SET_ICE_CONFIG,
+      iceConfig,
     });
     return this;
   }
