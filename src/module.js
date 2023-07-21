@@ -205,6 +205,8 @@ import {
   DAILY_SCREEN_SHARE_ERROR_TYPE,
   DAILY_METHOD_TEST_WEBSOCKET_CONNECTIVITY,
   DAILY_METHOD_ABORT_TEST_WEBSOCKET_CONNECTIVITY,
+  DAILY_METHOD_TEST_NETWORK_CONNECTIVITY,
+  DAILY_METHOD_ABORT_TEST_NETWORK_CONNECTIVITY,
   DAILY_METHOD_START_LOCAL_AUDIO_LEVEL_OBSERVER,
   DAILY_METHOD_STOP_LOCAL_AUDIO_LEVEL_OBSERVER,
   DAILY_METHOD_START_REMOTE_PARTICIPANTS_AUDIO_LEVEL_OBSERVER,
@@ -3006,6 +3008,7 @@ export default class DailyIframe extends EventEmitter {
         return Promise.reject(e);
       }
     }
+
     return new Promise((resolve) => {
       let k = (msg) => {
         resolve(msg.results);
@@ -3022,6 +3025,34 @@ export default class DailyIframe extends EventEmitter {
   abortTestWebsocketConnectivity() {
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_ABORT_TEST_WEBSOCKET_CONNECTIVITY,
+    });
+  }
+
+  testNetworkConnectivity(videoTrack, audioTrack) {
+    if (videoTrack instanceof MediaStreamTrack) {
+      this._preloadCache.videoTrackForConnectionQualityTest = videoTrack;
+    }
+
+    if (audioTrack instanceof MediaStreamTrack) {
+      this._preloadCache.audioTrackForConnectionQualityTest = audioTrack;
+    }
+
+    return new Promise((resolve) => {
+      let k = (msg) => {
+        resolve(msg.results);
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_TEST_NETWORK_CONNECTIVITY,
+        },
+        k
+      );
+    });
+  }
+
+  abortTestNetworkConnectivity() {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_ABORT_TEST_NETWORK_CONNECTIVITY,
     });
   }
 

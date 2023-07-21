@@ -1269,6 +1269,10 @@ export interface DailyEventObjectTranscriptionStopped {
   updatedBy: string;
 }
 
+export interface DailyNetworkConnectivityTestStats {
+  result: 'passed' | 'failed' | 'aborted';
+}
+
 export type DailyRemoteMediaPlayerStopReason =
   | DailyRemoteMediaPlayerEOS
   | DailyRemoteMediaPlayerPeerStopped;
@@ -1750,6 +1754,11 @@ export interface DailyCall {
   getCpuLoadStats(): Promise<DailyCpuLoadStats>;
   testWebsocketConnectivity(): Promise<DailyWebsocketConnectivityTestResults>;
   abortTestWebsocketConnectivity(): void;
+  testNetworkConnectivity(
+    videoTrack?: MediaStreamTrack,
+    audioTrack?: MediaStreamTrack
+  ): Promise<DailyNetworkConnectivityTestStats>;
+  abortTestNetworkConnectivity(): void;
   updateSendSettings(settings: DailySendSettings): Promise<DailySendSettings>;
   getSendSettings(): DailySendSettings | null;
   getActiveSpeaker(): { peerId?: string };
