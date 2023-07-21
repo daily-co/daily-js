@@ -631,6 +631,13 @@ export type DailyStartScreenShareOptions =
   | DailyScreenCaptureOptions
   | DailyStartScreenShare;
 
+export interface DailyWebsocketConnectivityTestResults {
+  abortedRegions: string[];
+  failedRegions: string[];
+  passedRegions: string[];
+  result: 'passed' | 'failed' | 'warning' | 'aborted';
+}
+
 export interface DailyNetworkStats {
   quality: number;
   stats: {
@@ -1715,6 +1722,8 @@ export interface DailyCall {
   stopTranscription(): void;
   getNetworkStats(): Promise<DailyNetworkStats>;
   getCpuLoadStats(): Promise<DailyCpuLoadStats>;
+  testWebsocketConnectivity(): Promise<DailyWebsocketConnectivityTestResults>;
+  abortTestWebsocketConnectivity(): void;
   updateSendSettings(settings: DailySendSettings): Promise<DailySendSettings>;
   getSendSettings(): DailySendSettings | null;
   getActiveSpeaker(): { peerId?: string };
