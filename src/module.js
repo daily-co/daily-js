@@ -203,6 +203,8 @@ import {
   MOTION_AND_DETAIL_BALANCED_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY,
   DEFAULT_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY,
   DAILY_SCREEN_SHARE_ERROR_TYPE,
+  DAILY_METHOD_TEST_WEBSOCKET_CONNECTIVITY,
+  DAILY_METHOD_ABORT_TEST_WEBSOCKET_CONNECTIVITY,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -2902,6 +2904,33 @@ export default class DailyIframe extends EventEmitter {
         resolve({ stats: msg.stats, ...this._network });
       };
       this.sendMessageToCallMachine({ action: DAILY_METHOD_GET_CALC_STATS }, k);
+    });
+  }
+
+  async testWebsocketConnectivity() {
+    if (this.needsLoad()) {
+      try {
+        await this.load();
+      } catch (e) {
+        return Promise.reject(e);
+      }
+    }
+    return new Promise((resolve) => {
+      let k = (msg) => {
+        resolve(msg.results);
+      };
+      this.sendMessageToCallMachine(
+          {
+            action: DAILY_METHOD_TEST_WEBSOCKET_CONNECTIVITY,
+          },
+          k
+      );
+    });
+  }
+
+  abortTestWebsocketConnectivity() {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_ABORT_TEST_WEBSOCKET_CONNECTIVITY,
     });
   }
 
