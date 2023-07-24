@@ -708,9 +708,9 @@ export type DailyVideoSendSettingsPreset =
 export interface DailyVideoSendSettings {
   maxQuality?: 'low' | 'medium' | 'high';
   encodings?: {
-    low: RTCRtpEncodingParameters;
-    medium: RTCRtpEncodingParameters;
-    high: RTCRtpEncodingParameters;
+    low?: RTCRtpEncodingParameters;
+    medium?: RTCRtpEncodingParameters;
+    high?: RTCRtpEncodingParameters;
   };
 }
 
