@@ -95,6 +95,8 @@ export type DailyEvent =
   | 'receive-settings-updated'
   | 'input-settings-updated'
   | 'send-settings-updated'
+  | 'local-audio-level'
+  | 'remote-participants-audio-level'
   | 'show-local-video-changed'
   | 'selected-devices-updated'
   | 'custom-button-click'
@@ -133,6 +135,7 @@ export type DailyFatalErrorType =
 export type DailyNonFatalErrorType =
   | 'input-settings-error'
   | 'screen-share-error'
+  | 'local-audio-level-observer-error'
   | 'video-processor-error'
   | 'remote-media-player-error'
   | 'live-streaming-warning'
@@ -701,6 +704,10 @@ export interface DailySendSettings {
     | undefined;
 }
 
+export interface DailyParticipantsAudioLevel {
+  [participantId: string]: number;
+}
+
 export type DailyVideoSendSettingsPreset =
   | 'default-video'
   | 'bandwidth-optimized'
@@ -1219,6 +1226,16 @@ export interface DailyEventObjectSendSettingsUpdated {
   sendSettings: DailySendSettings;
 }
 
+export interface DailyEventObjectLocalAudioLevel {
+  action: Extract<DailyEvent, 'local-audio-level'>;
+  audioLevel: number;
+}
+
+export interface DailyEventObjectRemoteParticipantsAudioLevel {
+  action: Extract<DailyEvent, 'remote-participants-audio-level'>;
+  participantsAudioLevel: DailyParticipantsAudioLevel;
+}
+
 export interface DailyEventObjectLiveStreamingStarted {
   action: Extract<DailyEvent, 'live-streaming-started'>;
   layout?: DailyLiveStreamingLayoutConfig<'start'>;
@@ -1669,6 +1686,12 @@ export interface DailyCall {
   ): Promise<{ userName: string }>;
   setUserData(data: unknown): Promise<{ userData: unknown }>;
   startCamera(properties?: DailyCallOptions): Promise<DailyDeviceInfos>;
+  startLocalAudioLevelObserver(interval?: number): Promise<void>;
+  stopLocalAudioLevelObserver(): void;
+  getLocalAudioLevel(): number;
+  startRemoteParticipantsAudioLevelObserver(interval?: number): Promise<void>;
+  stopRemoteParticipantsAudioLevelObserver(): void;
+  getRemoteParticipantsAudioLevel(): DailyParticipantsAudioLevel;
   cycleCamera(): Promise<{ device?: MediaDeviceInfo | null }>;
   cycleMic(): Promise<{ device?: MediaDeviceInfo | null }>;
   setInputDevices(devices: {
