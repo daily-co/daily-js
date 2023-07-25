@@ -137,6 +137,8 @@ import {
   DAILY_METHOD_SET_ACTIVE_SPEAKER_MODE,
   DAILY_METHOD_GET_LANG,
   DAILY_METHOD_SET_LANG,
+  DAILY_METHOD_SET_PROXYURL,
+  DAILY_METHOD_SET_ICE_CONFIG,
   DAILY_METHOD_GET_MEETING_SESSION,
   DAILY_METHOD_SET_SESSION_DATA,
   DAILY_METHOD_REGISTER_INPUT_HANDLER,
@@ -201,6 +203,8 @@ import {
   MOTION_AND_DETAIL_BALANCED_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY,
   DEFAULT_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY,
   DAILY_SCREEN_SHARE_ERROR_TYPE,
+  DAILY_METHOD_TEST_WEBSOCKET_CONNECTIVITY,
+  DAILY_METHOD_ABORT_TEST_WEBSOCKET_CONNECTIVITY,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -461,6 +465,8 @@ const FRAME_PROPS = {
           config.userMediaAudioConstraints;
         window._dailyConfig.callObjectBundleUrlOverride =
           config.callObjectBundleUrlOverride;
+        window._dailyConfig.proxyUrl = config.proxyUrl;
+        window._dailyConfig.iceConfig = config.iceConfig;
         return true;
       } catch (e) {
         console.error('Failed to validate dailyConfig', e);
@@ -1787,6 +1793,22 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
+  setProxyUrl(proxyUrl) {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_SET_PROXYURL,
+      proxyUrl,
+    });
+    return this;
+  }
+
+  setIceConfig(iceConfig) {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_SET_ICE_CONFIG,
+      iceConfig,
+    });
+    return this;
+  }
+
   async getMeetingSession() {
     // Validate call state: meeting session details are only available
     // once you have joined the meeting
@@ -2882,6 +2904,33 @@ export default class DailyIframe extends EventEmitter {
         resolve({ stats: msg.stats, ...this._network });
       };
       this.sendMessageToCallMachine({ action: DAILY_METHOD_GET_CALC_STATS }, k);
+    });
+  }
+
+  async testWebsocketConnectivity() {
+    if (this.needsLoad()) {
+      try {
+        await this.load();
+      } catch (e) {
+        return Promise.reject(e);
+      }
+    }
+    return new Promise((resolve) => {
+      let k = (msg) => {
+        resolve(msg.results);
+      };
+      this.sendMessageToCallMachine(
+          {
+            action: DAILY_METHOD_TEST_WEBSOCKET_CONNECTIVITY,
+          },
+          k
+      );
+    });
+  }
+
+  abortTestWebsocketConnectivity() {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_ABORT_TEST_WEBSOCKET_CONNECTIVITY,
     });
   }
 

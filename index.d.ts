@@ -360,7 +360,16 @@ export interface DailyMicAudioModeSettings {
   stereo?: boolean;
 }
 
+export interface DailyIceConfig {
+  iceServers?: RTCIceServer[];
+  placement?: 'front' | 'back' | 'replace';
+  iceTransportPolicy?: RTCIceTransportPolicy;
+}
+
 export interface DailyAdvancedConfig {
+  /**
+   * @deprecated This property will be removed. Instead, use sendSettings, which is found in DailyCallOptions.
+   */
   camSimulcastEncodings?: any[];
   /**
    * @deprecated This property will be removed. Use the method updateSendSettings instead.
@@ -385,6 +394,8 @@ export interface DailyAdvancedConfig {
   avoidEval?: boolean;
   callObjectBundleUrlOverride?: string;
   enableIndependentDevicePermissionPrompts?: boolean;
+  proxyUrl?: string;
+  iceConfig?: DailyIceConfig;
 }
 
 export interface DailyTrackState {
@@ -623,6 +634,13 @@ export type DailyStartScreenShareOptions =
   | DailyScreenCaptureOptions
   | DailyStartScreenShare;
 
+export interface DailyWebsocketConnectivityTestResults {
+  abortedRegions: string[];
+  failedRegions: string[];
+  passedRegions: string[];
+  result: 'passed' | 'failed' | 'warning' | 'aborted';
+}
+
 export interface DailyNetworkStats {
   quality: number;
   stats: {
@@ -694,8 +712,8 @@ export interface DailyVideoSendSettings {
   maxQuality?: 'low' | 'medium' | 'high';
   encodings?: {
     low: RTCRtpEncodingParameters;
-    medium: RTCRtpEncodingParameters;
-    high: RTCRtpEncodingParameters;
+    medium?: RTCRtpEncodingParameters;
+    high?: RTCRtpEncodingParameters;
   };
 }
 
@@ -1635,6 +1653,8 @@ export interface DailyCall {
     langSetting: DailyLanguageSetting;
   }>;
   setDailyLang(lang: DailyLanguageSetting): DailyCall;
+  setProxyUrl(proxyUrl?: string): DailyCall;
+  setIceConfig(iceConfig?: DailyIceConfig): DailyCall;
   getMeetingSession(): Promise<{
     meetingSession: DailyMeetingSession;
   }>;
@@ -1705,6 +1725,8 @@ export interface DailyCall {
   stopTranscription(): void;
   getNetworkStats(): Promise<DailyNetworkStats>;
   getCpuLoadStats(): Promise<DailyCpuLoadStats>;
+  testWebsocketConnectivity(): Promise<DailyWebsocketConnectivityTestResults>;
+  abortTestWebsocketConnectivity(): void;
   updateSendSettings(settings: DailySendSettings): Promise<DailySendSettings>;
   getSendSettings(): DailySendSettings | null;
   getActiveSpeaker(): { peerId?: string };

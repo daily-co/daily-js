@@ -232,6 +232,8 @@ export const DAILY_METHOD_SET_ACTIVE_SPEAKER_MODE = 'set-active-speaker-mode';
 export const DAILY_METHOD_REGISTER_INPUT_HANDLER = 'register-input-handler';
 export const DAILY_METHOD_GET_LANG = 'get-daily-lang';
 export const DAILY_METHOD_SET_LANG = 'set-daily-lang';
+export const DAILY_METHOD_SET_PROXYURL = 'set-proxy-url';
+export const DAILY_METHOD_SET_ICE_CONFIG = 'set-ice-config';
 export const DAILY_METHOD_GET_MEETING_SESSION = 'get-meeting-session';
 export const DAILY_METHOD_SET_SESSION_DATA = 'set-session-data';
 export const DAILY_METHOD_SET_USER_NAME = 'set-user-name';
@@ -277,6 +279,11 @@ export const DAILY_METHOD_TRANSMIT_LOG = 'transmit-log';
 export const DAILY_CUSTOM_TRACK = 'daily-custom-track';
 export const DAILY_REQUEST_FULLSCREEN = 'request-fullscreen';
 export const DAILY_EXIT_FULLSCREEN = 'request-exit-fullscreen';
+
+export const DAILY_METHOD_TEST_WEBSOCKET_CONNECTIVITY =
+  'test-websocket-connectivity';
+export const DAILY_METHOD_ABORT_TEST_WEBSOCKET_CONNECTIVITY =
+  'abort-test-websocket-connectivity';
 
 export const DAILY_JS_NETWORK_THRESHOLDS = {
   VERY_LOW: 'very-low',
