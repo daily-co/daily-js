@@ -1930,7 +1930,9 @@ export default class DailyIframe extends EventEmitter {
 
   validateAudioLevelInterval(interval) {
     if (interval && interval < 100) {
-      throw new Error('The interval must not be less than 100 milliseconds.');
+      throw new Error(
+        'The interval must be greater than or equal to 100 milliseconds.'
+      );
     }
   }
 
