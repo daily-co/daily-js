@@ -2935,10 +2935,15 @@ export default class DailyIframe extends EventEmitter {
   }
 
   getCpuLoadStats() {
-    if (this._callState !== DAILY_STATE_JOINED) {
-      return { cpuLoadState: undefined, stats: {} };
-    }
     return new Promise((resolve, _) => {
+      if (this._callState !== DAILY_STATE_JOINED) {
+        resolve({
+          cpuLoadState: undefined,
+          cpuLoadStateReason: undefined,
+          stats: {}
+        });
+        return;
+      }
       let k = (msg) => {
         resolve(msg.cpuStats);
       };
