@@ -799,7 +799,7 @@ export interface DailyRoomInfo {
   };
   tokenConfig: {
     eject_at_token_exp?: boolean;
-    eject_after_elapsed?: boolean;
+    eject_after_elapsed?: number;
     nbf?: number;
     exp?: number;
     is_owner?: boolean;
