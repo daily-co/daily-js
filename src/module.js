@@ -1928,8 +1928,15 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
+  validateAudioLevelInterval(interval) {
+    if (interval && interval < 100) {
+      throw new Error('The interval must not be less than 100 milliseconds.');
+    }
+  }
+
   startLocalAudioLevelObserver(interval) {
     methodNotSupportedInReactNative();
+    this.validateAudioLevelInterval(interval);
     if (!this._dailyMainExecuted) {
       this._preloadCache.localAudioLevelObserver = {
         enabled: true,
@@ -1966,6 +1973,7 @@ export default class DailyIframe extends EventEmitter {
 
   startRemoteParticipantsAudioLevelObserver(interval) {
     methodNotSupportedInReactNative();
+    this.validateAudioLevelInterval(interval);
     if (!this._dailyMainExecuted) {
       this._preloadCache.remoteParticipantsAudioLevelObserver = {
         enabled: true,
@@ -3001,10 +3009,10 @@ export default class DailyIframe extends EventEmitter {
         resolve(msg.results);
       };
       this.sendMessageToCallMachine(
-          {
-            action: DAILY_METHOD_TEST_WEBSOCKET_CONNECTIVITY,
-          },
-          k
+        {
+          action: DAILY_METHOD_TEST_WEBSOCKET_CONNECTIVITY,
+        },
+        k
       );
     });
   }
