@@ -1,7 +1,7 @@
 import EventEmitter from 'events';
 import { deepEqual } from 'fast-equals';
 import Bowser from 'bowser';
-
+import { maybeProxyHttpsUrl } from './utils';
 import {
   // re-export
   //
@@ -2540,7 +2540,7 @@ export default class DailyIframe extends EventEmitter {
       });
     } else {
       // iframe
-      this._iframe.src = this.assembleMeetingUrl();
+      this._iframe.src = maybeProxyHttpsUrl(this.assembleMeetingUrl());
       return new Promise((resolve, reject) => {
         this._loadedCallback = (error) => {
           if (this._callState === DAILY_STATE_ERROR) {

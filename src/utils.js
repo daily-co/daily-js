@@ -7,7 +7,7 @@ export function notImplementedError() {
 }
 
 // url assumed to start with 'https://'
-function maybeProxyHttpsUrl(url) {
+export function maybeProxyHttpsUrl(url) {
   if (window._dailyConfig && window._dailyConfig.proxyUrl) {
     return (
       window._dailyConfig.proxyUrl +
