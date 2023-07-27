@@ -977,7 +977,8 @@ export default class DailyIframe extends EventEmitter {
     if (window.navigator && window.navigator.userAgent.match(/Chrome\/61\./)) {
       iframeEl.allow = 'microphone, camera';
     } else {
-      iframeEl.allow = 'microphone; camera; autoplay; display-capture; screen-wake-lock';
+      iframeEl.allow =
+        'microphone; camera; autoplay; display-capture; screen-wake-lock';
     }
     iframeEl.style.visibility = 'hidden';
     parentEl.appendChild(iframeEl);
@@ -3028,13 +3029,18 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  testNetworkConnectivity(videoTrack, audioTrack) {
-    if (videoTrack instanceof MediaStreamTrack) {
-      this._preloadCache.videoTrackForConnectionQualityTest = videoTrack;
-    }
+  testNetworkConnectivity(tracks) {
+    if (tracks) {
+      const { videoTrack, audioTrack } = tracks;
+      if (videoTrack instanceof MediaStreamTrack) {
+        this._preloadCache.videoTrackForNetworkConnectivityTest = videoTrack;
+      }
 
-    if (audioTrack instanceof MediaStreamTrack) {
-      this._preloadCache.audioTrackForConnectionQualityTest = audioTrack;
+      if (audioTrack instanceof MediaStreamTrack) {
+        this._preloadCache.audioTrackForNetworkConnectivityTest = audioTrack;
+      }
+    } else {
+      // should we warn users here via console.warn? Or leave it up to the docs?
     }
 
     return new Promise((resolve) => {
@@ -3062,7 +3068,7 @@ export default class DailyIframe extends EventEmitter {
         resolve({
           cpuLoadState: undefined,
           cpuLoadStateReason: undefined,
-          stats: {}
+          stats: {},
         });
         return;
       }
@@ -4692,6 +4698,8 @@ function initializePreloadCache() {
     outputDeviceId: null,
     inputSettings: null,
     sendSettings: null,
+    videoTrackForNetworkConnectivityTest: null,
+    audioTrackForNetworkConnectivityTest: null,
   };
 }
 

@@ -1754,10 +1754,10 @@ export interface DailyCall {
   getCpuLoadStats(): Promise<DailyCpuLoadStats>;
   testWebsocketConnectivity(): Promise<DailyWebsocketConnectivityTestResults>;
   abortTestWebsocketConnectivity(): void;
-  testNetworkConnectivity(
-    videoTrack?: MediaStreamTrack,
-    audioTrack?: MediaStreamTrack
-  ): Promise<DailyNetworkConnectivityTestStats>;
+  testNetworkConnectivity(options: {
+    videoTrack?: MediaStreamTrack
+    audioTrack?: MediaStreamTrack;
+  }): Promise<DailyNetworkConnectivityTestStats>;
   abortTestNetworkConnectivity(): void;
   updateSendSettings(settings: DailySendSettings): Promise<DailySendSettings>;
   getSendSettings(): DailySendSettings | null;
