@@ -3034,6 +3034,12 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
+  abortTestWebsocketConnectivity() {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_ABORT_TEST_WEBSOCKET_CONNECTIVITY,
+    });
+  }
+
   async testConnectionQuality(params) {
     if (this.needsLoad()) {
       try {
