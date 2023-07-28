@@ -4882,7 +4882,14 @@ export default class DailyIframe extends EventEmitter {
 
     const hub = new Hub(client, undefined, DailyIframe.version());
     this.session_id && hub.setExtra('sessionId', this.session_id);
-    this.properties && hub.setExtra('properties', this.properties);
+    if (this.properties) {
+      let properties = { ...this.properties };
+
+      // remove PII
+      delete properties.userName;
+      delete properties.userData;
+      hub.setExtra('properties', properties);
+    }
     if (url) {
       let domain = url.searchParams.get('domain');
       if (!domain) {
