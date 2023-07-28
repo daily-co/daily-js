@@ -4903,8 +4903,10 @@ export default class DailyIframe extends EventEmitter {
       callMode: this._callObjectMode
         ? isReactNative()
           ? 'reactNative'
+          : this.properties?.dailyConfig?.callMode?.includes('prebuilt')
+          ? this.properties.dailyConfig.callMode
           : 'custom'
-        : 'prebuilt',
+        : 'prebuilt-frame',
       version: DailyIframe.version(),
     });
 

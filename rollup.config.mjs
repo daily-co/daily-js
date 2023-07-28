@@ -19,6 +19,8 @@ const mode = process.env.NODE_ENV || 'production';
 const devCallMachineUrl =
   process.env.DEV_CALL_MACHINE_URL ||
   'https://khk-local.wss.daily.co:8000/static/call-machine-object-bundle.js';
+const sentryDSN =
+  'https://f10f1c81e5d44a4098416c0867a8b740@o77906.ingest.sentry.io/168844';
 
 function makeConfig({ legacyFileName = false } = {}) {
   return {
@@ -37,6 +39,7 @@ function makeConfig({ legacyFileName = false } = {}) {
         'process.env.NODE_ENV': JSON.stringify(mode),
         __dailyJsVersion__: JSON.stringify(version),
         __devCallMachineUrl__: JSON.stringify(devCallMachineUrl),
+        __sentryDSN__: JSON.stringify(sentryDSN),
       }),
       babel({
         exclude: 'node_modules/**',
