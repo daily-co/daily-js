@@ -2562,10 +2562,20 @@ export default class DailyIframe extends EventEmitter {
             if (!willRetry) {
               this._updateCallState(DAILY_STATE_ERROR);
               this.resetMeetingDependentVars();
-              this.emit(DAILY_EVENT_ERROR, {
+              const error = {
                 action: DAILY_EVENT_ERROR,
                 errorMsg,
-              });
+                error: {
+                  type: 'connection-error',
+                  msg: errorMsg,
+                  details: {
+                    on: 'join',
+                    sourceError: new Error(errorMsg),
+                  },
+                },
+              };
+              this._maybeSendToSentry(error);
+              this.emit(DAILY_EVENT_ERROR, error);
               reject(errorMsg);
             }
           }
