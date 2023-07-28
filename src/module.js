@@ -3,6 +3,13 @@ import { deepEqual } from 'fast-equals';
 import Bowser from 'bowser';
 import { maybeProxyHttpsUrl } from './utils';
 import {
+  BrowserClient,
+  Hub,
+  makeFetchTransport,
+  defaultIntegrations,
+} from '@sentry/browser';
+
+import {
   // re-export
   //
   // call states
@@ -231,7 +238,11 @@ import WebMessageChannel from './shared-with-pluot-core/script-message-channels/
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
 import { SessionDataUpdate } from './shared-with-pluot-core/SessionData.js';
 import CallObjectLoader from './CallObjectLoader';
-import { randomStringId, validateHttpUrl } from './utils.js';
+import {
+  callObjectBundleUrl,
+  randomStringId,
+  validateHttpUrl,
+} from './utils.js';
 import * as Participant from './Participant';
 import {
   addDeviceChangeListener,
@@ -4084,10 +4095,12 @@ export default class DailyIframe extends EventEmitter {
         }
         let { preserveIframe, ...event } = msg;
         if (event?.error?.details?.sourceError) {
+          console.log(event.error.details);
           event.error.details.sourceError = JSON.parse(
             event.error.details.sourceError
           );
         }
+        this._maybeSendToSentry(msg);
         if (this._joinedCallback) {
           this._joinedCallback(null, event);
           this._joinedCallback = null;
@@ -4830,6 +4843,63 @@ export default class DailyIframe extends EventEmitter {
         'enable strict mode to track down and fix these attempts.';
       console.error(errMsg);
     }
+  }
+
+  _maybeSendToSentry(error) {
+    if (error.error?.type) {
+      const sentryErrors = ['connection-error', 'end-of-life'];
+      if (!sentryErrors.includes(error.error.type)) {
+        return;
+      }
+    }
+    const url = this.properties?.url ? new URL(this.properties.url) : undefined;
+    let env;
+    if (process.env.NODE_ENV === 'development') {
+      env = 'development';
+    } else if (url && url.host.includes('.staging.daily')) {
+      // console.log('host', url.host);
+      // console.log('bundleUrl', callObjectBundleUrl());
+      // console.log(process.env.NODE_ENV);
+      env = 'staging';
+    }
+
+    const client = new BrowserClient({
+      dsn: __sentryDSN__,
+      transport: makeFetchTransport,
+      integrations: defaultIntegrations,
+      environment: env,
+    });
+
+    const hub = new Hub(client, undefined, DailyIframe.version());
+    this.session_id && hub.setExtra('sessionId', this.session_id);
+    this.properties && hub.setExtra('properties', this.properties);
+    if (url) {
+      let domain = url.searchParams.get('domain');
+      if (!domain) {
+        let match = url.host.match(/(.*?)\./);
+        domain = (match && match[1]) || '';
+      }
+      domain && hub.setTag('domain', domain);
+    }
+    if (error.error) {
+      hub.setTag('fatalErrorType', error.error.type);
+      hub.setExtra('errorDetails', error.error.details);
+      error.error.details?.uri &&
+        hub.setTag('serverAddress', error.error.details.uri);
+      error.error.details?.region &&
+        hub.setTag('region', error.error.details.region);
+    }
+    hub.setTags({
+      callMode: this._callObjectMode
+        ? isReactNative()
+          ? 'reactNative'
+          : 'custom'
+        : 'prebuilt',
+      version: DailyIframe.version(),
+    });
+
+    const msg = error.error?.msg || error.errMsg;
+    hub.captureException(new Error(msg));
   }
 }
 
