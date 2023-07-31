@@ -3029,7 +3029,14 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  testNetworkConnectivity(tracks) {
+  async testNetworkConnectivity(tracks) {
+    if (this.needsLoad()) {
+      try {
+        await this.load();
+      } catch (e) {
+        return Promise.reject(e);
+      }
+    }
     if (tracks) {
       const { videoTrack, audioTrack } = tracks;
       if (videoTrack instanceof MediaStreamTrack) {
