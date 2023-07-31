@@ -214,6 +214,8 @@ import {
   DAILY_EVENT_LOCAL_AUDIO_LEVEL,
   DAILY_EVENT_REMOTE_PARTICIPANTS_AUDIO_LEVEL,
   DAILY_EVENT_DAILY_MAIN_EXECUTED,
+  DAILY_METHOD_ABORT_TEST_CONNECTION_QUALITY,
+  DAILY_METHOD_TEST_CONNECTION_QUALITY,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -3032,9 +3034,43 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  abortTestWebsocketConnectivity() {
+  async testConnectionQuality(params) {
+    if (this.needsLoad()) {
+      try {
+        await this.load();
+      } catch (e) {
+        return Promise.reject(e);
+      }
+    }
+
+    if (params) {
+      const { videoTrack, audioTrack } = params;
+      if (videoTrack instanceof MediaStreamTrack) {
+        this._preloadCache.videoTrackForConnectionQualityTest = videoTrack;
+      }
+
+      if (audioTrack instanceof MediaStreamTrack) {
+        this._preloadCache.audioTrackForConnectionQualityTest = audioTrack;
+      }
+    }
+
+    return new Promise((resolve) => {
+      let k = (msg) => {
+        resolve(msg.results);
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_TEST_CONNECTION_QUALITY,
+          duration: params?.duration,
+        },
+        k
+      );
+    });
+  }
+
+  abortTestConnectionQuality() {
     this.sendMessageToCallMachine({
-      action: DAILY_METHOD_ABORT_TEST_WEBSOCKET_CONNECTIVITY,
+      action: DAILY_METHOD_ABORT_TEST_CONNECTION_QUALITY,
     });
   }
 
@@ -4727,6 +4763,8 @@ function initializePreloadCache() {
     inputSettings: null,
     sendSettings: null,
     videoTrackForNetworkConnectivityTest: null,
+    audioSourceForConnectionQualityTest: null,
+    videoSourceForConnectionQualityTest: null,
   };
 }
 
