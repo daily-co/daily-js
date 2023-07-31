@@ -820,7 +820,7 @@ const PARTICIPANT_PROPS = {
             }
             break;
           case 'canSend':
-            if (permission instanceof Set) {
+            if (permission instanceof Set || permission instanceof Array) {
               const knownMediaTypes = [
                 'video',
                 'audio',
@@ -837,9 +837,13 @@ const PARTICIPANT_PROPS = {
             } else if (typeof permission !== 'boolean') {
               return false;
             }
+            // convert Array to Set if needed
+            if (permission instanceof Array) {
+              permissionsUpdate['canSend'] = new Set(permission);
+            }
             break;
           case 'canAdmin':
-            if (permission instanceof Set) {
+            if (permission instanceof Set || permission instanceof Array) {
               const knownAdminTypes = [
                 'participants',
                 'streaming',
@@ -853,6 +857,10 @@ const PARTICIPANT_PROPS = {
             } else if (typeof permission !== 'boolean') {
               return false;
             }
+            // convert Array to Set if needed
+            if (permission instanceof Array) {
+              permissionsUpdate['canAdmin'] = new Set(permission);
+            }
             break;
           default:
             return false;
@@ -863,8 +871,8 @@ const PARTICIPANT_PROPS = {
     help:
       'updatePermissions can take hasPresence, canSend, and canAdmin permissions. ' +
       'hasPresence must be a boolean. ' +
-      'canSend can be a boolean or an array of media types (video, audio, screenVideo, screenAudio, customVideo, customAudio). ' +
-      'canAdmin can be a boolean or an array of admin types (participants, streaming, transcription).',
+      'canSend can be a boolean or an Array or Set of media types (video, audio, screenVideo, screenAudio, customVideo, customAudio). ' +
+      'canAdmin can be a boolean or an Array or Set of admin types (participants, streaming, transcription).',
   },
 };
 
@@ -975,7 +983,8 @@ export default class DailyIframe extends EventEmitter {
     if (window.navigator && window.navigator.userAgent.match(/Chrome\/61\./)) {
       iframeEl.allow = 'microphone, camera';
     } else {
-      iframeEl.allow = 'microphone; camera; autoplay; display-capture; screen-wake-lock';
+      iframeEl.allow =
+        'microphone; camera; autoplay; display-capture; screen-wake-lock';
     }
     iframeEl.style.visibility = 'hidden';
     parentEl.appendChild(iframeEl);
@@ -3031,7 +3040,7 @@ export default class DailyIframe extends EventEmitter {
         resolve({
           cpuLoadState: undefined,
           cpuLoadStateReason: undefined,
-          stats: {}
+          stats: {},
         });
         return;
       }

@@ -432,23 +432,35 @@ export interface DailyTrackState {
   persistentTrack?: MediaStreamTrack;
 }
 
+export type DailyParticipantPermissionsCanSendValues =
+  | 'video'
+  | 'audio'
+  | 'screenVideo'
+  | 'screenAudio'
+  | 'customVideo'
+  | 'customAudio';
+
+export type DailyParticipantPermissionsCanAdminValues =
+  | 'participants'
+  | 'streaming'
+  | 'transcription';
+
 export interface DailyParticipantPermissions {
   hasPresence: boolean;
-  canSend:
-    | Set<
-        | 'video'
-        | 'audio'
-        | 'screenVideo'
-        | 'screenAudio'
-        | 'customVideo'
-        | 'customAudio'
-      >
-    | boolean;
-  canAdmin: Set<'participants' | 'streaming' | 'transcription'> | boolean;
+  canSend: Set<DailyParticipantPermissionsCanSendValues> | boolean;
+  canAdmin: Set<DailyParticipantPermissionsCanAdminValues> | boolean;
 }
 
 export type DailyParticipantPermissionsUpdate = {
-  [Property in keyof DailyParticipantPermissions]+?: DailyParticipantPermissions[Property];
+  hasPresence?: boolean;
+  canSend?:
+    | Array<DailyParticipantPermissionsCanSendValues>
+    | Set<DailyParticipantPermissionsCanSendValues>
+    | boolean;
+  canAdmin?:
+    | Array<DailyParticipantPermissionsCanAdminValues>
+    | Set<DailyParticipantPermissionsCanAdminValues>
+    | boolean;
 };
 
 export interface DailyParticipant {
