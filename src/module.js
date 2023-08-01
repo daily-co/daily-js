@@ -235,6 +235,7 @@ import {
   addDeviceChangeListener,
   removeDeviceChangeListener,
 } from './shared-with-pluot-core/DeviceChange.js';
+import { isPlayable } from './shared-with-pluot-core/TrackStateUtil';
 
 // call states
 export {
@@ -3038,12 +3039,10 @@ export default class DailyIframe extends EventEmitter {
       console.error('Video track needs to be of type `MediaStreamTrack`');
       return false;
     }
-    if (videoTrack.readyState === 'ended') {
-      console.error('Video track readyState is `ended` - this test needs a live video track');
-      return false;
-    }
-    if (!videoTrack.enabled) {
-      console.error('Video track is not enabled');
+    if (!isPlayable(videoTrack, { isLocalScreenVideo: false })) {
+      console.error(
+        'Video track is not playable - this test needs a live video track'
+      );
       return false;
     }
     return true;
@@ -3059,7 +3058,7 @@ export default class DailyIframe extends EventEmitter {
     }
 
     if (!this._validateVideoTrackForConnectivityTest(videoTrack)) {
-      return Promise.reject();
+      throw new Error('Missing video track');
     } else {
       this._preloadCache.videoTrackForNetworkConnectivityTest = videoTrack;
     }
