@@ -3029,7 +3029,27 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  async testNetworkConnectivity(tracks) {
+  _validateVideoTrackForConnectivityTest(videoTrack) {
+    if (!videoTrack) {
+      console.error('Missing video track');
+      return false;
+    }
+    if (!(videoTrack instanceof MediaStreamTrack)) {
+      console.error('Video track needs to be of type `MediaStreamTrack`');
+      return false;
+    }
+    if (videoTrack.readyState === 'ended') {
+      console.error('Video track readyState is `ended` - this test needs a live video track');
+      return false;
+    }
+    if (!videoTrack.enabled) {
+      console.error('Video track is not enabled');
+      return false;
+    }
+    return true;
+  }
+
+  async testNetworkConnectivity(videoTrack) {
     if (this.needsLoad()) {
       try {
         await this.load();
@@ -3037,17 +3057,11 @@ export default class DailyIframe extends EventEmitter {
         return Promise.reject(e);
       }
     }
-    if (tracks) {
-      const { videoTrack, audioTrack } = tracks;
-      if (videoTrack instanceof MediaStreamTrack) {
-        this._preloadCache.videoTrackForNetworkConnectivityTest = videoTrack;
-      }
 
-      if (audioTrack instanceof MediaStreamTrack) {
-        this._preloadCache.audioTrackForNetworkConnectivityTest = audioTrack;
-      }
+    if (!this._validateVideoTrackForConnectivityTest(videoTrack)) {
+      return Promise.reject();
     } else {
-      // should we warn users here via console.warn? Or leave it up to the docs?
+      this._preloadCache.videoTrackForNetworkConnectivityTest = videoTrack;
     }
 
     return new Promise((resolve) => {
@@ -4706,7 +4720,6 @@ function initializePreloadCache() {
     inputSettings: null,
     sendSettings: null,
     videoTrackForNetworkConnectivityTest: null,
-    audioTrackForNetworkConnectivityTest: null,
   };
 }
 

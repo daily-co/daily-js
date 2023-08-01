@@ -1270,7 +1270,7 @@ export interface DailyEventObjectTranscriptionStopped {
 }
 
 export interface DailyNetworkConnectivityTestStats {
-  result: 'passed' | 'failed' | 'aborted' | 'missing-video-track'
+  result: 'passed' | 'failed' | 'aborted';
 }
 
 export type DailyRemoteMediaPlayerStopReason =
@@ -1754,10 +1754,9 @@ export interface DailyCall {
   getCpuLoadStats(): Promise<DailyCpuLoadStats>;
   testWebsocketConnectivity(): Promise<DailyWebsocketConnectivityTestResults>;
   abortTestWebsocketConnectivity(): void;
-  testNetworkConnectivity(options: {
+  testNetworkConnectivity(
     videoTrack: MediaStreamTrack
-    audioTrack?: MediaStreamTrack;
-  }): Promise<DailyNetworkConnectivityTestStats>;
+  ): Promise<DailyNetworkConnectivityTestStats>;
   abortTestNetworkConnectivity(): void;
   updateSendSettings(settings: DailySendSettings): Promise<DailySendSettings>;
   getSendSettings(): DailySendSettings | null;
