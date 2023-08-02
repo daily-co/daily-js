@@ -237,7 +237,11 @@ import {
   addDeviceChangeListener,
   removeDeviceChangeListener,
 } from './shared-with-pluot-core/DeviceChange.js';
+<<<<<<< HEAD
 import { isPlayable } from './shared-with-pluot-core/TrackStateUtil';
+=======
+import {isPlayable} from "./shared-with-pluot-core/TrackStateUtil";
+>>>>>>> 0d0d320218 (Add same video track requirements to connection test as we did to connectivity test)
 
 // call states
 export {
@@ -3040,6 +3044,24 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
+  _validateVideoTrackForConnectivityTest(videoTrack) {
+    if (!videoTrack) {
+      console.error('Missing video track');
+      return false;
+    }
+    if (!(videoTrack instanceof MediaStreamTrack)) {
+      console.error('Video track needs to be of type `MediaStreamTrack`');
+      return false;
+    }
+    if (!isPlayable(videoTrack, { isLocalScreenVideo: false })) {
+      console.error(
+        'Video track is not playable - this test needs a live video track'
+      );
+      return false;
+    }
+    return true;
+  }
+
   async testConnectionQuality(params) {
     if (this.needsLoad()) {
       try {
@@ -3051,13 +3073,19 @@ export default class DailyIframe extends EventEmitter {
 
     if (params) {
       const { videoTrack, audioTrack } = params;
-      if (videoTrack instanceof MediaStreamTrack) {
+      if (!this._validateVideoTrackForConnectivityTest(videoTrack)) {
+        throw new Error('Missing video track');
+      } else {
         this._preloadCache.videoTrackForConnectionQualityTest = videoTrack;
       }
 
+      // If an audiotrack is missing, that's fine.
       if (audioTrack instanceof MediaStreamTrack) {
         this._preloadCache.audioTrackForConnectionQualityTest = audioTrack;
       }
+    } else {
+      // No parameters means no video track, so throw an error.
+      throw new Error('Missing video track');
     }
 
     return new Promise((resolve) => {
@@ -3067,7 +3095,7 @@ export default class DailyIframe extends EventEmitter {
       this.sendMessageToCallMachine(
         {
           action: DAILY_METHOD_TEST_CONNECTION_QUALITY,
-          duration: params?.duration,
+          duration: params?.duration, // we'll set a default duration in the test itself
         },
         k
       );
@@ -4769,8 +4797,8 @@ function initializePreloadCache() {
     inputSettings: null,
     sendSettings: null,
     videoTrackForNetworkConnectivityTest: null,
-    audioSourceForConnectionQualityTest: null,
-    videoSourceForConnectionQualityTest: null,
+    videoTrackForConnectionQualityTest: null,
+    audioTrackForConnectionQualityTest: null,
   };
 }
 

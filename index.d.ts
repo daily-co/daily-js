@@ -1284,9 +1284,13 @@ export interface DailyEventObjectTranscriptionStopped {
 export interface DailyNetworkConnectivityTestStats {
   result: 'passed' | 'failed' | 'aborted';
 }
+export interface DailyConnectionQualityTestData {
+  maxRTT: number | null;
+  packetLoss: number | null;
+}
 export interface DailyConnectionQualityTestStats {
-  result: 'passed' | 'failed' | 'aborted' | 'missing-video-track';
-  data: any;
+  result: 'good' | 'bad' | 'warning' | 'aborted' | 'failed' | 'missing-video-track';
+  data: DailyConnectionQualityTestData;
 }
 export type DailyRemoteMediaPlayerStopReason =
   | DailyRemoteMediaPlayerEOS
@@ -1769,19 +1773,16 @@ export interface DailyCall {
   getCpuLoadStats(): Promise<DailyCpuLoadStats>;
   testWebsocketConnectivity(): Promise<DailyWebsocketConnectivityTestResults>;
   abortTestWebsocketConnectivity(): void;
-<<<<<<< HEAD
   testNetworkConnectivity(
     videoTrack: MediaStreamTrack
   ): Promise<DailyNetworkConnectivityTestStats>;
   abortTestNetworkConnectivity(): void;
-=======
   testConnectionQuality(options: {
     videoTrack: MediaStreamTrack
     audioTrack?: MediaStreamTrack;
     duration?: number
   }): Promise<DailyConnectionQualityTestStats>;
   abortTestConnectionQuality(): void;
->>>>>>> b337519067 (feat(dj): Add connection quality method to daily-js)
   updateSendSettings(settings: DailySendSettings): Promise<DailySendSettings>;
   getSendSettings(): DailySendSettings | null;
   getActiveSpeaker(): { peerId?: string };
