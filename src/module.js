@@ -2,12 +2,7 @@ import EventEmitter from 'events';
 import { deepEqual } from 'fast-equals';
 import Bowser from 'bowser';
 import { maybeProxyHttpsUrl } from './utils';
-import {
-  BrowserClient,
-  Hub,
-  makeFetchTransport,
-  defaultIntegrations,
-} from '@sentry/browser';
+import * as Sentry from '@sentry/browser';
 
 import {
   // re-export
@@ -4873,14 +4868,18 @@ export default class DailyIframe extends EventEmitter {
       env = 'staging';
     }
 
-    const client = new BrowserClient({
+    const client = new Sentry.BrowserClient({
       dsn: __sentryDSN__,
-      transport: makeFetchTransport,
-      integrations: defaultIntegrations,
+      transport: Sentry.makeFetchTransport,
+      integrations: [
+        new Sentry.Integrations.GlobalHandlers({
+          onunhandledrejection: false,
+        }),
+      ],
       environment: env,
     });
 
-    const hub = new Hub(client, undefined, DailyIframe.version());
+    const hub = new Sentry.Hub(client, undefined, DailyIframe.version());
     this.session_id && hub.setExtra('sessionId', this.session_id);
     if (this.properties) {
       let properties = { ...this.properties };
@@ -4918,7 +4917,10 @@ export default class DailyIframe extends EventEmitter {
     });
 
     const msg = error.error?.msg || error.errMsg;
-    hub.captureException(new Error(msg));
+    hub.run((currentHub) => {
+      const retId = currentHub.captureException(new Error(msg));
+      console.log(`Error (${retId}) sent to Sentry in run().`);
+    });
   }
 }
 
