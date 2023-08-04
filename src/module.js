@@ -237,11 +237,7 @@ import {
   addDeviceChangeListener,
   removeDeviceChangeListener,
 } from './shared-with-pluot-core/DeviceChange.js';
-<<<<<<< HEAD
 import { isPlayable } from './shared-with-pluot-core/TrackStateUtil';
-=======
-import {isPlayable} from "./shared-with-pluot-core/TrackStateUtil";
->>>>>>> 0d0d320218 (Add same video track requirements to connection test as we did to connectivity test)
 
 // call states
 export {
@@ -3025,9 +3021,13 @@ export default class DailyIframe extends EventEmitter {
       }
     }
 
-    return new Promise((resolve) => {
-      let k = (msg) => {
-        resolve(msg.results);
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve(msg.results);
+        }
       };
       this.sendMessageToCallMachine(
         {
@@ -3044,7 +3044,7 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  _validateVideoTrackForConnectivityTest(videoTrack) {
+  _validateVideoTrackForNetworkTests(videoTrack) {
     if (!videoTrack) {
       console.error('Missing video track');
       return false;
@@ -3062,7 +3062,7 @@ export default class DailyIframe extends EventEmitter {
     return true;
   }
 
-  async testConnectionQuality(params) {
+  async testConnectionQuality(args) {
     if (this.needsLoad()) {
       try {
         await this.load();
@@ -3071,9 +3071,9 @@ export default class DailyIframe extends EventEmitter {
       }
     }
 
-    if (params) {
-      const { videoTrack, audioTrack } = params;
-      if (!this._validateVideoTrackForConnectivityTest(videoTrack)) {
+    if (args) {
+      const { videoTrack, audioTrack } = args;
+      if (!this._validateVideoTrackForNetworkTests(videoTrack)) {
         throw new Error('Missing video track');
       } else {
         this._preloadCache.videoTrackForConnectionQualityTest = videoTrack;
@@ -3088,14 +3088,18 @@ export default class DailyIframe extends EventEmitter {
       throw new Error('Missing video track');
     }
 
-    return new Promise((resolve) => {
-      let k = (msg) => {
-        resolve(msg.results);
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve(msg.results);
+        }
       };
       this.sendMessageToCallMachine(
         {
           action: DAILY_METHOD_TEST_CONNECTION_QUALITY,
-          duration: params?.duration, // we'll set a default duration in the test itself
+          duration: args.duration,
         },
         k
       );
@@ -3108,24 +3112,6 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  _validateVideoTrackForConnectivityTest(videoTrack) {
-    if (!videoTrack) {
-      console.error('Missing video track');
-      return false;
-    }
-    if (!(videoTrack instanceof MediaStreamTrack)) {
-      console.error('Video track needs to be of type `MediaStreamTrack`');
-      return false;
-    }
-    if (!isPlayable(videoTrack, { isLocalScreenVideo: false })) {
-      console.error(
-        'Video track is not playable - this test needs a live video track'
-      );
-      return false;
-    }
-    return true;
-  }
-
   async testNetworkConnectivity(videoTrack) {
     if (this.needsLoad()) {
       try {
@@ -3135,15 +3121,19 @@ export default class DailyIframe extends EventEmitter {
       }
     }
 
-    if (!this._validateVideoTrackForConnectivityTest(videoTrack)) {
+    if (!this._validateVideoTrackForNetworkTests(videoTrack)) {
       throw new Error('Missing video track');
     } else {
       this._preloadCache.videoTrackForNetworkConnectivityTest = videoTrack;
     }
 
-    return new Promise((resolve) => {
-      let k = (msg) => {
-        resolve(msg.results);
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve(msg.results);
+        }
       };
       this.sendMessageToCallMachine(
         {

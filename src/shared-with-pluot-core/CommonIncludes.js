@@ -292,15 +292,12 @@ export const DAILY_METHOD_TRANSMIT_LOG = 'transmit-log';
 export const DAILY_CUSTOM_TRACK = 'daily-custom-track';
 export const DAILY_REQUEST_FULLSCREEN = 'request-fullscreen';
 export const DAILY_EXIT_FULLSCREEN = 'request-exit-fullscreen';
-
 export const DAILY_METHOD_TEST_WEBSOCKET_CONNECTIVITY =
   'test-websocket-connectivity';
 export const DAILY_METHOD_ABORT_TEST_WEBSOCKET_CONNECTIVITY =
   'abort-test-websocket-connectivity';
-
 export const DAILY_METHOD_TEST_NETWORK_CONNECTIVITY = 'test-network-connectivity';
 export const DAILY_METHOD_ABORT_TEST_NETWORK_CONNECTIVITY = 'abort-test-network-connectivity';
-
 export const DAILY_METHOD_TEST_CONNECTION_QUALITY = 'test-connection-quality';
 export const DAILY_METHOD_ABORT_TEST_CONNECTION_QUALITY = 'abort-test-connection-quality';
 
