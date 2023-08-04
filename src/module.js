@@ -205,6 +205,8 @@ import {
   DAILY_SCREEN_SHARE_ERROR_TYPE,
   DAILY_METHOD_TEST_WEBSOCKET_CONNECTIVITY,
   DAILY_METHOD_ABORT_TEST_WEBSOCKET_CONNECTIVITY,
+  DAILY_METHOD_TEST_NETWORK_CONNECTIVITY,
+  DAILY_METHOD_ABORT_TEST_NETWORK_CONNECTIVITY,
   DAILY_METHOD_START_LOCAL_AUDIO_LEVEL_OBSERVER,
   DAILY_METHOD_STOP_LOCAL_AUDIO_LEVEL_OBSERVER,
   DAILY_METHOD_START_REMOTE_PARTICIPANTS_AUDIO_LEVEL_OBSERVER,
@@ -233,6 +235,7 @@ import {
   addDeviceChangeListener,
   removeDeviceChangeListener,
 } from './shared-with-pluot-core/DeviceChange.js';
+import { isPlayable } from './shared-with-pluot-core/TrackStateUtil';
 
 // call states
 export {
@@ -3015,6 +3018,7 @@ export default class DailyIframe extends EventEmitter {
         return Promise.reject(e);
       }
     }
+
     return new Promise((resolve) => {
       let k = (msg) => {
         resolve(msg.results);
@@ -3031,6 +3035,58 @@ export default class DailyIframe extends EventEmitter {
   abortTestWebsocketConnectivity() {
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_ABORT_TEST_WEBSOCKET_CONNECTIVITY,
+    });
+  }
+
+  _validateVideoTrackForConnectivityTest(videoTrack) {
+    if (!videoTrack) {
+      console.error('Missing video track');
+      return false;
+    }
+    if (!(videoTrack instanceof MediaStreamTrack)) {
+      console.error('Video track needs to be of type `MediaStreamTrack`');
+      return false;
+    }
+    if (!isPlayable(videoTrack, { isLocalScreenVideo: false })) {
+      console.error(
+        'Video track is not playable - this test needs a live video track'
+      );
+      return false;
+    }
+    return true;
+  }
+
+  async testNetworkConnectivity(videoTrack) {
+    if (this.needsLoad()) {
+      try {
+        await this.load();
+      } catch (e) {
+        return Promise.reject(e);
+      }
+    }
+
+    if (!this._validateVideoTrackForConnectivityTest(videoTrack)) {
+      throw new Error('Missing video track');
+    } else {
+      this._preloadCache.videoTrackForNetworkConnectivityTest = videoTrack;
+    }
+
+    return new Promise((resolve) => {
+      let k = (msg) => {
+        resolve(msg.results);
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_TEST_NETWORK_CONNECTIVITY,
+        },
+        k
+      );
+    });
+  }
+
+  abortTestNetworkConnectivity() {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_ABORT_TEST_NETWORK_CONNECTIVITY,
     });
   }
 
@@ -4670,6 +4726,7 @@ function initializePreloadCache() {
     outputDeviceId: null,
     inputSettings: null,
     sendSettings: null,
+    videoTrackForNetworkConnectivityTest: null,
   };
 }
 
