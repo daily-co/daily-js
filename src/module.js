@@ -214,7 +214,7 @@ import {
   DAILY_EVENT_LOCAL_AUDIO_LEVEL,
   DAILY_EVENT_REMOTE_PARTICIPANTS_AUDIO_LEVEL,
   DAILY_EVENT_DAILY_MAIN_EXECUTED,
-  DAILY_METHOD_ABORT_TEST_CONNECTION_QUALITY,
+  DAILY_METHOD_STOP_TEST_CONNECTION_QUALITY,
   DAILY_METHOD_TEST_CONNECTION_QUALITY,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
@@ -3106,9 +3106,9 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  abortTestConnectionQuality() {
+  stopTestConnectionQuality() {
     this.sendMessageToCallMachine({
-      action: DAILY_METHOD_ABORT_TEST_CONNECTION_QUALITY,
+      action: DAILY_METHOD_STOP_TEST_CONNECTION_QUALITY,
     });
   }
 

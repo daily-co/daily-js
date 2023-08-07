@@ -299,7 +299,7 @@ export const DAILY_METHOD_ABORT_TEST_WEBSOCKET_CONNECTIVITY =
 export const DAILY_METHOD_TEST_NETWORK_CONNECTIVITY = 'test-network-connectivity';
 export const DAILY_METHOD_ABORT_TEST_NETWORK_CONNECTIVITY = 'abort-test-network-connectivity';
 export const DAILY_METHOD_TEST_CONNECTION_QUALITY = 'test-connection-quality';
-export const DAILY_METHOD_ABORT_TEST_CONNECTION_QUALITY = 'abort-test-connection-quality';
+export const DAILY_METHOD_STOP_TEST_CONNECTION_QUALITY = 'stop-test-connection-quality';
 
 export const DAILY_JS_NETWORK_THRESHOLDS = {
   VERY_LOW: 'very-low',

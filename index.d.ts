@@ -1291,6 +1291,7 @@ export interface DailyConnectionQualityTestData {
 export interface DailyConnectionQualityTestStats {
   result: 'good' | 'bad' | 'warning' | 'aborted' | 'failed' | 'missing-video-track';
   data: DailyConnectionQualityTestData;
+  secondsElapsed: number;
 }
 export type DailyRemoteMediaPlayerStopReason =
   | DailyRemoteMediaPlayerEOS
@@ -1782,7 +1783,7 @@ export interface DailyCall {
     audioTrack?: MediaStreamTrack;
     duration?: number
   }): Promise<DailyConnectionQualityTestStats>;
-  abortTestConnectionQuality(): void;
+  stopTestConnectionQuality(): void;
   updateSendSettings(settings: DailySendSettings): Promise<DailySendSettings>;
   getSendSettings(): DailySendSettings | null;
   getActiveSpeaker(): { peerId?: string };
