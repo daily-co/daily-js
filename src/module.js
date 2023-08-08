@@ -3046,16 +3046,16 @@ export default class DailyIframe extends EventEmitter {
 
   _validateVideoTrackForNetworkTests(videoTrack) {
     if (!videoTrack) {
-      console.error('Missing video track');
+      console.error('Missing video track. You must provide a video track in order to run this test.');
       return false;
     }
     if (!(videoTrack instanceof MediaStreamTrack)) {
-      console.error('Video track needs to be of type `MediaStreamTrack`');
+      console.error('Video track needs to be of type `MediaStreamTrack`.');
       return false;
     }
     if (!isPlayable(videoTrack, { isLocalScreenVideo: false })) {
       console.error(
-        'Video track is not playable - this test needs a live video track'
+        'Video track is not playable. This test needs a live video track.'
       );
       return false;
     }
@@ -3071,21 +3071,12 @@ export default class DailyIframe extends EventEmitter {
       }
     }
 
-    if (args) {
-      const { videoTrack, audioTrack } = args;
-      if (!this._validateVideoTrackForNetworkTests(videoTrack)) {
-        throw new Error('Missing video track');
-      } else {
-        this._preloadCache.videoTrackForConnectionQualityTest = videoTrack;
-      }
+    const { videoTrack, duration } = args;
 
-      // If an audiotrack is missing, that's fine.
-      if (audioTrack instanceof MediaStreamTrack) {
-        this._preloadCache.audioTrackForConnectionQualityTest = audioTrack;
-      }
+    if (!this._validateVideoTrackForNetworkTests(videoTrack)) {
+      throw new Error('Video track error');
     } else {
-      // No parameters means no video track, so throw an error.
-      throw new Error('Missing video track');
+      this._preloadCache.videoTrackForConnectionQualityTest = videoTrack;
     }
 
     return new Promise((resolve, reject) => {
@@ -3099,7 +3090,7 @@ export default class DailyIframe extends EventEmitter {
       this.sendMessageToCallMachine(
         {
           action: DAILY_METHOD_TEST_CONNECTION_QUALITY,
-          duration: args.duration,
+          duration: duration
         },
         k
       );
@@ -3122,7 +3113,7 @@ export default class DailyIframe extends EventEmitter {
     }
 
     if (!this._validateVideoTrackForNetworkTests(videoTrack)) {
-      throw new Error('Missing video track');
+      throw new Error('Video track error');
     } else {
       this._preloadCache.videoTrackForNetworkConnectivityTest = videoTrack;
     }
@@ -4788,7 +4779,6 @@ function initializePreloadCache() {
     sendSettings: null,
     videoTrackForNetworkConnectivityTest: null,
     videoTrackForConnectionQualityTest: null,
-    audioTrackForConnectionQualityTest: null,
   };
 }
 

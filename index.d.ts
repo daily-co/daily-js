@@ -1289,7 +1289,7 @@ export interface DailyConnectionQualityTestData {
   packetLoss: number | null;
 }
 export interface DailyConnectionQualityTestStats {
-  result: 'good' | 'bad' | 'warning' | 'aborted' | 'failed' | 'missing-video-track';
+  result: 'good' | 'bad' | 'warning' | 'aborted' | 'failed';
   data: DailyConnectionQualityTestData;
   secondsElapsed: number;
 }
@@ -1779,9 +1779,8 @@ export interface DailyCall {
   ): Promise<DailyNetworkConnectivityTestStats>;
   abortTestNetworkConnectivity(): void;
   testConnectionQuality(options: {
-    videoTrack: MediaStreamTrack
-    audioTrack?: MediaStreamTrack;
-    duration?: number
+    videoTrack: MediaStreamTrack;
+    duration?: number;
   }): Promise<DailyConnectionQualityTestStats>;
   stopTestConnectionQuality(): void;
   updateSendSettings(settings: DailySendSettings): Promise<DailySendSettings>;
