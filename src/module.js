@@ -214,6 +214,8 @@ import {
   DAILY_EVENT_LOCAL_AUDIO_LEVEL,
   DAILY_EVENT_REMOTE_PARTICIPANTS_AUDIO_LEVEL,
   DAILY_EVENT_DAILY_MAIN_EXECUTED,
+  DAILY_METHOD_STOP_TEST_CONNECTION_QUALITY,
+  DAILY_METHOD_TEST_CONNECTION_QUALITY,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -3019,9 +3021,13 @@ export default class DailyIframe extends EventEmitter {
       }
     }
 
-    return new Promise((resolve) => {
-      let k = (msg) => {
-        resolve(msg.results);
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve(msg.results);
+        }
       };
       this.sendMessageToCallMachine(
         {
@@ -3038,22 +3044,63 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  _validateVideoTrackForConnectivityTest(videoTrack) {
+  _validateVideoTrackForNetworkTests(videoTrack) {
     if (!videoTrack) {
-      console.error('Missing video track');
+      console.error('Missing video track. You must provide a video track in order to run this test.');
       return false;
     }
     if (!(videoTrack instanceof MediaStreamTrack)) {
-      console.error('Video track needs to be of type `MediaStreamTrack`');
+      console.error('Video track needs to be of type `MediaStreamTrack`.');
       return false;
     }
     if (!isPlayable(videoTrack, { isLocalScreenVideo: false })) {
       console.error(
-        'Video track is not playable - this test needs a live video track'
+        'Video track is not playable. This test needs a live video track.'
       );
       return false;
     }
     return true;
+  }
+
+  async testConnectionQuality(args) {
+    if (this.needsLoad()) {
+      try {
+        await this.load();
+      } catch (e) {
+        return Promise.reject(e);
+      }
+    }
+
+    const { videoTrack, duration } = args;
+
+    if (!this._validateVideoTrackForNetworkTests(videoTrack)) {
+      throw new Error('Video track error');
+    } else {
+      this._preloadCache.videoTrackForConnectionQualityTest = videoTrack;
+    }
+
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve(msg.results);
+        }
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_TEST_CONNECTION_QUALITY,
+          duration: duration
+        },
+        k
+      );
+    });
+  }
+
+  stopTestConnectionQuality() {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_STOP_TEST_CONNECTION_QUALITY,
+    });
   }
 
   async testNetworkConnectivity(videoTrack) {
@@ -3065,15 +3112,19 @@ export default class DailyIframe extends EventEmitter {
       }
     }
 
-    if (!this._validateVideoTrackForConnectivityTest(videoTrack)) {
-      throw new Error('Missing video track');
+    if (!this._validateVideoTrackForNetworkTests(videoTrack)) {
+      throw new Error('Video track error');
     } else {
       this._preloadCache.videoTrackForNetworkConnectivityTest = videoTrack;
     }
 
-    return new Promise((resolve) => {
-      let k = (msg) => {
-        resolve(msg.results);
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve(msg.results);
+        }
       };
       this.sendMessageToCallMachine(
         {
@@ -4727,6 +4778,7 @@ function initializePreloadCache() {
     inputSettings: null,
     sendSettings: null,
     videoTrackForNetworkConnectivityTest: null,
+    videoTrackForConnectionQualityTest: null,
   };
 }
 

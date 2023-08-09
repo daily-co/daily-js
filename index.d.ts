@@ -1284,7 +1284,15 @@ export interface DailyEventObjectTranscriptionStopped {
 export interface DailyNetworkConnectivityTestStats {
   result: 'passed' | 'failed' | 'aborted';
 }
-
+export interface DailyConnectionQualityTestData {
+  maxRTT: number | null;
+  packetLoss: number | null;
+}
+export interface DailyConnectionQualityTestStats {
+  result: 'good' | 'bad' | 'warning' | 'aborted' | 'failed';
+  data: DailyConnectionQualityTestData;
+  secondsElapsed: number;
+}
 export type DailyRemoteMediaPlayerStopReason =
   | DailyRemoteMediaPlayerEOS
   | DailyRemoteMediaPlayerPeerStopped;
@@ -1770,6 +1778,11 @@ export interface DailyCall {
     videoTrack: MediaStreamTrack
   ): Promise<DailyNetworkConnectivityTestStats>;
   abortTestNetworkConnectivity(): void;
+  testConnectionQuality(options: {
+    videoTrack: MediaStreamTrack;
+    duration?: number;
+  }): Promise<DailyConnectionQualityTestStats>;
+  stopTestConnectionQuality(): void;
   updateSendSettings(settings: DailySendSettings): Promise<DailySendSettings>;
   getSendSettings(): DailySendSettings | null;
   getActiveSpeaker(): { peerId?: string };
