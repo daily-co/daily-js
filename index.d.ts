@@ -680,6 +680,10 @@ export interface DailyNetworkStats {
       videoRecvPacketLoss: number;
       videoSendBitsPerSecond: number;
       videoSendPacketLoss: number;
+      audioRecvBitsPerSecond: number;
+      audioRecvPacketLoss: number;
+      audioSendBitsPerSecond: number;
+      audioSendPacketLoss: number;
       totalSendPacketLoss: number;
       totalRecvPacketLoss: number;
     };
