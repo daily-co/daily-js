@@ -509,13 +509,14 @@ const FRAME_PROPS = {
         'no',
         'pl',
         'pt',
+        'pt-BR',
         'ru',
         'sv',
         'tr',
         'user',
       ].includes(lang);
     },
-    help: 'language not supported. Options are: de, en-us, en, es, fi, fr, it, jp, ka, nl, no, pl, pt, ru, sv, tr, user',
+    help: 'language not supported. Options are: de, en-us, en, es, fi, fr, it, jp, ka, nl, no, pl, pt, pt-BR, ru, sv, tr, user',
   },
   userName: true, // ignored if there's a token
   userData: {
@@ -3046,7 +3047,9 @@ export default class DailyIframe extends EventEmitter {
 
   _validateVideoTrackForNetworkTests(videoTrack) {
     if (!videoTrack) {
-      console.error('Missing video track. You must provide a video track in order to run this test.');
+      console.error(
+        'Missing video track. You must provide a video track in order to run this test.'
+      );
       return false;
     }
     if (!(videoTrack instanceof MediaStreamTrack)) {
@@ -3090,7 +3093,7 @@ export default class DailyIframe extends EventEmitter {
       this.sendMessageToCallMachine(
         {
           action: DAILY_METHOD_TEST_CONNECTION_QUALITY,
-          duration: duration
+          duration: duration,
         },
         k
       );

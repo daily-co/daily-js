@@ -25,6 +25,7 @@ export type DailyLanguage =
   | 'no'
   | 'pl'
   | 'pt'
+  | 'pt-BR'
   | 'ru'
   | 'sv'
   | 'tr';
