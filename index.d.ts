@@ -673,19 +673,19 @@ export interface DailyNetworkStats {
   quality: number;
   stats: {
     latest: {
-      recvBitsPerSecond: number;
-      sendBitsPerSecond: number;
       timestamp: number;
-      videoRecvBitsPerSecond: number;
-      videoRecvPacketLoss: number;
-      videoSendBitsPerSecond: number;
-      videoSendPacketLoss: number;
-      audioRecvBitsPerSecond: number;
-      audioRecvPacketLoss: number;
-      audioSendBitsPerSecond: number;
-      audioSendPacketLoss: number;
-      totalSendPacketLoss: number;
-      totalRecvPacketLoss: number;
+      recvBitsPerSecond: number | null;
+      sendBitsPerSecond: number | null;
+      videoRecvBitsPerSecond: number | null;
+      videoRecvPacketLoss: number | null;
+      videoSendBitsPerSecond: number | null;
+      videoSendPacketLoss: number | null;
+      audioRecvBitsPerSecond: number | null;
+      audioRecvPacketLoss: number | null;
+      audioSendBitsPerSecond: number | null;
+      audioSendPacketLoss: number | null;
+      totalSendPacketLoss: number | null;
+      totalRecvPacketLoss: number | null;
     };
     worstVideoRecvPacketLoss: number;
     worstVideoSendPacketLoss: number;
