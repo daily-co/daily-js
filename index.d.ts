@@ -689,6 +689,8 @@ export interface DailyNetworkStats {
     };
     worstVideoRecvPacketLoss: number;
     worstVideoSendPacketLoss: number;
+    worstAudioRecvPacketLoss: number;
+    worstAudioSendPacketLoss: number;
   };
   threshold: 'good' | 'low' | 'very-low';
 }
