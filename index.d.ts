@@ -519,7 +519,13 @@ export interface DailyParticipant {
   participantType?: string;
 
   // video element info (iframe-based calls using standard UI only)
+  /**
+   * @deprecated This property will be removed. Refer to tracks.video instead.
+   */
   cam_info: {} | DailyVideoElementInfo;
+  /**
+   * @deprecated This property will be removed. Refer to tracks.screenVideo instead.
+   */
   screen_info: {} | DailyVideoElementInfo;
 }
 
@@ -575,6 +581,12 @@ export interface DailyParticipantStreamCss {
   video?: Partial<CSSStyleDeclaration>;
 }
 
+/**
+ * @deprecated
+ * All properties will be removed as cam_info and screen_info are also deprecated.
+ * Use the participants() object's tracks property to retrieve track information instead.
+ * e.g. call.participants()['participant-id'].tracks.video.persistentTrack.getSettings()
+ */
 export interface DailyVideoElementInfo {
   width: number;
   height: number;
