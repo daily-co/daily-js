@@ -1,7 +1,7 @@
 import EventEmitter from 'events';
 import { deepEqual } from 'fast-equals';
 import Bowser from 'bowser';
-
+import { maybeProxyHttpsUrl } from './utils';
 import {
   // re-export
   //
@@ -205,6 +205,17 @@ import {
   DAILY_SCREEN_SHARE_ERROR_TYPE,
   DAILY_METHOD_TEST_WEBSOCKET_CONNECTIVITY,
   DAILY_METHOD_ABORT_TEST_WEBSOCKET_CONNECTIVITY,
+  DAILY_METHOD_TEST_NETWORK_CONNECTIVITY,
+  DAILY_METHOD_ABORT_TEST_NETWORK_CONNECTIVITY,
+  DAILY_METHOD_START_LOCAL_AUDIO_LEVEL_OBSERVER,
+  DAILY_METHOD_STOP_LOCAL_AUDIO_LEVEL_OBSERVER,
+  DAILY_METHOD_START_REMOTE_PARTICIPANTS_AUDIO_LEVEL_OBSERVER,
+  DAILY_METHOD_STOP_REMOTE_PARTICIPANTS_AUDIO_LEVEL_OBSERVER,
+  DAILY_EVENT_LOCAL_AUDIO_LEVEL,
+  DAILY_EVENT_REMOTE_PARTICIPANTS_AUDIO_LEVEL,
+  DAILY_EVENT_DAILY_MAIN_EXECUTED,
+  DAILY_METHOD_STOP_TEST_CONNECTION_QUALITY,
+  DAILY_METHOD_TEST_CONNECTION_QUALITY,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -226,6 +237,7 @@ import {
   addDeviceChangeListener,
   removeDeviceChangeListener,
 } from './shared-with-pluot-core/DeviceChange.js';
+import { isPlayable } from './shared-with-pluot-core/TrackStateUtil';
 
 // call states
 export {
@@ -497,13 +509,14 @@ const FRAME_PROPS = {
         'no',
         'pl',
         'pt',
+        'pt-BR',
         'ru',
         'sv',
         'tr',
         'user',
       ].includes(lang);
     },
-    help: 'language not supported. Options are: de, en-us, en, es, fi, fr, it, jp, ka, nl, no, pl, pt, ru, sv, tr, user',
+    help: 'language not supported. Options are: de, en-us, en, es, fi, fr, it, jp, ka, nl, no, pl, pt, pt-BR, ru, sv, tr, user',
   },
   userName: true, // ignored if there's a token
   userData: {
@@ -813,7 +826,7 @@ const PARTICIPANT_PROPS = {
             }
             break;
           case 'canSend':
-            if (permission instanceof Set) {
+            if (permission instanceof Set || permission instanceof Array) {
               const knownMediaTypes = [
                 'video',
                 'audio',
@@ -830,9 +843,13 @@ const PARTICIPANT_PROPS = {
             } else if (typeof permission !== 'boolean') {
               return false;
             }
+            // convert Array to Set if needed
+            if (permission instanceof Array) {
+              permissionsUpdate['canSend'] = new Set(permission);
+            }
             break;
           case 'canAdmin':
-            if (permission instanceof Set) {
+            if (permission instanceof Set || permission instanceof Array) {
               const knownAdminTypes = [
                 'participants',
                 'streaming',
@@ -846,6 +863,10 @@ const PARTICIPANT_PROPS = {
             } else if (typeof permission !== 'boolean') {
               return false;
             }
+            // convert Array to Set if needed
+            if (permission instanceof Array) {
+              permissionsUpdate['canAdmin'] = new Set(permission);
+            }
             break;
           default:
             return false;
@@ -856,8 +877,8 @@ const PARTICIPANT_PROPS = {
     help:
       'updatePermissions can take hasPresence, canSend, and canAdmin permissions. ' +
       'hasPresence must be a boolean. ' +
-      'canSend can be a boolean or an array of media types (video, audio, screenVideo, screenAudio, customVideo, customAudio). ' +
-      'canAdmin can be a boolean or an array of admin types (participants, streaming, transcription).',
+      'canSend can be a boolean or an Array or Set of media types (video, audio, screenVideo, screenAudio, customVideo, customAudio). ' +
+      'canAdmin can be a boolean or an Array or Set of admin types (participants, streaming, transcription).',
   },
 };
 
@@ -968,7 +989,8 @@ export default class DailyIframe extends EventEmitter {
     if (window.navigator && window.navigator.userAgent.match(/Chrome\/61\./)) {
       iframeEl.allow = 'microphone, camera';
     } else {
-      iframeEl.allow = 'microphone; camera; autoplay; display-capture';
+      iframeEl.allow =
+        'microphone; camera; autoplay; display-capture; screen-wake-lock';
     }
     iframeEl.style.visibility = 'hidden';
     parentEl.appendChild(iframeEl);
@@ -1140,6 +1162,8 @@ export default class DailyIframe extends EventEmitter {
     this._network = { threshold: 'good', quality: 100 };
     this._activeSpeaker = {};
     this._callFrameId = randomStringId();
+    this._localAudioLevel = 0;
+    this._remoteParticipantsAudioLevel = {};
 
     this._messageChannel = isReactNative()
       ? new ReactNativeMessageChannel()
@@ -1919,6 +1943,88 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
+  validateAudioLevelInterval(interval) {
+    if (interval && (interval < 100 || typeof interval !== 'number')) {
+      throw new Error(
+        'The interval must be a number greater than or equal to 100 milliseconds.'
+      );
+    }
+  }
+
+  startLocalAudioLevelObserver(interval) {
+    methodNotSupportedInReactNative();
+    this.validateAudioLevelInterval(interval);
+    if (!this._dailyMainExecuted) {
+      this._preloadCache.localAudioLevelObserver = {
+        enabled: true,
+        interval: interval,
+      };
+      return;
+    }
+    return new Promise((resolve, reject) => {
+      let k = (msg) => {
+        if (msg.error) {
+          reject({ error: msg.error });
+        } else {
+          resolve();
+        }
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_START_LOCAL_AUDIO_LEVEL_OBSERVER,
+          interval,
+        },
+        k
+      );
+    });
+  }
+
+  async stopLocalAudioLevelObserver() {
+    methodNotSupportedInReactNative();
+    this._preloadCache.localAudioLevelObserver = null;
+    this._localAudioLevel = 0;
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_STOP_LOCAL_AUDIO_LEVEL_OBSERVER,
+    });
+  }
+
+  startRemoteParticipantsAudioLevelObserver(interval) {
+    methodNotSupportedInReactNative();
+    this.validateAudioLevelInterval(interval);
+    if (!this._dailyMainExecuted) {
+      this._preloadCache.remoteParticipantsAudioLevelObserver = {
+        enabled: true,
+        interval: interval,
+      };
+      return;
+    }
+    return new Promise((resolve, reject) => {
+      let k = (msg) => {
+        if (msg.error) {
+          reject({ error: msg.error });
+        } else {
+          resolve();
+        }
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_START_REMOTE_PARTICIPANTS_AUDIO_LEVEL_OBSERVER,
+          interval,
+        },
+        k
+      );
+    });
+  }
+
+  async stopRemoteParticipantsAudioLevelObserver() {
+    methodNotSupportedInReactNative();
+    this._preloadCache.remoteParticipantsAudioLevelObserver = null;
+    this._remoteParticipantsAudioLevel = {};
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_STOP_REMOTE_PARTICIPANTS_AUDIO_LEVEL_OBSERVER,
+    });
+  }
+
   async startCamera(properties = {}) {
     // Validate mode.
     methodOnlySupportedInCallObject(this._callObjectMode, 'startCamera()');
@@ -2440,7 +2546,7 @@ export default class DailyIframe extends EventEmitter {
       });
     } else {
       // iframe
-      this._iframe.src = this.assembleMeetingUrl();
+      this._iframe.src = maybeProxyHttpsUrl(this.assembleMeetingUrl());
       return new Promise((resolve, reject) => {
         this._loadedCallback = (error) => {
           if (this._callState === DAILY_STATE_ERROR) {
@@ -2915,15 +3021,20 @@ export default class DailyIframe extends EventEmitter {
         return Promise.reject(e);
       }
     }
-    return new Promise((resolve) => {
-      let k = (msg) => {
-        resolve(msg.results);
+
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve(msg.results);
+        }
       };
       this.sendMessageToCallMachine(
-          {
-            action: DAILY_METHOD_TEST_WEBSOCKET_CONNECTIVITY,
-          },
-          k
+        {
+          action: DAILY_METHOD_TEST_WEBSOCKET_CONNECTIVITY,
+        },
+        k
       );
     });
   }
@@ -2934,11 +3045,115 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  getCpuLoadStats() {
-    if (this._callState !== DAILY_STATE_JOINED) {
-      return { cpuLoadState: undefined, stats: {} };
+  _validateVideoTrackForNetworkTests(videoTrack) {
+    if (!videoTrack) {
+      console.error(
+        'Missing video track. You must provide a video track in order to run this test.'
+      );
+      return false;
     }
+    if (!(videoTrack instanceof MediaStreamTrack)) {
+      console.error('Video track needs to be of type `MediaStreamTrack`.');
+      return false;
+    }
+    if (!isPlayable(videoTrack, { isLocalScreenVideo: false })) {
+      console.error(
+        'Video track is not playable. This test needs a live video track.'
+      );
+      return false;
+    }
+    return true;
+  }
+
+  async testConnectionQuality(args) {
+    if (this.needsLoad()) {
+      try {
+        await this.load();
+      } catch (e) {
+        return Promise.reject(e);
+      }
+    }
+
+    const { videoTrack, duration } = args;
+
+    if (!this._validateVideoTrackForNetworkTests(videoTrack)) {
+      throw new Error('Video track error');
+    } else {
+      this._preloadCache.videoTrackForConnectionQualityTest = videoTrack;
+    }
+
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve(msg.results);
+        }
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_TEST_CONNECTION_QUALITY,
+          duration: duration,
+        },
+        k
+      );
+    });
+  }
+
+  stopTestConnectionQuality() {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_STOP_TEST_CONNECTION_QUALITY,
+    });
+  }
+
+  async testNetworkConnectivity(videoTrack) {
+    if (this.needsLoad()) {
+      try {
+        await this.load();
+      } catch (e) {
+        return Promise.reject(e);
+      }
+    }
+
+    if (!this._validateVideoTrackForNetworkTests(videoTrack)) {
+      throw new Error('Video track error');
+    } else {
+      this._preloadCache.videoTrackForNetworkConnectivityTest = videoTrack;
+    }
+
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve(msg.results);
+        }
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_TEST_NETWORK_CONNECTIVITY,
+        },
+        k
+      );
+    });
+  }
+
+  abortTestNetworkConnectivity() {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_ABORT_TEST_NETWORK_CONNECTIVITY,
+    });
+  }
+
+  getCpuLoadStats() {
     return new Promise((resolve, _) => {
+      if (this._callState !== DAILY_STATE_JOINED) {
+        resolve({
+          cpuLoadState: undefined,
+          cpuLoadStateReason: undefined,
+          stats: {},
+        });
+        return;
+      }
       let k = (msg) => {
         resolve(msg.cpuStats);
       };
@@ -3054,6 +3269,14 @@ export default class DailyIframe extends EventEmitter {
   getSendSettings() {
     // Returns null if the user has never invoked updateSendSettings or joined a call
     return this._sendSettings || this._preloadCache.sendSettings;
+  }
+
+  getLocalAudioLevel() {
+    return this._localAudioLevel;
+  }
+
+  getRemoteParticipantsAudioLevel() {
+    return this._remoteParticipantsAudioLevel;
   }
 
   getActiveSpeaker() {
@@ -3654,6 +3877,9 @@ export default class DailyIframe extends EventEmitter {
           ...this.properties,
         });
         break;
+      case DAILY_EVENT_DAILY_MAIN_EXECUTED: {
+        this._dailyMainExecuted = true;
+      }
       case DAILY_EVENT_LOADED:
         if (this._loadedCallback) {
           this._loadedCallback();
@@ -3979,6 +4205,18 @@ export default class DailyIframe extends EventEmitter {
           }
         }
         break;
+      case DAILY_EVENT_LOCAL_AUDIO_LEVEL:
+        {
+          this._localAudioLevel = msg.audioLevel;
+          this.emitDailyJSEvent(msg);
+        }
+        break;
+      case DAILY_EVENT_REMOTE_PARTICIPANTS_AUDIO_LEVEL:
+        {
+          this._remoteParticipantsAudioLevel = msg.participantsAudioLevel;
+          this.emitDailyJSEvent(msg);
+        }
+        break;
       case DAILY_EVENT_REMOTE_MEDIA_PLAYER_STARTED:
         {
           let participantId = msg.session_id;
@@ -4288,6 +4526,9 @@ export default class DailyIframe extends EventEmitter {
     this._receiveSettings = {};
     this._inputSettings = undefined;
     this._sendSettings = {};
+    this._localAudioLevel = 0;
+    this._remoteParticipantsAudioLevel = {};
+    this._dailyMainExecuted = false;
     resetPreloadCache(this._preloadCache);
   }
 
@@ -4539,6 +4780,8 @@ function initializePreloadCache() {
     outputDeviceId: null,
     inputSettings: null,
     sendSettings: null,
+    videoTrackForNetworkConnectivityTest: null,
+    videoTrackForConnectionQualityTest: null,
   };
 }
 

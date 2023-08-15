@@ -81,6 +81,7 @@ export const DAILY_EVENT_THEME_UPDATED = 'theme-updated';
 export const DAILY_EVENT_LOADING = 'loading';
 export const DAILY_EVENT_LOAD_ATTEMPT_FAILED = 'load-attempt-failed';
 export const DAILY_EVENT_LOADED = 'loaded';
+export const DAILY_EVENT_DAILY_MAIN_EXECUTED = 'daily-main-executed';
 export const DAILY_EVENT_STARTED_CAMERA = 'started-camera';
 export const DAILY_EVENT_CAMERA_ERROR = 'camera-error';
 export const DAILY_EVENT_JOINING_MEETING = 'joining-meeting';
@@ -165,12 +166,16 @@ export const DAILY_EVENT_RECEIVE_SETTINGS_UPDATED = 'receive-settings-updated';
 
 export const DAILY_EVENT_INPUT_SETTINGS_UPDATED = 'input-settings-updated';
 export const DAILY_EVENT_SEND_SETTINGS_UPDATED = 'send-settings-updated';
+export const DAILY_EVENT_LOCAL_AUDIO_LEVEL = 'local-audio-level';
+export const DAILY_EVENT_REMOTE_PARTICIPANTS_AUDIO_LEVEL =
+  'remote-participants-audio-level';
 export const DAILY_EVENT_NONFATAL_ERROR = 'nonfatal-error';
 export const DAILY_INPUT_SETTINGS_ERROR_TYPE = 'input-settings-error';
 export const DAILY_SCREEN_SHARE_ERROR_TYPE = 'screen-share-error';
 export const DAILY_VIDEO_PROCESSOR_ERROR_TYPE = 'video-processor-error';
 export const DAILY_AUDIO_PROCESSOR_ERROR_TYPE = 'audio-processor-error';
-
+export const DAILY_LOCAL_AUDIO_LEVEL_OBSERVER_ERROR_TYPE =
+  'local-audio-level-observer-error';
 export const DAILY_EVENT_ERROR = 'error';
 
 export const DAILY_EVENT_CUSTOM_BUTTON_CLICK = 'custom-button-click';
@@ -220,6 +225,14 @@ export const DAILY_METHOD_CYCLE_CAMERA = 'cycle-camera';
 export const DAILY_METHOD_SET_CAMERA = 'set-camera';
 export const DAILY_METHOD_START_CUSTOM_TRACK = 'start-custom-track';
 export const DAILY_METHOD_STOP_CUSTOM_TRACK = 'stop-custom-track';
+export const DAILY_METHOD_START_LOCAL_AUDIO_LEVEL_OBSERVER =
+  'start-local-audio-level-observer';
+export const DAILY_METHOD_STOP_LOCAL_AUDIO_LEVEL_OBSERVER =
+  'stop-local-audio-level-observer';
+export const DAILY_METHOD_START_REMOTE_PARTICIPANTS_AUDIO_LEVEL_OBSERVER =
+  'start-remote-participants-audio-level-observer';
+export const DAILY_METHOD_STOP_REMOTE_PARTICIPANTS_AUDIO_LEVEL_OBSERVER =
+  'stop-remote-participants-audio-level-observer';
 export const DAILY_METHOD_CYCLE_MIC = 'cycle-mic';
 export const DAILY_METHOD_GET_CAMERA_FACING_MODE = 'get-camera-facing-mode';
 export const DAILY_METHOD_APP_MSG = 'app-msg';
@@ -279,11 +292,14 @@ export const DAILY_METHOD_TRANSMIT_LOG = 'transmit-log';
 export const DAILY_CUSTOM_TRACK = 'daily-custom-track';
 export const DAILY_REQUEST_FULLSCREEN = 'request-fullscreen';
 export const DAILY_EXIT_FULLSCREEN = 'request-exit-fullscreen';
-
 export const DAILY_METHOD_TEST_WEBSOCKET_CONNECTIVITY =
   'test-websocket-connectivity';
 export const DAILY_METHOD_ABORT_TEST_WEBSOCKET_CONNECTIVITY =
   'abort-test-websocket-connectivity';
+export const DAILY_METHOD_TEST_NETWORK_CONNECTIVITY = 'test-network-connectivity';
+export const DAILY_METHOD_ABORT_TEST_NETWORK_CONNECTIVITY = 'abort-test-network-connectivity';
+export const DAILY_METHOD_TEST_CONNECTION_QUALITY = 'test-connection-quality';
+export const DAILY_METHOD_STOP_TEST_CONNECTION_QUALITY = 'stop-test-connection-quality';
 
 export const DAILY_JS_NETWORK_THRESHOLDS = {
   VERY_LOW: 'very-low',

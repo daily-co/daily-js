@@ -25,6 +25,7 @@ export type DailyLanguage =
   | 'no'
   | 'pl'
   | 'pt'
+  | 'pt-BR'
   | 'ru'
   | 'sv'
   | 'tr';
@@ -95,6 +96,8 @@ export type DailyEvent =
   | 'receive-settings-updated'
   | 'input-settings-updated'
   | 'send-settings-updated'
+  | 'local-audio-level'
+  | 'remote-participants-audio-level'
   | 'show-local-video-changed'
   | 'selected-devices-updated'
   | 'custom-button-click'
@@ -133,6 +136,7 @@ export type DailyFatalErrorType =
 export type DailyNonFatalErrorType =
   | 'input-settings-error'
   | 'screen-share-error'
+  | 'local-audio-level-observer-error'
   | 'video-processor-error'
   | 'remote-media-player-error'
   | 'live-streaming-warning'
@@ -429,23 +433,35 @@ export interface DailyTrackState {
   persistentTrack?: MediaStreamTrack;
 }
 
+export type DailyParticipantPermissionsCanSendValues =
+  | 'video'
+  | 'audio'
+  | 'screenVideo'
+  | 'screenAudio'
+  | 'customVideo'
+  | 'customAudio';
+
+export type DailyParticipantPermissionsCanAdminValues =
+  | 'participants'
+  | 'streaming'
+  | 'transcription';
+
 export interface DailyParticipantPermissions {
   hasPresence: boolean;
-  canSend:
-    | Set<
-        | 'video'
-        | 'audio'
-        | 'screenVideo'
-        | 'screenAudio'
-        | 'customVideo'
-        | 'customAudio'
-      >
-    | boolean;
-  canAdmin: Set<'participants' | 'streaming' | 'transcription'> | boolean;
+  canSend: Set<DailyParticipantPermissionsCanSendValues> | boolean;
+  canAdmin: Set<DailyParticipantPermissionsCanAdminValues> | boolean;
 }
 
 export type DailyParticipantPermissionsUpdate = {
-  [Property in keyof DailyParticipantPermissions]+?: DailyParticipantPermissions[Property];
+  hasPresence?: boolean;
+  canSend?:
+    | Array<DailyParticipantPermissionsCanSendValues>
+    | Set<DailyParticipantPermissionsCanSendValues>
+    | boolean;
+  canAdmin?:
+    | Array<DailyParticipantPermissionsCanAdminValues>
+    | Set<DailyParticipantPermissionsCanAdminValues>
+    | boolean;
 };
 
 export interface DailyParticipant {
@@ -503,7 +519,13 @@ export interface DailyParticipant {
   participantType?: string;
 
   // video element info (iframe-based calls using standard UI only)
+  /**
+   * @deprecated This property will be removed. Refer to tracks.video instead.
+   */
   cam_info: {} | DailyVideoElementInfo;
+  /**
+   * @deprecated This property will be removed. Refer to tracks.screenVideo instead.
+   */
   screen_info: {} | DailyVideoElementInfo;
 }
 
@@ -559,6 +581,12 @@ export interface DailyParticipantStreamCss {
   video?: Partial<CSSStyleDeclaration>;
 }
 
+/**
+ * @deprecated
+ * All properties will be removed as cam_info and screen_info are also deprecated.
+ * Use the participants() object's tracks property to retrieve track information instead.
+ * e.g. call.participants()['participant-id'].tracks.video.persistentTrack.getSettings()
+ */
 export interface DailyVideoElementInfo {
   width: number;
   height: number;
@@ -645,18 +673,24 @@ export interface DailyNetworkStats {
   quality: number;
   stats: {
     latest: {
-      recvBitsPerSecond: number;
-      sendBitsPerSecond: number;
       timestamp: number;
-      videoRecvBitsPerSecond: number;
-      videoRecvPacketLoss: number;
-      videoSendBitsPerSecond: number;
-      videoSendPacketLoss: number;
-      totalSendPacketLoss: number;
-      totalRecvPacketLoss: number;
+      recvBitsPerSecond: number | null;
+      sendBitsPerSecond: number | null;
+      videoRecvBitsPerSecond: number | null;
+      videoRecvPacketLoss: number | null;
+      videoSendBitsPerSecond: number | null;
+      videoSendPacketLoss: number | null;
+      audioRecvBitsPerSecond: number | null;
+      audioRecvPacketLoss: number | null;
+      audioSendBitsPerSecond: number | null;
+      audioSendPacketLoss: number | null;
+      totalSendPacketLoss: number | null;
+      totalRecvPacketLoss: number | null;
     };
     worstVideoRecvPacketLoss: number;
     worstVideoSendPacketLoss: number;
+    worstAudioRecvPacketLoss: number;
+    worstAudioSendPacketLoss: number;
   };
   threshold: 'good' | 'low' | 'very-low';
 }
@@ -699,6 +733,10 @@ export interface DailySendSettings {
     | DailyVideoSendSettingsPreset
     | DailyScreenVideoSendSettingsPreset
     | undefined;
+}
+
+export interface DailyParticipantsAudioLevel {
+  [participantId: string]: number;
 }
 
 export type DailyVideoSendSettingsPreset =
@@ -799,7 +837,7 @@ export interface DailyRoomInfo {
   };
   tokenConfig: {
     eject_at_token_exp?: boolean;
-    eject_after_elapsed?: boolean;
+    eject_after_elapsed?: number;
     nbf?: number;
     exp?: number;
     is_owner?: boolean;
@@ -1219,6 +1257,16 @@ export interface DailyEventObjectSendSettingsUpdated {
   sendSettings: DailySendSettings;
 }
 
+export interface DailyEventObjectLocalAudioLevel {
+  action: Extract<DailyEvent, 'local-audio-level'>;
+  audioLevel: number;
+}
+
+export interface DailyEventObjectRemoteParticipantsAudioLevel {
+  action: Extract<DailyEvent, 'remote-participants-audio-level'>;
+  participantsAudioLevel: DailyParticipantsAudioLevel;
+}
+
 export interface DailyEventObjectLiveStreamingStarted {
   action: Extract<DailyEvent, 'live-streaming-started'>;
   layout?: DailyLiveStreamingLayoutConfig<'start'>;
@@ -1252,6 +1300,18 @@ export interface DailyEventObjectTranscriptionStopped {
   updatedBy: string;
 }
 
+export interface DailyNetworkConnectivityTestStats {
+  result: 'passed' | 'failed' | 'aborted';
+}
+export interface DailyConnectionQualityTestData {
+  maxRTT: number | null;
+  packetLoss: number | null;
+}
+export interface DailyConnectionQualityTestStats {
+  result: 'good' | 'bad' | 'warning' | 'aborted' | 'failed';
+  data: DailyConnectionQualityTestData;
+  secondsElapsed: number;
+}
 export type DailyRemoteMediaPlayerStopReason =
   | DailyRemoteMediaPlayerEOS
   | DailyRemoteMediaPlayerPeerStopped;
@@ -1669,6 +1729,12 @@ export interface DailyCall {
   ): Promise<{ userName: string }>;
   setUserData(data: unknown): Promise<{ userData: unknown }>;
   startCamera(properties?: DailyCallOptions): Promise<DailyDeviceInfos>;
+  startLocalAudioLevelObserver(interval?: number): Promise<void>;
+  stopLocalAudioLevelObserver(): void;
+  getLocalAudioLevel(): number;
+  startRemoteParticipantsAudioLevelObserver(interval?: number): Promise<void>;
+  stopRemoteParticipantsAudioLevelObserver(): void;
+  getRemoteParticipantsAudioLevel(): DailyParticipantsAudioLevel;
   cycleCamera(): Promise<{ device?: MediaDeviceInfo | null }>;
   cycleMic(): Promise<{ device?: MediaDeviceInfo | null }>;
   setInputDevices(devices: {
@@ -1727,6 +1793,15 @@ export interface DailyCall {
   getCpuLoadStats(): Promise<DailyCpuLoadStats>;
   testWebsocketConnectivity(): Promise<DailyWebsocketConnectivityTestResults>;
   abortTestWebsocketConnectivity(): void;
+  testNetworkConnectivity(
+    videoTrack: MediaStreamTrack
+  ): Promise<DailyNetworkConnectivityTestStats>;
+  abortTestNetworkConnectivity(): void;
+  testConnectionQuality(options: {
+    videoTrack: MediaStreamTrack;
+    duration?: number;
+  }): Promise<DailyConnectionQualityTestStats>;
+  stopTestConnectionQuality(): void;
   updateSendSettings(settings: DailySendSettings): Promise<DailySendSettings>;
   getSendSettings(): DailySendSettings | null;
   getActiveSpeaker(): { peerId?: string };
