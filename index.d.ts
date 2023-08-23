@@ -397,6 +397,8 @@ export interface DailyAdvancedConfig {
   userMediaVideoConstraints?: MediaTrackConstraints;
   avoidEval?: boolean;
   callObjectBundleUrlOverride?: string;
+  alwaysIncludeMicInPermissionPrompt?: boolean;
+  alwaysIncludeCamInPermissionPrompt?: boolean;
   enableIndependentDevicePermissionPrompts?: boolean;
   proxyUrl?: string;
   iceConfig?: DailyIceConfig;
