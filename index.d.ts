@@ -397,6 +397,8 @@ export interface DailyAdvancedConfig {
   userMediaVideoConstraints?: MediaTrackConstraints;
   avoidEval?: boolean;
   callObjectBundleUrlOverride?: string;
+  alwaysIncludeMicInPermissionPrompt?: boolean;
+  alwaysIncludeCamInPermissionPrompt?: boolean;
   enableIndependentDevicePermissionPrompts?: boolean;
   proxyUrl?: string;
   iceConfig?: DailyIceConfig;
@@ -1810,7 +1812,7 @@ export interface DailyCall {
   subscribeToTracksAutomatically(): boolean;
   setSubscribeToTracksAutomatically(enabled: boolean): DailyCall;
   enumerateDevices(): Promise<{ devices: MediaDeviceInfo[] }>;
-  sendAppMessage(data: any, to?: string): DailyCall;
+  sendAppMessage(data: any, to?: string | string[]): DailyCall;
   addFakeParticipant(details?: { aspectRatio: number }): DailyCall;
   setShowNamesMode(mode: false | 'always' | 'never'): DailyCall;
   setShowLocalVideo(show: boolean): DailyCall;

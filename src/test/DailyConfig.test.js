@@ -65,4 +65,18 @@ describe('DailyConfig', () => {
       'maxBitrate must be a number'
     );
   });
+
+  test('Throw error if an empty object is used as one of the encodings', () => {
+    const CAM_ENCODINGS = [
+      { maxBitrate: 900, scaleResolutionDownBy: 4, maxFramerate: 15 },
+      {},
+      {},
+    ];
+    const dailyConfig = {
+      camSimulcastEncodings: CAM_ENCODINGS,
+    };
+    expect(() => callObject.validateDailyConfig(dailyConfig)).toThrowError(
+      'Empty encoding is not allowed. At least one of these valid keys should be specified:maxBitrate,maxFramerate,scaleResolutionDownBy'
+    );
+  });
 });
