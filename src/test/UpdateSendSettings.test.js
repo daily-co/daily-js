@@ -128,7 +128,7 @@ describe('UpdateSendSettings', () => {
     ).not.toThrow();
   });
 
-  test('DailyVideoSendSettings encodings', () => {
+  test('DailyVideoSendSettings encodings must be defined as: low, low and medium, or low, medium and high.', () => {
     let updateSendSettings = {
       video: {
         encodings: {},
@@ -142,7 +142,11 @@ describe('UpdateSendSettings', () => {
     updateSendSettings = {
       video: {
         encodings: {
-          medium: {},
+          medium: {
+            maxBitrate: 90000,
+            scaleResolutionDownBy: 4,
+            maxFramerate: 15,
+          },
         },
       },
     };
@@ -152,8 +156,16 @@ describe('UpdateSendSettings', () => {
     updateSendSettings = {
       video: {
         encodings: {
-          medium: {},
-          high: {},
+          medium: {
+            maxBitrate: 90000,
+            scaleResolutionDownBy: 2,
+            maxFramerate: 15,
+          },
+          high: {
+            maxBitrate: 200000,
+            scaleResolutionDownBy: 1,
+            maxFramerate: 30,
+          },
         },
       },
     };
@@ -163,14 +175,76 @@ describe('UpdateSendSettings', () => {
     updateSendSettings = {
       video: {
         encodings: {
-          low: {},
-          medium: {},
-          high: {},
+          low: {
+            maxBitrate: 90000,
+            scaleResolutionDownBy: 4,
+            maxFramerate: 15,
+          },
+          medium: {
+            maxBitrate: 200000,
+            scaleResolutionDownBy: 2,
+            maxFramerate: 15,
+          },
+          high: {
+            maxBitrate: 680000,
+            scaleResolutionDownBy: 1,
+            maxFramerate: 30,
+          },
         },
       },
     };
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
     ).not.toThrow();
+  });
+
+  test('DailyVideoSendSettings encodings must not have an empty object as one of the encodings', () => {
+    let updateSendSettings = {
+      video: {
+        encodings: {
+          low: {},
+        },
+      },
+    };
+    const expectedEncodingErrorMsg =
+      'Empty encoding is not allowed. At least one of these valid keys should be specified:maxBitrate,maxFramerate,scaleResolutionDownBy';
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).toThrowError(expectedEncodingErrorMsg);
+    updateSendSettings = {
+      video: {
+        encodings: {
+          low: {
+            maxBitrate: 90000,
+            scaleResolutionDownBy: 4,
+            maxFramerate: 15,
+          },
+          medium: {},
+        },
+      },
+    };
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).toThrowError(expectedEncodingErrorMsg);
+    updateSendSettings = {
+      video: {
+        encodings: {
+          low: {
+            maxBitrate: 90000,
+            scaleResolutionDownBy: 4,
+            maxFramerate: 15,
+          },
+          medium: {
+            maxBitrate: 200000,
+            scaleResolutionDownBy: 2,
+            maxFramerate: 15,
+          },
+          high: {},
+        },
+      },
+    };
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).toThrowError(expectedEncodingErrorMsg);
   });
 });

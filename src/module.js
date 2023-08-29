@@ -2863,6 +2863,7 @@ export default class DailyIframe extends EventEmitter {
     // check value within each simulcast layer
     for (let i = 0; i < encodings.length; i++) {
       const layer = encodings[i];
+      this._validateEncodingLayerHasValidProperties(layer);
       for (let prop in layer) {
         // check property is valid
         if (!simulcastEncodingsValidKeys.includes(prop)) {
@@ -3164,6 +3165,16 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
+  _validateEncodingLayerHasValidProperties(layer) {
+    const layerHasProperties = Object.keys(layer)?.length > 0;
+    if (!layerHasProperties) {
+      throw new Error(
+        `Empty encoding is not allowed. At least one of these valid keys should be specified:` +
+          Object.values(simulcastEncodingsValidKeys)
+      );
+    }
+  }
+
   _validateVideoSendSettings(trackName, videoSendSettings) {
     const videoSupportedPresets = [
       DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY,
@@ -3224,6 +3235,22 @@ export default class DailyIframe extends EventEmitter {
         if (trowEncodingValidationError) {
           throw new Error(
             `Encodings must be defined as: low, low and medium, or low, medium and high.`
+          );
+        }
+
+        if (videoSendSettings.encodings.low) {
+          this._validateEncodingLayerHasValidProperties(
+            videoSendSettings.encodings.low
+          );
+        }
+        if (videoSendSettings.encodings.medium) {
+          this._validateEncodingLayerHasValidProperties(
+            videoSendSettings.encodings.medium
+          );
+        }
+        if (videoSendSettings.encodings.high) {
+          this._validateEncodingLayerHasValidProperties(
+            videoSendSettings.encodings.high
           );
         }
       }
