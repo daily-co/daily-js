@@ -505,6 +505,7 @@ export interface DailyParticipant {
     screenVideo: DailyTrackState;
     rmpAudio?: DailyTrackState;
     rmpVideo?: DailyTrackState;
+    [customTrackKey: string]: DailyTrackState | undefined;
   };
 
   // user/session info
