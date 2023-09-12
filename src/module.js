@@ -731,6 +731,9 @@ const FRAME_PROPS = {
   dailyJsVersion: {
     queryString: 'dailyJsVersion',
   },
+  proxy: {
+    queryString: 'proxy',
+  },
   strictMode: true,
 };
 
@@ -3821,6 +3824,9 @@ export default class DailyIframe extends EventEmitter {
         ...this.properties,
         emb: this._callFrameId,
         embHref: encodeURIComponent(window.location.href),
+        proxy: window._dailyConfig?.proxyUrl
+          ? encodeURIComponent(window._dailyConfig?.proxyUrl)
+          : undefined,
       },
       firstSep = props.url.match(/\?/) ? '&' : '?',
       url = props.url,
