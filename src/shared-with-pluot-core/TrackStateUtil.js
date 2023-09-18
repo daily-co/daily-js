@@ -43,3 +43,12 @@ export function getTrackDeviceId_v2CAM(track) {
     ? 'default'
     : track.getSettings?.().deviceId;
 }
+
+// Only for use with v2CamAndMic (should be renamed when v1 cam and mic code
+// path is removed).
+// Assumes track is non-null/undefined.
+export function getTrackDeviceLabel_v2CAM(track) {
+  return track.isProcessed
+    ? track._label // undefined if base track is custom (i.e. not Daily-managed)
+    : track.label;
+}
