@@ -50,5 +50,7 @@ export function getTrackDeviceId_v2CAM(track) {
 export function getTrackDeviceLabel_v2CAM(track) {
   return track.isProcessed
     ? track._label // undefined if base track is custom (i.e. not Daily-managed)
+    : track._treatAsDefaultDevice
+    ? track._defaultDeviceLabel
     : track.label;
 }
