@@ -813,6 +813,12 @@ const PARTICIPANT_PROPS = {
   },
   setAudio: true,
   setVideo: true,
+  setScreenShare: {
+    validate: (screenShareOn) => {
+      return screenShareOn === false;
+    },
+    help: "setScreenShare must be false, as it's only meant for stopping remote participants' screen shares",
+  },
   eject: true,
   updatePermissions: {
     validate: (permissionsUpdate) => {
