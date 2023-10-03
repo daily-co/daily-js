@@ -563,6 +563,7 @@ export type DailyTrackSubscriptionOptions =
 export interface DailyParticipantUpdateOptions {
   setAudio?: boolean;
   setVideo?: boolean;
+  setScreenShare?: false;
   setSubscribedTracks?: DailyTrackSubscriptionOptions;
   eject?: true;
   updatePermissions?: DailyParticipantPermissionsUpdate;
