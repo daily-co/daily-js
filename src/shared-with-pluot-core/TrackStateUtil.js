@@ -32,3 +32,25 @@ export function isPlayable(track, { isLocalScreenVideo }) {
     !isTrackMuted(track, { isLocalScreenVideo })
   );
 }
+
+// Only for use with v2CamAndMic (should be renamed when v1 cam and mic code
+// path is removed).
+// Assumes track is non-null/undefined.
+export function getTrackDeviceId_v2CAM(track) {
+  return track.isProcessed
+    ? track._deviceId // undefined if base track is custom (i.e. not Daily-managed)
+    : track._treatAsDefaultDevice
+    ? 'default'
+    : track.getSettings?.().deviceId;
+}
+
+// Only for use with v2CamAndMic (should be renamed when v1 cam and mic code
+// path is removed).
+// Assumes track is non-null/undefined.
+export function getTrackDeviceLabel_v2CAM(track) {
+  return track.isProcessed
+    ? track._label // undefined if base track is custom (i.e. not Daily-managed)
+    : track._treatAsDefaultDevice
+    ? track._defaultDeviceLabel
+    : track.label;
+}
