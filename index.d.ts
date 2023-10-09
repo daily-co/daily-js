@@ -391,6 +391,9 @@ export interface DailyAdvancedConfig {
   preferH264?: boolean;
   preferH264ForCam?: boolean;
   preferH264ForScreenSharing?: boolean;
+  /**
+   * @deprecated This property will be removed. Instead, use sendSettings, which is found in DailyCallOptions.
+   */
   screenSimulcastEncodings?: any[];
   useDevicePreferenceCookies?: boolean;
   userMediaAudioConstraints?: MediaTrackConstraints;
