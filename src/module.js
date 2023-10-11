@@ -2854,6 +2854,12 @@ export default class DailyIframe extends EventEmitter {
       );
       this.validateSimulcastEncodings(dailyConfig.camSimulcastEncodings);
     }
+    // warn for use of screenSimulcastEncodings
+    if (dailyConfig.screenSimulcastEncodings) {
+      console.warn(
+        'screenSimulcastEncodings is deprecated. Use sendSettings, found in DailyCallOptions, to provide screen simulcast settings.'
+      );
+    }
   }
 
   validateSimulcastEncodings(
