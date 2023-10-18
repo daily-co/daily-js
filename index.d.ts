@@ -391,6 +391,9 @@ export interface DailyAdvancedConfig {
   preferH264?: boolean;
   preferH264ForCam?: boolean;
   preferH264ForScreenSharing?: boolean;
+  /**
+   * @deprecated This property will be removed. Instead, use sendSettings, which is found in DailyCallOptions.
+   */
   screenSimulcastEncodings?: any[];
   useDevicePreferenceCookies?: boolean;
   userMediaAudioConstraints?: MediaTrackConstraints;
@@ -1648,6 +1651,9 @@ export interface DailyTranscriptionDeepgramOptions {
   language?: string;
   model?: string;
   tier?: string;
+  /**
+   * @deprecated This property will be removed. It is not supported for real-time transcriptions.
+   */
   detect_language?: boolean;
   profanity_filter?: boolean;
   redact?: Array<string> | boolean;
@@ -1749,6 +1755,9 @@ export interface DailyCall {
   getRemoteParticipantsAudioLevel(): DailyParticipantsAudioLevel;
   cycleCamera(): Promise<{ device?: MediaDeviceInfo | null }>;
   cycleMic(): Promise<{ device?: MediaDeviceInfo | null }>;
+  /**
+   * @deprecated This property will be removed. Use the method setInputDevicesAsync() instead.
+   */
   setInputDevices(devices: {
     audioDeviceId?: string | false | null;
     audioSource?: MediaStreamTrack | false;
@@ -1766,6 +1775,9 @@ export interface DailyCall {
   setOutputDeviceAsync(audioDevice: {
     outputDeviceId?: string;
   }): Promise<DailyDeviceInfos>;
+  /**
+   * @deprecated This property will be removed. Use the method setOutputDeviceAsync() instead.
+   */
   setOutputDevice(audioDevice: { outputDeviceId?: string }): DailyCall;
   getInputDevices(): Promise<DailyDeviceInfos>;
   preAuth(properties?: DailyCallOptions): Promise<{ access: DailyAccess }>;
