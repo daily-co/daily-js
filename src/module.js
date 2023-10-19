@@ -907,7 +907,7 @@ export default class DailyIframe extends EventEmitter {
         mobile: true,
         name: 'React Native',
         version: null,
-        supportsScreenShare: false,
+        supportsScreenShare: true,
         supportsSfu: true,
         supportsVideoProcessing: false,
         supportsAudioProcessing: false,
