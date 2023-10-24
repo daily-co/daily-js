@@ -1043,7 +1043,7 @@ export interface DailyFatalConnectionError extends DailyFatalError {
     on: 'join' | 'reconnect';
     sourceError: Error;
     uri?: string;
-    region?: string;
+    workerGroup?: string;
   };
 }
 
