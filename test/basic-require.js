@@ -1,4 +1,4 @@
-const DailyIframe = require('../dist/daily-iframe.js');
+const Daily = require('../dist/daily.js');
 
-var daily = new DailyIframe();
+var daily = new Daily();
 daily.sayHello();
