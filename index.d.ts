@@ -1476,7 +1476,7 @@ export interface DailyCallFactory {
   ): DailyCall;
   createFrame(properties?: DailyFactoryOptions): DailyCall;
   createTransparentFrame(properties?: DailyFactoryOptions): DailyCall;
-  getCallInstance(): DailyCall;
+  getCallInstance(): DailyCall | undefined;
 }
 
 export interface DailyCallStaticUtils {
