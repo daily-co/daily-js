@@ -6,8 +6,8 @@
     text following should say hello ... <b><span id="rplx"></span></b>
 
     <script type="module">
-      import DailyIframe from '../dist/daily-iframe-esm.js';
-      let daily = new DailyIframe();
+      import Daily from '../dist/daily-esm.js';
+      let daily = new Daily();
       document.getElementById('rplx').innerText = daily.sayHello();
     </script>
   </body>

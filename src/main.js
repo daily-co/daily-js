@@ -1,2 +1,2 @@
-const DailyIframe = require('./module.js');
-module.exports = DailyIframe.default;
+const Daily = require('./module.js');
+module.exports = Daily.default;

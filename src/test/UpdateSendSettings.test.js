@@ -10,13 +10,13 @@ class MockMediaStreamTrack {}
 global.navigator.mediaDevices = { enumerateDevices: async () => [] };
 global.__dailyJsVersion__ = '*';
 
-import DailyIframe from '../module';
+import Daily from '../module';
 
 describe('UpdateSendSettings', () => {
   let callObject;
 
   beforeEach(() => {
-    callObject = DailyIframe.createCallObject();
+    callObject = Daily.createCallObject();
   });
 
   afterEach(() => {

@@ -7,11 +7,11 @@
     "node": ">=10.0.0"
   },
   "homepage": "https://github.com/daily-co/daily-js/",
-  "main": "dist/daily-iframe.js",
-  "module": "dist/daily-iframe-esm.js",
+  "main": "dist/daily.js",
+  "module": "dist/daily-esm.js",
   "types": "index.d.ts",
   "files": "dist",
-  "unpkg": "dist/daily-iframe.js",
+  "unpkg": "dist/daily.js",
   "browserslist": [
     "defaults",
     "chrome 61",

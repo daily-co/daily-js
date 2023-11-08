@@ -5,7 +5,7 @@ Our goal is to run under
 - Node with `require`
 - Babel with `import`
 - experimental node `import` support
-- `<script>` tag as `window.DailyIframe`
+- `<script>` tag as `window.Daily`
 - `<script type="module">` tag as an ES6 module
 
 # tests for module format and loading
@@ -13,7 +13,7 @@ Our goal is to run under
 ## basic-script.html
 
 Loading our library via a traditional `<script>` tag. The
-`DailyIframe` class is accessible via the `window` variable. To test,
+`Daily` class is accessible via the `window` variable. To test,
 load `test/basic-script.html` in a web browser.
 
 ## basic-require.js
