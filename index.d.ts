@@ -469,6 +469,15 @@ export type DailyParticipantPermissionsUpdate = {
     | boolean;
 };
 
+export interface DailyParticipantTracks {
+  audio: DailyTrackState;
+  video: DailyTrackState;
+  screenAudio: DailyTrackState;
+  screenVideo: DailyTrackState;
+  rmpAudio?: DailyTrackState;
+  rmpVideo?: DailyTrackState;
+}
+
 export interface DailyParticipant {
   /**
    * @deprecated This property will be removed. Use tracks.audio.persistentTrack instead.
@@ -501,13 +510,7 @@ export interface DailyParticipant {
   screen: boolean;
 
   // track state
-  tracks: {
-    audio: DailyTrackState;
-    video: DailyTrackState;
-    screenAudio: DailyTrackState;
-    screenVideo: DailyTrackState;
-    rmpAudio?: DailyTrackState;
-    rmpVideo?: DailyTrackState;
+  tracks: DailyParticipantTracks & {
     [customTrackKey: string]: DailyTrackState | undefined;
   };
 
@@ -683,6 +686,7 @@ export interface DailyNetworkStats {
       timestamp: number;
       recvBitsPerSecond: number | null;
       sendBitsPerSecond: number | null;
+      networkRoundTripTime: number | null;
       videoRecvBitsPerSecond: number | null;
       videoSendBitsPerSecond: number | null;
       audioRecvBitsPerSecond: number | null;
@@ -706,6 +710,7 @@ export interface DailyNetworkStats {
     worstVideoSendJitter: number;
     worstAudioRecvJitter: number;
     worstAudioSendJitter: number;
+    averageNetworkRoundTripTime: number;
   };
   threshold: 'good' | 'low' | 'very-low';
 }
@@ -1471,7 +1476,7 @@ export interface DailyCallFactory {
   ): DailyCall;
   createFrame(properties?: DailyFactoryOptions): DailyCall;
   createTransparentFrame(properties?: DailyFactoryOptions): DailyCall;
-  getCallInstance(): DailyCall;
+  getCallInstance(): DailyCall | undefined;
 }
 
 export interface DailyCallStaticUtils {

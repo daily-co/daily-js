@@ -907,7 +907,7 @@ export default class DailyIframe extends EventEmitter {
         mobile: true,
         name: 'React Native',
         version: null,
-        supportsScreenShare: false,
+        supportsScreenShare: true,
         supportsSfu: true,
         supportsVideoProcessing: false,
         supportsAudioProcessing: false,
@@ -1581,6 +1581,8 @@ export default class DailyIframe extends EventEmitter {
       'getReceiveSettings()'
     );
 
+    if (!this._dailyMainExecuted) return this._receiveSettings;
+
     // This method can be called in two main ways:
     // - it can get receive settings for a specific participant (or "base")
     // - it can get *all* receive settings
@@ -1800,6 +1802,8 @@ export default class DailyIframe extends EventEmitter {
 
   setBandwidth({ kbs, trackConstraints }) {
     methodNotSupportedInReactNative();
+    if (!this._dailyMainExecuted) return;
+
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_SET_BANDWIDTH,
       kbs,
@@ -1810,6 +1814,7 @@ export default class DailyIframe extends EventEmitter {
 
   getDailyLang() {
     methodNotSupportedInReactNative();
+    if (!this._dailyMainExecuted) return;
     return new Promise(async (resolve) => {
       const k = (msg) => {
         delete msg.action;
@@ -1928,6 +1933,8 @@ export default class DailyIframe extends EventEmitter {
       throw e;
     }
     this.properties.userData = data;
+
+    if (!this._dailyMainExecuted) return;
 
     return new Promise((resolve) => {
       const k = (msg) => {
@@ -2739,6 +2746,9 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async startScreenShare(captureOptions = {}) {
+    if (!this._dailyMainExecuted) {
+      return;
+    }
     if (captureOptions.screenVideoSendSettings) {
       this._validateVideoSendSettings(
         'screenVideo',
@@ -2781,6 +2791,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   stopScreenShare() {
+    if (!this._dailyMainExecuted) return;
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_SCREENSHARE });
   }
 
@@ -3381,6 +3392,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   sendAppMessage(data, to = '*') {
+    methodOnlySupportedAfterJoin(this._callState, 'sendAppMessage()');
     if (JSON.stringify(data).length > MAX_APP_MSG_SIZE) {
       throw new Error(
         'Message data too large. Max size is ' + MAX_APP_MSG_SIZE
@@ -3392,6 +3404,7 @@ export default class DailyIframe extends EventEmitter {
 
   addFakeParticipant(args) {
     methodNotSupportedInReactNative();
+    methodOnlySupportedAfterJoin(this._callState, 'addFakeParticipant()');
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_ADD_FAKE_PARTICIPANT,
       ...args,
@@ -4730,7 +4743,7 @@ export default class DailyIframe extends EventEmitter {
     }
     // Need to access store directly since when participant muted their audio we
     // don't have access to their audio tracks in this._participants
-    const state = store.getState();
+    const state = window.store.getState();
     for (const streamId in state.streams) {
       const streamData = state.streams[streamId];
       if (
