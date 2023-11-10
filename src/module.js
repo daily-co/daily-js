@@ -4904,6 +4904,8 @@ export default class DailyIframe extends EventEmitter {
         hub.setTag('serverAddress', error.error.details.uri);
       error.error.details?.workerGroup &&
         hub.setTag('workerGroup', error.error.details.workerGroup);
+      error.error.details?.geoGroup &&
+        hub.setTag('geoGroup', error.error.details.geoGroup);
     }
     hub.setTags({
       callMode: this._callObjectMode

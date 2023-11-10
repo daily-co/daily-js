@@ -1044,6 +1044,7 @@ export interface DailyFatalConnectionError extends DailyFatalError {
     sourceError: Error;
     uri?: string;
     workerGroup?: string;
+    geoGroup?: string;
   };
 }
 
