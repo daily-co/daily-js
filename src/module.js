@@ -4914,6 +4914,7 @@ export default class DailyIframe extends EventEmitter {
           : 'custom'
         : 'prebuilt-frame',
       version: DailyIframe.version(),
+      connectionAttempt: error.error?.details?.on || 'unknown',
     });
 
     const msg = error.error?.msg || error.errMsg;
