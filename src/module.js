@@ -2562,9 +2562,9 @@ export default class DailyIframe extends EventEmitter {
                 errorMsg,
                 error: {
                   type: 'connection-error',
-                  msg: errorMsg,
+                  msg: 'Failed to load call object bundle.',
                   details: {
-                    on: 'join',
+                    on: 'load',
                     sourceError: new Error(errorMsg),
                     bundleUrl: callObjectBundleUrl(),
                   },
@@ -4101,7 +4101,6 @@ export default class DailyIframe extends EventEmitter {
         }
         let { preserveIframe, ...event } = msg;
         if (event?.error?.details?.sourceError) {
-          console.log(event.error.details);
           event.error.details.sourceError = JSON.parse(
             event.error.details.sourceError
           );
@@ -4863,9 +4862,6 @@ export default class DailyIframe extends EventEmitter {
     if (process.env.NODE_ENV === 'development') {
       env = 'development';
     } else if (url && url.host.includes('.staging.daily')) {
-      // console.log('host', url.host);
-      // console.log('bundleUrl', callObjectBundleUrl());
-      // console.log(process.env.NODE_ENV);
       env = 'staging';
     }
 
@@ -4886,8 +4882,9 @@ export default class DailyIframe extends EventEmitter {
       let properties = { ...this.properties };
 
       // remove PII
-      delete properties.userName;
-      delete properties.userData;
+      properties.userName = properties.userName ? '[Filtered]' : undefined;
+      properties.userData = properties.userData ? '[Filtered]' : undefined;
+      properties.token = properties.token ? '[Filtered]' : undefined;
       hub.setExtra('properties', properties);
     }
     if (url) {
