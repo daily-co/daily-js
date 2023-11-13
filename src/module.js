@@ -2566,6 +2566,7 @@ export default class DailyIframe extends EventEmitter {
                   details: {
                     on: 'join',
                     sourceError: new Error(errorMsg),
+                    bundleUrl: callObjectBundleUrl(),
                   },
                 },
               };
@@ -4906,6 +4907,8 @@ export default class DailyIframe extends EventEmitter {
         hub.setTag('workerGroup', error.error.details.workerGroup);
       error.error.details?.geoGroup &&
         hub.setTag('geoGroup', error.error.details.geoGroup);
+      error.error.details?.bundleUrl &&
+        hub.setTag('bundleUrl', error.error.details.bundleUrl);
     }
     hub.setTags({
       callMode: this._callObjectMode
