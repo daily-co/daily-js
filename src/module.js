@@ -4919,10 +4919,9 @@ export default class DailyIframe extends EventEmitter {
       connectionAttempt: error.error?.details?.on || 'unknown',
     });
 
-    const msg = error.error?.msg || error.errMsg;
+    const msg = error.error?.msg || error.errorMsg;
     hub.run((currentHub) => {
-      const retId = currentHub.captureException(new Error(msg));
-      console.log(`Error (${retId}) sent to Sentry in run().`);
+      currentHub.captureException(new Error(msg));
     });
   }
 }
