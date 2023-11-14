@@ -4906,6 +4906,8 @@ export default class DailyIframe extends EventEmitter {
         hub.setTag('geoGroup', error.error.details.geoGroup);
       error.error.details?.bundleUrl &&
         hub.setTag('bundleUrl', error.error.details.bundleUrl);
+      error.error.details?.on &&
+        hub.setTag('connectionAttempt', error.error.details.on);
     }
     hub.setTags({
       callMode: this._callObjectMode
@@ -4916,13 +4918,11 @@ export default class DailyIframe extends EventEmitter {
           : 'custom'
         : 'prebuilt-frame',
       version: DailyIframe.version(),
-      connectionAttempt: error.error?.details?.on || 'unknown',
     });
 
-    const msg = error.error?.msg || error.errMsg;
+    const msg = error.error?.msg || error.errorMsg;
     hub.run((currentHub) => {
-      const retId = currentHub.captureException(new Error(msg));
-      console.log(`Error (${retId}) sent to Sentry in run().`);
+      currentHub.captureException(new Error(msg));
     });
   }
 }
