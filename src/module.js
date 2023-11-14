@@ -2,6 +2,8 @@ import EventEmitter from 'events';
 import { deepEqual } from 'fast-equals';
 import Bowser from 'bowser';
 import { maybeProxyHttpsUrl } from './utils';
+import * as Sentry from '@sentry/browser';
+
 import {
   // re-export
   //
@@ -231,7 +233,11 @@ import WebMessageChannel from './shared-with-pluot-core/script-message-channels/
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
 import { SessionDataUpdate } from './shared-with-pluot-core/SessionData.js';
 import CallObjectLoader from './CallObjectLoader';
-import { randomStringId, validateHttpUrl } from './utils.js';
+import {
+  callObjectBundleUrl,
+  randomStringId,
+  validateHttpUrl,
+} from './utils.js';
 import * as Participant from './Participant';
 import {
   addDeviceChangeListener,
@@ -2551,10 +2557,21 @@ export default class DailyIframe extends EventEmitter {
             if (!willRetry) {
               this._updateCallState(DAILY_STATE_ERROR);
               this.resetMeetingDependentVars();
-              this.emit(DAILY_EVENT_ERROR, {
+              const error = {
                 action: DAILY_EVENT_ERROR,
                 errorMsg,
-              });
+                error: {
+                  type: 'connection-error',
+                  msg: 'Failed to load call object bundle.',
+                  details: {
+                    on: 'load',
+                    sourceError: new Error(errorMsg),
+                    bundleUrl: callObjectBundleUrl(),
+                  },
+                },
+              };
+              this._maybeSendToSentry(error);
+              this.emit(DAILY_EVENT_ERROR, error);
               reject(errorMsg);
             }
           }
@@ -4088,6 +4105,7 @@ export default class DailyIframe extends EventEmitter {
             event.error.details.sourceError
           );
         }
+        this._maybeSendToSentry(msg);
         if (this._joinedCallback) {
           this._joinedCallback(null, event);
           this._joinedCallback = null;
@@ -4830,6 +4848,82 @@ export default class DailyIframe extends EventEmitter {
         'enable strict mode to track down and fix these attempts.';
       console.error(errMsg);
     }
+  }
+
+  _maybeSendToSentry(error) {
+    if (error.error?.type) {
+      const sentryErrors = ['connection-error', 'end-of-life'];
+      if (!sentryErrors.includes(error.error.type)) {
+        return;
+      }
+    }
+    const url = this.properties?.url ? new URL(this.properties.url) : undefined;
+    let env;
+    if (process.env.NODE_ENV === 'development') {
+      env = 'development';
+    } else if (url && url.host.includes('.staging.daily')) {
+      env = 'staging';
+    }
+
+    const client = new Sentry.BrowserClient({
+      dsn: __sentryDSN__,
+      transport: Sentry.makeFetchTransport,
+      integrations: [
+        new Sentry.Integrations.GlobalHandlers({
+          onunhandledrejection: false,
+        }),
+      ],
+      environment: env,
+    });
+
+    const hub = new Sentry.Hub(client, undefined, DailyIframe.version());
+    this.session_id && hub.setExtra('sessionId', this.session_id);
+    if (this.properties) {
+      let properties = { ...this.properties };
+
+      // remove PII
+      properties.userName = properties.userName ? '[Filtered]' : undefined;
+      properties.userData = properties.userData ? '[Filtered]' : undefined;
+      properties.token = properties.token ? '[Filtered]' : undefined;
+      hub.setExtra('properties', properties);
+    }
+    if (url) {
+      let domain = url.searchParams.get('domain');
+      if (!domain) {
+        let match = url.host.match(/(.*?)\./);
+        domain = (match && match[1]) || '';
+      }
+      domain && hub.setTag('domain', domain);
+    }
+    if (error.error) {
+      hub.setTag('fatalErrorType', error.error.type);
+      hub.setExtra('errorDetails', error.error.details);
+      error.error.details?.uri &&
+        hub.setTag('serverAddress', error.error.details.uri);
+      error.error.details?.workerGroup &&
+        hub.setTag('workerGroup', error.error.details.workerGroup);
+      error.error.details?.geoGroup &&
+        hub.setTag('geoGroup', error.error.details.geoGroup);
+      error.error.details?.bundleUrl &&
+        hub.setTag('bundleUrl', error.error.details.bundleUrl);
+    }
+    hub.setTags({
+      callMode: this._callObjectMode
+        ? isReactNative()
+          ? 'reactNative'
+          : this.properties?.dailyConfig?.callMode?.includes('prebuilt')
+          ? this.properties.dailyConfig.callMode
+          : 'custom'
+        : 'prebuilt-frame',
+      version: DailyIframe.version(),
+      connectionAttempt: error.error?.details?.on || 'unknown',
+    });
+
+    const msg = error.error?.msg || error.errMsg;
+    hub.run((currentHub) => {
+      const retId = currentHub.captureException(new Error(msg));
+      console.log(`Error (${retId}) sent to Sentry in run().`);
+    });
   }
 }
 
