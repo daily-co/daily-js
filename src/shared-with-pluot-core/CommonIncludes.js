@@ -58,6 +58,7 @@ export const DAILY_FATAL_ERROR_NBF_ROOM = 'nbf-room';
 export const DAILY_FATAL_ERROR_NBF_TOKEN = 'nbf-token';
 export const DAILY_FATAL_ERROR_EXP_ROOM = 'exp-room';
 export const DAILY_FATAL_ERROR_EXP_TOKEN = 'exp-token';
+export const DAILY_FATAL_ERROR_NO_ROOM = 'no-room';
 export const DAILY_FATAL_ERROR_MEETING_FULL = 'meeting-full';
 export const DAILY_FATAL_ERROR_EOL = 'end-of-life';
 export const DAILY_FATAL_ERROR_NOT_ALLOWED = 'not-allowed';
