@@ -4858,7 +4858,7 @@ export default class DailyIframe extends EventEmitter {
       }
     }
     const url = this.properties?.url ? new URL(this.properties.url) : undefined;
-    let env;
+    let env = 'production';
     if (process.env.NODE_ENV === 'development') {
       env = 'development';
     } else if (url && url.host.includes('.staging.daily')) {
