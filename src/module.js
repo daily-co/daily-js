@@ -2252,19 +2252,6 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  setInputDevices({ audioDeviceId, videoDeviceId, audioSource, videoSource }) {
-    console.warn(
-      'setInputDevices() is deprecated: instead use setInputDevicesAsync(), which returns a Promise'
-    );
-    void this.setInputDevicesAsync({
-      audioDeviceId,
-      videoDeviceId,
-      audioSource,
-      videoSource,
-    });
-    return this;
-  }
-
   async setInputDevicesAsync({
     audioDeviceId,
     videoDeviceId,
@@ -2329,14 +2316,6 @@ export default class DailyIframe extends EventEmitter {
         k
       );
     });
-  }
-
-  setOutputDevice({ outputDeviceId }) {
-    console.warn(
-      'setOutputDevice() is deprecated: instead use setOutputDeviceAsync(), which returns a Promise'
-    );
-    void this.setOutputDeviceAsync({ outputDeviceId });
-    return this;
   }
 
   async setOutputDeviceAsync({ outputDeviceId }) {
@@ -5197,17 +5176,10 @@ function validateVideoProcessor(p) {
   // publish has been deprecated. It hasnt been removed from VALID_PROCESSOR_KEYS
   // so as to not throw an error for any active users; Added a warning about the
   // deprecation below.
-  const VALID_PROCESSOR_KEYS = ['type', `config`, 'publish'];
+  const VALID_PROCESSOR_KEYS = ['type', 'config'];
   if (!p) return false;
   if (typeof p !== 'object') return false;
   if (!validateVideoProcessorType(p.type)) return false;
-  if (p.publish !== undefined && typeof p.publish !== 'boolean') return false;
-  // publish flag has been deprecated
-  if (typeof p.publish === 'boolean') {
-    console.warn(
-      'inputSettings.video.processor: publish key has been deprecated; it will be ignored'
-    );
-  }
 
   if (p.config) {
     if (typeof p.config !== 'object') return false;
