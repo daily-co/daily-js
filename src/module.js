@@ -97,7 +97,7 @@ import {
   DAILY_EVENT_LANG_UPDATED,
   DAILY_EVENT_SHOW_LOCAL_VIDEO_CHANGED,
   DAILY_EVENT_ACCESS_STATE_UPDATED,
-  DAILY_EVENT_MEETING_SESSION_UPDATED,
+  DAILY_EVENT_MEETING_SESSION_SUMMARY_UPDATED,
   DAILY_EVENT_MEETING_SESSION_STATE_UPDATED,
   DAILY_EVENT_MEETING_SESSION_DATA_ERROR,
   DAILY_EVENT_WAITING_PARTICIPANT_ADDED,
@@ -142,7 +142,6 @@ import {
   DAILY_METHOD_SET_LANG,
   DAILY_METHOD_SET_PROXYURL,
   DAILY_METHOD_SET_ICE_CONFIG,
-  DAILY_METHOD_GET_MEETING_SESSION,
   DAILY_METHOD_SET_SESSION_DATA,
   DAILY_METHOD_REGISTER_INPUT_HANDLER,
   DAILY_METHOD_DETECT_ALL_FACES,
@@ -349,7 +348,7 @@ export {
   DAILY_EVENT_LIVE_STREAMING_ERROR,
   DAILY_EVENT_LANG_UPDATED,
   DAILY_EVENT_ACCESS_STATE_UPDATED,
-  DAILY_EVENT_MEETING_SESSION_UPDATED,
+  DAILY_EVENT_MEETING_SESSION_SUMMARY_UPDATED,
   DAILY_EVENT_MEETING_SESSION_STATE_UPDATED,
   DAILY_EVENT_MEETING_SESSION_DATA_ERROR,
   DAILY_EVENT_WAITING_PARTICIPANT_ADDED,
@@ -1166,6 +1165,8 @@ export default class DailyIframe extends EventEmitter {
     this._callState = DAILY_STATE_NEW; // only update via updateIsPreparingToJoin() or _updateCallState()
     this._isPreparingToJoin = false; // only update via _updateCallState()
     this._accessState = { access: DAILY_ACCESS_UNKNOWN };
+    this._meetingSessionSummary = {};
+    this._prevMeetingSessionSummary = {};
     this._meetingSessionState = maybeStripDataFromMeetingSessionState(
       DEFAULT_SESSION_STATE,
       this._callObjectMode
@@ -1855,21 +1856,22 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
+  meetingSessionSummary() {
+    if ([DAILY_STATE_LEFT, DAILY_STATE_ERROR].includes(this._callState)) {
+      return this._prevMeetingSessionSummary;
+    }
+    return this._meetingSessionSummary;
+  }
+
   async getMeetingSession() {
+    console.warn(
+      'getMeetingSession() is deprecated: use meetingSessionSummary(), which will return immediately'
+    );
     // Validate call state: meeting session details are only available
     // once you have joined the meeting
     methodOnlySupportedAfterJoin(this._callState, 'getMeetingSession()');
-    return new Promise(async (resolve) => {
-      const k = (msg) => {
-        delete msg.action;
-        delete msg.callbackStamp;
-        delete msg.callFrameId;
-        resolve(msg);
-      };
-      this.sendMessageToCallMachine(
-        { action: DAILY_METHOD_GET_MEETING_SESSION },
-        k
-      );
+    return new Promise((resolve) => {
+      resolve({ meetingSession: this.meetingSessionSummary() });
     });
   }
 
@@ -4060,11 +4062,18 @@ export default class DailyIframe extends EventEmitter {
         }
         break;
       }
-      case DAILY_EVENT_MEETING_SESSION_UPDATED:
+      case DAILY_EVENT_MEETING_SESSION_SUMMARY_UPDATED:
         if (msg.meetingSession) {
+          this._meetingSessionSummary = msg.meetingSession;
           try {
             delete msg.callFrameId;
             this.emit(msg.action, msg);
+            // send deprecated backwards-compatible event
+            const msg_cp = {
+              ...msg,
+              action: 'meeting-session-updated',
+            };
+            this.emit(msg_cp.action, msg_cp);
           } catch (e) {
             console.log('could not emit', msg, e);
           }
@@ -4579,6 +4588,8 @@ export default class DailyIframe extends EventEmitter {
     this._activeSpeakerMode = false;
     this._didPreAuth = false;
     this._accessState = { access: DAILY_ACCESS_UNKNOWN };
+    this._prevMeetingSessionSummary = this._meetingSessionSummary;
+    this._meetingSessionSummary = {};
     this._meetingSessionState = maybeStripDataFromMeetingSessionState(
       DEFAULT_SESSION_STATE,
       this._callObjectMode

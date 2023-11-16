@@ -101,7 +101,8 @@ export const DAILY_EVENT_PARTICIPANT_COUNTS_UPDATED =
 
 export const DAILY_EVENT_ACCESS_STATE_UPDATED = 'access-state-updated';
 
-export const DAILY_EVENT_MEETING_SESSION_UPDATED = 'meeting-session-updated';
+export const DAILY_EVENT_MEETING_SESSION_SUMMARY_UPDATED =
+  'meeting-session-summary-updated';
 export const DAILY_EVENT_MEETING_SESSION_STATE_UPDATED =
   'meeting-session-state-updated';
 export const DAILY_EVENT_MEETING_SESSION_DATA_ERROR =
@@ -248,7 +249,6 @@ export const DAILY_METHOD_GET_LANG = 'get-daily-lang';
 export const DAILY_METHOD_SET_LANG = 'set-daily-lang';
 export const DAILY_METHOD_SET_PROXYURL = 'set-proxy-url';
 export const DAILY_METHOD_SET_ICE_CONFIG = 'set-ice-config';
-export const DAILY_METHOD_GET_MEETING_SESSION = 'get-meeting-session';
 export const DAILY_METHOD_SET_SESSION_DATA = 'set-session-data';
 export const DAILY_METHOD_SET_USER_NAME = 'set-user-name';
 export const DAILY_METHOD_SET_USER_DATA = 'set-user-data';

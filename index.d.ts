@@ -87,6 +87,7 @@ export type DailyEvent =
   | 'remote-media-player-updated'
   | 'access-state-updated'
   | 'meeting-session-updated'
+  | 'meeting-session-summary-updated'
   | 'meeting-session-state-updated'
   | 'waiting-participant-added'
   | 'waiting-participant-updated'
@@ -879,7 +880,14 @@ export interface DailyRoomInfo {
   dialInPIN?: string;
 }
 
+/**
+ * @deprecated This type will be removed. Use DailyMeetingSessionSummary instead.
+ */
 export interface DailyMeetingSession {
+  id: string;
+}
+
+export interface DailyMeetingSessionSummary {
   id: string;
 }
 
@@ -1118,6 +1126,14 @@ export interface DailyEventObjectAccessState extends DailyAccessState {
   action: Extract<DailyEvent, 'access-state-updated'>;
 }
 
+export interface DailyEventObjectMeetingSessionSummaryUpdated {
+  action: Extract<DailyEvent, 'meeting-session-summary-updated'>;
+  meetingSession: DailyMeetingSessionSummary;
+}
+
+/**
+ * @deprecated This event will be removed. Use the method meetingSessionSummary() instead.
+ */
 export interface DailyEventObjectMeetingSessionUpdated {
   action: Extract<DailyEvent, 'meeting-session-updated'>;
   meetingSession: DailyMeetingSession;
@@ -1743,9 +1759,13 @@ export interface DailyCall {
   setDailyLang(lang: DailyLanguageSetting): DailyCall;
   setProxyUrl(proxyUrl?: string): DailyCall;
   setIceConfig(iceConfig?: DailyIceConfig): DailyCall;
+  /**
+   * @deprecated This function will be removed. Use the method meetingSessionSummary() instead.
+   */
   getMeetingSession(): Promise<{
     meetingSession: DailyMeetingSession;
   }>;
+  meetingSessionSummary(): DailyMeetingSessionSummary;
   meetingSessionState(): DailyMeetingSessionState;
   setMeetingSessionData(
     data: unknown,
