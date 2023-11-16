@@ -4854,7 +4854,7 @@ export default class DailyIframe extends EventEmitter {
 
   _maybeSendToSentry(error) {
     if (error.error?.type) {
-      const sentryErrors = ['connection-error', 'end-of-life'];
+      const sentryErrors = ['connection-error', 'end-of-life', 'no-room'];
       if (!sentryErrors.includes(error.error.type)) {
         return;
       }
