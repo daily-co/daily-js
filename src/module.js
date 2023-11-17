@@ -37,6 +37,7 @@ import {
   DAILY_FATAL_ERROR_EOL,
   DAILY_FATAL_ERROR_EXP_ROOM,
   DAILY_FATAL_ERROR_EXP_TOKEN,
+  DAILY_FATAL_ERROR_NO_ROOM,
   DAILY_FATAL_ERROR_MEETING_FULL,
   DAILY_FATAL_ERROR_NOT_ALLOWED,
   DAILY_FATAL_ERROR_CONNECTION,
@@ -287,6 +288,7 @@ export {
   DAILY_FATAL_ERROR_EXP_ROOM,
   DAILY_FATAL_ERROR_EXP_TOKEN,
   DAILY_FATAL_ERROR_MEETING_FULL,
+  DAILY_FATAL_ERROR_NO_ROOM,
   DAILY_FATAL_ERROR_NOT_ALLOWED,
   DAILY_FATAL_ERROR_CONNECTION,
   DAILY_CAMERA_ERROR_CAM_IN_USE,
@@ -4831,7 +4833,7 @@ export default class DailyIframe extends EventEmitter {
 
   _maybeSendToSentry(error) {
     if (error.error?.type) {
-      const sentryErrors = ['connection-error', 'end-of-life'];
+      const sentryErrors = ['connection-error', 'end-of-life', 'no-room'];
       if (!sentryErrors.includes(error.error.type)) {
         return;
       }
