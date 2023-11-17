@@ -1764,15 +1764,6 @@ export interface DailyCall {
   getRemoteParticipantsAudioLevel(): DailyParticipantsAudioLevel;
   cycleCamera(): Promise<{ device?: MediaDeviceInfo | null }>;
   cycleMic(): Promise<{ device?: MediaDeviceInfo | null }>;
-  /**
-   * @deprecated This property will be removed. Use the method setInputDevicesAsync() instead.
-   */
-  setInputDevices(devices: {
-    audioDeviceId?: string | false | null;
-    audioSource?: MediaStreamTrack | false;
-    videoDeviceId?: string | false | null;
-    videoSource?: MediaStreamTrack | false;
-  }): DailyCall;
   startCustomTrack(properties: StartCustomTrackOptions): Promise<string>;
   stopCustomTrack(trackName: string): Promise<string>;
   setInputDevicesAsync(devices: {
@@ -1784,10 +1775,6 @@ export interface DailyCall {
   setOutputDeviceAsync(audioDevice: {
     outputDeviceId?: string;
   }): Promise<DailyDeviceInfos>;
-  /**
-   * @deprecated This property will be removed. Use the method setOutputDeviceAsync() instead.
-   */
-  setOutputDevice(audioDevice: { outputDeviceId?: string }): DailyCall;
   getInputDevices(): Promise<DailyDeviceInfos>;
   preAuth(properties?: DailyCallOptions): Promise<{ access: DailyAccess }>;
   load(properties?: DailyLoadOptions): Promise<void>;
