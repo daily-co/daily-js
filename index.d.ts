@@ -1316,7 +1316,7 @@ export interface DailyEventObjectTranscriptionStarted {
   tier?: string;
   detect_language?: boolean;
   profanity_filter?: boolean;
-  redact?: Array<string> | boolean;
+  redact?: Array<string> | Array<boolean> | boolean;
   startedBy: string;
 }
 
@@ -1666,7 +1666,7 @@ export interface DailyTranscriptionDeepgramOptions {
    */
   detect_language?: boolean;
   profanity_filter?: boolean;
-  redact?: Array<string> | boolean;
+  redact?: Array<string> | Array<boolean> | boolean;
 }
 
 export type SidebarView =
