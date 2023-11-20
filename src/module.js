@@ -142,6 +142,7 @@ import {
   DAILY_METHOD_SET_LANG,
   DAILY_METHOD_SET_PROXYURL,
   DAILY_METHOD_SET_ICE_CONFIG,
+  DAILY_METHOD_GET_MEETING_SESSION,
   DAILY_METHOD_SET_SESSION_DATA,
   DAILY_METHOD_REGISTER_INPUT_HANDLER,
   DAILY_METHOD_DETECT_ALL_FACES,
@@ -1871,7 +1872,19 @@ export default class DailyIframe extends EventEmitter {
     // once you have joined the meeting
     methodOnlySupportedAfterJoin(this._callState, 'getMeetingSession()');
     return new Promise((resolve) => {
-      resolve({ meetingSession: this.meetingSessionSummary() });
+      // Not doing the following so that we can log and monitor usage of
+      // this now deprecated function
+      // resolve({ meetingSession: this.meetingSessionSummary() });
+      const k = (msg) => {
+        delete msg.action;
+        delete msg.callbackStamp;
+        delete msg.callFrameId;
+        resolve(msg);
+      };
+      this.sendMessageToCallMachine(
+        { action: DAILY_METHOD_GET_MEETING_SESSION },
+        k
+      );
     });
   }
 
