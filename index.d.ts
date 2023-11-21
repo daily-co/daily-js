@@ -87,6 +87,7 @@ export type DailyEvent =
   | 'remote-media-player-updated'
   | 'access-state-updated'
   | 'meeting-session-updated'
+  | 'meeting-session-summary-updated'
   | 'meeting-session-state-updated'
   | 'waiting-participant-added'
   | 'waiting-participant-updated'
@@ -393,7 +394,8 @@ export interface DailyAdvancedConfig {
   preferH264ForCam?: boolean;
   preferH264ForScreenSharing?: boolean;
   /**
-   * @deprecated This property will be removed. Instead, use sendSettings, which is found in DailyCallOptions.
+   * @deprecated This property will be removed. Instead, use sendSettings, which
+   *             is found in DailyCallOptions.
    */
   screenSimulcastEncodings?: any[];
   useDevicePreferenceCookies?: boolean;
@@ -434,7 +436,8 @@ export interface DailyTrackState {
   track?: MediaStreamTrack;
   // not-guaranteed-playable reference to the track
   // (it may be present when state !== 'playable')
-  // useful, for instance, for avoiding Safari's remote-track-unmute-in-background-tab bug
+  // useful, for instance, for avoiding Safari's
+  // remote-track-unmute-in-background-tab bug
   // (see https://github.com/daily-demos/call-object-react/blob/c81b21262dead2aacbd5a2f534d0fee8530acfe4/src/components/Tile/Tile.js#L53-L60)
   persistentTrack?: MediaStreamTrack;
 }
@@ -481,19 +484,25 @@ export interface DailyParticipantTracks {
 
 export interface DailyParticipant {
   /**
-   * @deprecated This property will be removed. Use tracks.audio.persistentTrack instead.
+   * @deprecated
+   * This property will be removed. Use tracks.audio.persistentTrack instead.
    */
   audioTrack?: MediaStreamTrack | false;
   /**
-   * @deprecated This property will be removed. Use tracks.video.persistentTrack instead.
+   * @deprecated
+   * This property will be removed. Use tracks.video.persistentTrack instead.
    */
   videoTrack?: MediaStreamTrack | false;
   /**
-   * @deprecated This property will be removed. Use tracks.screenVideo.persistentTrack instead.
+   * @deprecated
+   * This property will be removed.
+   * Use tracks.screenVideo.persistentTrack instead.
    */
   screenVideoTrack?: MediaStreamTrack | false;
   /**
-   * @deprecated This property will be removed. Use tracks.screenAudio.persistentTrack instead.
+   * @deprecated
+   * This property will be removed.
+   * Use tracks.screenAudio.persistentTrack instead.
    */
   screenAudioTrack?: MediaStreamTrack | false;
 
@@ -506,7 +515,8 @@ export interface DailyParticipant {
    */
   video: boolean;
   /**
-   * @deprecated This property will be removed. Use tracks.screenVideo.state instead.
+   * @deprecated
+   * This property will be removed. Use tracks.screenVideo.state instead.
    */
   screen: boolean;
 
@@ -530,11 +540,13 @@ export interface DailyParticipant {
 
   // video element info (iframe-based calls using standard UI only)
   /**
-   * @deprecated This property will be removed. Refer to tracks.video instead.
+   * @deprecated
+   * This property will be removed. Refer to tracks.video instead.
    */
   cam_info: {} | DailyVideoElementInfo;
   /**
-   * @deprecated This property will be removed. Refer to tracks.screenVideo instead.
+   * @deprecated
+   * This property will be removed. Refer to tracks.screenVideo instead.
    */
   screen_info: {} | DailyVideoElementInfo;
 }
@@ -594,8 +606,9 @@ export interface DailyParticipantStreamCss {
 
 /**
  * @deprecated
- * All properties will be removed as cam_info and screen_info are also deprecated.
- * Use the participants() object's tracks property to retrieve track information instead.
+ * All properties will be removed as cam_info and screen_info are also
+ * deprecated. Use the participants() object's tracks property to retrieve track
+ * information instead.
  * e.g. call.participants()['participant-id'].tracks.video.persistentTrack.getSettings()
  */
 export interface DailyVideoElementInfo {
@@ -636,7 +649,9 @@ export interface DailyScreenCaptureOptions {
    */
   chromeMediaSourceId?: string;
   /**
-   * @deprecated This property will be removed. It is recommended to use our custom tracks API.
+   * @deprecated
+   * This property will be removed.
+   * It is recommended to use our custom tracks API.
    */
   mediaStream?: MediaStream;
 }
@@ -879,7 +894,15 @@ export interface DailyRoomInfo {
   dialInPIN?: string;
 }
 
+/**
+ * @deprecated
+ * This type will be removed. Use DailyMeetingSessionSummary instead.
+ */
 export interface DailyMeetingSession {
+  id: string;
+}
+
+export interface DailyMeetingSessionSummary {
   id: string;
 }
 
@@ -1118,6 +1141,16 @@ export interface DailyEventObjectAccessState extends DailyAccessState {
   action: Extract<DailyEvent, 'access-state-updated'>;
 }
 
+export interface DailyEventObjectMeetingSessionSummaryUpdated {
+  action: Extract<DailyEvent, 'meeting-session-summary-updated'>;
+  meetingSession: DailyMeetingSessionSummary;
+}
+
+/**
+ * @deprecated
+ * This event will be removed. Use the
+ * DailyEventObjectMeetingSessionSummaryUpdated type instead.
+ */
 export interface DailyEventObjectMeetingSessionUpdated {
   action: Extract<DailyEvent, 'meeting-session-updated'>;
   meetingSession: DailyMeetingSession;
@@ -1743,9 +1776,13 @@ export interface DailyCall {
   setDailyLang(lang: DailyLanguageSetting): DailyCall;
   setProxyUrl(proxyUrl?: string): DailyCall;
   setIceConfig(iceConfig?: DailyIceConfig): DailyCall;
+  /**
+   * @deprecated This function will be removed. Use the method meetingSessionSummary() instead.
+   */
   getMeetingSession(): Promise<{
     meetingSession: DailyMeetingSession;
   }>;
+  meetingSessionSummary(): DailyMeetingSessionSummary;
   meetingSessionState(): DailyMeetingSessionState;
   setMeetingSessionData(
     data: unknown,
