@@ -1167,7 +1167,7 @@ export default class DailyIframe extends EventEmitter {
     this._isPreparingToJoin = false; // only update via _updateCallState()
     this._accessState = { access: DAILY_ACCESS_UNKNOWN };
     this._meetingSessionSummary = {};
-    this._prevMeetingSessionSummary = {};
+    this._finalSummaryOfPrevSession = {};
     this._meetingSessionState = maybeStripDataFromMeetingSessionState(
       DEFAULT_SESSION_STATE,
       this._callObjectMode
@@ -1859,7 +1859,7 @@ export default class DailyIframe extends EventEmitter {
 
   meetingSessionSummary() {
     if ([DAILY_STATE_LEFT, DAILY_STATE_ERROR].includes(this._callState)) {
-      return this._prevMeetingSessionSummary;
+      return this._finalSummaryOfPrevSession;
     }
     return this._meetingSessionSummary;
   }
@@ -4601,7 +4601,7 @@ export default class DailyIframe extends EventEmitter {
     this._activeSpeakerMode = false;
     this._didPreAuth = false;
     this._accessState = { access: DAILY_ACCESS_UNKNOWN };
-    this._prevMeetingSessionSummary = this._meetingSessionSummary;
+    this._finalSummaryOfPrevSession = this._meetingSessionSummary;
     this._meetingSessionSummary = {};
     this._meetingSessionState = maybeStripDataFromMeetingSessionState(
       DEFAULT_SESSION_STATE,
