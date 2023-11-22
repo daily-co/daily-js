@@ -2534,10 +2534,14 @@ export default class DailyIframe extends EventEmitter {
       // non-iframe, callObjectMode
       return new Promise((resolve, reject) => {
         this._callObjectLoader.cancel();
+        const startTime = Date.now();
         this._callObjectLoader.load(
           this._callFrameId,
           this.properties.dailyConfig && this.properties.dailyConfig.avoidEval,
           (wasNoOp) => {
+            if (!wasNoOp) {
+              this._bundleLoadTime = Date.now() - startTime;
+            }
             this._updateCallState(DAILY_STATE_LOADED);
             // Only need to emit event if load was a no-op, since the loaded
             // bundle won't be emitting it if it's not executed again
@@ -3953,6 +3957,23 @@ export default class DailyIframe extends EventEmitter {
         break;
       case DAILY_EVENT_DAILY_MAIN_EXECUTED: {
         this._dailyMainExecuted = true;
+        const logMsg = {
+          action: DAILY_METHOD_TRANSMIT_LOG,
+          level: 'log',
+          code: 1011,
+          stats: {
+            event: 'bundle load',
+            time: this._bundleLoadTime,
+            url: callObjectBundleUrl(),
+          },
+        };
+        this._messageChannel.sendMessageToCallMachine(
+          logMsg,
+          null,
+          this._iframe,
+          this._callFrameId
+        );
+        break;
       }
       case DAILY_EVENT_LOADED:
         if (this._loadedCallback) {
