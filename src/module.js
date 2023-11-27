@@ -2539,9 +2539,7 @@ export default class DailyIframe extends EventEmitter {
           this._callFrameId,
           this.properties.dailyConfig && this.properties.dailyConfig.avoidEval,
           (wasNoOp) => {
-            if (!wasNoOp) {
-              this._bundleLoadTime = Date.now() - startTime;
-            }
+            this._bundleLoadTime = wasNoOp ? 'no-op' : Date.now() - startTime;
             this._updateCallState(DAILY_STATE_LOADED);
             // Only need to emit event if load was a no-op, since the loaded
             // bundle won't be emitting it if it's not executed again
@@ -3963,7 +3961,8 @@ export default class DailyIframe extends EventEmitter {
           code: 1011,
           stats: {
             event: 'bundle load',
-            time: this._bundleLoadTime,
+            time: this._bundleLoadTime === 'no-op' ? 0 : this._bundleLoadTime,
+            preLoaded: this._bundleLoadTime === 'no-op',
             url: callObjectBundleUrl(),
           },
         };
@@ -4634,6 +4633,7 @@ export default class DailyIframe extends EventEmitter {
     this._localAudioLevel = 0;
     this._remoteParticipantsAudioLevel = {};
     this._dailyMainExecuted = false;
+    this._bundleLoadTime = undefined;
     resetPreloadCache(this._preloadCache);
   }
 
