@@ -1700,6 +1700,7 @@ export interface DailyTranscriptionDeepgramOptions {
   detect_language?: boolean;
   profanity_filter?: boolean;
   redact?: Array<string> | Array<boolean> | boolean;
+  extra?: Map<string, any>;
 }
 
 export type SidebarView =
