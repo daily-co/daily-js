@@ -1,9 +1,9 @@
-import DailyIframe from '../module';
+import Daily from '../module';
 import {
   MAX_SESSION_DATA_SIZE,
   MAX_USER_DATA_SIZE,
 } from '../shared-with-pluot-core/CommonIncludes';
-// const { createCallObject } = DailyIframe;
+// const { createCallObject } = Daily;
 
 // let djs;
 
@@ -12,12 +12,12 @@ import {
 // };
 
 // beforeEach(() => {
-//   delete DailyIframe.version;
-//   DailyIframe.version = versionFn;
+//   delete Daily.version;
+//   Daily.version = versionFn;
 //   djs = createCallObject();
 // });
 
-const validateRMPEncodeFunc = DailyIframe.__get__(
+const validateRMPEncodeFunc = Daily.__get__(
   'validateRemotePlayerEncodingSettings'
 );
 
@@ -30,9 +30,7 @@ it('Track constraints must be Object Type', () => {
   expect(() => validateRMPEncodeFunc(validateTcIsObject)).toThrowError();
 });
 
-const validateSessionDataFunc = DailyIframe.__get__(
-  'validateSessionDataUpdate'
-);
+const validateSessionDataFunc = Daily.__get__('validateSessionDataUpdate');
 
 it('Session data merge strategy must be valid', () => {
   expect(() => validateSessionDataFunc({}, 'merge')).toThrow(
@@ -69,7 +67,7 @@ it('Session data should not exceed max character limit', () => {
   );
 });
 
-const validateUserDataFunc = DailyIframe.__get__('validateUserData');
+const validateUserDataFunc = Daily.__get__('validateUserData');
 
 it('User data must be serializable to JSON', () => {
   const circularReference = {};

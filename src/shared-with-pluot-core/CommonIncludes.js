@@ -58,6 +58,7 @@ export const DAILY_FATAL_ERROR_NBF_ROOM = 'nbf-room';
 export const DAILY_FATAL_ERROR_NBF_TOKEN = 'nbf-token';
 export const DAILY_FATAL_ERROR_EXP_ROOM = 'exp-room';
 export const DAILY_FATAL_ERROR_EXP_TOKEN = 'exp-token';
+export const DAILY_FATAL_ERROR_NO_ROOM = 'no-room';
 export const DAILY_FATAL_ERROR_MEETING_FULL = 'meeting-full';
 export const DAILY_FATAL_ERROR_EOL = 'end-of-life';
 export const DAILY_FATAL_ERROR_NOT_ALLOWED = 'not-allowed';
@@ -100,7 +101,8 @@ export const DAILY_EVENT_PARTICIPANT_COUNTS_UPDATED =
 
 export const DAILY_EVENT_ACCESS_STATE_UPDATED = 'access-state-updated';
 
-export const DAILY_EVENT_MEETING_SESSION_UPDATED = 'meeting-session-updated';
+export const DAILY_EVENT_MEETING_SESSION_SUMMARY_UPDATED =
+  'meeting-session-summary-updated';
 export const DAILY_EVENT_MEETING_SESSION_STATE_UPDATED =
   'meeting-session-state-updated';
 export const DAILY_EVENT_MEETING_SESSION_DATA_ERROR =

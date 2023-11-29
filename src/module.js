@@ -2,6 +2,8 @@ import EventEmitter from 'events';
 import { deepEqual } from 'fast-equals';
 import Bowser from 'bowser';
 import { maybeProxyHttpsUrl } from './utils';
+import * as Sentry from '@sentry/browser';
+
 import {
   // re-export
   //
@@ -35,6 +37,7 @@ import {
   DAILY_FATAL_ERROR_EOL,
   DAILY_FATAL_ERROR_EXP_ROOM,
   DAILY_FATAL_ERROR_EXP_TOKEN,
+  DAILY_FATAL_ERROR_NO_ROOM,
   DAILY_FATAL_ERROR_MEETING_FULL,
   DAILY_FATAL_ERROR_NOT_ALLOWED,
   DAILY_FATAL_ERROR_CONNECTION,
@@ -94,7 +97,7 @@ import {
   DAILY_EVENT_LANG_UPDATED,
   DAILY_EVENT_SHOW_LOCAL_VIDEO_CHANGED,
   DAILY_EVENT_ACCESS_STATE_UPDATED,
-  DAILY_EVENT_MEETING_SESSION_UPDATED,
+  DAILY_EVENT_MEETING_SESSION_SUMMARY_UPDATED,
   DAILY_EVENT_MEETING_SESSION_STATE_UPDATED,
   DAILY_EVENT_MEETING_SESSION_DATA_ERROR,
   DAILY_EVENT_WAITING_PARTICIPANT_ADDED,
@@ -231,7 +234,11 @@ import WebMessageChannel from './shared-with-pluot-core/script-message-channels/
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
 import { SessionDataUpdate } from './shared-with-pluot-core/SessionData.js';
 import CallObjectLoader from './CallObjectLoader';
-import { randomStringId, validateHttpUrl } from './utils.js';
+import {
+  callObjectBundleUrl,
+  randomStringId,
+  validateHttpUrl,
+} from './utils.js';
 import * as Participant from './Participant';
 import {
   addDeviceChangeListener,
@@ -281,6 +288,7 @@ export {
   DAILY_FATAL_ERROR_EXP_ROOM,
   DAILY_FATAL_ERROR_EXP_TOKEN,
   DAILY_FATAL_ERROR_MEETING_FULL,
+  DAILY_FATAL_ERROR_NO_ROOM,
   DAILY_FATAL_ERROR_NOT_ALLOWED,
   DAILY_FATAL_ERROR_CONNECTION,
   DAILY_CAMERA_ERROR_CAM_IN_USE,
@@ -341,7 +349,7 @@ export {
   DAILY_EVENT_LIVE_STREAMING_ERROR,
   DAILY_EVENT_LANG_UPDATED,
   DAILY_EVENT_ACCESS_STATE_UPDATED,
-  DAILY_EVENT_MEETING_SESSION_UPDATED,
+  DAILY_EVENT_MEETING_SESSION_SUMMARY_UPDATED,
   DAILY_EVENT_MEETING_SESSION_STATE_UPDATED,
   DAILY_EVENT_MEETING_SESSION_DATA_ERROR,
   DAILY_EVENT_WAITING_PARTICIPANT_ADDED,
@@ -1158,6 +1166,8 @@ export default class DailyIframe extends EventEmitter {
     this._callState = DAILY_STATE_NEW; // only update via updateIsPreparingToJoin() or _updateCallState()
     this._isPreparingToJoin = false; // only update via _updateCallState()
     this._accessState = { access: DAILY_ACCESS_UNKNOWN };
+    this._meetingSessionSummary = {};
+    this._finalSummaryOfPrevSession = {};
     this._meetingSessionState = maybeStripDataFromMeetingSessionState(
       DEFAULT_SESSION_STATE,
       this._callObjectMode
@@ -1847,11 +1857,24 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
+  meetingSessionSummary() {
+    if ([DAILY_STATE_LEFT, DAILY_STATE_ERROR].includes(this._callState)) {
+      return this._finalSummaryOfPrevSession;
+    }
+    return this._meetingSessionSummary;
+  }
+
   async getMeetingSession() {
+    console.warn(
+      'getMeetingSession() is deprecated: use meetingSessionSummary(), which will return immediately'
+    );
     // Validate call state: meeting session details are only available
     // once you have joined the meeting
     methodOnlySupportedAfterJoin(this._callState, 'getMeetingSession()');
-    return new Promise(async (resolve) => {
+    return new Promise((resolve) => {
+      // Not doing the following so that we can log and monitor usage of
+      // this now deprecated function
+      // resolve({ meetingSession: this.meetingSessionSummary() });
       const k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
@@ -2246,19 +2269,6 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  setInputDevices({ audioDeviceId, videoDeviceId, audioSource, videoSource }) {
-    console.warn(
-      'setInputDevices() is deprecated: instead use setInputDevicesAsync(), which returns a Promise'
-    );
-    void this.setInputDevicesAsync({
-      audioDeviceId,
-      videoDeviceId,
-      audioSource,
-      videoSource,
-    });
-    return this;
-  }
-
   async setInputDevicesAsync({
     audioDeviceId,
     videoDeviceId,
@@ -2323,14 +2333,6 @@ export default class DailyIframe extends EventEmitter {
         k
       );
     });
-  }
-
-  setOutputDevice({ outputDeviceId }) {
-    console.warn(
-      'setOutputDevice() is deprecated: instead use setOutputDeviceAsync(), which returns a Promise'
-    );
-    void this.setOutputDeviceAsync({ outputDeviceId });
-    return this;
   }
 
   async setOutputDeviceAsync({ outputDeviceId }) {
@@ -2551,10 +2553,21 @@ export default class DailyIframe extends EventEmitter {
             if (!willRetry) {
               this._updateCallState(DAILY_STATE_ERROR);
               this.resetMeetingDependentVars();
-              this.emit(DAILY_EVENT_ERROR, {
+              const error = {
                 action: DAILY_EVENT_ERROR,
                 errorMsg,
-              });
+                error: {
+                  type: 'connection-error',
+                  msg: 'Failed to load call object bundle.',
+                  details: {
+                    on: 'load',
+                    sourceError: new Error(errorMsg),
+                    bundleUrl: callObjectBundleUrl(),
+                  },
+                },
+              };
+              this._maybeSendToSentry(error);
+              this.emit(DAILY_EVENT_ERROR, error);
               reject(errorMsg);
             }
           }
@@ -4062,11 +4075,18 @@ export default class DailyIframe extends EventEmitter {
         }
         break;
       }
-      case DAILY_EVENT_MEETING_SESSION_UPDATED:
+      case DAILY_EVENT_MEETING_SESSION_SUMMARY_UPDATED:
         if (msg.meetingSession) {
+          this._meetingSessionSummary = msg.meetingSession;
           try {
             delete msg.callFrameId;
             this.emit(msg.action, msg);
+            // send deprecated backwards-compatible event
+            const msg_cp = {
+              ...msg,
+              action: 'meeting-session-updated',
+            };
+            this.emit(msg_cp.action, msg_cp);
           } catch (e) {
             console.log('could not emit', msg, e);
           }
@@ -4088,6 +4108,7 @@ export default class DailyIframe extends EventEmitter {
             event.error.details.sourceError
           );
         }
+        this._maybeSendToSentry(msg);
         if (this._joinedCallback) {
           this._joinedCallback(null, event);
           this._joinedCallback = null;
@@ -4580,6 +4601,8 @@ export default class DailyIframe extends EventEmitter {
     this._activeSpeakerMode = false;
     this._didPreAuth = false;
     this._accessState = { access: DAILY_ACCESS_UNKNOWN };
+    this._finalSummaryOfPrevSession = this._meetingSessionSummary;
+    this._meetingSessionSummary = {};
     this._meetingSessionState = maybeStripDataFromMeetingSessionState(
       DEFAULT_SESSION_STATE,
       this._callObjectMode
@@ -4830,6 +4853,82 @@ export default class DailyIframe extends EventEmitter {
         'enable strict mode to track down and fix these attempts.';
       console.error(errMsg);
     }
+  }
+
+  _maybeSendToSentry(error) {
+    if (error.error?.type) {
+      const sentryErrors = ['connection-error', 'end-of-life', 'no-room'];
+      if (!sentryErrors.includes(error.error.type)) {
+        return;
+      }
+    }
+    const url = this.properties?.url ? new URL(this.properties.url) : undefined;
+    let env = 'production';
+    if (process.env.NODE_ENV === 'development') {
+      env = 'development';
+    } else if (url && url.host.includes('.staging.daily')) {
+      env = 'staging';
+    }
+
+    const client = new Sentry.BrowserClient({
+      dsn: __sentryDSN__,
+      transport: Sentry.makeFetchTransport,
+      integrations: [
+        new Sentry.Integrations.GlobalHandlers({
+          onunhandledrejection: false,
+        }),
+      ],
+      environment: env,
+    });
+
+    const hub = new Sentry.Hub(client, undefined, DailyIframe.version());
+    this.session_id && hub.setExtra('sessionId', this.session_id);
+    if (this.properties) {
+      let properties = { ...this.properties };
+
+      // remove PII
+      properties.userName = properties.userName ? '[Filtered]' : undefined;
+      properties.userData = properties.userData ? '[Filtered]' : undefined;
+      properties.token = properties.token ? '[Filtered]' : undefined;
+      hub.setExtra('properties', properties);
+    }
+    if (url) {
+      let domain = url.searchParams.get('domain');
+      if (!domain) {
+        let match = url.host.match(/(.*?)\./);
+        domain = (match && match[1]) || '';
+      }
+      domain && hub.setTag('domain', domain);
+    }
+    if (error.error) {
+      hub.setTag('fatalErrorType', error.error.type);
+      hub.setExtra('errorDetails', error.error.details);
+      error.error.details?.uri &&
+        hub.setTag('serverAddress', error.error.details.uri);
+      error.error.details?.workerGroup &&
+        hub.setTag('workerGroup', error.error.details.workerGroup);
+      error.error.details?.geoGroup &&
+        hub.setTag('geoGroup', error.error.details.geoGroup);
+      error.error.details?.bundleUrl &&
+        hub.setTag('bundleUrl', error.error.details.bundleUrl);
+      error.error.details?.on &&
+        hub.setTag('connectionAttempt', error.error.details.on);
+    }
+    hub.setTags({
+      callMode: this._callObjectMode
+        ? isReactNative()
+          ? 'reactNative'
+          : this.properties?.dailyConfig?.callMode?.includes('prebuilt')
+          ? this.properties.dailyConfig.callMode
+          : 'custom'
+        : 'prebuilt-frame',
+      version: DailyIframe.version(),
+    });
+
+    const msg = error.error?.msg || error.errorMsg;
+    hub.run((currentHub) => {
+      currentHub.captureException(new Error(msg));
+    });
   }
 }
 
@@ -5103,17 +5202,10 @@ function validateVideoProcessor(p) {
   // publish has been deprecated. It hasnt been removed from VALID_PROCESSOR_KEYS
   // so as to not throw an error for any active users; Added a warning about the
   // deprecation below.
-  const VALID_PROCESSOR_KEYS = ['type', `config`, 'publish'];
+  const VALID_PROCESSOR_KEYS = ['type', 'config'];
   if (!p) return false;
   if (typeof p !== 'object') return false;
   if (!validateVideoProcessorType(p.type)) return false;
-  if (p.publish !== undefined && typeof p.publish !== 'boolean') return false;
-  // publish flag has been deprecated
-  if (typeof p.publish === 'boolean') {
-    console.warn(
-      'inputSettings.video.processor: publish key has been deprecated; it will be ignored'
-    );
-  }
 
   if (p.config) {
     if (typeof p.config !== 'object') return false;

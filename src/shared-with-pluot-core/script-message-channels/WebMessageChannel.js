@@ -72,7 +72,7 @@ export default class WebMessageChannel extends ScriptMessageChannel {
   sendMessageToCallMachine(message, callback, iframe, callFrameId) {
     if (!callFrameId) {
       throw new Error(
-        'undefined callFrameId. Are you trying to use a dailyIFrame instance previously destroyed?'
+        'undefined callFrameId. Are you trying to use a DailyCall instance previously destroyed?'
       );
     }
     let msg = { ...message };
