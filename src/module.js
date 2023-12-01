@@ -220,6 +220,16 @@ import {
   DAILY_EVENT_DAILY_MAIN_EXECUTED,
   DAILY_METHOD_STOP_TEST_CONNECTION_QUALITY,
   DAILY_METHOD_TEST_CONNECTION_QUALITY,
+  DAILY_METHOD_START_DIALOUT,
+  DAILY_METHOD_STOP_DIALOUT,
+  DAILY_EVENT_SIP_CONNECTED,
+  DAILY_EVENT_SIP_ERROR,
+  DAILY_EVENT_SIP_STOPPED,
+  DAILY_EVENT_SIP_WARNING,
+  DAILY_EVENT_DIALOUT_CONNECTED,
+  DAILY_EVENT_DIALOUT_ERROR,
+  DAILY_EVENT_DIALOUT_MISSED,
+  DAILY_EVENT_DIALOUT_WARNING,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -3052,6 +3062,20 @@ export default class DailyIframe extends EventEmitter {
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_TRANSCRIPTION });
   }
 
+  startDialOut(args) {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_START_DIALOUT,
+      ...args,
+    });
+  }
+
+  stopDialOut(args) {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_STOP_DIALOUT,
+      ...args,
+    });
+  }
+
   getNetworkStats() {
     if (this._callState !== DAILY_STATE_JOINED) {
       let stats = { latest: {} };
@@ -4395,6 +4419,14 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_LIVE_STREAMING_ERROR:
       case DAILY_EVENT_NONFATAL_ERROR:
       case DAILY_EVENT_LANG_UPDATED:
+      case DAILY_EVENT_SIP_CONNECTED:
+      case DAILY_EVENT_SIP_ERROR:
+      case DAILY_EVENT_SIP_STOPPED:
+      case DAILY_EVENT_SIP_WARNING:
+      case DAILY_EVENT_DIALOUT_CONNECTED:
+      case DAILY_EVENT_DIALOUT_ERROR:
+      case DAILY_EVENT_DIALOUT_MISSED:
+      case DAILY_EVENT_DIALOUT_WARNING:
         try {
           this.emit(msg.action, msg);
         } catch (e) {

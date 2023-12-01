@@ -104,7 +104,16 @@ export type DailyEvent =
   | 'show-local-video-changed'
   | 'selected-devices-updated'
   | 'custom-button-click'
-  | 'sidebar-view-changed';
+  | 'sidebar-view-changed'
+  | 'sip-connected'
+  | 'sip-error'
+  | 'sip-stopped'
+  | 'sip-warning'
+  | 'dialout-connected'
+  | 'dialout-error'
+  | 'dialout-missed'
+  | 'dialout-stopped'
+  | 'dialout-warning';
 
 export type DailyMeetingState =
   | 'new'
@@ -1425,6 +1434,64 @@ export interface DailyEventObjectSidebarViewChanged {
   view: SidebarView;
 }
 
+export interface DailyEventObjectSipConnected {
+  action: Extract<DailyEvent, 'sip-connected'>;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectSipError {
+  action: Extract<DailyEvent, 'sip-error'>;
+  errorMsg: string;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectSipStopped {
+  action: Extract<DailyEvent, 'sip-stopped'>;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectSipWarning {
+  action: Extract<DailyEvent, 'sip-warning'>;
+  errorMsg: string;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectDialOutConnected {
+  action: Extract<DailyEvent, 'dialout-connected'>;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectDialOutError {
+  action: Extract<DailyEvent, 'dialout-error'>;
+  errorMsg: string;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectDialOutMissed {
+  action: Extract<DailyEvent, 'dialout-missed'>;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectDialOutStopped {
+  action: Extract<DailyEvent, 'dialout-stopped'>;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectDialOutWarning {
+  action: Extract<DailyEvent, 'dialout-warning'>;
+  errorMsg: string;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
 export type DailyEventObject<T extends DailyEvent = any> =
   T extends DailyEventObjectAppMessage['action']
     ? DailyEventObjectAppMessage
@@ -1512,6 +1579,24 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectSelectedDevicesUpdated
     : T extends DailyEventObjectSidebarViewChanged['action']
     ? DailyEventObjectSidebarViewChanged
+    : T extends DailyEventObjectSipConnected['action']
+    ? DailyEventObjectSipConnected
+    : T extends DailyEventObjectSipError['action']
+    ? DailyEventObjectSipError
+    : T extends DailyEventObjectSipStopped['action']
+    ? DailyEventObjectSipStopped
+    : T extends DailyEventObjectSipWarning['action']
+    ? DailyEventObjectSipWarning
+    : T extends DailyEventObjectDialOutConnected['action']
+    ? DailyEventObjectDialOutConnected
+    : T extends DailyEventObjectDialOutError['action']
+    ? DailyEventObjectDialOutError
+    : T extends DailyEventObjectDialOutMissed['action']
+    ? DailyEventObjectDialOutMissed
+    : T extends DailyEventObjectDialOutStopped['action']
+    ? DailyEventObjectDialOutStopped
+    : T extends DailyEventObjectDialOutWarning['action']
+    ? DailyEventObjectDialOutWarning
     : any;
 
 export interface DailyCallFactory {
@@ -1718,6 +1803,23 @@ export type SidebarView =
   | 'breakout'
   | string;
 
+export interface DailyDialOutSession {
+  instanceId: string;
+  sessionId: string;
+}
+
+export interface DailyStartDialoutSipOptions {
+  sipUri?: string;
+}
+
+export interface DailyStartDialoutPhoneOptions {
+  phoneNumber?: string;
+}
+
+export type DailyStartDialoutOptions =
+  | DailyStartDialoutSipOptions
+  | DailyStartDialoutPhoneOptions;
+
 export interface DailyCall {
   iframe(): HTMLIFrameElement | null;
   join(properties?: DailyCallOptions): Promise<DailyParticipantsObject | void>;
@@ -1917,6 +2019,8 @@ export interface DailyCall {
     dailyConfig?: DailyAdvancedConfig;
     userName?: string;
   };
+  startDialOut(options: DailyStartDialoutOptions): Promise<DailyDialOutSession>;
+  stopDialOut(options?: { instanceId: string }): Promise<void>;
 }
 
 declare const Daily: DailyCallFactory & DailyCallStaticUtils;
