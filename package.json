@@ -10,7 +10,12 @@
   "main": "dist/daily.js",
   "module": "dist/daily-esm.js",
   "types": "index.d.ts",
-  "files": "dist",
+  "files": [
+    "dist",
+    "index.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
   "unpkg": "dist/daily.js",
   "browserslist": [
     "defaults",
