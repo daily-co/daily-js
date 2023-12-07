@@ -85,8 +85,18 @@ export default class WebMessageChannel extends ScriptMessageChannel {
       msg.callbackStamp = stamp;
     }
     const w = iframe ? iframe.contentWindow : window;
-    // console.log('[WebMessageChannel] sending message to call machine', msg);
-    w.postMessage(msg, '*');
+    const targetOrigin = this._callMachineTargetOrigin(iframe);
+    // There may be no targetOrigin yet if we haven't set up the iframe yet
+    // (In which case there's also no point posting the message)
+    if (targetOrigin) {
+      // console.log('[WebMessageChannel] sending message to call machine', msg);
+      w.postMessage(msg, targetOrigin);
+    } else {
+      // console.log(
+      //   "[WebMessageChannel] not sending message to call machine, as there's no targetOrigin yet",
+      //   msg
+      // );
+    }
   }
 
   sendMessageToDailyJs(message, callFrameId) {
@@ -94,7 +104,11 @@ export default class WebMessageChannel extends ScriptMessageChannel {
     message.callFrameId = callFrameId;
     message.from = 'embedded';
     // console.log('[WebMessageChannel] sending message to daily-js', message);
-    window.postMessage(message, '*');
+    // Note: this message is only meant for the daily-js running in the same
+    // window. IframeDriverProvider is responsible for forwarding that message
+    // up to the daily-js running in the parent window (the "driver" of the
+    // iframe).
+    window.postMessage(message, window.location.origin);
   }
 
   removeListener(listener) {
@@ -111,11 +125,19 @@ export default class WebMessageChannel extends ScriptMessageChannel {
     const newMsg = { ...msg };
     newMsg.callFrameId = newCallFrameId;
     const w = iframe ? iframe.contentWindow : window;
-    // console.log(
-    //   '[WebMessageChannel] forwarding packaged message to call machine',
-    //   msg
-    // );
-    w.postMessage(newMsg, '*');
+    const targetOrigin = this._callMachineTargetOrigin(iframe);
+    if (targetOrigin) {
+      // console.log(
+      //   '[WebMessageChannel] forwarding packaged message to call machine',
+      //   msg
+      // );
+      w.postMessage(newMsg, targetOrigin);
+    } else {
+      // console.log(
+      //   "[WebMessageChannel] not forwarding packaged message to call machine, as there's no targetOrigin yet",
+      //   msg
+      // );
+    }
   }
 
   // Listener will be given packaged message with all internal metadata fields
@@ -151,6 +173,17 @@ export default class WebMessageChannel extends ScriptMessageChannel {
     if (wrappedListener) {
       window.removeEventListener('message', wrappedListener);
       delete this._wrappedListeners[listenerId];
+    }
+  }
+
+  // The origin of the page where the call machine is running
+  _callMachineTargetOrigin(iframe) {
+    if (iframe) {
+      if (iframe.src) {
+        return new URL(iframe.src).origin;
+      }
+    } else {
+      return window.location.origin;
     }
   }
 }
