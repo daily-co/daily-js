@@ -1357,6 +1357,7 @@ export interface DailyEventObjectTranscriptionStarted {
   tier?: string;
   profanity_filter?: boolean;
   redact?: Array<string> | Array<boolean> | boolean;
+  punctuate?: boolean;
   extra?: Map<string, any>;
   startedBy: string;
 }
@@ -1706,6 +1707,7 @@ export interface DailyTranscriptionDeepgramOptions {
   tier?: string;
   profanity_filter?: boolean;
   redact?: Array<string> | Array<boolean> | boolean;
+  punctuate?: boolean;
   extra?: Map<string, any>;
 }
 
