@@ -1359,7 +1359,7 @@ export interface DailyEventObjectTranscriptionStarted {
   redact?: Array<string> | Array<boolean> | boolean;
   endpointing?: number | boolean;
   punctuate?: boolean;
-  extra?: Map<string, any>;
+  extra?: Record<string, any>;
   startedBy: string;
 }
 
@@ -1710,7 +1710,7 @@ export interface DailyTranscriptionDeepgramOptions {
   redact?: Array<string> | Array<boolean> | boolean;
   endpointing?: number | boolean;
   punctuate?: boolean;
-  extra?: Map<string, any>;
+  extra?: Record<string, any>;
 }
 
 export type SidebarView =
