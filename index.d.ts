@@ -1357,6 +1357,7 @@ export interface DailyEventObjectTranscriptionStarted {
   tier?: string;
   profanity_filter?: boolean;
   redact?: Array<string> | Array<boolean> | boolean;
+  extra?: Map<string, any>;
   startedBy: string;
 }
 
