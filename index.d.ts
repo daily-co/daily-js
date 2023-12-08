@@ -1347,7 +1347,6 @@ export interface DailyEventObjectTranscriptionStarted {
   language: string;
   model: string;
   tier?: string;
-  detect_language?: boolean;
   profanity_filter?: boolean;
   redact?: Array<string> | Array<boolean> | boolean;
   startedBy: string;
@@ -1694,10 +1693,6 @@ export interface DailyTranscriptionDeepgramOptions {
   language?: string;
   model?: string;
   tier?: string;
-  /**
-   * @deprecated This property will be removed. It is not supported for real-time transcriptions.
-   */
-  detect_language?: boolean;
   profanity_filter?: boolean;
   redact?: Array<string> | Array<boolean> | boolean;
   extra?: Map<string, any>;
