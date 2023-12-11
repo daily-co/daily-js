@@ -1357,6 +1357,9 @@ export interface DailyEventObjectTranscriptionStarted {
   tier?: string;
   profanity_filter?: boolean;
   redact?: Array<string> | Array<boolean> | boolean;
+  endpointing?: number | boolean;
+  punctuate?: boolean;
+  extra?: Record<string, any>;
   startedBy: string;
 }
 
@@ -1705,7 +1708,9 @@ export interface DailyTranscriptionDeepgramOptions {
   tier?: string;
   profanity_filter?: boolean;
   redact?: Array<string> | Array<boolean> | boolean;
-  extra?: Map<string, any>;
+  endpointing?: number | boolean;
+  punctuate?: boolean;
+  extra?: Record<string, any>;
 }
 
 export type SidebarView =
