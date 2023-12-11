@@ -409,7 +409,8 @@ export function isAudioOutputSelectionDisallowed() {
   // Note that prior to the "broken" version of Firefox, audio output device
   // selection wasn't supported in Firefox anyway; it was a new feature that
   // shipped with a show-stopping bug. So by disallowing audio output selection,
-  // we're  just carrying forward Firefox's old behavior until the bug is fixed.
+  // we're just carrying forward Firefox's old (but still pretty recent)
+  // behavior until the bug is fixed.
   //
   // Once the fix lands (https://bugzilla.mozilla.org/show_bug.cgi?id=1849108),
   // we'll need to release another version of daily-js enabling audio output
