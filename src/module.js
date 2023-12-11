@@ -1827,7 +1827,7 @@ export default class DailyIframe extends EventEmitter {
   getDailyLang() {
     methodNotSupportedInReactNative();
     if (!this._dailyMainExecuted) return;
-    return new Promise(async (resolve) => {
+    return new Promise((resolve) => {
       const k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
@@ -2956,7 +2956,7 @@ export default class DailyIframe extends EventEmitter {
       throw e;
     }
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
           reject({ error: msg.error, errorMsg: msg.errorMsg });
@@ -2985,7 +2985,7 @@ export default class DailyIframe extends EventEmitter {
     if (typeof session_id !== 'string')
       throw new Error(' remotePlayerID must be of type string');
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
           reject({ error: msg.error, errorMsg: msg.errorMsg });
@@ -3011,7 +3011,7 @@ export default class DailyIframe extends EventEmitter {
       throw e;
     }
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
           reject({ error: msg.error, errorMsg: msg.errorMsg });
@@ -3756,22 +3756,20 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async geo() {
-    return new Promise(async (resolve) => {
-      try {
-        let url = 'https://gs.daily.co/_ks_/x-swsl/:';
-        let res = await fetch(url);
-        let data = await res.json();
-        resolve({ current: data.geo });
-      } catch (e) {
-        console.error('geo lookup failed', e);
-        resolve({ current: '' });
-      }
-    });
+    try {
+      let url = 'https://gs.daily.co/_ks_/x-swsl/:';
+      let res = await fetch(url);
+      let data = await res.json();
+      return { current: data.geo };
+    } catch (e) {
+      console.error('geo lookup failed', e);
+      return { current: '' };
+    }
   }
 
   async setNetworkTopology(opts) {
     methodNotSupportedInReactNative();
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
           reject({ error: msg.error });
@@ -3787,7 +3785,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async getNetworkTopology() {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
           reject({ error: msg.error });
