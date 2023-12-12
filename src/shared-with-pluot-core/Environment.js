@@ -401,3 +401,19 @@ export function getOSName() {
   }
   return OSName;
 }
+
+export function isAudioOutputSelectionDisallowed() {
+  // Disallow audio output selection if we're on a version of Firefox where
+  // doing so (using setSinkId) results in echo cancellation breaking.
+  //
+  // Note that prior to the "broken" version of Firefox, audio output device
+  // selection wasn't supported in Firefox anyway; it was a new feature that
+  // shipped with a show-stopping bug. So by disallowing audio output selection,
+  // we're just carrying forward Firefox's old (but still pretty recent)
+  // behavior until the bug is fixed.
+  //
+  // Once the fix lands (https://bugzilla.mozilla.org/show_bug.cgi?id=1849108),
+  // we'll need to release another version of daily-js enabling audio output
+  // selection for newer versions of Firefox that include the fix.
+  return getBrowserName() === 'Firefox' && getBrowserVersion().major > 115;
+}

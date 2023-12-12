@@ -229,6 +229,7 @@ import {
   isScreenSharingSupported,
   isVideoProcessingSupported,
   isAudioProcessingSupported,
+  isAudioOutputSelectionDisallowed,
 } from './shared-with-pluot-core/Environment.js';
 import WebMessageChannel from './shared-with-pluot-core/script-message-channels/WebMessageChannel';
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
@@ -3393,6 +3394,14 @@ export default class DailyIframe extends EventEmitter {
   async enumerateDevices() {
     if (this._callObjectMode) {
       let raw = await navigator.mediaDevices.enumerateDevices();
+
+      // Strip audio output devices if the user can't do anything with them
+      // anyway. Stripping them emulates behavior of browsers (FF < 116, Safari)
+      // that don't support audio output selection.
+      if (isAudioOutputSelectionDisallowed()) {
+        raw = raw.filter((d) => d.kind !== 'audiooutput');
+      }
+
       return { devices: raw.map((d) => JSON.parse(JSON.stringify(d))) };
     }
 
