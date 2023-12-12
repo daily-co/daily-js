@@ -409,6 +409,7 @@ export interface DailyAdvancedConfig {
   enableIndependentDevicePermissionPrompts?: boolean;
   proxyUrl?: string;
   iceConfig?: DailyIceConfig;
+  useLegacyVideoProcessor?: boolean;
 }
 
 export interface DailyTrackState {
