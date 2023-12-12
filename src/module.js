@@ -146,7 +146,6 @@ import {
   DAILY_METHOD_GET_MEETING_SESSION,
   DAILY_METHOD_SET_SESSION_DATA,
   DAILY_METHOD_REGISTER_INPUT_HANDLER,
-  DAILY_METHOD_DETECT_ALL_FACES,
   DAILY_METHOD_ROOM,
   DAILY_METHOD_GET_NETWORK_TOPOLOGY,
   DAILY_METHOD_SET_NETWORK_TOPOLOGY,
@@ -3646,21 +3645,6 @@ export default class DailyIframe extends EventEmitter {
       } catch (e) {
         reject(e);
       }
-    });
-  }
-
-  detectAllFaces() {
-    methodNotSupportedInReactNative();
-    return new Promise((resolve) => {
-      let k = (msg) => {
-        delete msg.action;
-        delete msg.callbackStamp;
-        resolve(msg);
-      };
-      this.sendMessageToCallMachine(
-        { action: DAILY_METHOD_DETECT_ALL_FACES },
-        k
-      );
     });
   }
 

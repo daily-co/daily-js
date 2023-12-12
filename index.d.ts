@@ -1505,18 +1505,6 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectSidebarViewChanged
     : any;
 
-export interface DailyFaceInfo {
-  score: number;
-  viewportBox: {
-    width: number;
-    height: number;
-    left: number;
-    top: number;
-    right: number;
-    bottom: number;
-  };
-}
-
 export interface DailyCallFactory {
   createCallObject(properties?: DailyFactoryOptions): DailyCall;
   wrap(iframe: HTMLIFrameElement, properties?: DailyFactoryOptions): DailyCall;
@@ -1888,9 +1876,6 @@ export interface DailyCall {
   setTheme(theme: DailyThemeConfig): Promise<DailyThemeConfig>;
   showLocalVideo(): boolean;
   showParticipantsBar(): boolean;
-  detectAllFaces(): Promise<{
-    faces?: { [id: string]: DailyFaceInfo[] };
-  }>;
   requestFullscreen(): Promise<void>;
   exitFullscreen(): void;
   room(options?: {
