@@ -80,6 +80,7 @@ import {
   DAILY_EVENT_RECORDING_UPLOAD_COMPLETED,
   DAILY_EVENT_ERROR,
   DAILY_EVENT_APP_MSG,
+  DAILY_EVENT_TRANSCRIPTION_MSG,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED,
   DAILY_EVENT_NETWORK_QUALITY_CHANGE,
@@ -145,7 +146,6 @@ import {
   DAILY_METHOD_GET_MEETING_SESSION,
   DAILY_METHOD_SET_SESSION_DATA,
   DAILY_METHOD_REGISTER_INPUT_HANDLER,
-  DAILY_METHOD_DETECT_ALL_FACES,
   DAILY_METHOD_ROOM,
   DAILY_METHOD_GET_NETWORK_TOPOLOGY,
   DAILY_METHOD_SET_NETWORK_TOPOLOGY,
@@ -229,6 +229,7 @@ import {
   isScreenSharingSupported,
   isVideoProcessingSupported,
   isAudioProcessingSupported,
+  isAudioOutputSelectionDisallowed,
 } from './shared-with-pluot-core/Environment.js';
 import WebMessageChannel from './shared-with-pluot-core/script-message-channels/WebMessageChannel';
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
@@ -333,6 +334,7 @@ export {
   DAILY_EVENT_TRANSCRIPTION_ERROR,
   DAILY_EVENT_ERROR,
   DAILY_EVENT_APP_MSG,
+  DAILY_EVENT_TRANSCRIPTION_MSG,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED,
   DAILY_EVENT_NETWORK_QUALITY_CHANGE,
@@ -1825,7 +1827,7 @@ export default class DailyIframe extends EventEmitter {
   getDailyLang() {
     methodNotSupportedInReactNative();
     if (!this._dailyMainExecuted) return;
-    return new Promise(async (resolve) => {
+    return new Promise((resolve) => {
       const k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
@@ -2534,10 +2536,12 @@ export default class DailyIframe extends EventEmitter {
       // non-iframe, callObjectMode
       return new Promise((resolve, reject) => {
         this._callObjectLoader.cancel();
+        const startTime = Date.now();
         this._callObjectLoader.load(
           this._callFrameId,
           this.properties.dailyConfig && this.properties.dailyConfig.avoidEval,
           (wasNoOp) => {
+            this._bundleLoadTime = wasNoOp ? 'no-op' : Date.now() - startTime;
             this._updateCallState(DAILY_STATE_LOADED);
             // Only need to emit event if load was a no-op, since the loaded
             // bundle won't be emitting it if it's not executed again
@@ -2952,7 +2956,7 @@ export default class DailyIframe extends EventEmitter {
       throw e;
     }
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
           reject({ error: msg.error, errorMsg: msg.errorMsg });
@@ -2981,7 +2985,7 @@ export default class DailyIframe extends EventEmitter {
     if (typeof session_id !== 'string')
       throw new Error(' remotePlayerID must be of type string');
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
           reject({ error: msg.error, errorMsg: msg.errorMsg });
@@ -3007,7 +3011,7 @@ export default class DailyIframe extends EventEmitter {
       throw e;
     }
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
           reject({ error: msg.error, errorMsg: msg.errorMsg });
@@ -3390,6 +3394,14 @@ export default class DailyIframe extends EventEmitter {
   async enumerateDevices() {
     if (this._callObjectMode) {
       let raw = await navigator.mediaDevices.enumerateDevices();
+
+      // Strip audio output devices if the user can't do anything with them
+      // anyway. Stripping them emulates behavior of browsers (FF < 116, Safari)
+      // that don't support audio output selection.
+      if (isAudioOutputSelectionDisallowed()) {
+        raw = raw.filter((d) => d.kind !== 'audiooutput');
+      }
+
       return { devices: raw.map((d) => JSON.parse(JSON.stringify(d))) };
     }
 
@@ -3645,21 +3657,6 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  detectAllFaces() {
-    methodNotSupportedInReactNative();
-    return new Promise((resolve) => {
-      let k = (msg) => {
-        delete msg.action;
-        delete msg.callbackStamp;
-        resolve(msg);
-      };
-      this.sendMessageToCallMachine(
-        { action: DAILY_METHOD_DETECT_ALL_FACES },
-        k
-      );
-    });
-  }
-
   async requestFullscreen() {
     methodNotSupportedInReactNative();
     if (
@@ -3752,22 +3749,20 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async geo() {
-    return new Promise(async (resolve) => {
-      try {
-        let url = 'https://gs.daily.co/_ks_/x-swsl/:';
-        let res = await fetch(url);
-        let data = await res.json();
-        resolve({ current: data.geo });
-      } catch (e) {
-        console.error('geo lookup failed', e);
-        resolve({ current: '' });
-      }
-    });
+    try {
+      let url = 'https://gs.daily.co/_ks_/x-swsl/:';
+      let res = await fetch(url);
+      let data = await res.json();
+      return { current: data.geo };
+    } catch (e) {
+      console.error('geo lookup failed', e);
+      return { current: '' };
+    }
   }
 
   async setNetworkTopology(opts) {
     methodNotSupportedInReactNative();
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
           reject({ error: msg.error });
@@ -3783,7 +3778,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async getNetworkTopology() {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
           reject({ error: msg.error });
@@ -3953,6 +3948,24 @@ export default class DailyIframe extends EventEmitter {
         break;
       case DAILY_EVENT_DAILY_MAIN_EXECUTED: {
         this._dailyMainExecuted = true;
+        const logMsg = {
+          action: DAILY_METHOD_TRANSMIT_LOG,
+          level: 'log',
+          code: 1011,
+          stats: {
+            event: 'bundle load',
+            time: this._bundleLoadTime === 'no-op' ? 0 : this._bundleLoadTime,
+            preLoaded: this._bundleLoadTime === 'no-op',
+            url: callObjectBundleUrl(),
+          },
+        };
+        this._messageChannel.sendMessageToCallMachine(
+          logMsg,
+          null,
+          this._iframe,
+          this._callFrameId
+        );
+        break;
       }
       case DAILY_EVENT_LOADED:
         if (this._loadedCallback) {
@@ -4364,6 +4377,7 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_STARTED_CAMERA:
       case DAILY_EVENT_CAMERA_ERROR:
       case DAILY_EVENT_APP_MSG:
+      case DAILY_EVENT_TRANSCRIPTION_MSG:
       case DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED:
       case DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED:
       case DAILY_EVENT_NETWORK_CONNECTION:
@@ -4613,6 +4627,7 @@ export default class DailyIframe extends EventEmitter {
     this._localAudioLevel = 0;
     this._remoteParticipantsAudioLevel = {};
     this._dailyMainExecuted = false;
+    this._bundleLoadTime = undefined;
     resetPreloadCache(this._preloadCache);
   }
 

@@ -130,6 +130,7 @@ export const DAILY_EVENT_RECORDING_UPLOAD_COMPLETED =
   'recording-upload-completed';
 export const DAILY_EVENT_RECORDING_DATA = 'recording-data';
 export const DAILY_EVENT_APP_MSG = 'app-message';
+export const DAILY_EVENT_TRANSCRIPTION_MSG = 'transcription-message';
 
 export const DAILY_EVENT_REMOTE_MEDIA_PLAYER_STARTED =
   'remote-media-player-started';
@@ -253,7 +254,6 @@ export const DAILY_METHOD_GET_MEETING_SESSION = 'get-meeting-session';
 export const DAILY_METHOD_SET_SESSION_DATA = 'set-session-data';
 export const DAILY_METHOD_SET_USER_NAME = 'set-user-name';
 export const DAILY_METHOD_SET_USER_DATA = 'set-user-data';
-export const DAILY_METHOD_DETECT_ALL_FACES = 'detect-all-faces';
 export const DAILY_METHOD_ROOM = 'lib-room-info';
 export const DAILY_METHOD_GET_NETWORK_TOPOLOGY = 'get-network-topology';
 export const DAILY_METHOD_SET_NETWORK_TOPOLOGY = 'set-network-topology';

@@ -58,6 +58,7 @@ export type DailyEvent =
   | 'transcription-stopped'
   | 'transcription-error'
   | 'app-message'
+  | 'transcription-message'
   | 'local-screen-share-started'
   | 'local-screen-share-stopped'
   | 'active-speaker-change'
@@ -408,6 +409,7 @@ export interface DailyAdvancedConfig {
   enableIndependentDevicePermissionPrompts?: boolean;
   proxyUrl?: string;
   iceConfig?: DailyIceConfig;
+  useLegacyVideoProcessor?: boolean;
 }
 
 export interface DailyTrackState {
@@ -1279,6 +1281,13 @@ export interface DailyEventObjectAppMessage<Data = any> {
   fromId: string;
 }
 
+export interface DailyEventObjectTranscriptionMessage {
+  action: Extract<DailyEvent, 'transcription-message'>;
+  participantId: string;
+  text: string;
+  timestamp: Date;
+}
+
 export interface DailyEventObjectLangUpdated {
   action: Extract<DailyEvent, 'lang-updated'>;
   lang: DailyLanguage;
@@ -1347,9 +1356,11 @@ export interface DailyEventObjectTranscriptionStarted {
   language: string;
   model: string;
   tier?: string;
-  detect_language?: boolean;
   profanity_filter?: boolean;
   redact?: Array<string> | Array<boolean> | boolean;
+  endpointing?: number | boolean;
+  punctuate?: boolean;
+  extra?: Record<string, any>;
   startedBy: string;
 }
 
@@ -1409,6 +1420,8 @@ export interface DailyEventObjectSidebarViewChanged {
 export type DailyEventObject<T extends DailyEvent = any> =
   T extends DailyEventObjectAppMessage['action']
     ? DailyEventObjectAppMessage
+    : T extends DailyEventObjectTranscriptionMessage['action']
+    ? DailyEventObjectTranscriptionMessage
     : T extends DailyEventObjectNoPayload['action']
     ? DailyEventObjectNoPayload
     : T extends DailyEventObjectCameraError['action']
@@ -1492,18 +1505,6 @@ export type DailyEventObject<T extends DailyEvent = any> =
     : T extends DailyEventObjectSidebarViewChanged['action']
     ? DailyEventObjectSidebarViewChanged
     : any;
-
-export interface DailyFaceInfo {
-  score: number;
-  viewportBox: {
-    width: number;
-    height: number;
-    left: number;
-    top: number;
-    right: number;
-    bottom: number;
-  };
-}
 
 export interface DailyCallFactory {
   createCallObject(properties?: DailyFactoryOptions): DailyCall;
@@ -1694,13 +1695,11 @@ export interface DailyTranscriptionDeepgramOptions {
   language?: string;
   model?: string;
   tier?: string;
-  /**
-   * @deprecated This property will be removed. It is not supported for real-time transcriptions.
-   */
-  detect_language?: boolean;
   profanity_filter?: boolean;
   redact?: Array<string> | Array<boolean> | boolean;
-  extra?: Map<string, any>;
+  endpointing?: number | boolean;
+  punctuate?: boolean;
+  extra?: Record<string, any>;
 }
 
 export type SidebarView =
@@ -1878,9 +1877,6 @@ export interface DailyCall {
   setTheme(theme: DailyThemeConfig): Promise<DailyThemeConfig>;
   showLocalVideo(): boolean;
   showParticipantsBar(): boolean;
-  detectAllFaces(): Promise<{
-    faces?: { [id: string]: DailyFaceInfo[] };
-  }>;
   requestFullscreen(): Promise<void>;
   exitFullscreen(): void;
   room(options?: {
