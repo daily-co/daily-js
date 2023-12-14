@@ -354,12 +354,11 @@ export const UPDATE_LIVE_STREAMING_ENDPOINTS_OP = {
 
 export const DAILY_METHOD_START_DIALOUT = 'dialout-start';
 export const DAILY_METHOD_STOP_DIALOUT = 'dialout-stop';
-export const DAILY_EVENT_SIP_CONNECTED = 'sip-connected';
-export const DAILY_EVENT_SIP_ERROR = 'sip-error';
-export const DAILY_EVENT_SIP_STOPPED = 'sip-stopped';
-export const DAILY_EVENT_SIP_WARNING = 'sip-warning';
+export const DAILY_EVENT_DIALIN_CONNECTED = 'dialin-connected';
+export const DAILY_EVENT_DIALIN_ERROR = 'dialin-error';
+export const DAILY_EVENT_DIALIN_STOPPED = 'dialin-stopped';
+export const DAILY_EVENT_DIALIN_WARNING = 'dialin-warning';
 export const DAILY_EVENT_DIALOUT_CONNECTED = 'dialout-connected';
 export const DAILY_EVENT_DIALOUT_ERROR = 'dialout-error';
-export const DAILY_EVENT_DIALOUT_MISSED = 'dialout-missed';
 export const DAILY_EVENT_DIALOUT_STOPPED = 'dialout-stopped';
 export const DAILY_EVENT_DIALOUT_WARNING = 'dialout-warning';

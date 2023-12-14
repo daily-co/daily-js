@@ -105,13 +105,12 @@ export type DailyEvent =
   | 'selected-devices-updated'
   | 'custom-button-click'
   | 'sidebar-view-changed'
-  | 'sip-connected'
-  | 'sip-error'
-  | 'sip-stopped'
-  | 'sip-warning'
+  | 'dialin-connected'
+  | 'dialin-error'
+  | 'dialin-stopped'
+  | 'dialin-warning'
   | 'dialout-connected'
   | 'dialout-error'
-  | 'dialout-missed'
   | 'dialout-stopped'
   | 'dialout-warning';
 
@@ -1434,27 +1433,27 @@ export interface DailyEventObjectSidebarViewChanged {
   view: SidebarView;
 }
 
-export interface DailyEventObjectSipConnected {
-  action: Extract<DailyEvent, 'sip-connected'>;
+export interface DailyEventObjectDialinConnected {
+  action: Extract<DailyEvent, 'dialin-connected'>;
   instanceId?: string;
   actionTraceId?: string;
 }
 
-export interface DailyEventObjectSipError {
-  action: Extract<DailyEvent, 'sip-error'>;
+export interface DailyEventObjectDialinError {
+  action: Extract<DailyEvent, 'dialin-error'>;
   errorMsg: string;
   instanceId?: string;
   actionTraceId?: string;
 }
 
-export interface DailyEventObjectSipStopped {
-  action: Extract<DailyEvent, 'sip-stopped'>;
+export interface DailyEventObjectDialinStopped {
+  action: Extract<DailyEvent, 'dialin-stopped'>;
   instanceId?: string;
   actionTraceId?: string;
 }
 
-export interface DailyEventObjectSipWarning {
-  action: Extract<DailyEvent, 'sip-warning'>;
+export interface DailyEventObjectDialinWarning {
+  action: Extract<DailyEvent, 'dialin-warning'>;
   errorMsg: string;
   instanceId?: string;
   actionTraceId?: string;
@@ -1469,12 +1468,6 @@ export interface DailyEventObjectDialOutConnected {
 export interface DailyEventObjectDialOutError {
   action: Extract<DailyEvent, 'dialout-error'>;
   errorMsg: string;
-  instanceId?: string;
-  actionTraceId?: string;
-}
-
-export interface DailyEventObjectDialOutMissed {
-  action: Extract<DailyEvent, 'dialout-missed'>;
   instanceId?: string;
   actionTraceId?: string;
 }
@@ -1579,20 +1572,18 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectSelectedDevicesUpdated
     : T extends DailyEventObjectSidebarViewChanged['action']
     ? DailyEventObjectSidebarViewChanged
-    : T extends DailyEventObjectSipConnected['action']
-    ? DailyEventObjectSipConnected
-    : T extends DailyEventObjectSipError['action']
-    ? DailyEventObjectSipError
-    : T extends DailyEventObjectSipStopped['action']
-    ? DailyEventObjectSipStopped
-    : T extends DailyEventObjectSipWarning['action']
-    ? DailyEventObjectSipWarning
+    : T extends DailyEventObjectDialinConnected['action']
+    ? DailyEventObjectDialinConnected
+    : T extends DailyEventObjectDialinError['action']
+    ? DailyEventObjectDialinError
+    : T extends DailyEventObjectDialinStopped['action']
+    ? DailyEventObjectDialinStopped
+    : T extends DailyEventObjectDialinWarning['action']
+    ? DailyEventObjectDialinWarning
     : T extends DailyEventObjectDialOutConnected['action']
     ? DailyEventObjectDialOutConnected
     : T extends DailyEventObjectDialOutError['action']
     ? DailyEventObjectDialOutError
-    : T extends DailyEventObjectDialOutMissed['action']
-    ? DailyEventObjectDialOutMissed
     : T extends DailyEventObjectDialOutStopped['action']
     ? DailyEventObjectDialOutStopped
     : T extends DailyEventObjectDialOutWarning['action']
