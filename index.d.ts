@@ -2019,8 +2019,10 @@ export interface DailyCall {
     dailyConfig?: DailyAdvancedConfig;
     userName?: string;
   };
-  startDialOut(options: DailyStartDialoutOptions): Promise<DailyDialOutSession>;
-  stopDialOut(options?: { instanceId: string }): Promise<void>;
+  startDialOut(
+    options: DailyStartDialoutOptions
+  ): Promise<{ session?: DailyDialOutSession }>;
+  stopDialOut(options?: { instanceId: string }): void;
 }
 
 declare const Daily: DailyCallFactory & DailyCallStaticUtils;

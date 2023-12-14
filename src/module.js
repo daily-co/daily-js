@@ -3062,14 +3062,47 @@ export default class DailyIframe extends EventEmitter {
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_TRANSCRIPTION });
   }
 
-  startDialOut(args) {
-    this.sendMessageToCallMachine({
-      action: DAILY_METHOD_START_DIALOUT,
-      ...args,
+  async startDialOut(args) {
+    if (this._callState !== DAILY_STATE_JOINED) {
+      throw new Error('startDialOut() is only available when joined');
+    }
+
+    if (!args.sipUri && !args.phoneNumber) {
+      throw new Error(
+        `Error starting dial out: either a sip uri or phone number must be provided`
+      );
+    }
+
+    if (args.sipUri && args.phoneNumber) {
+      throw new Error(
+        `Error starting dial out: only one of sip uri or phone number must be provided`
+      );
+    }
+
+    return new Promise((resolve) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve(msg);
+        }
+      };
+
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_START_DIALOUT,
+          ...args,
+        },
+        k
+      );
     });
   }
 
   stopDialOut(args) {
+    if (this._callState !== DAILY_STATE_JOINED) {
+      throw new Error('stopDialOut() is only available when joined');
+    }
+
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_STOP_DIALOUT,
       ...args,
