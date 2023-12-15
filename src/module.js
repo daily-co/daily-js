@@ -3965,6 +3965,9 @@ export default class DailyIframe extends EventEmitter {
           this._iframe,
           this._callFrameId
         );
+        // if a duplicate instance was detected before initialization
+        // we need to send up the log now.
+        this._delayDuplicateInstanceLog && this._logDuplicateInstanceAttempt();
         break;
       }
       case DAILY_EVENT_LOADED:
@@ -4853,20 +4856,22 @@ export default class DailyIframe extends EventEmitter {
   }
 
   _logDuplicateInstanceAttempt() {
-    if (!_callInstance.needsLoad()) {
-      _callInstance.sendMessageToCallMachine({
+    const callInst = _callInstance._dailyMainExecuted
+      ? _callInstance
+      : this._dailyMainExecuted
+      ? this
+      : undefined;
+    if (callInst) {
+      callInst.sendMessageToCallMachine({
         action: DAILY_METHOD_TRANSMIT_LOG,
         level: 'error',
         code: this.strictMode ? 9990 : 9992,
       });
-    } else if (!this.strictMode) {
-      const errMsg =
-        'You are attempting to use multiple call instances simultaneously. ' +
-        'This is unsupported and will result in unknown errors. Previous ' +
-        'instances should be destroyed before creating new ones. Please ' +
-        'remove `strictMode: false` from your constructor properties to ' +
-        'enable strict mode to track down and fix these attempts.';
-      console.error(errMsg);
+    } else {
+      // dailyMainExecuted most likely will only fire once and
+      // it's unclear which call machine will handle it.
+      this._delayDuplicateInstanceLog = true;
+      _callInstance._delayDuplicateInstanceLog = true;
     }
   }
 
