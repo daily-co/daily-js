@@ -103,10 +103,20 @@ export function isFullscreenSupported() {
 
 const supportedBrowsersForVideoProcessors = ['Chrome', 'Firefox'];
 
-export function isVideoProcessingSupported() {
+export function isVideoProcessingSupported(usingLegacyProvider = false) {
   if (isReactNative()) return false;
   if (browserMobile_p()) return false;
-  return supportedBrowsersForVideoProcessors.includes(getBrowserName());
+  const supportedBrowsers = [...supportedBrowsersForVideoProcessors];
+  if (!usingLegacyProvider) {
+    supportedBrowsers.push('Safari');
+  }
+  // TODO: remove
+  console.log(
+    '[pk] supported browser for video processing: ',
+    supportedBrowsers,
+    getBrowserName()
+  );
+  return supportedBrowsers.includes(getBrowserName());
 }
 
 const supportedBrowsersForAudioProcessors = ['Chrome', 'Firefox'];

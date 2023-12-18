@@ -932,6 +932,9 @@ export default class DailyIframe extends EventEmitter {
       supportsFullscreen: !!isFullscreenSupported(),
       supportsScreenShare: !!isScreenSharingSupported(),
       supportsSfu: !!browserVideoSupported_p(),
+      // Note: isVideoProcessingSupported() reports video processing support for
+      // the new default processor (Banuba), which is wider than for the old
+      // processor, which can still be configured via useLegacyVideoProcessor
       supportsVideoProcessing: isVideoProcessingSupported(),
       supportsAudioProcessing: isAudioProcessingSupported(),
     };
@@ -5177,7 +5180,12 @@ function validateInputSettings(settings) {
 // strip out the entire `video` or `audio` if processing isn't supported.
 function stripInputSettingsForUnsupportedPlatforms(settings) {
   const unsupportedProcessors = [];
-  if (settings.video && !isVideoProcessingSupported()) {
+  if (
+    settings.video &&
+    !isVideoProcessingSupported(
+      window._dailyConfig.useLegacyVideoProcessor ?? false
+    )
+  ) {
     delete settings.video;
     unsupportedProcessors.push('video');
   }
