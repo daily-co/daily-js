@@ -101,22 +101,42 @@ export function isFullscreenSupported() {
   return !!iframe.requestFullscreen || !!iframe.webkitRequestFullscreen;
 }
 
-const supportedBrowsersForVideoProcessors = ['Chrome', 'Firefox'];
-
 export function isVideoProcessingSupported(usingLegacyProvider = false) {
   if (isReactNative()) return false;
-  if (browserMobile_p()) return false;
-  const supportedBrowsers = [...supportedBrowsersForVideoProcessors];
-  if (!usingLegacyProvider) {
-    supportedBrowsers.push('Safari');
+
+  if (usingLegacyProvider) {
+    return isVideoProcessingSupportedInBrowser_MediaPipe();
+  } else {
+    return isVideoProcessingSupportedInBrowser_Banuba();
   }
-  // TODO: remove
-  console.log(
-    '[pk] supported browser for video processing: ',
-    supportedBrowsers,
-    getBrowserName()
-  );
-  return supportedBrowsers.includes(getBrowserName());
+}
+
+function isVideoProcessingSupportedInBrowser_MediaPipe() {
+  if (browserMobile_p()) {
+    return;
+  }
+
+  return ['Chrome', 'Firefox'].includes(getBrowserName());
+}
+
+function isVideoProcessingSupportedInBrowser_Banuba() {
+  const browserName = getBrowserName();
+
+  // Exclude Safari 15.0..<15.4 on iOS, due to a bug.
+  // See underyling bug https://bugs.webkit.org/show_bug.cgi?id=232195, which
+  // manifested as https://bugs.webkit.org/show_bug.cgi?id=232076, which led
+  // Banuba to recommend Safari-specific workaround https://docs.banuba.com/face-ar-sdk-v1/web/web_known_issues/#effect-animations-are-delayed-on-safari.
+  // Given that the underlying bug has since been fixed, for now it makes sense
+  // to simply exclude the problmatic versions of Safari, especially because
+  // they are tied to now-rather-old iOS versions.
+  if (isIOS() && browserName === 'Safari') {
+    const version = getSafariVersion();
+    if (version.major === 15 && version.minor < 4) {
+      return false;
+    }
+  }
+
+  return ['Chrome', 'Firefox', 'Safari'].includes(browserName);
 }
 
 const supportedBrowsersForAudioProcessors = ['Chrome', 'Firefox'];
