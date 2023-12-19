@@ -113,13 +113,35 @@ export function isVideoProcessingSupported(usingLegacyProvider = false) {
 
 function isVideoProcessingSupportedInBrowser_MediaPipe() {
   if (browserMobile_p()) {
-    return;
+    return false;
   }
 
   return ['Chrome', 'Firefox'].includes(getBrowserName());
 }
 
 function isVideoProcessingSupportedInBrowser_Banuba() {
+  // TODO: we *should* be able to support mobile browsers someday by removing
+  // the below check.
+  // Remaining work before that can be done:
+  // - On iOS, more gracefully handle the "interrupted" state that occurs when
+  //   backgrounding the browser or switching to a new tab (it currently results
+  //   in very visually weird state).
+  // - Consider whether we should have a set of mobile-specific "preset"
+  //   background images; the set we have is tuned to look best on desktop.
+  //   (Preset background images might not be an important enough feature for it
+  //   for it to be worth our while, though...especially since the background
+  //   images look passable on mobile).
+  // - Spend more time tuning the auto-shutoff mechanism and processing settings
+  //   for much-more-often-CPU-constrained mobile devices (especially Android
+  //   devices). On my Galaxy A50:
+  //     - if the the auto-shutoff mechanism is enabled, if fires all the time
+  //     - if the auto-shutoff mechanism is disabled, the CPU spikes to the
+  //       point of starving video decoding, even on a 1:1 call, causing either
+  //       the local or remote video to appear interrupted
+  if (browserMobile_p()) {
+    return false;
+  }
+
   const browserName = getBrowserName();
 
   // Exclude Safari 15.0..<15.4 on iOS, due to a bug.
