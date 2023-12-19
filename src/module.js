@@ -3077,6 +3077,34 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
+    if (args.sipUri) {
+      if (typeof args.sipUri !== 'string') {
+        throw new Error(`Error starting dial out: sipUri must be a string`);
+      }
+
+      if (!args.sipUri.startsWith('sip:')) {
+        throw new Error(
+          `Error starting dial out: Invalid SIP URI, must start with 'sip:'`
+        );
+      }
+    }
+
+    if (args.phoneNumber) {
+      if (typeof args.phoneNumber !== 'string') {
+        throw new Error(
+          `Error starting dial out: phoneNumber must be a string`
+        );
+      }
+
+      // Must be a valid phone number as per E.164, example: +12268077097.
+      const re = /^\+\d{1,}$/;
+      if (!re.test(args.phoneNumber)) {
+        throw new Error(
+          `Error starting dial out: Invalid phone number, must be valid phone number as per E.164`
+        );
+      }
+    }
+
     return new Promise((resolve) => {
       const k = (msg) => {
         if (msg.error) {
