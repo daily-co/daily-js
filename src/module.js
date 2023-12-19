@@ -3063,9 +3063,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async startDialOut(args) {
-    if (this._callState !== DAILY_STATE_JOINED) {
-      throw new Error('startDialOut() is only available when joined');
-    }
+    methodOnlySupportedAfterJoin(this._callState, 'startDialOut()');
 
     if (!args.sipUri && !args.phoneNumber) {
       throw new Error(
@@ -3099,9 +3097,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   stopDialOut(args) {
-    if (this._callState !== DAILY_STATE_JOINED) {
-      throw new Error('stopDialOut() is only available when joined');
-    }
+    methodOnlySupportedAfterJoin(this._callState, 'stopDialOut()');
 
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_STOP_DIALOUT,
