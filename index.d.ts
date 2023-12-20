@@ -1066,8 +1066,14 @@ export type DailyFatalError = {
 export interface DailyFatalConnectionError extends DailyFatalError {
   type: Extract<DailyFatalErrorType, 'connection-error'>;
   details: {
-    on: 'load' | 'join' | 'reconnect' | 'move';
-    sourceError: Error;
+    on:
+      | 'load'
+      | 'join'
+      | 'reconnect'
+      | 'move'
+      | 'rtc-connection'
+      | 'room-lookup';
+    sourceError: Record<string, any>;
     uri?: string;
     workerGroup?: string;
     geoGroup?: string;

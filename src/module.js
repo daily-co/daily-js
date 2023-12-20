@@ -4122,10 +4122,8 @@ export default class DailyIframe extends EventEmitter {
           this._loadedCallback = null;
         }
         let { preserveIframe, ...event } = msg;
-        if (event?.error?.details?.sourceError) {
-          event.error.details.sourceError = JSON.parse(
-            event.error.details.sourceError
-          );
+        if (event?.error?.details) {
+          event.error.details = JSON.parse(event.error.details);
         }
         this._maybeSendToSentry(msg);
         if (this._joinedCallback) {
