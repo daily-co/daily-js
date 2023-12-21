@@ -1596,6 +1596,10 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectDialOutStopped
     : T extends DailyEventObjectDialOutWarning['action']
     ? DailyEventObjectDialOutWarning
+    : T extends DailyEventObjectLocalAudioLevel['action']
+    ? DailyEventObjectLocalAudioLevel
+    : T extends DailyEventObjectRemoteParticipantsAudioLevel['action']
+    ? DailyEventObjectRemoteParticipantsAudioLevel
     : any;
 
 export interface DailyCallFactory {
