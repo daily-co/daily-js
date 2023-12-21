@@ -144,6 +144,8 @@ export const DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED =
   'local-screen-share-started';
 export const DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED =
   'local-screen-share-stopped';
+export const DAILY_EVENT_LOCAL_SCREEN_SHARE_CANCELED =
+  'local-screen-share-canceled';
 export const DAILY_EVENT_ACTIVE_SPEAKER_CHANGE = 'active-speaker-change';
 export const DAILY_EVENT_ACTIVE_SPEAKER_MODE_CHANGE =
   'active-speaker-mode-change';
