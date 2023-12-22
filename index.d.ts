@@ -1795,7 +1795,6 @@ export type SidebarView =
   | string;
 
 export interface DailyDialOutSession {
-  instanceId: string;
   sessionId: string;
 }
 
@@ -2013,7 +2012,7 @@ export interface DailyCall {
   startDialOut(
     options: DailyStartDialoutOptions
   ): Promise<{ session?: DailyDialOutSession }>;
-  stopDialOut(options?: { instanceId: string }): void;
+  stopDialOut(options?: { sessionId: string }): void;
 }
 
 declare const Daily: DailyCallFactory & DailyCallStaticUtils;
