@@ -705,6 +705,7 @@ export interface DailyNetworkStats {
       timestamp: number;
       recvBitsPerSecond: number | null;
       sendBitsPerSecond: number | null;
+      availableOutgoingBitrate: number | null;
       networkRoundTripTime: number | null;
       videoRecvBitsPerSecond: number | null;
       videoSendBitsPerSecond: number | null;
