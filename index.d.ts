@@ -1552,10 +1552,10 @@ export interface DailyStreamingParticipantsConfig {
   sort?: DailyStreamingParticipantsSortMethod;
 }
 
-export interface DailyStreamingDefaultLayoutConfig
-  extends DailyStreamingParticipantsConfig {
+export interface DailyStreamingDefaultLayoutConfig {
   preset: 'default';
   max_cam_streams?: number;
+  participants?: DailyStreamingParticipantsConfig;
 }
 
 export interface DailyStreamingSingleParticipantLayoutConfig {
@@ -1563,35 +1563,35 @@ export interface DailyStreamingSingleParticipantLayoutConfig {
   session_id: string;
 }
 
-export interface DailyStreamingActiveParticipantLayoutConfig
-  extends DailyStreamingParticipantsConfig {
+export interface DailyStreamingActiveParticipantLayoutConfig {
   preset: 'active-participant';
+  participants?: DailyStreamingParticipantsConfig;
 }
 
 export interface DailyStreamingAudioOnlyLayoutConfig {
   preset: 'audio-only';
+  participants?: DailyStreamingParticipantsConfig;
 }
 
 export type DailyStreamingPortraitLayoutVariant = 'vertical' | 'inset';
 
-export interface DailyStreamingPortraitLayoutConfig
-  extends DailyStreamingParticipantsConfig {
+export interface DailyStreamingPortraitLayoutConfig {
   preset: 'portrait';
   variant?: DailyStreamingPortraitLayoutVariant;
   max_cam_streams?: number;
+  participants?: DailyStreamingParticipantsConfig;
 }
 
-export interface DailyUpdateStreamingCustomLayoutConfig
-  extends DailyStreamingParticipantsConfig {
+export interface DailyUpdateStreamingCustomLayoutConfig {
   preset: 'custom';
+  participants?: DailyStreamingParticipantsConfig;
   composition_params?: {
     [key: string]: boolean | number | string;
   };
 }
 
 export interface DailyStartStreamingCustomLayoutConfig
-  extends DailyUpdateStreamingCustomLayoutConfig,
-    DailyStreamingParticipantsConfig {
+  extends DailyUpdateStreamingCustomLayoutConfig {
   composition_id?: string;
   session_assets?: {
     [key: string]: string;
