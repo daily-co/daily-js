@@ -104,7 +104,15 @@ export type DailyEvent =
   | 'show-local-video-changed'
   | 'selected-devices-updated'
   | 'custom-button-click'
-  | 'sidebar-view-changed';
+  | 'sidebar-view-changed'
+  | 'dialin-connected'
+  | 'dialin-error'
+  | 'dialin-stopped'
+  | 'dialin-warning'
+  | 'dialout-connected'
+  | 'dialout-error'
+  | 'dialout-stopped'
+  | 'dialout-warning';
 
 export type DailyMeetingState =
   | 'new'
@@ -1425,6 +1433,58 @@ export interface DailyEventObjectSidebarViewChanged {
   view: SidebarView;
 }
 
+export interface DailyEventObjectDialinConnected {
+  action: Extract<DailyEvent, 'dialin-connected'>;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectDialinError {
+  action: Extract<DailyEvent, 'dialin-error'>;
+  errorMsg: string;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectDialinStopped {
+  action: Extract<DailyEvent, 'dialin-stopped'>;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectDialinWarning {
+  action: Extract<DailyEvent, 'dialin-warning'>;
+  errorMsg: string;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectDialOutConnected {
+  action: Extract<DailyEvent, 'dialout-connected'>;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectDialOutError {
+  action: Extract<DailyEvent, 'dialout-error'>;
+  errorMsg: string;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectDialOutStopped {
+  action: Extract<DailyEvent, 'dialout-stopped'>;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectDialOutWarning {
+  action: Extract<DailyEvent, 'dialout-warning'>;
+  errorMsg: string;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
 export type DailyEventObject<T extends DailyEvent = any> =
   T extends DailyEventObjectAppMessage['action']
     ? DailyEventObjectAppMessage
@@ -1512,6 +1572,22 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectSelectedDevicesUpdated
     : T extends DailyEventObjectSidebarViewChanged['action']
     ? DailyEventObjectSidebarViewChanged
+    : T extends DailyEventObjectDialinConnected['action']
+    ? DailyEventObjectDialinConnected
+    : T extends DailyEventObjectDialinError['action']
+    ? DailyEventObjectDialinError
+    : T extends DailyEventObjectDialinStopped['action']
+    ? DailyEventObjectDialinStopped
+    : T extends DailyEventObjectDialinWarning['action']
+    ? DailyEventObjectDialinWarning
+    : T extends DailyEventObjectDialOutConnected['action']
+    ? DailyEventObjectDialOutConnected
+    : T extends DailyEventObjectDialOutError['action']
+    ? DailyEventObjectDialOutError
+    : T extends DailyEventObjectDialOutStopped['action']
+    ? DailyEventObjectDialOutStopped
+    : T extends DailyEventObjectDialOutWarning['action']
+    ? DailyEventObjectDialOutWarning
     : any;
 
 export interface DailyCallFactory {
@@ -1718,6 +1794,22 @@ export type SidebarView =
   | 'breakout'
   | string;
 
+export interface DailyDialOutSession {
+  sessionId: string;
+}
+
+export interface DailyStartDialoutSipOptions {
+  sipUri?: string;
+}
+
+export interface DailyStartDialoutPhoneOptions {
+  phoneNumber?: string;
+}
+
+export type DailyStartDialoutOptions =
+  | DailyStartDialoutSipOptions
+  | DailyStartDialoutPhoneOptions;
+
 export interface DailyCall {
   iframe(): HTMLIFrameElement | null;
   join(properties?: DailyCallOptions): Promise<DailyParticipantsObject | void>;
@@ -1917,6 +2009,10 @@ export interface DailyCall {
     dailyConfig?: DailyAdvancedConfig;
     userName?: string;
   };
+  startDialOut(
+    options: DailyStartDialoutOptions
+  ): Promise<{ session?: DailyDialOutSession }>;
+  stopDialOut(options?: { sessionId: string }): void;
 }
 
 declare const Daily: DailyCallFactory & DailyCallStaticUtils;

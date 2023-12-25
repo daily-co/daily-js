@@ -220,6 +220,16 @@ import {
   DAILY_EVENT_DAILY_MAIN_EXECUTED,
   DAILY_METHOD_STOP_TEST_CONNECTION_QUALITY,
   DAILY_METHOD_TEST_CONNECTION_QUALITY,
+  DAILY_METHOD_START_DIALOUT,
+  DAILY_METHOD_STOP_DIALOUT,
+  DAILY_EVENT_DIALIN_CONNECTED,
+  DAILY_EVENT_DIALIN_ERROR,
+  DAILY_EVENT_DIALIN_STOPPED,
+  DAILY_EVENT_DIALIN_WARNING,
+  DAILY_EVENT_DIALOUT_CONNECTED,
+  DAILY_EVENT_DIALOUT_ERROR,
+  DAILY_EVENT_DIALOUT_STOPPED,
+  DAILY_EVENT_DIALOUT_WARNING,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -3052,6 +3062,77 @@ export default class DailyIframe extends EventEmitter {
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_TRANSCRIPTION });
   }
 
+  async startDialOut(args) {
+    methodOnlySupportedAfterJoin(this._callState, 'startDialOut()');
+
+    if (!args.sipUri && !args.phoneNumber) {
+      throw new Error(
+        `Error starting dial out: either a sip uri or phone number must be provided`
+      );
+    }
+
+    if (args.sipUri && args.phoneNumber) {
+      throw new Error(
+        `Error starting dial out: only one of sip uri or phone number must be provided`
+      );
+    }
+
+    if (args.sipUri) {
+      if (typeof args.sipUri !== 'string') {
+        throw new Error(`Error starting dial out: sipUri must be a string`);
+      }
+
+      if (!args.sipUri.startsWith('sip:')) {
+        throw new Error(
+          `Error starting dial out: Invalid SIP URI, must start with 'sip:'`
+        );
+      }
+    }
+
+    if (args.phoneNumber) {
+      if (typeof args.phoneNumber !== 'string') {
+        throw new Error(
+          `Error starting dial out: phoneNumber must be a string`
+        );
+      }
+
+      // Must be a valid phone number as per E.164, example: +12268077097.
+      const re = /^\+\d{1,}$/;
+      if (!re.test(args.phoneNumber)) {
+        throw new Error(
+          `Error starting dial out: Invalid phone number, must be valid phone number as per E.164`
+        );
+      }
+    }
+
+    return new Promise((resolve) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve(msg);
+        }
+      };
+
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_START_DIALOUT,
+          ...args,
+        },
+        k
+      );
+    });
+  }
+
+  stopDialOut(args) {
+    methodOnlySupportedAfterJoin(this._callState, 'stopDialOut()');
+
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_STOP_DIALOUT,
+      ...args,
+    });
+  }
+
   getNetworkStats() {
     if (this._callState !== DAILY_STATE_JOINED) {
       let stats = { latest: {} };
@@ -4395,6 +4476,14 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_LIVE_STREAMING_ERROR:
       case DAILY_EVENT_NONFATAL_ERROR:
       case DAILY_EVENT_LANG_UPDATED:
+      case DAILY_EVENT_DIALIN_CONNECTED:
+      case DAILY_EVENT_DIALIN_ERROR:
+      case DAILY_EVENT_DIALIN_STOPPED:
+      case DAILY_EVENT_DIALIN_WARNING:
+      case DAILY_EVENT_DIALOUT_CONNECTED:
+      case DAILY_EVENT_DIALOUT_ERROR:
+      case DAILY_EVENT_DIALOUT_STOPPED:
+      case DAILY_EVENT_DIALOUT_WARNING:
         try {
           this.emit(msg.action, msg);
         } catch (e) {
