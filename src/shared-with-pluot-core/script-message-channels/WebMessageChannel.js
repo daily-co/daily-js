@@ -108,7 +108,7 @@ export default class WebMessageChannel extends ScriptMessageChannel {
     // window. IframeDriverProvider is responsible for forwarding that message
     // up to the daily-js running in the parent window (the "driver" of the
     // iframe).
-    window.postMessage(message, window.location.origin);
+    window.postMessage(message, this._targetOriginFromWindowLocation());
   }
 
   removeListener(listener) {
@@ -183,7 +183,15 @@ export default class WebMessageChannel extends ScriptMessageChannel {
         return new URL(iframe.src).origin;
       }
     } else {
-      return window.location.origin;
+      return this._targetOriginFromWindowLocation();
     }
+  }
+
+  // Converts this window's current location into something that can be used as
+  // a target origin for window.postMessage() calls.
+  _targetOriginFromWindowLocation() {
+    // According to MDN: 'posting a message to a page at a `file:` URL currently requires that the targetOrigin argument be "*"'
+    // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+    return window.location.protocol === 'file:' ? '*' : window.location.origin;
   }
 }
