@@ -848,11 +848,17 @@ export interface DailyRoomInfo {
     audio_only?: boolean;
     enable_recording?: string;
     enable_dialin?: boolean;
+    /**
+     * @deprecated This property will be removed. All calls are treated as autojoin.
+     */
     autojoin?: boolean;
     eject_at_room_exp?: boolean;
     eject_after_elapsed?: number;
     lang?: '' | DailyLanguageSetting;
     sfu_switchover?: number;
+    /**
+     * @deprecated This property will be removed. All calls websocket signaling ('ws').
+     */
     signaling_impl?: string;
     geo?: string;
     recordings_bucket?: DailyRecordingsBucket;
