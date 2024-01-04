@@ -1908,9 +1908,8 @@ export default class DailyIframe extends EventEmitter {
   meetingSessionState() {
     // Validate call state: meeting session details are only available
     // once you have joined the meeting
-    if (this._callState !== DAILY_STATE_JOINED) {
-      throw new Error('meetingSessionState() is only available when joined');
-    }
+    methodOnlySupportedAfterJoin(this._callState, 'meetingSessionState');
+
     // currently only default values returned
     return this._meetingSessionState;
   }
@@ -1923,9 +1922,8 @@ export default class DailyIframe extends EventEmitter {
 
     // Validate call state: session data can only be set once you have
     // joined the meeting
-    if (this._callState !== DAILY_STATE_JOINED) {
-      throw new Error('setMeetingSessionData() is only available when joined');
-    }
+    methodOnlySupportedAfterJoin(this._callState, 'setMeetingSessionData');
+
     try {
       validateSessionDataUpdate(data, mergeStrategy);
     } catch (e) {
@@ -2087,11 +2085,17 @@ export default class DailyIframe extends EventEmitter {
 
     // Validate call state: startCamera() is only allowed if you haven't
     // already joined (or aren't in the process of joining).
-    if ([DAILY_STATE_JOINING, DAILY_STATE_JOINED].includes(this._callState)) {
-      throw new Error(
-        'startCamera() not supported after joining a meeting: did you mean to use setLocalAudio() and/or setLocalVideo() instead?'
-      );
-    }
+    methodOnlySupportedOutsideJoin(
+      this._callState,
+      this._isPreparingToJoin,
+      'startCamera()',
+      'Did you mean to use setLocalAudio() and/or setLocalVideo() instead?'
+    );
+
+    methodNotSupportedDuringPreCallTesting(
+      this._testingInProgress,
+      'startCamera()'
+    );
 
     if (this.needsLoad()) {
       try {
@@ -2178,16 +2182,16 @@ export default class DailyIframe extends EventEmitter {
 
   startCustomTrack(properties = { track, mode, trackName }) {
     methodNotSupportedInReactNative();
+    // Validate meeting state: custom tracks are only available
+    // once you have joined the meeting
+    methodOnlySupportedAfterJoin(this._callState, 'startCustomTrack()');
+
     this.validateCustomTrack(
       properties.track,
       properties.mode,
       properties.trackName
     );
-    // Validate meeting state: custom tracks are only available
-    // once you have joined the meeting
-    if (this._callState !== DAILY_STATE_JOINED) {
-      throw new Error('startCustomTrack() is only allowed when joined');
-    }
+
     return new Promise((resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
@@ -2212,9 +2216,8 @@ export default class DailyIframe extends EventEmitter {
     methodNotSupportedInReactNative();
     // Validate meeting state: custom tracks are only available
     // once you have joined the meeting
-    if (this._callState !== DAILY_STATE_JOINED) {
-      throw new Error('stopCustomTrack() is only allowed when joined');
-    }
+    methodOnlySupportedAfterJoin(this._callState, 'stopCustomTrack()');
+
     return new Promise((resolve) => {
       let k = (msg) => {
         resolve(msg.mediaTag);
@@ -2231,11 +2234,8 @@ export default class DailyIframe extends EventEmitter {
 
   setCamera(cameraDeviceId) {
     methodOnlySupportedInReactNative();
-    if (this.needsLoad()) {
-      throw new Error(
-        'Before you can invoke setCamera, first you need to invoke one of these methods: join, startCamera, or preAuth'
-      );
-    }
+    methodRequiresDailyMainExecution(this._dailyMainExecuted, 'setCamera()');
+
     return new Promise((resolve) => {
       let k = (msg) => {
         resolve({ device: msg.device });
@@ -2454,7 +2454,7 @@ export default class DailyIframe extends EventEmitter {
     // (assuming automatic audio device management isn't disabled)
     if (
       !this.disableReactNativeAutoDeviceManagement('audio') &&
-      this._isCallPendingOrOngoing(this._callState, this._isPreparingToJoin)
+      _isCallPendingOrOngoing(this._callState, this._isPreparingToJoin)
     ) {
       this.nativeUtils().setAudioMode(this._nativeInCallAudioMode);
     }
@@ -2468,9 +2468,15 @@ export default class DailyIframe extends EventEmitter {
 
     // Validate call state: pre-auth is only allowed if you haven't already
     // joined (or aren't in the process of joining).
-    if ([DAILY_STATE_JOINING, DAILY_STATE_JOINED].includes(this._callState)) {
-      throw new Error('preAuth() not supported after joining a meeting');
-    }
+    methodOnlySupportedOutsideJoin(
+      this._callState,
+      this._isPreparingToJoin,
+      'preAuth()'
+    );
+    methodNotSupportedDuringPreCallTesting(
+      this._testingInProgress,
+      'preAuth()'
+    );
 
     // Load call machine bundle, if needed.
     if (this.needsLoad()) {
@@ -2618,6 +2624,8 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async join(properties = {}) {
+    methodNotSupportedDuringPreCallTesting(this._testingInProgress, 'join()');
+
     let newCss = false;
     if (this.needsLoad()) {
       this.updateIsPreparingToJoin(true);
@@ -2778,9 +2786,11 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async startScreenShare(captureOptions = {}) {
-    if (!this._dailyMainExecuted) {
-      return;
-    }
+    methodRequiresDailyMainExecution(
+      this._dailyMainExecuted,
+      'startScreenShare()'
+    );
+
     if (captureOptions.screenVideoSendSettings) {
       this._validateVideoSendSettings(
         'screenVideo',
@@ -2823,7 +2833,10 @@ export default class DailyIframe extends EventEmitter {
   }
 
   stopScreenShare() {
-    if (!this._dailyMainExecuted) return;
+    methodRequiresDailyMainExecution(
+      this._dailyMainExecuted,
+      'stopScreenShare()'
+    );
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_SCREENSHARE });
   }
 
@@ -3184,7 +3197,7 @@ export default class DailyIframe extends EventEmitter {
       validateAudioCodec(args.codecs.audio);
     }
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const k = (msg) => {
         if (msg.error) {
           reject(msg.error);
@@ -3278,17 +3291,25 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async testConnectionQuality(args) {
+    methodOnlySupportedOutsideJoin(
+      this._callState,
+      this._isPreparingToJoin,
+      'testConnectionQuality()'
+    );
+    this._testingInProgress = true;
     if (this.needsLoad()) {
       try {
         await this.load();
       } catch (e) {
+        this._testingInProgress = false;
         return Promise.reject(e);
       }
     }
 
-    const { videoTrack, duration } = args;
+    const { videoTrack, ...callArgs } = args;
 
     if (!this._validateVideoTrackForNetworkTests(videoTrack)) {
+      this._testingInProgress = false;
       throw new Error('Video track error');
     } else {
       this._preloadCache.videoTrackForConnectionQualityTest = videoTrack;
@@ -3297,15 +3318,18 @@ export default class DailyIframe extends EventEmitter {
     return new Promise((resolve, reject) => {
       const k = (msg) => {
         if (msg.error) {
+          this._testingInProgress = false;
           reject(msg.error);
         } else {
+          this._testingInProgress = false;
           resolve(msg.results);
         }
       };
       this.sendMessageToCallMachine(
         {
           action: DAILY_METHOD_TEST_CONNECTION_QUALITY,
-          duration: duration,
+          ...callArgs,
+          dailyJsVersion: this.properties.dailyJsVersion,
         },
         k
       );
@@ -3927,6 +3951,7 @@ export default class DailyIframe extends EventEmitter {
 
   async setNetworkTopology(opts) {
     methodNotSupportedInReactNative();
+    methodOnlySupportedAfterJoin(this._callState, 'setNetworkTopology()');
     return new Promise((resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
@@ -3944,6 +3969,9 @@ export default class DailyIframe extends EventEmitter {
 
   async getNetworkTopology() {
     return new Promise((resolve, reject) => {
+      if (this.needsLoad()) {
+        resolve({ topology: 'none' });
+      }
       let k = (msg) => {
         if (msg.error) {
           reject({ error: msg.error });
@@ -4759,22 +4787,22 @@ export default class DailyIframe extends EventEmitter {
 
     // Update state side-effects (which, for now, all depend on whether
     // _isCallPendingOrOngoing)
-    const oldIsMeetingPendingOrOngoing = this._isCallPendingOrOngoing(
+    const oldIsMeetingPendingOrOngoing = _isCallPendingOrOngoing(
       oldMeetingState,
       oldIsPreparingToJoin
     );
-    const _isCallPendingOrOngoing = this._isCallPendingOrOngoing(
+    const curCallPendingOrOngoing = _isCallPendingOrOngoing(
       this._callState,
       this._isPreparingToJoin
     );
-    if (oldIsMeetingPendingOrOngoing === _isCallPendingOrOngoing) {
+    if (oldIsMeetingPendingOrOngoing === curCallPendingOrOngoing) {
       return;
     }
-    this.updateKeepDeviceAwake(_isCallPendingOrOngoing);
-    this.updateDeviceAudioMode(_isCallPendingOrOngoing);
-    this.updateShowAndroidOngoingMeetingNotification(_isCallPendingOrOngoing);
+    this.updateKeepDeviceAwake(curCallPendingOrOngoing);
+    this.updateDeviceAudioMode(curCallPendingOrOngoing);
+    this.updateShowAndroidOngoingMeetingNotification(curCallPendingOrOngoing);
     this.updateNoOpRecordingEnsuringBackgroundContinuity(
-      _isCallPendingOrOngoing
+      curCallPendingOrOngoing
     );
   }
 
@@ -4871,13 +4899,6 @@ export default class DailyIframe extends EventEmitter {
     }
     this.nativeUtils().enableNoOpRecordingEnsuringBackgroundContinuity(
       enableNoOpRecording
-    );
-  }
-
-  _isCallPendingOrOngoing(callState, isPreparingToJoin) {
-    return (
-      [DAILY_STATE_JOINING, DAILY_STATE_JOINED].includes(callState) ||
-      isPreparingToJoin
     );
   }
 
@@ -5183,6 +5204,57 @@ function methodOnlySupportedAfterJoin(
     if (moreInfo) {
       msg += ` ${moreInfo}`;
     }
+    console.error(msg);
+    throw new Error(msg);
+  }
+}
+
+function _isCallPendingOrOngoing(callState, isPreparingToJoin) {
+  return (
+    [DAILY_STATE_JOINING, DAILY_STATE_JOINED].includes(callState) ||
+    isPreparingToJoin
+  );
+}
+
+function methodOnlySupportedOutsideJoin(
+  callState,
+  isPreparingToJoin,
+  methodName = 'This daily-js method',
+  moreInfo
+) {
+  if (_isCallPendingOrOngoing(callState, isPreparingToJoin)) {
+    let msg = `${methodName} not supported after joining a meeting.`;
+    if (moreInfo) {
+      msg += ` ${moreInfo}`;
+    }
+    console.error(msg);
+    throw new Error(msg);
+  }
+}
+
+function methodRequiresDailyMainExecution(
+  dailyMainExecuted,
+  methodName = 'This daily-js method',
+  moreInfo
+) {
+  if (!dailyMainExecuted) {
+    let msg = `${methodName} requires preAuth(), startCamera(), or join() to \
+initialize call state.`;
+    if (moreInfo) {
+      msg += ` ${moreInfo}`;
+    }
+    console.error(msg);
+    throw new Error(msg);
+  }
+}
+
+function methodNotSupportedDuringPreCallTesting(
+  testingInProgress,
+  methodName = 'This daily-js method'
+) {
+  if (testingInProgress) {
+    let msg = `PreCall testing is in progress. Please try ${methodName} again \
+once testing has completed`;
     console.error(msg);
     throw new Error(msg);
   }
