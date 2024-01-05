@@ -218,8 +218,10 @@ import {
   DAILY_EVENT_LOCAL_AUDIO_LEVEL,
   DAILY_EVENT_REMOTE_PARTICIPANTS_AUDIO_LEVEL,
   DAILY_EVENT_DAILY_MAIN_EXECUTED,
-  DAILY_METHOD_STOP_TEST_CONNECTION_QUALITY,
-  DAILY_METHOD_TEST_CONNECTION_QUALITY,
+  DAILY_METHOD_STOP_TEST_P2P_CALL_QUALITY,
+  DAILY_METHOD_TEST_CALL_QUALITY,
+  DAILY_METHOD_STOP_TEST_CALL_QUALITY,
+  DAILY_METHOD_TEST_P2P_CALL_QUALITY,
   DAILY_METHOD_START_DIALOUT,
   DAILY_METHOD_STOP_DIALOUT,
   DAILY_EVENT_DIALIN_CONNECTED,
@@ -2750,6 +2752,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async leave() {
+    methodNotSupportedDuringTestCall(this._testCallInProgress, `leave()`);
     return new Promise((resolve) => {
       if (
         this._callState === DAILY_STATE_LEFT ||
@@ -3233,6 +3236,10 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async testWebsocketConnectivity() {
+    methodNotSupportedDuringTestCall(
+      this._testCallInProgress,
+      `testWebsocketConnectivity()`
+    );
     if (this.needsLoad()) {
       try {
         await this.load();
@@ -3284,35 +3291,69 @@ export default class DailyIframe extends EventEmitter {
     return true;
   }
 
-  async testConnectionQuality(args) {
-    methodOnlySupportedBeforeJoin(
-      this._callState,
-      this._isPreparingToJoin,
-      'testConnectionQuality()'
+  async testCallQuality(args) {
+    methodNotSupportedAfterDailyMainExecution(
+      this._dailyMainExecuted,
+      'testCallQuality()'
     );
+    if (this._testCallInProgress) {
+      const msg = 'A pre-call quality test is already in progress';
+      console.error(msg);
+      throw new Error(msg);
+    }
+
     this._testCallInProgress = true;
+
+    if (!this._validateVideoTrackForNetworkTests(args?.videoTrack)) {
+      this._testCallInProgress = false;
+      throw new Error('Video track error');
+    }
+    const { videoTrack, ...callArgs } = args;
+    this._preloadCache.videoTrackForConnectionQualityTest = videoTrack;
+
     if (this.needsLoad()) {
       try {
+        // fun fact: sometimes when we call the loader's load() we don't
+        // actually load the call bundle, we just call a global function
+        // _dailyCallObjectSetup() to reinstall the call-bundle's message
+        // handler. meanwhile: needsLoad() checks against _callState and will
+        // return false if LOADED (which load() sets). Since the test call does
+        // not otherwise update our _callState to things like JOINED/LEFT but it
+        // WILL leave a call and remove the listener, we need to set the
+        // _callState back to what it was so future needsLoad() checks do the
+        // right thing
+        const _preloadCallState = this._callState;
         await this.load();
+        this._callState = _preloadCallState;
       } catch (e) {
         this._testCallInProgress = false;
         return Promise.reject(e);
       }
     }
 
-    const { videoTrack, ...callArgs } = args;
-
-    if (!this._validateVideoTrackForNetworkTests(videoTrack)) {
-      this._testCallInProgress = false;
-      throw new Error('Video track error');
-    } else {
-      this._preloadCache.videoTrackForConnectionQualityTest = videoTrack;
-    }
-
     return new Promise((resolve, reject) => {
       const k = (msg) => {
         if (msg.error) {
           this._testCallInProgress = false;
+          let sentryError = { ...msg.error };
+          if (msg.error.error?.details) {
+            msg.error.error.details = JSON.parse(msg.error.error.details);
+            sentryError.error = {
+              ...sentryError.error,
+              details: { ...sentryError.error.details },
+            };
+            sentryError.error.details.duringTest = 'testCallQuality';
+          } else {
+            // we want to add details to the sentryError we send but
+            // be careful not to modify the one we return
+            sentryError.error = sentryError.error
+              ? { ...sentryError.error }
+              : {};
+            sentryError.error.details = {
+              duringTest: 'testCallQuality',
+            };
+          }
+          this._maybeSendToSentry(sentryError);
           reject(msg.error);
         } else {
           this._testCallInProgress = false;
@@ -3321,7 +3362,7 @@ export default class DailyIframe extends EventEmitter {
       };
       this.sendMessageToCallMachine(
         {
-          action: DAILY_METHOD_TEST_CONNECTION_QUALITY,
+          action: DAILY_METHOD_TEST_CALL_QUALITY,
           ...callArgs,
           dailyJsVersion: this.properties.dailyJsVersion,
         },
@@ -3330,13 +3371,74 @@ export default class DailyIframe extends EventEmitter {
     });
   }
 
-  stopTestConnectionQuality() {
+  stopTestCallQuality() {
     this.sendMessageToCallMachine({
-      action: DAILY_METHOD_STOP_TEST_CONNECTION_QUALITY,
+      action: DAILY_METHOD_STOP_TEST_CALL_QUALITY,
+    });
+  }
+
+  async testConnectionQuality(args) {
+    console.warn(`testConnectionQuality() is deprecated: use \
+testCallQuality()(recommended) or testPeerToPeerCallQuality() instead`);
+    return await this.testPeerToPeerCallQuality(args);
+  }
+
+  async testPeerToPeerCallQuality(args) {
+    methodNotSupportedDuringTestCall(
+      this._testCallInProgress,
+      `testConnectionQuality()`
+    );
+    if (this.needsLoad()) {
+      try {
+        await this.load();
+      } catch (e) {
+        return Promise.reject(e);
+      }
+    }
+
+    const { videoTrack, duration } = args;
+
+    if (!this._validateVideoTrackForNetworkTests(videoTrack)) {
+      throw new Error('Video track error');
+    } else {
+      this._preloadCache.videoTrackForConnectionQualityTest = videoTrack;
+    }
+
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve(msg.results);
+        }
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_TEST_P2P_CALL_QUALITY,
+          duration: duration,
+        },
+        k
+      );
+    });
+  }
+
+  stopTestConnectionQuality() {
+    console.warn(`stopTestConnectionQuality() is deprecated: use \
+stopTestCallQuality() or stopTestPeerToPeerCallQuality() instead`);
+    this.stopTestPeerToPeerCallQuality();
+  }
+
+  stopTestPeerToPeerCallQuality() {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_STOP_TEST_P2P_CALL_QUALITY,
     });
   }
 
   async testNetworkConnectivity(videoTrack) {
+    methodNotSupportedDuringTestCall(
+      this._testCallInProgress,
+      `testNetworkConnectivity()`
+    );
     if (this.needsLoad()) {
       try {
         await this.load();
@@ -5242,13 +5344,30 @@ initialize call state.`;
   }
 }
 
+function methodNotSupportedAfterDailyMainExecution(
+  dailyMainExecuted,
+  methodName = 'This daily-js method',
+  moreInfo
+) {
+  if (dailyMainExecuted) {
+    let msg = `${methodName} can not be called after preAuth(), startCamera(), \
+or join() and call state has been initialized.`;
+    if (moreInfo) {
+      msg += ` ${moreInfo}`;
+    }
+    console.error(msg);
+    throw new Error(msg);
+  }
+}
+
 function methodNotSupportedDuringTestCall(
   testingInProgress,
   methodName = 'This daily-js method'
 ) {
   if (testingInProgress) {
-    let msg = `PreCall testing is in progress. Please try ${methodName} again \
-once testing has completed`;
+    let msg = `A pre-call quality test is in progress. Please try \
+${methodName} again once testing has completed. Use \
+stopTestCallQuality() to end it early.`;
     console.error(msg);
     throw new Error(msg);
   }

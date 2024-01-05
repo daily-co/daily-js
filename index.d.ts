@@ -699,13 +699,6 @@ export type DailyStartScreenShareOptions =
   | DailyScreenCaptureOptions
   | DailyStartScreenShare;
 
-export interface DailyWebsocketConnectivityTestResults {
-  abortedRegions: string[];
-  failedRegions: string[];
-  passedRegions: string[];
-  result: 'passed' | 'failed' | 'warning' | 'aborted';
-}
-
 export interface DailyNetworkStats {
   quality: number;
   stats: {
@@ -1393,18 +1386,56 @@ export interface DailyEventObjectTranscriptionStopped {
   updatedBy: string;
 }
 
+export interface DailyWebsocketConnectivityTestResults {
+  result: 'passed' | 'failed' | 'warning' | 'aborted';
+  abortedRegions: string[];
+  failedRegions: string[];
+  passedRegions: string[];
+}
+
 export interface DailyNetworkConnectivityTestStats {
   result: 'passed' | 'failed' | 'aborted';
 }
+
+export type DailyQualityTestResult =
+  | 'good'
+  | 'bad'
+  | 'warning'
+  | 'aborted'
+  | 'failed';
+
+export type DailyCallQualityTestResults =
+  | DailyCallQualityTestStats
+  | DailyCallQualityTestAborted
+  | DailyCallQualityTestFailure;
+
+export interface DailyCallQualityTestStats {
+  result: Extract<DailyQualityTestResult, 'good' | 'warning' | 'bad'>;
+  data: DailyConnectionQualityTestData;
+  secondsElapsed: number;
+}
+
+export interface DailyCallQualityTestAborted {
+  result: Extract<DailyQualityTestResult, 'aborted'>;
+  secondsElapsed: number;
+}
+
+export interface DailyCallQualityTestFailure {
+  result: Extract<DailyQualityTestResult, 'failed'>;
+  errorMsg: string;
+  error?: DailyFatalErrorObject<DailyFatalErrorType>;
+}
+
 export interface DailyConnectionQualityTestData {
   maxRTT: number | null;
   packetLoss: number | null;
 }
 export interface DailyConnectionQualityTestStats {
-  result: 'good' | 'bad' | 'warning' | 'aborted' | 'failed';
+  result: DailyQualityTestResult;
   data: DailyConnectionQualityTestData;
   secondsElapsed: number;
 }
+
 export type DailyRemoteMediaPlayerStopReason =
   | DailyRemoteMediaPlayerEOS
   | DailyRemoteMediaPlayerPeerStopped;
@@ -1979,10 +2010,30 @@ export interface DailyCall {
     videoTrack: MediaStreamTrack
   ): Promise<DailyNetworkConnectivityTestStats>;
   abortTestNetworkConnectivity(): void;
+  testCallQuality(options: {
+    url: string;
+    token?: string;
+    duration?: number;
+    videoTrack?: MediaStreamTrack;
+  }): Promise<DailyCallQualityTestResults>;
+  stopTestCallQuality(): void;
+  testPeerToPeerCallQuality(options: {
+    videoTrack: MediaStreamTrack;
+    duration?: number;
+  }): Promise<DailyConnectionQualityTestStats>;
+  stopTestPeerToPeerCallQuality(): void;
+  /**
+   * @deprecated This function will be removed. Use the method
+   *    testCallQuality()(recommended) or testPeerToPeerCallQuality() instead.
+   */
   testConnectionQuality(options: {
     videoTrack: MediaStreamTrack;
     duration?: number;
   }): Promise<DailyConnectionQualityTestStats>;
+  /**
+   * @deprecated This function will be removed. Use the method
+   *    stopTestCallQuality() or stopTestPeerToPeerCallQuality() instead.
+   */
   stopTestConnectionQuality(): void;
   updateSendSettings(settings: DailySendSettings): Promise<DailySendSettings>;
   getSendSettings(): DailySendSettings | null;
