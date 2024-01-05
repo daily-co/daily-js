@@ -2085,17 +2085,14 @@ export default class DailyIframe extends EventEmitter {
 
     // Validate call state: startCamera() is only allowed if you haven't
     // already joined (or aren't in the process of joining).
-    methodOnlySupportedOutsideJoin(
+    methodOnlySupportedBeforeJoin(
       this._callState,
       this._isPreparingToJoin,
       'startCamera()',
       'Did you mean to use setLocalAudio() and/or setLocalVideo() instead?'
     );
 
-    methodNotSupportedDuringPreCallTesting(
-      this._testingInProgress,
-      'startCamera()'
-    );
+    methodNotSupportedDuringTestCall(this._testCallInProgress, 'startCamera()');
 
     if (this.needsLoad()) {
       try {
@@ -2468,15 +2465,12 @@ export default class DailyIframe extends EventEmitter {
 
     // Validate call state: pre-auth is only allowed if you haven't already
     // joined (or aren't in the process of joining).
-    methodOnlySupportedOutsideJoin(
+    methodOnlySupportedBeforeJoin(
       this._callState,
       this._isPreparingToJoin,
       'preAuth()'
     );
-    methodNotSupportedDuringPreCallTesting(
-      this._testingInProgress,
-      'preAuth()'
-    );
+    methodNotSupportedDuringTestCall(this._testCallInProgress, 'preAuth()');
 
     // Load call machine bundle, if needed.
     if (this.needsLoad()) {
@@ -2624,7 +2618,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async join(properties = {}) {
-    methodNotSupportedDuringPreCallTesting(this._testingInProgress, 'join()');
+    methodNotSupportedDuringTestCall(this._testCallInProgress, 'join()');
 
     let newCss = false;
     if (this.needsLoad()) {
@@ -3291,17 +3285,17 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async testConnectionQuality(args) {
-    methodOnlySupportedOutsideJoin(
+    methodOnlySupportedBeforeJoin(
       this._callState,
       this._isPreparingToJoin,
       'testConnectionQuality()'
     );
-    this._testingInProgress = true;
+    this._testCallInProgress = true;
     if (this.needsLoad()) {
       try {
         await this.load();
       } catch (e) {
-        this._testingInProgress = false;
+        this._testCallInProgress = false;
         return Promise.reject(e);
       }
     }
@@ -3309,7 +3303,7 @@ export default class DailyIframe extends EventEmitter {
     const { videoTrack, ...callArgs } = args;
 
     if (!this._validateVideoTrackForNetworkTests(videoTrack)) {
-      this._testingInProgress = false;
+      this._testCallInProgress = false;
       throw new Error('Video track error');
     } else {
       this._preloadCache.videoTrackForConnectionQualityTest = videoTrack;
@@ -3318,10 +3312,10 @@ export default class DailyIframe extends EventEmitter {
     return new Promise((resolve, reject) => {
       const k = (msg) => {
         if (msg.error) {
-          this._testingInProgress = false;
+          this._testCallInProgress = false;
           reject(msg.error);
         } else {
-          this._testingInProgress = false;
+          this._testCallInProgress = false;
           resolve(msg.results);
         }
       };
@@ -5216,7 +5210,7 @@ function _isCallPendingOrOngoing(callState, isPreparingToJoin) {
   );
 }
 
-function methodOnlySupportedOutsideJoin(
+function methodOnlySupportedBeforeJoin(
   callState,
   isPreparingToJoin,
   methodName = 'This daily-js method',
@@ -5248,7 +5242,7 @@ initialize call state.`;
   }
 }
 
-function methodNotSupportedDuringPreCallTesting(
+function methodNotSupportedDuringTestCall(
   testingInProgress,
   methodName = 'This daily-js method'
 ) {
