@@ -3296,18 +3296,24 @@ export default class DailyIframe extends EventEmitter {
       this._dailyMainExecuted,
       'testCallQuality()'
     );
-    if (this._testCallInProgress) {
-      const msg = 'A pre-call quality test is already in progress';
-      console.error(msg);
-      throw new Error(msg);
-    }
-
-    this._testCallInProgress = true;
-
-    if (!this._validateVideoTrackForNetworkTests(args?.videoTrack)) {
-      this._testCallInProgress = false;
+    if (
+      args.videoTrack &&
+      !this._validateVideoTrackForNetworkTests(args.videoTrack)
+    ) {
       throw new Error('Video track error');
     }
+
+    // it's ok to call this method when a test is already running. we
+    // simply wait for the same promise and return the same results from
+    // ongoing one. BUT only the first test run should modify our flag.
+    const _testCallAlreadyInProgress = this._testCallAlreadyInProgress;
+    const _maybeUpdateTestCallInProgressFlag = (inProgress) => {
+      if (!_testCallAlreadyInProgress) {
+        this._testCallInProgress = inProgress;
+      }
+    };
+    _maybeUpdateTestCallInProgressFlag(true);
+
     const { videoTrack, ...callArgs } = args;
     this._preloadCache.videoTrackForConnectionQualityTest = videoTrack;
 
@@ -3326,18 +3332,18 @@ export default class DailyIframe extends EventEmitter {
         await this.load();
         this._callState = _preloadCallState;
       } catch (e) {
-        this._testCallInProgress = false;
+        _maybeUpdateTestCallInProgressFlag(false);
         return Promise.reject(e);
       }
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const k = (msg) => {
-        if (msg.error) {
-          this._testCallInProgress = false;
-          let sentryError = { ...msg.error };
-          if (msg.error.error?.details) {
-            msg.error.error.details = JSON.parse(msg.error.error.details);
+        const { result, ...data } = msg.results;
+        if (result === 'failed') {
+          let sentryError = { ...data };
+          if (data.error?.details) {
+            data.error.details = JSON.parse(data.error.details);
             sentryError.error = {
               ...sentryError.error,
               details: { ...sentryError.error.details },
@@ -3354,11 +3360,9 @@ export default class DailyIframe extends EventEmitter {
             };
           }
           this._maybeSendToSentry(sentryError);
-          reject(msg.error);
-        } else {
-          this._testCallInProgress = false;
-          resolve(msg.results);
         }
+        _maybeUpdateTestCallInProgressFlag(false);
+        resolve({ result, ...data });
       };
       this.sendMessageToCallMachine(
         {

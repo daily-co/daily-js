@@ -1411,8 +1411,16 @@ export type DailyCallQualityTestResults =
 
 export interface DailyCallQualityTestStats {
   result: Extract<DailyQualityTestResult, 'good' | 'warning' | 'bad'>;
-  data: DailyConnectionQualityTestData;
+  data: DailyCallQualityTestData;
   secondsElapsed: number;
+}
+
+export interface DailyCallQualityTestData {
+  maxRoundTripTime: number | null;
+  avgRoundTripTime: number | null;
+  avgSendPacketLoss: number | null;
+  avgAvailableOutgoingBitrate: number | null;
+  avgSendBitsPerSecond: number | null;
 }
 
 export interface DailyCallQualityTestAborted {
@@ -1427,9 +1435,11 @@ export interface DailyCallQualityTestFailure {
 }
 
 export interface DailyConnectionQualityTestData {
+  // TODO: New TestPeerToPeerCallQuality() should return DailyCallQualityTestData
   maxRTT: number | null;
   packetLoss: number | null;
 }
+
 export interface DailyConnectionQualityTestStats {
   result: DailyQualityTestResult;
   data: DailyConnectionQualityTestData;
@@ -2011,8 +2021,6 @@ export interface DailyCall {
   ): Promise<DailyNetworkConnectivityTestStats>;
   abortTestNetworkConnectivity(): void;
   testCallQuality(options: {
-    url: string;
-    token?: string;
     duration?: number;
     videoTrack?: MediaStreamTrack;
   }): Promise<DailyCallQualityTestResults>;
