@@ -3302,6 +3302,12 @@ export default class DailyIframe extends EventEmitter {
     ) {
       throw new Error('Video track error');
     }
+    if (args.duration && args.duration < 7) {
+      let err = `Invalid duration. This test requires a minumum of 7 seconds
+ to get valid results`;
+      console.error(err);
+      throw new Error(err);
+    }
 
     // it's ok to call this method when a test is already running. we
     // simply wait for the same promise and return the same results from
