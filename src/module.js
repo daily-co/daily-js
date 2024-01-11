@@ -5377,6 +5377,9 @@ function validateAndTagBgImageSource(config) {
     config.type = 'default';
     return true;
   }
+  if (config.source instanceof ArrayBuffer) {
+    return true;
+  }
   if (validateHttpUrl(config.source)) {
     config.type = 'url';
     if (!validateBgImageFileType(config.source)) {
