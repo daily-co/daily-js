@@ -1485,53 +1485,49 @@ export interface DailyEventObjectSidebarViewChanged {
 
 export interface DailyEventObjectDialinConnected {
   action: Extract<DailyEvent, 'dialin-connected'>;
-  instanceId?: string;
   actionTraceId?: string;
 }
 
 export interface DailyEventObjectDialinError {
   action: Extract<DailyEvent, 'dialin-error'>;
   errorMsg: string;
-  instanceId?: string;
   actionTraceId?: string;
 }
 
 export interface DailyEventObjectDialinStopped {
   action: Extract<DailyEvent, 'dialin-stopped'>;
-  instanceId?: string;
   actionTraceId?: string;
 }
 
 export interface DailyEventObjectDialinWarning {
   action: Extract<DailyEvent, 'dialin-warning'>;
   errorMsg: string;
-  instanceId?: string;
   actionTraceId?: string;
 }
 
 export interface DailyEventObjectDialOutConnected {
   action: Extract<DailyEvent, 'dialout-connected'>;
-  instanceId?: string;
+  sessionId?: string;
   actionTraceId?: string;
 }
 
 export interface DailyEventObjectDialOutError {
   action: Extract<DailyEvent, 'dialout-error'>;
   errorMsg: string;
-  instanceId?: string;
+  sessionId?: string;
   actionTraceId?: string;
 }
 
 export interface DailyEventObjectDialOutStopped {
   action: Extract<DailyEvent, 'dialout-stopped'>;
-  instanceId?: string;
+  sessionId?: string;
   actionTraceId?: string;
 }
 
 export interface DailyEventObjectDialOutWarning {
   action: Extract<DailyEvent, 'dialout-warning'>;
   errorMsg: string;
-  instanceId?: string;
+  sessionId?: string;
   actionTraceId?: string;
 }
 
