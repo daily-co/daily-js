@@ -1806,16 +1806,28 @@ export type SidebarView =
   | 'breakout'
   | string;
 
+export type DailyDialOutAudioCodecs = 'PCMU' | 'OPUS' | 'G722' | 'PCMA';
+
+export type DailyDialOutVideoCodecs = 'H264' | 'VP8';
+
+export interface DailyDialOutCodecs {
+  audio?: Array<DailyDialOutAudioCodecs>;
+  video?: Array<DailyDialOutVideoCodecs>;
+}
+
 export interface DailyDialOutSession {
   sessionId: string;
 }
 
 export interface DailyStartDialoutSipOptions {
   sipUri?: string;
+  video?: boolean;
+  codecs?: DailyDialOutCodecs;
 }
 
 export interface DailyStartDialoutPhoneOptions {
   phoneNumber?: string;
+  codecs?: DailyDialOutCodecs;
 }
 
 export type DailyStartDialoutOptions =

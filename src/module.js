@@ -3065,6 +3065,75 @@ export default class DailyIframe extends EventEmitter {
   async startDialOut(args) {
     methodOnlySupportedAfterJoin(this._callState, 'startDialOut()');
 
+    const validateAudioCodec = (audioCodecs) => {
+      if (audioCodecs) {
+        if (!Array.isArray(audioCodecs)) {
+          throw new Error(
+            `Error starting dial out: audio codec must be an array`
+          );
+        }
+
+        if (audioCodecs.length <= 0) {
+          throw new Error(
+            `Error starting dial out: audio codec array specified but empty`
+          );
+        }
+
+        audioCodecs.forEach((codec) => {
+          if (typeof codec !== 'string') {
+            throw new Error(
+              `Error starting dial out: audio codec must be a string`
+            );
+          }
+
+          if (
+            codec !== 'OPUS' &&
+            codec !== 'PCMU' &&
+            codec !== 'PCMA' &&
+            codec !== 'G722'
+          ) {
+            throw new Error(
+              `Error starting dial out: audio codec must be one of OPUS, PCMU, PCMA, G722`
+            );
+          }
+        });
+      }
+    };
+
+    const validateAudioVideoCodec = (codecs) => {
+      if (codecs) {
+        validateAudioCodec(codecs.audio);
+
+        if (codecs.video) {
+          if (!Array.isArray(codecs.video)) {
+            throw new Error(
+              `Error starting dial out: video codec must be an array`
+            );
+          }
+
+          if (codecs.video.length <= 0) {
+            throw new Error(
+              `Error starting dial out: video codec array specified but empty`
+            );
+          }
+
+          codecs.video.forEach((videoCodec) => {
+            if (typeof videoCodec !== 'string') {
+              throw new Error(
+                `Error starting dial out: video codec must be a string`
+              );
+            }
+
+            if (videoCodec !== 'H264' && videoCodec !== 'VP8') {
+              throw new Error(
+                `Error starting dial out: video codec must be H264 or VP8`
+              );
+            }
+          });
+        }
+      }
+    };
+
     if (!args.sipUri && !args.phoneNumber) {
       throw new Error(
         `Error starting dial out: either a sip uri or phone number must be provided`
@@ -3087,6 +3156,14 @@ export default class DailyIframe extends EventEmitter {
           `Error starting dial out: Invalid SIP URI, must start with 'sip:'`
         );
       }
+
+      if (typeof args.video !== 'boolean') {
+        throw new Error(
+          `Error starting dial out: video must be a boolean value`
+        );
+      }
+
+      validateAudioVideoCodec(args.codecs);
     }
 
     if (args.phoneNumber) {
@@ -3103,6 +3180,8 @@ export default class DailyIframe extends EventEmitter {
           `Error starting dial out: Invalid phone number, must be valid phone number as per E.164`
         );
       }
+
+      validateAudioCodec(args.codecs.audio);
     }
 
     return new Promise((resolve) => {
