@@ -988,7 +988,7 @@ export interface DailyBackgroundImageInputSettings {
   type: 'background-image';
   config: {
     url?: string;
-    source?: string | number;
+    source?: string | number | ArrayBuffer;
   };
 }
 
