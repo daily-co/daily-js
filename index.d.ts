@@ -2091,7 +2091,7 @@ export interface DailyCall {
   startDialOut(
     options: DailyStartDialoutOptions
   ): Promise<{ session?: DailyDialOutSession }>;
-  stopDialOut(options?: { sessionId: string }): void;
+  stopDialOut(options: { sessionId: string }): void;
 }
 
 declare const Daily: DailyCallFactory & DailyCallStaticUtils;
