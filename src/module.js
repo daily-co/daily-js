@@ -83,6 +83,7 @@ import {
   DAILY_EVENT_TRANSCRIPTION_MSG,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED,
+  DAILY_EVENT_LOCAL_SCREEN_SHARE_CANCELED,
   DAILY_EVENT_NETWORK_QUALITY_CHANGE,
   DAILY_EVENT_CPU_LOAD_CHANGE,
   DAILY_EVENT_ACTIVE_SPEAKER_CHANGE,
@@ -217,8 +218,20 @@ import {
   DAILY_EVENT_LOCAL_AUDIO_LEVEL,
   DAILY_EVENT_REMOTE_PARTICIPANTS_AUDIO_LEVEL,
   DAILY_EVENT_DAILY_MAIN_EXECUTED,
-  DAILY_METHOD_STOP_TEST_CONNECTION_QUALITY,
-  DAILY_METHOD_TEST_CONNECTION_QUALITY,
+  DAILY_METHOD_STOP_TEST_P2P_CALL_QUALITY,
+  DAILY_METHOD_TEST_CALL_QUALITY,
+  DAILY_METHOD_STOP_TEST_CALL_QUALITY,
+  DAILY_METHOD_TEST_P2P_CALL_QUALITY,
+  DAILY_METHOD_START_DIALOUT,
+  DAILY_METHOD_STOP_DIALOUT,
+  DAILY_EVENT_DIALIN_CONNECTED,
+  DAILY_EVENT_DIALIN_ERROR,
+  DAILY_EVENT_DIALIN_STOPPED,
+  DAILY_EVENT_DIALIN_WARNING,
+  DAILY_EVENT_DIALOUT_CONNECTED,
+  DAILY_EVENT_DIALOUT_ERROR,
+  DAILY_EVENT_DIALOUT_STOPPED,
+  DAILY_EVENT_DIALOUT_WARNING,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -337,6 +350,7 @@ export {
   DAILY_EVENT_TRANSCRIPTION_MSG,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED,
   DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED,
+  DAILY_EVENT_LOCAL_SCREEN_SHARE_CANCELED,
   DAILY_EVENT_NETWORK_QUALITY_CHANGE,
   DAILY_EVENT_CPU_LOAD_CHANGE,
   DAILY_EVENT_ACTIVE_SPEAKER_CHANGE,
@@ -932,6 +946,9 @@ export default class DailyIframe extends EventEmitter {
       supportsFullscreen: !!isFullscreenSupported(),
       supportsScreenShare: !!isScreenSharingSupported(),
       supportsSfu: !!browserVideoSupported_p(),
+      // Note: isVideoProcessingSupported() reports video processing support for
+      // the new default processor (Banuba), which is wider than for the old
+      // processor, which can still be configured via useLegacyVideoProcessor
       supportsVideoProcessing: isVideoProcessingSupported(),
       supportsAudioProcessing: isAudioProcessingSupported(),
     };
@@ -1893,9 +1910,8 @@ export default class DailyIframe extends EventEmitter {
   meetingSessionState() {
     // Validate call state: meeting session details are only available
     // once you have joined the meeting
-    if (this._callState !== DAILY_STATE_JOINED) {
-      throw new Error('meetingSessionState() is only available when joined');
-    }
+    methodOnlySupportedAfterJoin(this._callState, 'meetingSessionState');
+
     // currently only default values returned
     return this._meetingSessionState;
   }
@@ -1908,9 +1924,8 @@ export default class DailyIframe extends EventEmitter {
 
     // Validate call state: session data can only be set once you have
     // joined the meeting
-    if (this._callState !== DAILY_STATE_JOINED) {
-      throw new Error('setMeetingSessionData() is only available when joined');
-    }
+    methodOnlySupportedAfterJoin(this._callState, 'setMeetingSessionData');
+
     try {
       validateSessionDataUpdate(data, mergeStrategy);
     } catch (e) {
@@ -2072,11 +2087,14 @@ export default class DailyIframe extends EventEmitter {
 
     // Validate call state: startCamera() is only allowed if you haven't
     // already joined (or aren't in the process of joining).
-    if ([DAILY_STATE_JOINING, DAILY_STATE_JOINED].includes(this._callState)) {
-      throw new Error(
-        'startCamera() not supported after joining a meeting: did you mean to use setLocalAudio() and/or setLocalVideo() instead?'
-      );
-    }
+    methodOnlySupportedBeforeJoin(
+      this._callState,
+      this._isPreparingToJoin,
+      'startCamera()',
+      'Did you mean to use setLocalAudio() and/or setLocalVideo() instead?'
+    );
+
+    methodNotSupportedDuringTestCall(this._testCallInProgress, 'startCamera()');
 
     if (this.needsLoad()) {
       try {
@@ -2163,16 +2181,16 @@ export default class DailyIframe extends EventEmitter {
 
   startCustomTrack(properties = { track, mode, trackName }) {
     methodNotSupportedInReactNative();
+    // Validate meeting state: custom tracks are only available
+    // once you have joined the meeting
+    methodOnlySupportedAfterJoin(this._callState, 'startCustomTrack()');
+
     this.validateCustomTrack(
       properties.track,
       properties.mode,
       properties.trackName
     );
-    // Validate meeting state: custom tracks are only available
-    // once you have joined the meeting
-    if (this._callState !== DAILY_STATE_JOINED) {
-      throw new Error('startCustomTrack() is only allowed when joined');
-    }
+
     return new Promise((resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
@@ -2197,9 +2215,8 @@ export default class DailyIframe extends EventEmitter {
     methodNotSupportedInReactNative();
     // Validate meeting state: custom tracks are only available
     // once you have joined the meeting
-    if (this._callState !== DAILY_STATE_JOINED) {
-      throw new Error('stopCustomTrack() is only allowed when joined');
-    }
+    methodOnlySupportedAfterJoin(this._callState, 'stopCustomTrack()');
+
     return new Promise((resolve) => {
       let k = (msg) => {
         resolve(msg.mediaTag);
@@ -2216,11 +2233,8 @@ export default class DailyIframe extends EventEmitter {
 
   setCamera(cameraDeviceId) {
     methodOnlySupportedInReactNative();
-    if (this.needsLoad()) {
-      throw new Error(
-        'Before you can invoke setCamera, first you need to invoke one of these methods: join, startCamera, or preAuth'
-      );
-    }
+    methodRequiresDailyMainExecution(this._dailyMainExecuted, 'setCamera()');
+
     return new Promise((resolve) => {
       let k = (msg) => {
         resolve({ device: msg.device });
@@ -2439,7 +2453,7 @@ export default class DailyIframe extends EventEmitter {
     // (assuming automatic audio device management isn't disabled)
     if (
       !this.disableReactNativeAutoDeviceManagement('audio') &&
-      this._isCallPendingOrOngoing(this._callState, this._isPreparingToJoin)
+      _isCallPendingOrOngoing(this._callState, this._isPreparingToJoin)
     ) {
       this.nativeUtils().setAudioMode(this._nativeInCallAudioMode);
     }
@@ -2453,9 +2467,12 @@ export default class DailyIframe extends EventEmitter {
 
     // Validate call state: pre-auth is only allowed if you haven't already
     // joined (or aren't in the process of joining).
-    if ([DAILY_STATE_JOINING, DAILY_STATE_JOINED].includes(this._callState)) {
-      throw new Error('preAuth() not supported after joining a meeting');
-    }
+    methodOnlySupportedBeforeJoin(
+      this._callState,
+      this._isPreparingToJoin,
+      'preAuth()'
+    );
+    methodNotSupportedDuringTestCall(this._testCallInProgress, 'preAuth()');
 
     // Load call machine bundle, if needed.
     if (this.needsLoad()) {
@@ -2603,6 +2620,8 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async join(properties = {}) {
+    methodNotSupportedDuringTestCall(this._testCallInProgress, 'join()');
+
     let newCss = false;
     if (this.needsLoad()) {
       this.updateIsPreparingToJoin(true);
@@ -2733,6 +2752,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async leave() {
+    methodNotSupportedDuringTestCall(this._testCallInProgress, `leave()`);
     return new Promise((resolve) => {
       if (
         this._callState === DAILY_STATE_LEFT ||
@@ -2763,9 +2783,11 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async startScreenShare(captureOptions = {}) {
-    if (!this._dailyMainExecuted) {
-      return;
-    }
+    methodRequiresDailyMainExecution(
+      this._dailyMainExecuted,
+      'startScreenShare()'
+    );
+
     if (captureOptions.screenVideoSendSettings) {
       this._validateVideoSendSettings(
         'screenVideo',
@@ -2808,7 +2830,10 @@ export default class DailyIframe extends EventEmitter {
   }
 
   stopScreenShare() {
-    if (!this._dailyMainExecuted) return;
+    methodRequiresDailyMainExecution(
+      this._dailyMainExecuted,
+      'stopScreenShare()'
+    );
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_SCREENSHARE });
   }
 
@@ -3047,6 +3072,156 @@ export default class DailyIframe extends EventEmitter {
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_TRANSCRIPTION });
   }
 
+  async startDialOut(args) {
+    methodOnlySupportedAfterJoin(this._callState, 'startDialOut()');
+
+    const validateAudioCodec = (audioCodecs) => {
+      if (audioCodecs) {
+        if (!Array.isArray(audioCodecs)) {
+          throw new Error(
+            `Error starting dial out: audio codec must be an array`
+          );
+        }
+
+        if (audioCodecs.length <= 0) {
+          throw new Error(
+            `Error starting dial out: audio codec array specified but empty`
+          );
+        }
+
+        audioCodecs.forEach((codec) => {
+          if (typeof codec !== 'string') {
+            throw new Error(
+              `Error starting dial out: audio codec must be a string`
+            );
+          }
+
+          if (
+            codec !== 'OPUS' &&
+            codec !== 'PCMU' &&
+            codec !== 'PCMA' &&
+            codec !== 'G722'
+          ) {
+            throw new Error(
+              `Error starting dial out: audio codec must be one of OPUS, PCMU, PCMA, G722`
+            );
+          }
+        });
+      }
+    };
+
+    const validateAudioVideoCodec = (codecs) => {
+      if (codecs) {
+        validateAudioCodec(codecs.audio);
+
+        if (codecs.video) {
+          if (!Array.isArray(codecs.video)) {
+            throw new Error(
+              `Error starting dial out: video codec must be an array`
+            );
+          }
+
+          if (codecs.video.length <= 0) {
+            throw new Error(
+              `Error starting dial out: video codec array specified but empty`
+            );
+          }
+
+          codecs.video.forEach((videoCodec) => {
+            if (typeof videoCodec !== 'string') {
+              throw new Error(
+                `Error starting dial out: video codec must be a string`
+              );
+            }
+
+            if (videoCodec !== 'H264' && videoCodec !== 'VP8') {
+              throw new Error(
+                `Error starting dial out: video codec must be H264 or VP8`
+              );
+            }
+          });
+        }
+      }
+    };
+
+    if (!args.sipUri && !args.phoneNumber) {
+      throw new Error(
+        `Error starting dial out: either a sip uri or phone number must be provided`
+      );
+    }
+
+    if (args.sipUri && args.phoneNumber) {
+      throw new Error(
+        `Error starting dial out: only one of sip uri or phone number must be provided`
+      );
+    }
+
+    if (args.sipUri) {
+      if (typeof args.sipUri !== 'string') {
+        throw new Error(`Error starting dial out: sipUri must be a string`);
+      }
+
+      if (!args.sipUri.startsWith('sip:')) {
+        throw new Error(
+          `Error starting dial out: Invalid SIP URI, must start with 'sip:'`
+        );
+      }
+
+      if (typeof args.video !== 'boolean') {
+        throw new Error(
+          `Error starting dial out: video must be a boolean value`
+        );
+      }
+
+      validateAudioVideoCodec(args.codecs);
+    }
+
+    if (args.phoneNumber) {
+      if (typeof args.phoneNumber !== 'string') {
+        throw new Error(
+          `Error starting dial out: phoneNumber must be a string`
+        );
+      }
+
+      // Must be a valid phone number as per E.164, example: +12268077097.
+      const re = /^\+\d{1,}$/;
+      if (!re.test(args.phoneNumber)) {
+        throw new Error(
+          `Error starting dial out: Invalid phone number, must be valid phone number as per E.164`
+        );
+      }
+
+      validateAudioCodec(args.codecs.audio);
+    }
+
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve(msg);
+        }
+      };
+
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_START_DIALOUT,
+          ...args,
+        },
+        k
+      );
+    });
+  }
+
+  stopDialOut(args) {
+    methodOnlySupportedAfterJoin(this._callState, 'stopDialOut()');
+
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_STOP_DIALOUT,
+      ...args,
+    });
+  }
+
   getNetworkStats() {
     if (this._callState !== DAILY_STATE_JOINED) {
       let stats = { latest: {} };
@@ -3061,6 +3236,10 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async testWebsocketConnectivity() {
+    methodNotSupportedDuringTestCall(
+      this._testCallInProgress,
+      `testWebsocketConnectivity()`
+    );
     if (this.needsLoad()) {
       try {
         await this.load();
@@ -3112,7 +3291,107 @@ export default class DailyIframe extends EventEmitter {
     return true;
   }
 
+  async testCallQuality(args) {
+    methodNotSupportedAfterDailyMainExecution(
+      this._dailyMainExecuted,
+      'testCallQuality()'
+    );
+    if (
+      args.videoTrack &&
+      !this._validateVideoTrackForNetworkTests(args.videoTrack)
+    ) {
+      throw new Error('Video track error');
+    }
+
+    // it's ok to call this method when a test is already running. we
+    // simply wait for the same promise and return the same results from
+    // ongoing one. BUT only the first test run should modify our flag.
+    const _testCallAlreadyInProgress = this._testCallAlreadyInProgress;
+    const _maybeUpdateTestCallInProgressFlag = (inProgress) => {
+      if (!_testCallAlreadyInProgress) {
+        this._testCallInProgress = inProgress;
+      }
+    };
+    _maybeUpdateTestCallInProgressFlag(true);
+
+    const { videoTrack, ...callArgs } = args;
+    this._preloadCache.videoTrackForConnectionQualityTest = videoTrack;
+
+    if (this.needsLoad()) {
+      try {
+        // fun fact: sometimes when we call the loader's load() we don't
+        // actually load the call bundle, we just call a global function
+        // _dailyCallObjectSetup() to reinstall the call-bundle's message
+        // handler. meanwhile: needsLoad() checks against _callState and will
+        // return false if LOADED (which load() sets). Since the test call does
+        // not otherwise update our _callState to things like JOINED/LEFT but it
+        // WILL leave a call and remove the listener, we need to set the
+        // _callState back to what it was so future needsLoad() checks do the
+        // right thing
+        const _preloadCallState = this._callState;
+        await this.load();
+        this._callState = _preloadCallState;
+      } catch (e) {
+        _maybeUpdateTestCallInProgressFlag(false);
+        return Promise.reject(e);
+      }
+    }
+
+    return new Promise((resolve) => {
+      const k = (msg) => {
+        const { result, ...data } = msg.results;
+        if (result === 'failed') {
+          let sentryError = { ...data };
+          if (data.error?.details) {
+            data.error.details = JSON.parse(data.error.details);
+            sentryError.error = {
+              ...sentryError.error,
+              details: { ...sentryError.error.details },
+            };
+            sentryError.error.details.duringTest = 'testCallQuality';
+          } else {
+            // we want to add details to the sentryError we send but
+            // be careful not to modify the one we return
+            sentryError.error = sentryError.error
+              ? { ...sentryError.error }
+              : {};
+            sentryError.error.details = {
+              duringTest: 'testCallQuality',
+            };
+          }
+          this._maybeSendToSentry(sentryError);
+        }
+        _maybeUpdateTestCallInProgressFlag(false);
+        resolve({ result, ...data });
+      };
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_TEST_CALL_QUALITY,
+          ...callArgs,
+          dailyJsVersion: this.properties.dailyJsVersion,
+        },
+        k
+      );
+    });
+  }
+
+  stopTestCallQuality() {
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_STOP_TEST_CALL_QUALITY,
+    });
+  }
+
   async testConnectionQuality(args) {
+    console.warn(`testConnectionQuality() is deprecated: use \
+testCallQuality()(recommended) or testPeerToPeerCallQuality() instead`);
+    return await this.testPeerToPeerCallQuality(args);
+  }
+
+  async testPeerToPeerCallQuality(args) {
+    methodNotSupportedDuringTestCall(
+      this._testCallInProgress,
+      `testConnectionQuality()`
+    );
     if (this.needsLoad()) {
       try {
         await this.load();
@@ -3139,7 +3418,7 @@ export default class DailyIframe extends EventEmitter {
       };
       this.sendMessageToCallMachine(
         {
-          action: DAILY_METHOD_TEST_CONNECTION_QUALITY,
+          action: DAILY_METHOD_TEST_P2P_CALL_QUALITY,
           duration: duration,
         },
         k
@@ -3148,12 +3427,22 @@ export default class DailyIframe extends EventEmitter {
   }
 
   stopTestConnectionQuality() {
+    console.warn(`stopTestConnectionQuality() is deprecated: use \
+stopTestCallQuality() or stopTestPeerToPeerCallQuality() instead`);
+    this.stopTestPeerToPeerCallQuality();
+  }
+
+  stopTestPeerToPeerCallQuality() {
     this.sendMessageToCallMachine({
-      action: DAILY_METHOD_STOP_TEST_CONNECTION_QUALITY,
+      action: DAILY_METHOD_STOP_TEST_P2P_CALL_QUALITY,
     });
   }
 
   async testNetworkConnectivity(videoTrack) {
+    methodNotSupportedDuringTestCall(
+      this._testCallInProgress,
+      `testNetworkConnectivity()`
+    );
     if (this.needsLoad()) {
       try {
         await this.load();
@@ -3762,6 +4051,7 @@ export default class DailyIframe extends EventEmitter {
 
   async setNetworkTopology(opts) {
     methodNotSupportedInReactNative();
+    methodOnlySupportedAfterJoin(this._callState, 'setNetworkTopology()');
     return new Promise((resolve, reject) => {
       let k = (msg) => {
         if (msg.error) {
@@ -3779,6 +4069,9 @@ export default class DailyIframe extends EventEmitter {
 
   async getNetworkTopology() {
     return new Promise((resolve, reject) => {
+      if (this.needsLoad()) {
+        resolve({ topology: 'none' });
+      }
       let k = (msg) => {
         if (msg.error) {
           reject({ error: msg.error });
@@ -3965,6 +4258,9 @@ export default class DailyIframe extends EventEmitter {
           this._iframe,
           this._callFrameId
         );
+        // if a duplicate instance was detected before initialization
+        // we need to send up the log now.
+        this._delayDuplicateInstanceLog && this._logDuplicateInstanceAttempt();
         break;
       }
       case DAILY_EVENT_LOADED:
@@ -4116,10 +4412,8 @@ export default class DailyIframe extends EventEmitter {
           this._loadedCallback = null;
         }
         let { preserveIframe, ...event } = msg;
-        if (event?.error?.details?.sourceError) {
-          event.error.details.sourceError = JSON.parse(
-            event.error.details.sourceError
-          );
+        if (event?.error?.details) {
+          event.error.details = JSON.parse(event.error.details);
         }
         this._maybeSendToSentry(msg);
         if (this._joinedCallback) {
@@ -4380,6 +4674,7 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_TRANSCRIPTION_MSG:
       case DAILY_EVENT_LOCAL_SCREEN_SHARE_STARTED:
       case DAILY_EVENT_LOCAL_SCREEN_SHARE_STOPPED:
+      case DAILY_EVENT_LOCAL_SCREEN_SHARE_CANCELED:
       case DAILY_EVENT_NETWORK_CONNECTION:
       case DAILY_EVENT_RECORDING_DATA:
       case DAILY_EVENT_LIVE_STREAMING_STARTED:
@@ -4388,6 +4683,14 @@ export default class DailyIframe extends EventEmitter {
       case DAILY_EVENT_LIVE_STREAMING_ERROR:
       case DAILY_EVENT_NONFATAL_ERROR:
       case DAILY_EVENT_LANG_UPDATED:
+      case DAILY_EVENT_DIALIN_CONNECTED:
+      case DAILY_EVENT_DIALIN_ERROR:
+      case DAILY_EVENT_DIALIN_STOPPED:
+      case DAILY_EVENT_DIALIN_WARNING:
+      case DAILY_EVENT_DIALOUT_CONNECTED:
+      case DAILY_EVENT_DIALOUT_ERROR:
+      case DAILY_EVENT_DIALOUT_STOPPED:
+      case DAILY_EVENT_DIALOUT_WARNING:
         try {
           this.emit(msg.action, msg);
         } catch (e) {
@@ -4584,22 +4887,22 @@ export default class DailyIframe extends EventEmitter {
 
     // Update state side-effects (which, for now, all depend on whether
     // _isCallPendingOrOngoing)
-    const oldIsMeetingPendingOrOngoing = this._isCallPendingOrOngoing(
+    const oldIsMeetingPendingOrOngoing = _isCallPendingOrOngoing(
       oldMeetingState,
       oldIsPreparingToJoin
     );
-    const _isCallPendingOrOngoing = this._isCallPendingOrOngoing(
+    const curCallPendingOrOngoing = _isCallPendingOrOngoing(
       this._callState,
       this._isPreparingToJoin
     );
-    if (oldIsMeetingPendingOrOngoing === _isCallPendingOrOngoing) {
+    if (oldIsMeetingPendingOrOngoing === curCallPendingOrOngoing) {
       return;
     }
-    this.updateKeepDeviceAwake(_isCallPendingOrOngoing);
-    this.updateDeviceAudioMode(_isCallPendingOrOngoing);
-    this.updateShowAndroidOngoingMeetingNotification(_isCallPendingOrOngoing);
+    this.updateKeepDeviceAwake(curCallPendingOrOngoing);
+    this.updateDeviceAudioMode(curCallPendingOrOngoing);
+    this.updateShowAndroidOngoingMeetingNotification(curCallPendingOrOngoing);
     this.updateNoOpRecordingEnsuringBackgroundContinuity(
-      _isCallPendingOrOngoing
+      curCallPendingOrOngoing
     );
   }
 
@@ -4696,13 +4999,6 @@ export default class DailyIframe extends EventEmitter {
     }
     this.nativeUtils().enableNoOpRecordingEnsuringBackgroundContinuity(
       enableNoOpRecording
-    );
-  }
-
-  _isCallPendingOrOngoing(callState, isPreparingToJoin) {
-    return (
-      [DAILY_STATE_JOINING, DAILY_STATE_JOINED].includes(callState) ||
-      isPreparingToJoin
     );
   }
 
@@ -4853,20 +5149,22 @@ export default class DailyIframe extends EventEmitter {
   }
 
   _logDuplicateInstanceAttempt() {
-    if (!_callInstance.needsLoad()) {
-      _callInstance.sendMessageToCallMachine({
+    const callInst = _callInstance._dailyMainExecuted
+      ? _callInstance
+      : this._dailyMainExecuted
+      ? this
+      : undefined;
+    if (callInst) {
+      callInst.sendMessageToCallMachine({
         action: DAILY_METHOD_TRANSMIT_LOG,
         level: 'error',
         code: this.strictMode ? 9990 : 9992,
       });
-    } else if (!this.strictMode) {
-      const errMsg =
-        'You are attempting to use multiple call instances simultaneously. ' +
-        'This is unsupported and will result in unknown errors. Previous ' +
-        'instances should be destroyed before creating new ones. Please ' +
-        'remove `strictMode: false` from your constructor properties to ' +
-        'enable strict mode to track down and fix these attempts.';
-      console.error(errMsg);
+    } else {
+      // dailyMainExecuted most likely will only fire once and
+      // it's unclear which call machine will handle it.
+      this._delayDuplicateInstanceLog = true;
+      _callInstance._delayDuplicateInstanceLog = true;
     }
   }
 
@@ -5006,6 +5304,74 @@ function methodOnlySupportedAfterJoin(
     if (moreInfo) {
       msg += ` ${moreInfo}`;
     }
+    console.error(msg);
+    throw new Error(msg);
+  }
+}
+
+function _isCallPendingOrOngoing(callState, isPreparingToJoin) {
+  return (
+    [DAILY_STATE_JOINING, DAILY_STATE_JOINED].includes(callState) ||
+    isPreparingToJoin
+  );
+}
+
+function methodOnlySupportedBeforeJoin(
+  callState,
+  isPreparingToJoin,
+  methodName = 'This daily-js method',
+  moreInfo
+) {
+  if (_isCallPendingOrOngoing(callState, isPreparingToJoin)) {
+    let msg = `${methodName} not supported after joining a meeting.`;
+    if (moreInfo) {
+      msg += ` ${moreInfo}`;
+    }
+    console.error(msg);
+    throw new Error(msg);
+  }
+}
+
+function methodRequiresDailyMainExecution(
+  dailyMainExecuted,
+  methodName = 'This daily-js method',
+  moreInfo
+) {
+  if (!dailyMainExecuted) {
+    let msg = `${methodName} requires preAuth(), startCamera(), or join() to \
+initialize call state.`;
+    if (moreInfo) {
+      msg += ` ${moreInfo}`;
+    }
+    console.error(msg);
+    throw new Error(msg);
+  }
+}
+
+function methodNotSupportedAfterDailyMainExecution(
+  dailyMainExecuted,
+  methodName = 'This daily-js method',
+  moreInfo
+) {
+  if (dailyMainExecuted) {
+    let msg = `${methodName} can not be called after preAuth(), startCamera(), \
+or join() and call state has been initialized.`;
+    if (moreInfo) {
+      msg += ` ${moreInfo}`;
+    }
+    console.error(msg);
+    throw new Error(msg);
+  }
+}
+
+function methodNotSupportedDuringTestCall(
+  testingInProgress,
+  methodName = 'This daily-js method'
+) {
+  if (testingInProgress) {
+    let msg = `A pre-call quality test is in progress. Please try \
+${methodName} again once testing has completed. Use \
+stopTestCallQuality() to end it early.`;
     console.error(msg);
     throw new Error(msg);
   }
@@ -5172,7 +5538,12 @@ function validateInputSettings(settings) {
 // strip out the entire `video` or `audio` if processing isn't supported.
 function stripInputSettingsForUnsupportedPlatforms(settings) {
   const unsupportedProcessors = [];
-  if (settings.video && !isVideoProcessingSupported()) {
+  if (
+    settings.video &&
+    !isVideoProcessingSupported(
+      window._dailyConfig.useLegacyVideoProcessor ?? false
+    )
+  ) {
     delete settings.video;
     unsupportedProcessors.push('video');
   }
@@ -5272,6 +5643,9 @@ function validateVideoProcessorConfig(type, config) {
 function validateAndTagBgImageSource(config) {
   if (config.source === 'default') {
     config.type = 'default';
+    return true;
+  }
+  if (config.source instanceof ArrayBuffer) {
     return true;
   }
   if (validateHttpUrl(config.source)) {

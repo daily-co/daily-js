@@ -61,6 +61,7 @@ export type DailyEvent =
   | 'transcription-message'
   | 'local-screen-share-started'
   | 'local-screen-share-stopped'
+  | 'local-screen-share-canceled'
   | 'active-speaker-change'
   | 'active-speaker-mode-change'
   | 'network-quality-change'
@@ -103,7 +104,15 @@ export type DailyEvent =
   | 'show-local-video-changed'
   | 'selected-devices-updated'
   | 'custom-button-click'
-  | 'sidebar-view-changed';
+  | 'sidebar-view-changed'
+  | 'dialin-connected'
+  | 'dialin-error'
+  | 'dialin-stopped'
+  | 'dialin-warning'
+  | 'dialout-connected'
+  | 'dialout-error'
+  | 'dialout-stopped'
+  | 'dialout-warning';
 
 export type DailyMeetingState =
   | 'new'
@@ -690,13 +699,6 @@ export type DailyStartScreenShareOptions =
   | DailyScreenCaptureOptions
   | DailyStartScreenShare;
 
-export interface DailyWebsocketConnectivityTestResults {
-  abortedRegions: string[];
-  failedRegions: string[];
-  passedRegions: string[];
-  result: 'passed' | 'failed' | 'warning' | 'aborted';
-}
-
 export interface DailyNetworkStats {
   quality: number;
   stats: {
@@ -704,6 +706,7 @@ export interface DailyNetworkStats {
       timestamp: number;
       recvBitsPerSecond: number | null;
       sendBitsPerSecond: number | null;
+      availableOutgoingBitrate: number | null;
       networkRoundTripTime: number | null;
       videoRecvBitsPerSecond: number | null;
       videoSendBitsPerSecond: number | null;
@@ -838,11 +841,19 @@ export interface DailyRoomInfo {
     audio_only?: boolean;
     enable_recording?: string;
     enable_dialin?: boolean;
+    /**
+     * @deprecated This property will be removed.
+     * All calls are treated as autojoin.
+     */
     autojoin?: boolean;
     eject_at_room_exp?: boolean;
     eject_after_elapsed?: number;
     lang?: '' | DailyLanguageSetting;
     sfu_switchover?: number;
+    /**
+     * @deprecated This property will be removed.
+     * All calls use websocket signaling ('ws').
+     */
     signaling_impl?: string;
     geo?: string;
     recordings_bucket?: DailyRecordingsBucket;
@@ -970,7 +981,7 @@ export interface DailyBackgroundImageInputSettings {
   type: 'background-image';
   config: {
     url?: string;
-    source?: string | number;
+    source?: string | number | ArrayBuffer;
   };
 }
 
@@ -1066,8 +1077,14 @@ export type DailyFatalError = {
 export interface DailyFatalConnectionError extends DailyFatalError {
   type: Extract<DailyFatalErrorType, 'connection-error'>;
   details: {
-    on: 'load' | 'join' | 'reconnect' | 'move';
-    sourceError: Error;
+    on:
+      | 'load'
+      | 'join'
+      | 'reconnect'
+      | 'move'
+      | 'rtc-connection'
+      | 'room-lookup';
+    sourceError: Record<string, any>;
     uri?: string;
     workerGroup?: string;
     geoGroup?: string;
@@ -1369,18 +1386,67 @@ export interface DailyEventObjectTranscriptionStopped {
   updatedBy: string;
 }
 
+export interface DailyWebsocketConnectivityTestResults {
+  result: 'passed' | 'failed' | 'warning' | 'aborted';
+  abortedRegions: string[];
+  failedRegions: string[];
+  passedRegions: string[];
+}
+
 export interface DailyNetworkConnectivityTestStats {
   result: 'passed' | 'failed' | 'aborted';
 }
+
+export type DailyQualityTestResult =
+  | 'good'
+  | 'bad'
+  | 'warning'
+  | 'aborted'
+  | 'failed';
+
+export type DailyCallQualityTestResults =
+  | DailyCallQualityTestStats
+  | DailyCallQualityTestAborted
+  | DailyCallQualityTestFailure;
+
+export interface DailyCallQualityTestStats {
+  result: Extract<DailyQualityTestResult, 'good' | 'warning' | 'bad'>;
+  data: DailyCallQualityTestData;
+  secondsElapsed: number;
+}
+
+export interface DailyCallQualityTestData {
+  maxRoundTripTime: number | null;
+  avgRoundTripTime: number | null;
+  avgSendPacketLoss: number | null;
+  avgAvailableOutgoingBitrate: number | null;
+  avgSendBitsPerSecond: number | null;
+}
+
+export interface DailyCallQualityTestAborted {
+  result: Extract<DailyQualityTestResult, 'aborted'>;
+  secondsElapsed: number;
+}
+
+export interface DailyCallQualityTestFailure {
+  result: Extract<DailyQualityTestResult, 'failed'>;
+  errorMsg: string;
+  error?: DailyFatalErrorObject<DailyFatalErrorType>;
+  secondsElapsed: number;
+}
+
 export interface DailyConnectionQualityTestData {
+  // TODO: New TestPeerToPeerCallQuality() should return DailyCallQualityTestData
   maxRTT: number | null;
   packetLoss: number | null;
 }
+
 export interface DailyConnectionQualityTestStats {
-  result: 'good' | 'bad' | 'warning' | 'aborted' | 'failed';
+  result: DailyQualityTestResult;
   data: DailyConnectionQualityTestData;
   secondsElapsed: number;
 }
+
 export type DailyRemoteMediaPlayerStopReason =
   | DailyRemoteMediaPlayerEOS
   | DailyRemoteMediaPlayerPeerStopped;
@@ -1415,6 +1481,58 @@ export interface DailyEventObjectSelectedDevicesUpdated {
 export interface DailyEventObjectSidebarViewChanged {
   action: Extract<DailyEvent, 'sidebar-view-changed'>;
   view: SidebarView;
+}
+
+export interface DailyEventObjectDialinConnected {
+  action: Extract<DailyEvent, 'dialin-connected'>;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectDialinError {
+  action: Extract<DailyEvent, 'dialin-error'>;
+  errorMsg: string;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectDialinStopped {
+  action: Extract<DailyEvent, 'dialin-stopped'>;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectDialinWarning {
+  action: Extract<DailyEvent, 'dialin-warning'>;
+  errorMsg: string;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectDialOutConnected {
+  action: Extract<DailyEvent, 'dialout-connected'>;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectDialOutError {
+  action: Extract<DailyEvent, 'dialout-error'>;
+  errorMsg: string;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectDialOutStopped {
+  action: Extract<DailyEvent, 'dialout-stopped'>;
+  instanceId?: string;
+  actionTraceId?: string;
+}
+
+export interface DailyEventObjectDialOutWarning {
+  action: Extract<DailyEvent, 'dialout-warning'>;
+  errorMsg: string;
+  instanceId?: string;
+  actionTraceId?: string;
 }
 
 export type DailyEventObject<T extends DailyEvent = any> =
@@ -1504,6 +1622,26 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectSelectedDevicesUpdated
     : T extends DailyEventObjectSidebarViewChanged['action']
     ? DailyEventObjectSidebarViewChanged
+    : T extends DailyEventObjectDialinConnected['action']
+    ? DailyEventObjectDialinConnected
+    : T extends DailyEventObjectDialinError['action']
+    ? DailyEventObjectDialinError
+    : T extends DailyEventObjectDialinStopped['action']
+    ? DailyEventObjectDialinStopped
+    : T extends DailyEventObjectDialinWarning['action']
+    ? DailyEventObjectDialinWarning
+    : T extends DailyEventObjectDialOutConnected['action']
+    ? DailyEventObjectDialOutConnected
+    : T extends DailyEventObjectDialOutError['action']
+    ? DailyEventObjectDialOutError
+    : T extends DailyEventObjectDialOutStopped['action']
+    ? DailyEventObjectDialOutStopped
+    : T extends DailyEventObjectDialOutWarning['action']
+    ? DailyEventObjectDialOutWarning
+    : T extends DailyEventObjectLocalAudioLevel['action']
+    ? DailyEventObjectLocalAudioLevel
+    : T extends DailyEventObjectRemoteParticipantsAudioLevel['action']
+    ? DailyEventObjectRemoteParticipantsAudioLevel
     : any;
 
 export interface DailyCallFactory {
@@ -1545,10 +1683,10 @@ export interface DailyStreamingParticipantsConfig {
   sort?: DailyStreamingParticipantsSortMethod;
 }
 
-export interface DailyStreamingDefaultLayoutConfig
-  extends DailyStreamingParticipantsConfig {
+export interface DailyStreamingDefaultLayoutConfig {
   preset: 'default';
   max_cam_streams?: number;
+  participants?: DailyStreamingParticipantsConfig;
 }
 
 export interface DailyStreamingSingleParticipantLayoutConfig {
@@ -1556,35 +1694,35 @@ export interface DailyStreamingSingleParticipantLayoutConfig {
   session_id: string;
 }
 
-export interface DailyStreamingActiveParticipantLayoutConfig
-  extends DailyStreamingParticipantsConfig {
+export interface DailyStreamingActiveParticipantLayoutConfig {
   preset: 'active-participant';
+  participants?: DailyStreamingParticipantsConfig;
 }
 
 export interface DailyStreamingAudioOnlyLayoutConfig {
   preset: 'audio-only';
+  participants?: DailyStreamingParticipantsConfig;
 }
 
 export type DailyStreamingPortraitLayoutVariant = 'vertical' | 'inset';
 
-export interface DailyStreamingPortraitLayoutConfig
-  extends DailyStreamingParticipantsConfig {
+export interface DailyStreamingPortraitLayoutConfig {
   preset: 'portrait';
   variant?: DailyStreamingPortraitLayoutVariant;
   max_cam_streams?: number;
+  participants?: DailyStreamingParticipantsConfig;
 }
 
-export interface DailyUpdateStreamingCustomLayoutConfig
-  extends DailyStreamingParticipantsConfig {
+export interface DailyUpdateStreamingCustomLayoutConfig {
   preset: 'custom';
+  participants?: DailyStreamingParticipantsConfig;
   composition_params?: {
     [key: string]: boolean | number | string;
   };
 }
 
 export interface DailyStartStreamingCustomLayoutConfig
-  extends DailyUpdateStreamingCustomLayoutConfig,
-    DailyStreamingParticipantsConfig {
+  extends DailyUpdateStreamingCustomLayoutConfig {
   composition_id?: string;
   session_assets?: {
     [key: string]: string;
@@ -1709,6 +1847,34 @@ export type SidebarView =
   | 'network'
   | 'breakout'
   | string;
+
+export type DailyDialOutAudioCodecs = 'PCMU' | 'OPUS' | 'G722' | 'PCMA';
+
+export type DailyDialOutVideoCodecs = 'H264' | 'VP8';
+
+export interface DailyDialOutCodecs {
+  audio?: Array<DailyDialOutAudioCodecs>;
+  video?: Array<DailyDialOutVideoCodecs>;
+}
+
+export interface DailyDialOutSession {
+  sessionId: string;
+}
+
+export interface DailyStartDialoutSipOptions {
+  sipUri?: string;
+  video?: boolean;
+  codecs?: DailyDialOutCodecs;
+}
+
+export interface DailyStartDialoutPhoneOptions {
+  phoneNumber?: string;
+  codecs?: DailyDialOutCodecs;
+}
+
+export type DailyStartDialoutOptions =
+  | DailyStartDialoutSipOptions
+  | DailyStartDialoutPhoneOptions;
 
 export interface DailyCall {
   iframe(): HTMLIFrameElement | null;
@@ -1855,10 +2021,27 @@ export interface DailyCall {
     videoTrack: MediaStreamTrack
   ): Promise<DailyNetworkConnectivityTestStats>;
   abortTestNetworkConnectivity(): void;
+  testCallQuality(options: {
+    videoTrack?: MediaStreamTrack;
+  }): Promise<DailyCallQualityTestResults>;
+  stopTestCallQuality(): void;
+  testPeerToPeerCallQuality(options: {
+    videoTrack: MediaStreamTrack;
+    duration?: number;
+  }): Promise<DailyConnectionQualityTestStats>;
+  stopTestPeerToPeerCallQuality(): void;
+  /**
+   * @deprecated This function will be removed. Use the method
+   *    testCallQuality()(recommended) or testPeerToPeerCallQuality() instead.
+   */
   testConnectionQuality(options: {
     videoTrack: MediaStreamTrack;
     duration?: number;
   }): Promise<DailyConnectionQualityTestStats>;
+  /**
+   * @deprecated This function will be removed. Use the method
+   *    stopTestCallQuality() or stopTestPeerToPeerCallQuality() instead.
+   */
   stopTestConnectionQuality(): void;
   updateSendSettings(settings: DailySendSettings): Promise<DailySendSettings>;
   getSendSettings(): DailySendSettings | null;
@@ -1909,6 +2092,10 @@ export interface DailyCall {
     dailyConfig?: DailyAdvancedConfig;
     userName?: string;
   };
+  startDialOut(
+    options: DailyStartDialoutOptions
+  ): Promise<{ session?: DailyDialOutSession }>;
+  stopDialOut(options?: { sessionId: string }): void;
 }
 
 declare const Daily: DailyCallFactory & DailyCallStaticUtils;
