@@ -1412,6 +1412,7 @@ export type DailyCallQualityTestResults =
 export interface DailyCallQualityTestStats {
   result: Extract<DailyQualityTestResult, 'good' | 'warning' | 'bad'>;
   data: DailyCallQualityTestData;
+  secondsElapsed: number;
 }
 
 export interface DailyCallQualityTestData {
@@ -1424,12 +1425,14 @@ export interface DailyCallQualityTestData {
 
 export interface DailyCallQualityTestAborted {
   result: Extract<DailyQualityTestResult, 'aborted'>;
+  secondsElapsed: number;
 }
 
 export interface DailyCallQualityTestFailure {
   result: Extract<DailyQualityTestResult, 'failed'>;
   errorMsg: string;
   error?: DailyFatalErrorObject<DailyFatalErrorType>;
+  secondsElapsed: number;
 }
 
 export interface DailyConnectionQualityTestData {
