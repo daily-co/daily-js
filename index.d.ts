@@ -1409,9 +1409,19 @@ export type DailyCallQualityTestResults =
   | DailyCallQualityTestAborted
   | DailyCallQualityTestFailure;
 
+export type DailyP2PCallQualityTestResults =
+  | DailyP2PCallQualityTestStats
+  | DailyCallQualityTestAborted
+  | DailyCallQualityTestFailure;
+
 export interface DailyCallQualityTestStats {
   result: Extract<DailyQualityTestResult, 'good' | 'warning' | 'bad'>;
   data: DailyCallQualityTestData;
+  secondsElapsed: number;
+}
+export interface DailyP2PCallQualityTestStats {
+  result: Extract<DailyQualityTestResult, 'good' | 'warning' | 'bad'>;
+  data: DailyP2PCallQualityTestData;
   secondsElapsed: number;
 }
 
@@ -1421,6 +1431,15 @@ export interface DailyCallQualityTestData {
   avgSendPacketLoss: number | null;
   avgAvailableOutgoingBitrate: number | null;
   avgSendBitsPerSecond: number | null;
+}
+
+export interface DailyP2PCallQualityTestData {
+  maxRoundTripTime: number | null;
+  avgRoundTripTime: number | null;
+  avgRecvPacketLoss: number | null;
+  avgAvailableOutgoingBitrate: number | null;
+  avgSendBitsPerSecond: number | null;
+  avgRecvBitsPerSecond: number | null;
 }
 
 export interface DailyCallQualityTestAborted {
@@ -2028,11 +2047,11 @@ export interface DailyCall {
   testPeerToPeerCallQuality(options: {
     videoTrack: MediaStreamTrack;
     duration?: number;
-  }): Promise<DailyConnectionQualityTestStats>;
+  }): Promise<DailyP2PCallQualityTestResults>;
   stopTestPeerToPeerCallQuality(): void;
   /**
    * @deprecated This function will be removed. Use the method
-   *    testCallQuality()(recommended) or testPeerToPeerCallQuality() instead.
+   *    testPeerToPeerCallQuality() instead.
    */
   testConnectionQuality(options: {
     videoTrack: MediaStreamTrack;
@@ -2040,7 +2059,7 @@ export interface DailyCall {
   }): Promise<DailyConnectionQualityTestStats>;
   /**
    * @deprecated This function will be removed. Use the method
-   *    stopTestCallQuality() or stopTestPeerToPeerCallQuality() instead.
+   *    stopTestPeerToPeerCallQuality() instead.
    */
   stopTestConnectionQuality(): void;
   updateSendSettings(settings: DailySendSettings): Promise<DailySendSettings>;
