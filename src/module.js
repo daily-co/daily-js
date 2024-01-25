@@ -4256,12 +4256,7 @@ stopTestCallQuality() or stopTestPeerToPeerCallQuality() instead`);
             url: callObjectBundleUrl(),
           },
         };
-        this._messageChannel.sendMessageToCallMachine(
-          logMsg,
-          null,
-          this._iframe,
-          this._callFrameId
-        );
+        this.sendMessageToCallMachine(logMsg);
         // if a duplicate instance was detected before initialization
         // we need to send up the log now.
         this._delayDuplicateInstanceLog && this._logDuplicateInstanceAttempt();
@@ -5116,6 +5111,22 @@ stopTestCallQuality() or stopTestPeerToPeerCallQuality() instead`);
     const str = 'hello, world.';
     console.log(str);
     return str;
+  }
+
+  _logCallQualityTestResults(results) {
+    if (this._dailyMainExecuted) {
+      const logMsg = {
+        action: DAILY_METHOD_TRANSMIT_LOG,
+        level: 'info',
+        code: 1012,
+        results,
+      };
+      this.sendMessageToCallMachine(logMsg);
+    } else {
+      console.warn(
+        '_logCallQualityTestResults() must be called after daily initialization'
+      );
+    }
   }
 
   _logUseAfterDestroy() {
