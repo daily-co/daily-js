@@ -3167,10 +3167,12 @@ export default class DailyIframe extends EventEmitter {
         );
       }
 
-      if (typeof args.video !== 'boolean') {
-        throw new Error(
-          `Error starting dial out: video must be a boolean value`
-        );
+      if (args.video) {
+        if (typeof args.video !== 'boolean') {
+          throw new Error(
+            `Error starting dial out: video must be a boolean value`
+          );
+        }
       }
 
       validateAudioVideoCodec(args.codecs);
@@ -3191,7 +3193,9 @@ export default class DailyIframe extends EventEmitter {
         );
       }
 
-      validateAudioCodec(args.codecs.audio);
+      if (args.codecs) {
+        validateAudioCodec(args.codecs.audio);
+      }
     }
 
     return new Promise((resolve, reject) => {
