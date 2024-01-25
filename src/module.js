@@ -3384,7 +3384,19 @@ export default class DailyIframe extends EventEmitter {
   async testConnectionQuality(args) {
     console.warn(`testConnectionQuality() is deprecated: use \
 testCallQuality()(recommended) or testPeerToPeerCallQuality() instead`);
-    return await this.testPeerToPeerCallQuality(args);
+    const stats = await this.testPeerToPeerCallQuality(args);
+    // return backwards compatible type
+    let bcStats = {
+      result: stats.result,
+      secondsElapsed: stats.secondsElapsed,
+    };
+    if (stats.data) {
+      bcStats.data = {
+        maxRTT: stats.data.maxRoundTripTime,
+        packetLoss: stats.data.avgRecvPacketLoss,
+      };
+    }
+    return bcStats;
   }
 
   async testPeerToPeerCallQuality(args) {
