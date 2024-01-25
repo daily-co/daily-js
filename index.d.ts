@@ -2047,7 +2047,7 @@ export interface DailyCall {
   stopTestPeerToPeerCallQuality(): void;
   /**
    * @deprecated This function will be removed. Use the method
-   *    testCallQuality()(recommended) or testPeerToPeerCallQuality() instead.
+   *    testPeerToPeerCallQuality() instead.
    */
   testConnectionQuality(options: {
     videoTrack: MediaStreamTrack;
@@ -2055,7 +2055,7 @@ export interface DailyCall {
   }): Promise<DailyConnectionQualityTestStats>;
   /**
    * @deprecated This function will be removed. Use the method
-   *    stopTestCallQuality() or stopTestPeerToPeerCallQuality() instead.
+   *    stopTestPeerToPeerCallQuality() instead.
    */
   stopTestConnectionQuality(): void;
   updateSendSettings(settings: DailySendSettings): Promise<DailySendSettings>;
