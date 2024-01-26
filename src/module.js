@@ -3242,8 +3242,8 @@ export default class DailyIframe extends EventEmitter {
 
   async sendDTMF(args) {
     methodOnlySupportedAfterJoin(this._callState, 'sendDTMF()');
-    // TODO: additional check like, tone max size = 20, tone only has valid DTMF digits
-    // throw in case of error, msg only contains the valid fields and contains tone and sessionId
+
+    validateSendDTMF(args);
 
     return new Promise((resolve, reject) => {
       const k = (msg) => {
@@ -5966,6 +5966,23 @@ function validateConfigPropType(prop, propType) {
       //   "Internal programming error: we've defined our config prop types wrong"
       // );
       return false;
+  }
+}
+
+function validateSendDTMF({ sessionId, tone }) {
+  if (!(sessionId && tone)) {
+    throw new Error(`sessionId and tone are mandatory parameter`);
+  }
+  if (typeof sessionId !== 'string' || typeof tone !== 'string') {
+    throw new Error(`sessionId and tone should be of string type`);
+  }
+  if (tone.length > 20) {
+    throw new Error(`tone string must be upto 20 characters`);
+  }
+  let dtmfPattern = /[^0-9A-D*#]/g;
+  let invalidTone = tone.match(dtmfPattern);
+  if (invalidTone && invalidTone[0]) {
+    throw new Error(`${invalidTone[0]} is not valid DTMF tone`);
   }
 }
 
