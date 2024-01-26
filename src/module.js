@@ -5969,18 +5969,18 @@ function validateConfigPropType(prop, propType) {
   }
 }
 
-function validateSendDTMF({ sessionId, tone }) {
-  if (!(sessionId && tone)) {
-    throw new Error(`sessionId and tone are mandatory parameter`);
+function validateSendDTMF({ sessionId, tones }) {
+  if (!(sessionId && tones)) {
+    throw new Error(`sessionId and tones are mandatory parameter`);
   }
-  if (typeof sessionId !== 'string' || typeof tone !== 'string') {
-    throw new Error(`sessionId and tone should be of string type`);
+  if (typeof sessionId !== 'string' || typeof tones !== 'string') {
+    throw new Error(`sessionId and tones should be of string type`);
   }
-  if (tone.length > 20) {
-    throw new Error(`tone string must be upto 20 characters`);
+  if (tones.length > 20) {
+    throw new Error(`tones string must be upto 20 characters`);
   }
   let dtmfPattern = /[^0-9A-D*#]/g;
-  let invalidTone = tone.match(dtmfPattern);
+  let invalidTone = tones.match(dtmfPattern);
   if (invalidTone && invalidTone[0]) {
     throw new Error(`${invalidTone[0]} is not valid DTMF tone`);
   }
