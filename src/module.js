@@ -3221,9 +3221,22 @@ export default class DailyIframe extends EventEmitter {
   stopDialOut(args) {
     methodOnlySupportedAfterJoin(this._callState, 'stopDialOut()');
 
-    this.sendMessageToCallMachine({
-      action: DAILY_METHOD_STOP_DIALOUT,
-      ...args,
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve(msg);
+        }
+      };
+
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_STOP_DIALOUT,
+          ...args,
+        },
+        k
+      );
     });
   }
 

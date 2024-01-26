@@ -2110,7 +2110,7 @@ export interface DailyCall {
   startDialOut(
     options: DailyStartDialoutOptions
   ): Promise<{ session?: DailyDialOutSession }>;
-  stopDialOut(options: { sessionId: string }): void;
+  stopDialOut(options: { sessionId: string }): Promise<void>;
   sendDTMF(options: { sessionId: string; tones: string }): Promise<void>;
 }
 
