@@ -232,6 +232,8 @@ import {
   DAILY_EVENT_DIALOUT_ERROR,
   DAILY_EVENT_DIALOUT_STOPPED,
   DAILY_EVENT_DIALOUT_WARNING,
+  ADAPTIVE_02_LAYERS_VIDEO_SEND_SETTINGS_PRESET_KEY,
+  ADAPTIVE_03_LAYERS_VIDEO_SEND_SETTINGS_PRESET_KEY,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -3532,6 +3534,8 @@ stopTestPeerToPeerCallQuality() instead`);
       LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
       MEDIUM_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
       HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
+      ADAPTIVE_02_LAYERS_VIDEO_SEND_SETTINGS_PRESET_KEY,
+      ADAPTIVE_03_LAYERS_VIDEO_SEND_SETTINGS_PRESET_KEY,
     ];
     const screenVideoSupportedPresets = [
       DEFAULT_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY,
@@ -3552,9 +3556,13 @@ stopTestPeerToPeerCallQuality() instead`);
       if (typeof videoSendSettings !== 'object') {
         throw new Error(supportedVideoSendSettingsErrorMsg);
       }
-      if (!videoSendSettings.maxQuality && !videoSendSettings.encodings) {
+      if (
+        !videoSendSettings.maxQuality &&
+        !videoSendSettings.encodings &&
+        videoSendSettings.allowAdaptiveLayers === undefined
+      ) {
         throw new Error(
-          `Video send settings must contain at least maxQuality or encodings attribute`
+          `Video send settings must contain at least maxQuality, allowAdaptiveLayers or encodings attribute`
         );
       }
       if (
