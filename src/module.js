@@ -223,6 +223,7 @@ import {
   DAILY_METHOD_STOP_TEST_CALL_QUALITY,
   DAILY_METHOD_TEST_P2P_CALL_QUALITY,
   DAILY_METHOD_START_DIALOUT,
+  DAILY_METHOD_SEND_DTMF,
   DAILY_METHOD_STOP_DIALOUT,
   DAILY_EVENT_DIALIN_CONNECTED,
   DAILY_EVENT_DIALIN_ERROR,
@@ -3220,9 +3221,46 @@ export default class DailyIframe extends EventEmitter {
   stopDialOut(args) {
     methodOnlySupportedAfterJoin(this._callState, 'stopDialOut()');
 
-    this.sendMessageToCallMachine({
-      action: DAILY_METHOD_STOP_DIALOUT,
-      ...args,
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve(msg);
+        }
+      };
+
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_STOP_DIALOUT,
+          ...args,
+        },
+        k
+      );
+    });
+  }
+
+  async sendDTMF(args) {
+    methodOnlySupportedAfterJoin(this._callState, 'sendDTMF()');
+
+    validateSendDTMF(args);
+
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve(msg);
+        }
+      };
+
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_SEND_DTMF,
+          ...args,
+        },
+        k
+      );
     });
   }
 
@@ -5939,6 +5977,23 @@ function validateConfigPropType(prop, propType) {
       //   "Internal programming error: we've defined our config prop types wrong"
       // );
       return false;
+  }
+}
+
+function validateSendDTMF({ sessionId, tones }) {
+  if (!(sessionId && tones)) {
+    throw new Error(`sessionId and tones are mandatory parameter`);
+  }
+  if (typeof sessionId !== 'string' || typeof tones !== 'string') {
+    throw new Error(`sessionId and tones should be of string type`);
+  }
+  if (tones.length > 20) {
+    throw new Error(`tones string must be upto 20 characters`);
+  }
+  let dtmfPattern = /[^0-9A-D*#]/g;
+  let invalidTone = tones.match(dtmfPattern);
+  if (invalidTone && invalidTone[0]) {
+    throw new Error(`${invalidTone[0]} is not valid DTMF tone`);
   }
 }
 
