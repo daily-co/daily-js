@@ -43,7 +43,7 @@ describe('UpdateSendSettings', () => {
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
     ).toThrowError(
-      'Video send settings must contain at least maxQuality or encodings attribute'
+      'Video send settings must contain at least maxQuality, allowAdaptiveLayers or encodings attribute'
     );
   });
 

@@ -766,11 +766,17 @@ export interface DailyCpuLoadStats {
 }
 
 export interface DailySendSettings {
-  video?: DailyVideoSendSettings | DailyVideoSendSettingsPreset;
+  video?: DailyCamVideoSendSettings | DailyVideoSendSettingsPreset;
   customVideoDefaults?: DailyVideoSendSettings | DailyVideoSendSettingsPreset;
   screenVideo?: DailyVideoSendSettings | DailyScreenVideoSendSettingsPreset;
   [customKey: string]:
     | DailyVideoSendSettings
+    // TypeScript will prioritize the index signature over explicitly declared properties
+    // So unless I add it here, in order to use DailyCamVideoSendSettings I would need to
+    // use of a type assertion to inform TypeScript about the specific type of video.
+    // Like this:
+    // video: { allowAdaptiveLayers: true, } as DailyCamVideoSendSettings
+    | DailyCamVideoSendSettings
     | DailyVideoSendSettingsPreset
     | DailyScreenVideoSendSettingsPreset
     | undefined;
@@ -784,7 +790,9 @@ export type DailyVideoSendSettingsPreset =
   | 'default-video'
   | 'bandwidth-optimized'
   | 'bandwidth-and-quality-balanced'
-  | 'quality-optimized';
+  | 'quality-optimized'
+  | 'adaptive-2-layers'
+  | 'adaptive-3-layers';
 
 // Media Track Send Settings
 export interface DailyVideoSendSettings {
@@ -794,6 +802,10 @@ export interface DailyVideoSendSettings {
     medium?: RTCRtpEncodingParameters;
     high?: RTCRtpEncodingParameters;
   };
+}
+
+export interface DailyCamVideoSendSettings extends DailyVideoSendSettings {
+  allowAdaptiveLayers?: boolean;
 }
 
 export type DailyScreenVideoSendSettingsPreset =
