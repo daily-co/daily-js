@@ -150,6 +150,7 @@ export type DailyNonFatalErrorType =
   | 'screen-share-error'
   | 'local-audio-level-observer-error'
   | 'video-processor-error'
+  | 'audio-processor-error'
   | 'remote-media-player-error'
   | 'live-streaming-warning'
   | 'meeting-session-data-error';
