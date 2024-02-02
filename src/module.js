@@ -5553,7 +5553,7 @@ function stripInputSettingsForUnsupportedPlatforms(settings) {
   if (
     settings.video &&
     !isVideoProcessingSupported(
-      window._dailyConfig.useLegacyVideoProcessor ?? false
+      window._dailyConfig?.useLegacyVideoProcessor ?? false
     )
   ) {
     delete settings.video;
