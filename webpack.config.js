@@ -4,6 +4,8 @@ require('dotenv').config();
 
 const path = require('path');
 const webpack = require('webpack');
+const BundleAnalyzerPlugin =
+  require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const version = require('./package-lock.json').version;
 const mode = process.env.NODE_ENV || 'production';
 const devCallMachineUrl =
@@ -32,6 +34,16 @@ function makeConfig({ legacyFileName = false } = {}) {
       global: false,
     },
     plugins: [
+      ...(process.env.ANALYZE === 'true'
+        ? [
+            new BundleAnalyzerPlugin({
+              analyzerMode: 'static',
+              reportFilename: legacyFileName
+                ? 'report-iframe.html'
+                : 'report.html',
+            }),
+          ]
+        : []),
       new webpack.DefinePlugin({
         'process.env': {
           NODE_ENV: JSON.stringify(mode),

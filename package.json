@@ -25,6 +25,7 @@
   ],
   "scripts": {
     "dev": "NODE_ENV=development npx webpack-dev-server --progress -c webpack.config.js",
+    "analyze": "ANALYZE=true npm run build-main",
     "build": "npm run build-main && npm run build-module",
     "build-dev": "NODE_ENV=development npm run build",
     "build-main": "webpack",
@@ -58,6 +59,7 @@
     "semantic-release": "^19.0.3",
     "ts-jest": "^27.1.2",
     "webpack": "^5.77.0",
+    "webpack-bundle-analyzer": "^4.10.1",
     "webpack-cli": "^5.0.1",
     "webpack-dev-server": "^4.13.2"
   },
