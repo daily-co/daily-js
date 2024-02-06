@@ -1,6 +1,3 @@
-import filter from 'lodash/filter';
-import orderBy from 'lodash/orderBy';
-
 export const getLocalSubscriptionToTrack = (state, id, mediaTag) => {
   return _getSubscriptionToTrack(state.local, id, mediaTag);
 };
@@ -125,18 +122,15 @@ const _getSubscriptionToTrack = (subscriber, subscribeeId, mediaTag) => {
 };
 
 const _getRemoteStreamEntry = (state, participantId, type, kind) => {
-  let streams = orderBy(
-    filter(
-      state.streams,
+  let streams = Object.values(state.streams || {})
+    .filter(
       (s) =>
         s.participantId === participantId &&
         s.type === type &&
         s.pendingTrack &&
         s.pendingTrack.kind === kind
-    ),
-    'starttime',
-    'desc'
-  );
+    )
+    .sort((a, b) => new Date(b.starttime) - new Date(a.starttime));
   return streams && streams[0];
 };
 

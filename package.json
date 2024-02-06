@@ -68,9 +68,7 @@
     "@sentry/browser": "^7.60.1",
     "bowser": "^2.8.1",
     "dequal": "^2.0.3",
-    "events": "^3.1.0",
-    "fast-equals": "^1.6.3",
-    "lodash": "^4.17.15"
+    "events": "^3.1.0"
   },
   "jest": {
     "verbose": true,
