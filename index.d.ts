@@ -397,6 +397,9 @@ export interface DailyAdvancedConfig {
   experimentalGetUserMediaConstraintsModify?: (
     constraints: MediaStreamConstraints
   ) => void;
+  /**
+   * @deprecated This property will be removed. It has no affect.
+   */
   fastConnect?: boolean;
   h264Profile?: string;
   micAudioMode?: 'music' | 'speech' | DailyMicAudioModeSettings;
