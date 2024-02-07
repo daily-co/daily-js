@@ -1,14 +1,13 @@
 import { isReactNative } from './shared-with-pluot-core/Environment';
 import { callObjectBundleUrl, randomStringId } from './utils';
 
-function prepareDailyConfig(callFrameId, avoidEval) {
+function prepareDailyConfig(callFrameId) {
   // Add a global callFrameId so we can have both iframes and one
   // call object mode calls live at the same time
   if (!window._dailyConfig) {
     window._dailyConfig = {};
   }
   window._dailyConfig.callFrameId = callFrameId;
-  window._dailyConfig.avoidEval = avoidEval;
 }
 
 export default class CallObjectLoader {
@@ -42,15 +41,19 @@ export default class CallObjectLoader {
       return;
     }
 
-    prepareDailyConfig(callFrameId, avoidEval);
+    prepareDailyConfig(callFrameId);
 
     // Cancel current load, if any
     this._currentLoad && this._currentLoad.cancel();
 
     // Start a new load
-    this._currentLoad = new LoadOperation(() => {
-      successCallback(false); // false = "this load() wasn't a no-op"
-    }, failureCallback);
+    this._currentLoad = new LoadOperation(
+      avoidEval,
+      () => {
+        successCallback(false); // false = "this load() wasn't a no-op"
+      },
+      failureCallback
+    );
     this._currentLoad.start();
   }
 
@@ -82,9 +85,11 @@ const LOAD_ATTEMPT_DELAY = 3 * 1000;
 class LoadOperation {
   // Here failureCallback takes the same parameters as CallObjectLoader.load,
   // and successCallback takes no parameters.
-  constructor(successCallback, failureCallback) {
+  constructor(avoidEval, successCallback, failureCallback) {
     this._attemptsRemaining = LOAD_ATTEMPTS;
     this._currentAttempt = null;
+
+    this.avoidEval = avoidEval;
 
     this._successCallback = successCallback;
     this._failureCallback = failureCallback;
@@ -118,18 +123,20 @@ class LoadOperation {
           return;
         }
         this._currentAttempt = new LoadAttempt(
+          this.avoidEval,
           this._successCallback,
           retryOrFailureCallback
         );
-        this._currentAttempt.start();
+        void this._currentAttempt.start();
       }, LOAD_ATTEMPT_DELAY);
     };
 
     this._currentAttempt = new LoadAttempt(
+      this.avoidEval,
       this._successCallback,
       retryOrFailureCallback
     );
-    this._currentAttempt.start();
+    void this._currentAttempt.start();
   }
 
   cancel() {
@@ -171,9 +178,9 @@ const LOAD_ATTEMPT_NETWORK_TIMEOUT = 20 * 1000;
  * in React Native and also no CSP consideration to contend with.
  */
 class LoadAttempt {
-  constructor(successCallback, failureCallback) {
+  constructor(avoidEval, successCallback, failureCallback) {
     this._loadAttemptImpl =
-      isReactNative() || !_dailyConfig.avoidEval
+      isReactNative() || !avoidEval
         ? new LoadAttempt_ReactNative(successCallback, failureCallback)
         : new LoadAttempt_Web(successCallback, failureCallback);
   }
@@ -451,7 +458,7 @@ class LoadAttempt_Web {
     this._scriptElement = script;
 
     // On load, consider this attempt a success
-    script.onload = async () => {
+    script.onload = () => {
       // console.log('[LoadAttempt_Web] succeeded');
       this._stopLoading();
       this.succeeded = true;
@@ -459,7 +466,7 @@ class LoadAttempt_Web {
     };
 
     // On error, consider this attempt a failure
-    script.onerror = async (e) => {
+    script.onerror = (e) => {
       // console.log('[LoadAttempt_Web] failed');
       this._stopLoading();
       this._failureCallback(

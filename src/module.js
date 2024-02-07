@@ -2563,7 +2563,7 @@ export default class DailyIframe extends EventEmitter {
         const startTime = Date.now();
         this._callObjectLoader.load(
           this._callFrameId,
-          this.properties.dailyConfig && this.properties.dailyConfig.avoidEval,
+          !!this.properties.dailyConfig?.avoidEval,
           (wasNoOp) => {
             this._bundleLoadTime = wasNoOp ? 'no-op' : Date.now() - startTime;
             this._updateCallState(DAILY_STATE_LOADED);
