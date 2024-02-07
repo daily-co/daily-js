@@ -1575,14 +1575,18 @@ export default class DailyIframe extends EventEmitter {
 
   localAudio() {
     if (this._participants.local) {
-      return this._participants.local.audio;
+      return !['blocked', 'off'].includes(
+        this._participants.local.tracks.audio.state
+      );
     }
     return null;
   }
 
   localVideo() {
     if (this._participants.local) {
-      return this._participants.local.video;
+      return !['blocked', 'off'].includes(
+        this._participants.local.tracks.video.state
+      );
     }
     return null;
   }
