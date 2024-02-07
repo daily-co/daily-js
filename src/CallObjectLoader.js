@@ -1,13 +1,17 @@
 import { isReactNative } from './shared-with-pluot-core/Environment';
 import { callObjectBundleUrl, randomStringId } from './utils';
 
-function prepareDailyConfig(callFrameId) {
+function registerPendingCallInstance(instanceId) {
   // Add a global callFrameId so we can have both iframes and one
   // call object mode calls live at the same time
-  if (!window._dailyConfig) {
-    window._dailyConfig = {};
+  if (!window._daily) {
+    window._daily = { pendings: [], instances: {} };
+  } else if (!window._daily.pendings) {
+    window._daily.pendings = [];
   }
-  window._dailyConfig.callFrameId = callFrameId;
+  window._daily.pendings.push(instanceId);
+  window._daily.instances[instanceId] =
+    window._daily.instances[instanceId] || {};
 }
 
 export default class CallObjectLoader {
@@ -24,8 +28,8 @@ export default class CallObjectLoader {
    * Since the call object bundle sets up global state in the same scope as the
    * app code consuming it, it only needs to be loaded and executed once ever.
    *
-   * @param callFrameId A string identifying this "call frame", to distinguish it
-   *  from other iframe-based calls for message channel purposes.
+   * @param instanceId A string identifying this call instance, to distinguish
+   *  messages going between the call instance and the call machine from others.
    * @param avoidEval Whether to use the new eval-less loading mechanism on web
    *  (LoadAttempt_Web) instead of the legacy loading mechanism
    *  (LoadAttempt_ReactNative).
@@ -34,14 +38,14 @@ export default class CallObjectLoader {
    * @param failureCallback Callback function that takes an error message and a
    *   boolean indicating whether an automatic retry is slated to occur.
    */
-  load(callFrameId, avoidEval, successCallback, failureCallback) {
+  load(instanceId, avoidEval, successCallback, failureCallback) {
     if (this.loaded) {
-      window._dailyCallObjectSetup(callFrameId);
+      window._daily.instances[instanceId].resetCallMachine();
       successCallback(true); // true = "this load() was a no-op"
       return;
     }
 
-    prepareDailyConfig(callFrameId);
+    registerPendingCallInstance(instanceId);
 
     // Cancel current load, if any
     this._currentLoad && this._currentLoad.cancel();
@@ -413,7 +417,7 @@ class LoadAttempt_Web {
     this._scriptElement = null;
   }
 
-  async start() {
+  start() {
     // Initialize global state tracking active load attempts
     if (!window._dailyCallMachineLoadWaitlist) {
       window._dailyCallMachineLoadWaitlist = new Set();
