@@ -217,7 +217,7 @@ import {
   DAILY_METHOD_STOP_REMOTE_PARTICIPANTS_AUDIO_LEVEL_OBSERVER,
   DAILY_EVENT_LOCAL_AUDIO_LEVEL,
   DAILY_EVENT_REMOTE_PARTICIPANTS_AUDIO_LEVEL,
-  DAILY_EVENT_DAILY_MAIN_EXECUTED,
+  DAILY_EVENT_CALL_MACHINE_INITIALIZED,
   DAILY_METHOD_STOP_TEST_P2P_CALL_QUALITY,
   DAILY_METHOD_TEST_CALL_QUALITY,
   DAILY_METHOD_STOP_TEST_CALL_QUALITY,
@@ -1617,7 +1617,7 @@ export default class DailyIframe extends EventEmitter {
       'getReceiveSettings()'
     );
 
-    if (!this._dailyMainExecuted) return this._receiveSettings;
+    if (!this._callMachineInitialized) return this._receiveSettings;
 
     // This method can be called in two main ways:
     // - it can get receive settings for a specific participant (or "base")
@@ -1838,7 +1838,7 @@ export default class DailyIframe extends EventEmitter {
 
   setBandwidth({ kbs, trackConstraints }) {
     methodNotSupportedInReactNative();
-    if (!this._dailyMainExecuted) return;
+    if (!this._callMachineInitialized) return;
 
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_SET_BANDWIDTH,
@@ -1850,7 +1850,7 @@ export default class DailyIframe extends EventEmitter {
 
   getDailyLang() {
     methodNotSupportedInReactNative();
-    if (!this._dailyMainExecuted) return;
+    if (!this._callMachineInitialized) return;
     return new Promise((resolve) => {
       const k = (msg) => {
         delete msg.action;
@@ -1981,7 +1981,7 @@ export default class DailyIframe extends EventEmitter {
     }
     this.properties.userData = data;
 
-    if (!this._dailyMainExecuted) return;
+    if (!this._callMachineInitialized) return;
 
     return new Promise((resolve) => {
       const k = (msg) => {
@@ -2017,7 +2017,7 @@ export default class DailyIframe extends EventEmitter {
   startLocalAudioLevelObserver(interval) {
     methodNotSupportedInReactNative();
     this.validateAudioLevelInterval(interval);
-    if (!this._dailyMainExecuted) {
+    if (!this._callMachineInitialized) {
       this._preloadCache.localAudioLevelObserver = {
         enabled: true,
         interval: interval,
@@ -2054,7 +2054,7 @@ export default class DailyIframe extends EventEmitter {
   startRemoteParticipantsAudioLevelObserver(interval) {
     methodNotSupportedInReactNative();
     this.validateAudioLevelInterval(interval);
-    if (!this._dailyMainExecuted) {
+    if (!this._callMachineInitialized) {
       this._preloadCache.remoteParticipantsAudioLevelObserver = {
         enabled: true,
         interval: interval,
@@ -2240,7 +2240,10 @@ export default class DailyIframe extends EventEmitter {
 
   setCamera(cameraDeviceId) {
     methodOnlySupportedInReactNative();
-    methodRequiresDailyMainExecution(this._dailyMainExecuted, 'setCamera()');
+    methodRequiresInitializedCallMachine(
+      this._callMachineInitialized,
+      'setCamera()'
+    );
 
     return new Promise((resolve) => {
       let k = (msg) => {
@@ -2790,8 +2793,8 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async startScreenShare(captureOptions = {}) {
-    methodRequiresDailyMainExecution(
-      this._dailyMainExecuted,
+    methodRequiresInitializedCallMachine(
+      this._callMachineInitialized,
       'startScreenShare()'
     );
 
@@ -2837,8 +2840,8 @@ export default class DailyIframe extends EventEmitter {
   }
 
   stopScreenShare() {
-    methodRequiresDailyMainExecution(
-      this._dailyMainExecuted,
+    methodRequiresInitializedCallMachine(
+      this._callMachineInitialized,
       'stopScreenShare()'
     );
     this.sendMessageToCallMachine({ action: DAILY_METHOD_STOP_SCREENSHARE });
@@ -3340,8 +3343,8 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async testCallQuality(args) {
-    methodNotSupportedAfterDailyMainExecution(
-      this._dailyMainExecuted,
+    methodNotSupportedAfterCallMachineInitialized(
+      this._callMachineInitialized,
       'testCallQuality()'
     );
     if (
@@ -4305,8 +4308,8 @@ stopTestPeerToPeerCallQuality() instead`);
           ...this.properties,
         });
         break;
-      case DAILY_EVENT_DAILY_MAIN_EXECUTED: {
-        this._dailyMainExecuted = true;
+      case DAILY_EVENT_CALL_MACHINE_INITIALIZED: {
+        this._callMachineInitialized = true;
         const logMsg = {
           action: DAILY_METHOD_TRANSMIT_LOG,
           level: 'log',
@@ -4990,7 +4993,7 @@ stopTestPeerToPeerCallQuality() instead`);
     this._sendSettings = {};
     this._localAudioLevel = 0;
     this._remoteParticipantsAudioLevel = {};
-    this._dailyMainExecuted = false;
+    this._callMachineInitialized = false;
     this._bundleLoadTime = undefined;
     resetPreloadCache(this._preloadCache);
   }
@@ -5176,7 +5179,7 @@ stopTestPeerToPeerCallQuality() instead`);
   }
 
   _logCallQualityTestResults(results) {
-    if (this._dailyMainExecuted) {
+    if (this._callMachineInitialized) {
       const logMsg = {
         action: DAILY_METHOD_TRANSMIT_LOG,
         level: 'info',
@@ -5226,9 +5229,9 @@ stopTestPeerToPeerCallQuality() instead`);
   }
 
   _logDuplicateInstanceAttempt() {
-    const callInst = _callInstance._dailyMainExecuted
+    const callInst = _callInstance._callMachineInitialized
       ? _callInstance
-      : this._dailyMainExecuted
+      : this._callMachineInitialized
       ? this
       : undefined;
     if (callInst) {
@@ -5238,7 +5241,7 @@ stopTestPeerToPeerCallQuality() instead`);
         code: this.strictMode ? 9990 : 9992,
       });
     } else {
-      // dailyMainExecuted most likely will only fire once and
+      // callMachineInitialized most likely will only fire once and
       // it's unclear which call machine will handle it.
       this._delayDuplicateInstanceLog = true;
       _callInstance._delayDuplicateInstanceLog = true;
@@ -5409,12 +5412,12 @@ function methodOnlySupportedBeforeJoin(
   }
 }
 
-function methodRequiresDailyMainExecution(
-  dailyMainExecuted,
+function methodRequiresInitializedCallMachine(
+  callMachineInitialized,
   methodName = 'This daily-js method',
   moreInfo
 ) {
-  if (!dailyMainExecuted) {
+  if (!callMachineInitialized) {
     let msg = `${methodName} requires preAuth(), startCamera(), or join() to \
 initialize call state.`;
     if (moreInfo) {
@@ -5425,12 +5428,12 @@ initialize call state.`;
   }
 }
 
-function methodNotSupportedAfterDailyMainExecution(
-  dailyMainExecuted,
+function methodNotSupportedAfterCallMachineInitialized(
+  callMachineInitialized,
   methodName = 'This daily-js method',
   moreInfo
 ) {
-  if (dailyMainExecuted) {
+  if (callMachineInitialized) {
     let msg = `${methodName} can not be called after preAuth(), startCamera(), \
 or join() and call state has been initialized.`;
     if (moreInfo) {
