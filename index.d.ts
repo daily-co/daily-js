@@ -841,6 +841,7 @@ export interface DailyRoomInfo {
     enable_chat?: boolean;
     enable_hand_raising?: boolean;
     enable_knocking?: boolean;
+    enable_live_captions_ui?: boolean;
     enable_network_ui?: boolean;
     enable_noise_cancellation_ui?: boolean;
     enable_people_ui?: boolean;
@@ -888,6 +889,7 @@ export interface DailyRoomInfo {
     enable_emoji_reactions?: boolean;
     enable_chat?: boolean;
     enable_hand_raising?: boolean;
+    enable_live_captions_ui?: boolean;
     enable_network_ui?: boolean;
     enable_noise_cancellation_ui?: boolean;
     enable_people_ui?: boolean;
@@ -905,6 +907,7 @@ export interface DailyRoomInfo {
     is_owner?: boolean;
     user_name?: string;
     user_id?: string;
+    enable_live_captions_ui?: boolean;
     enable_prejoin_ui?: boolean;
     enable_screenshare?: boolean;
     start_video_off?: boolean;
