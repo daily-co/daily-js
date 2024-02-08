@@ -1,7 +1,7 @@
 import { isReactNative } from './shared-with-pluot-core/Environment';
 import { callObjectBundleUrl, randomStringId } from './utils';
 
-function registerPendingCallInstance(instanceId) {
+function registerPendingCallInstance(callFrameId) {
   // Add a global callFrameId so we can have both iframes and one
   // call object mode calls live at the same time
   if (!window._daily) {
@@ -9,9 +9,9 @@ function registerPendingCallInstance(instanceId) {
   } else if (!window._daily.pendings) {
     window._daily.pendings = [];
   }
-  window._daily.pendings.push(instanceId);
-  window._daily.instances[instanceId] =
-    window._daily.instances[instanceId] || {};
+  window._daily.pendings.push(callFrameId);
+  window._daily.instances[callFrameId] =
+    window._daily.instances[callFrameId] || {};
 }
 
 export default class CallObjectLoader {
@@ -28,7 +28,7 @@ export default class CallObjectLoader {
    * Since the call object bundle sets up global state in the same scope as the
    * app code consuming it, it only needs to be loaded and executed once ever.
    *
-   * @param instanceId A string identifying this call instance, to distinguish
+   * @param callFrameId A string identifying this call instance, to distinguish
    *  messages going between the call instance and the call machine from others.
    * @param avoidEval Whether to use the new eval-less loading mechanism on web
    *  (LoadAttempt_Web) instead of the legacy loading mechanism
@@ -38,14 +38,14 @@ export default class CallObjectLoader {
    * @param failureCallback Callback function that takes an error message and a
    *   boolean indicating whether an automatic retry is slated to occur.
    */
-  load(instanceId, avoidEval, successCallback, failureCallback) {
+  load(callFrameId, avoidEval, successCallback, failureCallback) {
     if (this.loaded) {
-      window._daily.instances[instanceId].resetCallMachine();
+      window._daily.instances[callFrameId].resetCallMachine();
       successCallback(true); // true = "this load() was a no-op"
       return;
     }
 
-    registerPendingCallInstance(instanceId);
+    registerPendingCallInstance(callFrameId);
 
     // Cancel current load, if any
     this._currentLoad && this._currentLoad.cancel();

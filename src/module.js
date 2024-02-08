@@ -1202,10 +1202,15 @@ export default class DailyIframe extends EventEmitter {
     this._inputEventsOn = {}; // need to cache these until loaded
     this._network = { threshold: 'good', quality: 100 };
     this._activeSpeaker = {};
-    this._instanceId = randomStringId();
     this._localAudioLevel = 0;
     this._remoteParticipantsAudioLevel = {};
 
+    // This ID is used internally to coordinate communication between this
+    // Daily instance and the call machine. It currently seeps into many of
+    // the externally facing daily-js events but should have no external use.
+    // TODO: Remove this id from external daily-js events and rename to
+    //       _callClientId
+    this._callFrameId = randomStringId();
     this._messageChannel = isReactNative()
       ? new ReactNativeMessageChannel()
       : new WebMessageChannel();
@@ -1291,7 +1296,7 @@ export default class DailyIframe extends EventEmitter {
 
     this._messageChannel.addListenerForMessagesFromCallMachine(
       this.handleMessageFromCallMachine,
-      this._instanceId,
+      this._callFrameId,
       this
     );
   }
@@ -1350,7 +1355,7 @@ export default class DailyIframe extends EventEmitter {
     if (this.strictMode) {
       // we set this to undefined in strictMode so that all calls to
       // the underlying channel's sendMessageToCallMachine will fail
-      this._instanceId = undefined;
+      this._callFrameId = undefined;
     }
     _callInstance = undefined;
   }
@@ -2565,7 +2570,7 @@ export default class DailyIframe extends EventEmitter {
         this._callObjectLoader.cancel();
         const startTime = Date.now();
         this._callObjectLoader.load(
-          this._instanceId,
+          this._callFrameId,
           !!this.properties.dailyConfig?.avoidEval,
           (wasNoOp) => {
             this._bundleLoadTime = wasNoOp ? 'no-op' : Date.now() - startTime;
@@ -4220,7 +4225,7 @@ stopTestPeerToPeerCallQuality() instead`);
     // handle case of url with query string and without
     let props = {
         ...this.properties,
-        emb: this._instanceId,
+        emb: this._callFrameId,
         embHref: encodeURIComponent(window.location.href),
         proxy: window._dailyConfig?.proxyUrl
           ? encodeURIComponent(window._dailyConfig?.proxyUrl)
@@ -4268,7 +4273,7 @@ stopTestPeerToPeerCallQuality() instead`);
       message,
       callback,
       this._iframe,
-      this._instanceId
+      this._callFrameId
     );
   }
 
@@ -4283,14 +4288,14 @@ stopTestPeerToPeerCallQuality() instead`);
     this._messageChannel.forwardPackagedMessageToCallMachine(
       msg,
       this._iframe,
-      this._instanceId
+      this._callFrameId
     );
   }
 
   addListenerForPackagedMessagesFromCallMachine(listener) {
     return this._messageChannel.addListenerForPackagedMessagesFromCallMachine(
       listener,
-      this._instanceId
+      this._callFrameId
     );
   }
 
@@ -5002,7 +5007,7 @@ stopTestPeerToPeerCallQuality() instead`);
     if (!isReactNative()) {
       return;
     }
-    this.nativeUtils().setKeepDeviceAwake(keepAwake, this._instanceId);
+    this.nativeUtils().setKeepDeviceAwake(keepAwake, this._callFrameId);
   }
 
   updateDeviceAudioMode(useInCallAudioMode) {
@@ -5043,7 +5048,7 @@ stopTestPeerToPeerCallQuality() instead`);
       title,
       subtitle,
       iconName,
-      this._instanceId
+      this._callFrameId
     );
   }
 
@@ -5209,7 +5214,7 @@ stopTestPeerToPeerCallQuality() instead`);
         logMsg,
         null,
         this._iframe,
-        this._instanceId
+        this._callFrameId
       );
     } else if (_callInstance && !_callInstance.needsLoad()) {
       const logMsg = {
