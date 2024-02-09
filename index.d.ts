@@ -150,6 +150,7 @@ export type DailyNonFatalErrorType =
   | 'screen-share-error'
   | 'local-audio-level-observer-error'
   | 'video-processor-error'
+  | 'audio-processor-error'
   | 'remote-media-player-error'
   | 'live-streaming-warning'
   | 'meeting-session-data-error';
@@ -766,11 +767,17 @@ export interface DailyCpuLoadStats {
 }
 
 export interface DailySendSettings {
-  video?: DailyVideoSendSettings | DailyVideoSendSettingsPreset;
+  video?: DailyCamVideoSendSettings | DailyVideoSendSettingsPreset;
   customVideoDefaults?: DailyVideoSendSettings | DailyVideoSendSettingsPreset;
   screenVideo?: DailyVideoSendSettings | DailyScreenVideoSendSettingsPreset;
   [customKey: string]:
     | DailyVideoSendSettings
+    // TypeScript will prioritize the index signature over explicitly declared properties
+    // So unless I add it here, in order to use DailyCamVideoSendSettings I would need to
+    // use of a type assertion to inform TypeScript about the specific type of video.
+    // Like this:
+    // video: { allowAdaptiveLayers: true, } as DailyCamVideoSendSettings
+    | DailyCamVideoSendSettings
     | DailyVideoSendSettingsPreset
     | DailyScreenVideoSendSettingsPreset
     | undefined;
@@ -784,7 +791,9 @@ export type DailyVideoSendSettingsPreset =
   | 'default-video'
   | 'bandwidth-optimized'
   | 'bandwidth-and-quality-balanced'
-  | 'quality-optimized';
+  | 'quality-optimized'
+  | 'adaptive-2-layers'
+  | 'adaptive-3-layers';
 
 // Media Track Send Settings
 export interface DailyVideoSendSettings {
@@ -794,6 +803,10 @@ export interface DailyVideoSendSettings {
     medium?: RTCRtpEncodingParameters;
     high?: RTCRtpEncodingParameters;
   };
+}
+
+export interface DailyCamVideoSendSettings extends DailyVideoSendSettings {
+  allowAdaptiveLayers?: boolean;
 }
 
 export type DailyScreenVideoSendSettingsPreset =
@@ -828,6 +841,7 @@ export interface DailyRoomInfo {
     enable_chat?: boolean;
     enable_hand_raising?: boolean;
     enable_knocking?: boolean;
+    enable_live_captions_ui?: boolean;
     enable_network_ui?: boolean;
     enable_noise_cancellation_ui?: boolean;
     enable_people_ui?: boolean;
@@ -875,6 +889,7 @@ export interface DailyRoomInfo {
     enable_emoji_reactions?: boolean;
     enable_chat?: boolean;
     enable_hand_raising?: boolean;
+    enable_live_captions_ui?: boolean;
     enable_network_ui?: boolean;
     enable_noise_cancellation_ui?: boolean;
     enable_people_ui?: boolean;
@@ -892,6 +907,7 @@ export interface DailyRoomInfo {
     is_owner?: boolean;
     user_name?: string;
     user_id?: string;
+    enable_live_captions_ui?: boolean;
     enable_prejoin_ui?: boolean;
     enable_screenshare?: boolean;
     start_video_off?: boolean;
@@ -1504,53 +1520,49 @@ export interface DailyEventObjectSidebarViewChanged {
 
 export interface DailyEventObjectDialinConnected {
   action: Extract<DailyEvent, 'dialin-connected'>;
-  instanceId?: string;
   actionTraceId?: string;
 }
 
 export interface DailyEventObjectDialinError {
   action: Extract<DailyEvent, 'dialin-error'>;
   errorMsg: string;
-  instanceId?: string;
   actionTraceId?: string;
 }
 
 export interface DailyEventObjectDialinStopped {
   action: Extract<DailyEvent, 'dialin-stopped'>;
-  instanceId?: string;
   actionTraceId?: string;
 }
 
 export interface DailyEventObjectDialinWarning {
   action: Extract<DailyEvent, 'dialin-warning'>;
   errorMsg: string;
-  instanceId?: string;
   actionTraceId?: string;
 }
 
 export interface DailyEventObjectDialOutConnected {
   action: Extract<DailyEvent, 'dialout-connected'>;
-  instanceId?: string;
+  sessionId?: string;
   actionTraceId?: string;
 }
 
 export interface DailyEventObjectDialOutError {
   action: Extract<DailyEvent, 'dialout-error'>;
   errorMsg: string;
-  instanceId?: string;
+  sessionId?: string;
   actionTraceId?: string;
 }
 
 export interface DailyEventObjectDialOutStopped {
   action: Extract<DailyEvent, 'dialout-stopped'>;
-  instanceId?: string;
+  sessionId?: string;
   actionTraceId?: string;
 }
 
 export interface DailyEventObjectDialOutWarning {
   action: Extract<DailyEvent, 'dialout-warning'>;
   errorMsg: string;
-  instanceId?: string;
+  sessionId?: string;
   actionTraceId?: string;
 }
 
@@ -2114,7 +2126,8 @@ export interface DailyCall {
   startDialOut(
     options: DailyStartDialoutOptions
   ): Promise<{ session?: DailyDialOutSession }>;
-  stopDialOut(options?: { sessionId: string }): void;
+  stopDialOut(options: { sessionId: string }): Promise<void>;
+  sendDTMF(options: { sessionId: string; tones: string }): Promise<void>;
 }
 
 declare const Daily: DailyCallFactory & DailyCallStaticUtils;

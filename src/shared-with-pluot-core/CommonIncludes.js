@@ -50,6 +50,10 @@ export const MOTION_OPTIMIZED_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY =
   'motion-optimized';
 export const MOTION_AND_DETAIL_BALANCED_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY =
   'motion-and-detail-balanced';
+export const ADAPTIVE_02_LAYERS_VIDEO_SEND_SETTINGS_PRESET_KEY =
+  'adaptive-2-layers';
+export const ADAPTIVE_03_LAYERS_VIDEO_SEND_SETTINGS_PRESET_KEY =
+  'adaptive-3-layers';
 
 // error types
 
@@ -355,6 +359,7 @@ export const UPDATE_LIVE_STREAMING_ENDPOINTS_OP = {
 };
 
 export const DAILY_METHOD_START_DIALOUT = 'dialout-start';
+export const DAILY_METHOD_SEND_DTMF = 'send-dtmf';
 export const DAILY_METHOD_STOP_DIALOUT = 'dialout-stop';
 export const DAILY_EVENT_DIALIN_CONNECTED = 'dialin-connected';
 export const DAILY_EVENT_DIALIN_ERROR = 'dialin-error';

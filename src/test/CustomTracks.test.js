@@ -96,6 +96,6 @@ describe('Custom tracks', () => {
     const mode = undefined;
     expect(() =>
       callObject.startCustomTrack({ track, trackName })
-    ).toThrowError('startCustomTrack() is only allowed when joined');
+    ).toThrowError('startCustomTrack() only supported after join.');
   });
 });

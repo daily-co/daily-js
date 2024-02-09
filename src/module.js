@@ -1,5 +1,5 @@
 import EventEmitter from 'events';
-import { deepEqual } from 'fast-equals';
+import { dequal } from 'dequal';
 import Bowser from 'bowser';
 import { maybeProxyHttpsUrl } from './utils';
 import * as Sentry from '@sentry/browser';
@@ -223,6 +223,7 @@ import {
   DAILY_METHOD_STOP_TEST_CALL_QUALITY,
   DAILY_METHOD_TEST_P2P_CALL_QUALITY,
   DAILY_METHOD_START_DIALOUT,
+  DAILY_METHOD_SEND_DTMF,
   DAILY_METHOD_STOP_DIALOUT,
   DAILY_EVENT_DIALIN_CONNECTED,
   DAILY_EVENT_DIALIN_ERROR,
@@ -232,6 +233,8 @@ import {
   DAILY_EVENT_DIALOUT_ERROR,
   DAILY_EVENT_DIALOUT_STOPPED,
   DAILY_EVENT_DIALOUT_WARNING,
+  ADAPTIVE_02_LAYERS_VIDEO_SEND_SETTINGS_PRESET_KEY,
+  ADAPTIVE_03_LAYERS_VIDEO_SEND_SETTINGS_PRESET_KEY,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -1572,14 +1575,18 @@ export default class DailyIframe extends EventEmitter {
 
   localAudio() {
     if (this._participants.local) {
-      return this._participants.local.audio;
+      return !['blocked', 'off'].includes(
+        this._participants.local.tracks.audio.state
+      );
     }
     return null;
   }
 
   localVideo() {
     if (this._participants.local) {
-      return this._participants.local.video;
+      return !['blocked', 'off'].includes(
+        this._participants.local.tracks.video.state
+      );
     }
     return null;
   }
@@ -3167,10 +3174,12 @@ export default class DailyIframe extends EventEmitter {
         );
       }
 
-      if (typeof args.video !== 'boolean') {
-        throw new Error(
-          `Error starting dial out: video must be a boolean value`
-        );
+      if (args.video) {
+        if (typeof args.video !== 'boolean') {
+          throw new Error(
+            `Error starting dial out: video must be a boolean value`
+          );
+        }
       }
 
       validateAudioVideoCodec(args.codecs);
@@ -3191,7 +3200,9 @@ export default class DailyIframe extends EventEmitter {
         );
       }
 
-      validateAudioCodec(args.codecs.audio);
+      if (args.codecs) {
+        validateAudioCodec(args.codecs.audio);
+      }
     }
 
     return new Promise((resolve, reject) => {
@@ -3216,9 +3227,46 @@ export default class DailyIframe extends EventEmitter {
   stopDialOut(args) {
     methodOnlySupportedAfterJoin(this._callState, 'stopDialOut()');
 
-    this.sendMessageToCallMachine({
-      action: DAILY_METHOD_STOP_DIALOUT,
-      ...args,
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve(msg);
+        }
+      };
+
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_STOP_DIALOUT,
+          ...args,
+        },
+        k
+      );
+    });
+  }
+
+  async sendDTMF(args) {
+    methodOnlySupportedAfterJoin(this._callState, 'sendDTMF()');
+
+    validateSendDTMF(args);
+
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve(msg);
+        }
+      };
+
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_SEND_DTMF,
+          ...args,
+        },
+        k
+      );
     });
   }
 
@@ -3528,6 +3576,8 @@ stopTestPeerToPeerCallQuality() instead`);
       LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
       MEDIUM_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
       HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
+      ADAPTIVE_02_LAYERS_VIDEO_SEND_SETTINGS_PRESET_KEY,
+      ADAPTIVE_03_LAYERS_VIDEO_SEND_SETTINGS_PRESET_KEY,
     ];
     const screenVideoSupportedPresets = [
       DEFAULT_SCREEN_VIDEO_SEND_SETTINGS_PRESET_KEY,
@@ -3548,9 +3598,13 @@ stopTestPeerToPeerCallQuality() instead`);
       if (typeof videoSendSettings !== 'object') {
         throw new Error(supportedVideoSendSettingsErrorMsg);
       }
-      if (!videoSendSettings.maxQuality && !videoSendSettings.encodings) {
+      if (
+        !videoSendSettings.maxQuality &&
+        !videoSendSettings.encodings &&
+        videoSendSettings.allowAdaptiveLayers === undefined
+      ) {
         throw new Error(
-          `Video send settings must contain at least maxQuality or encodings attribute`
+          `Video send settings must contain at least maxQuality, allowAdaptiveLayers or encodings attribute`
         );
       }
       if (
@@ -4264,12 +4318,7 @@ stopTestPeerToPeerCallQuality() instead`);
             url: callObjectBundleUrl(),
           },
         };
-        this._messageChannel.sendMessageToCallMachine(
-          logMsg,
-          null,
-          this._iframe,
-          this._callFrameId
-        );
+        this.sendMessageToCallMachine(logMsg);
         // if a duplicate instance was detected before initialization
         // we need to send up the log now.
         this._delayDuplicateInstanceLog && this._logDuplicateInstanceAttempt();
@@ -4370,7 +4419,7 @@ stopTestPeerToPeerCallQuality() instead`);
         }
         break;
       case DAILY_EVENT_PARTICIPANT_COUNTS_UPDATED:
-        if (!deepEqual(this._participantCounts, msg.participantCounts)) {
+        if (!dequal(this._participantCounts, msg.participantCounts)) {
           this._participantCounts = msg.participantCounts;
           try {
             this.emit(msg.action, msg);
@@ -4386,7 +4435,7 @@ stopTestPeerToPeerCallQuality() instead`);
         if (msg.awaitingAccess) {
           newAccessState.awaitingAccess = msg.awaitingAccess;
         }
-        if (!deepEqual(this._accessState, newAccessState)) {
+        if (!dequal(this._accessState, newAccessState)) {
           this._accessState = newAccessState;
           try {
             this.emit(msg.action, msg);
@@ -4558,7 +4607,7 @@ stopTestPeerToPeerCallQuality() instead`);
         // NOTE: doing equality check here rather than before sending message in
         // the first place from call machine, to simplify handling initial
         // receive settings
-        if (!deepEqual(this._receiveSettings, msg.receiveSettings)) {
+        if (!dequal(this._receiveSettings, msg.receiveSettings)) {
           this._receiveSettings = msg.receiveSettings;
           try {
             this.emit(msg.action, {
@@ -4574,11 +4623,11 @@ stopTestPeerToPeerCallQuality() instead`);
         // NOTE: doing equality check here rather than before sending message in
         // the first place from call machine, to simplify handling initial
         // input settings
-        if (!deepEqual(this._inputSettings, msg.inputSettings)) {
+        if (!dequal(this._inputSettings, msg.inputSettings)) {
           const prevInputSettings = this._getInputSettings();
           this._inputSettings = msg.inputSettings;
           this._preloadCache.inputSettings = {}; // clear cache, if any
-          if (!deepEqual(prevInputSettings, this._getInputSettings())) {
+          if (!dequal(prevInputSettings, this._getInputSettings())) {
             try {
               this.emit(msg.action, {
                 action: msg.action,
@@ -4592,7 +4641,7 @@ stopTestPeerToPeerCallQuality() instead`);
         break;
       case DAILY_EVENT_SEND_SETTINGS_UPDATED:
         {
-          if (!deepEqual(this._sendSettings, msg.sendSettings)) {
+          if (!dequal(this._sendSettings, msg.sendSettings)) {
             this._sendSettings = msg.sendSettings;
             this._preloadCache.sendSettings = null; // clear cache, if any
             try {
@@ -4841,7 +4890,7 @@ stopTestPeerToPeerCallQuality() instead`);
   }
 
   compareEqualForParticipantUpdateEvent(a, b) {
-    if (!deepEqual(a, b)) {
+    if (!dequal(a, b)) {
       return false;
     }
     if (
@@ -5124,6 +5173,22 @@ stopTestPeerToPeerCallQuality() instead`);
     const str = 'hello, world.';
     console.log(str);
     return str;
+  }
+
+  _logCallQualityTestResults(results) {
+    if (this._dailyMainExecuted) {
+      const logMsg = {
+        action: DAILY_METHOD_TRANSMIT_LOG,
+        level: 'info',
+        code: 1012,
+        results,
+      };
+      this.sendMessageToCallMachine(logMsg);
+    } else {
+      console.warn(
+        '_logCallQualityTestResults() must be called after daily initialization'
+      );
+    }
   }
 
   _logUseAfterDestroy() {
@@ -5448,7 +5513,7 @@ function validateUserData(data) {
       dataStr = JSON.stringify(data);
 
       // check that what goes in is the same coming out :)
-      if (!deepEqual(JSON.parse(dataStr), data)) {
+      if (!dequal(JSON.parse(dataStr), data)) {
         console.warn(`The userData provided will be modified when serialized.`);
       }
     } catch (e) {
@@ -5927,16 +5992,33 @@ function validateConfigPropType(prop, propType) {
   }
 }
 
+function validateSendDTMF({ sessionId, tones }) {
+  if (!(sessionId && tones)) {
+    throw new Error(`sessionId and tones are mandatory parameter`);
+  }
+  if (typeof sessionId !== 'string' || typeof tones !== 'string') {
+    throw new Error(`sessionId and tones should be of string type`);
+  }
+  if (tones.length > 20) {
+    throw new Error(`tones string must be upto 20 characters`);
+  }
+  let dtmfPattern = /[^0-9A-D*#]/g;
+  let invalidTone = tones.match(dtmfPattern);
+  if (invalidTone && invalidTone[0]) {
+    throw new Error(`${invalidTone[0]} is not valid DTMF tone`);
+  }
+}
+
 function remoteMediaPlayerStartValidationHelpMsg() {
-  return `startRemoteMediaPlayer arguments must be of the form: 
-  { url: "playback url", 
-  settings?: 
+  return `startRemoteMediaPlayer arguments must be of the form:
+  { url: "playback url",
+  settings?:
   {state: "play"|"pause", simulcastEncodings?: [{}] } }`;
 }
 
 function remoteMediaPlayerUpdateValidationHelpMsg() {
-  return `updateRemoteMediaPlayer arguments must be of the form: 
-  session_id: "participant session", 
+  return `updateRemoteMediaPlayer arguments must be of the form:
+  session_id: "participant session",
   { settings?: {state: "play"|"pause"} }`;
 }
 
