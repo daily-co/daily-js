@@ -467,5 +467,9 @@ export function isAudioOutputSelectionDisallowed() {
   // Once the fix lands (https://bugzilla.mozilla.org/show_bug.cgi?id=1849108),
   // we'll need to release another version of daily-js enabling audio output
   // selection for newer versions of Firefox that include the fix.
-  return getBrowserName() === 'Firefox' && getBrowserVersion().major > 115;
+  return (
+    getBrowserName() === 'Firefox' &&
+    getBrowserVersion().major > 115 &&
+    getBrowserVersion().major < 123
+  );
 }
