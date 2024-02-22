@@ -3213,19 +3213,6 @@ export default class DailyIframe extends EventEmitter {
       }
     }
 
-    if (args.displayName) {
-      if (typeof args.displayName !== 'string') {
-        throw new Error(
-          `Error starting dial out: displayName must be a string`
-        );
-      }
-      if (args.displayName.length >= 200) {
-        throw new Error(
-          `Error starting dial out: displayName length must be less than 200`
-        );
-      }
-    }
-
     return new Promise((resolve, reject) => {
       const k = (msg) => {
         if (msg.error) {
