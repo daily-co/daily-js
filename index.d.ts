@@ -1897,12 +1897,14 @@ export interface DailyDialOutSession {
 
 export interface DailyStartDialoutSipOptions {
   sipUri?: string;
+  displayName?: string;
   video?: boolean;
   codecs?: DailyDialOutCodecs;
 }
 
 export interface DailyStartDialoutPhoneOptions {
   phoneNumber?: string;
+  displayName?: string;
   codecs?: DailyDialOutCodecs;
 }
 
