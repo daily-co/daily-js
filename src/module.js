@@ -1596,10 +1596,16 @@ export default class DailyIframe extends EventEmitter {
     return null;
   }
 
-  setLocalAudio(bool) {
+  setLocalAudio(bool, options = {}) {
+    if (bool && 'forceDiscardTrack' in options) {
+      console.error(
+        'forceDiscardTrack option only supported when calling setLocalAudio(false); ignoring'
+      );
+    }
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_LOCAL_AUDIO,
       state: bool,
+      options,
     });
     return this;
   }
