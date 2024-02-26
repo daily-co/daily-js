@@ -1597,10 +1597,18 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setLocalAudio(bool, options = {}) {
-    if (bool && 'forceDiscardTrack' in options) {
-      console.error(
-        'forceDiscardTrack option only supported when calling setLocalAudio(false); ignoring'
-      );
+    if ('forceDiscardTrack' in options) {
+      if (isReactNative()) {
+        console.warn(
+          'forceDiscardTrack option not supported in React Native; ignoring'
+        );
+        options = {};
+      } else if (bool) {
+        console.warn(
+          'forceDiscardTrack option only supported when calling setLocalAudio(false); ignoring'
+        );
+        options = {};
+      }
     }
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_LOCAL_AUDIO,
