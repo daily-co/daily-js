@@ -1947,7 +1947,7 @@ export interface DailyCall {
   ): Promise<{ access: DailyAccess; granted: boolean }>;
   localAudio(): boolean;
   localVideo(): boolean;
-  setLocalAudio(enabled: boolean, options?: { discardTrack: true }): DailyCall;
+  setLocalAudio(enabled: boolean, options?: { forceDiscardTrack: true }): DailyCall;
   setLocalVideo(enabled: boolean): DailyCall;
   getReceiveSettings(
     id: string,
