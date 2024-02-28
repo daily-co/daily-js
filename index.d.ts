@@ -1322,6 +1322,7 @@ export interface DailyEventObjectTranscriptionMessage {
   participantId: string;
   text: string;
   timestamp: Date;
+  rawResponse: Record<string, any>;
 }
 
 export interface DailyEventObjectLangUpdated {
@@ -1397,6 +1398,7 @@ export interface DailyEventObjectTranscriptionStarted {
   endpointing?: number | boolean;
   punctuate?: boolean;
   extra?: Record<string, any>;
+  includeRawResponse?: boolean;
   startedBy: string;
 }
 
@@ -1872,6 +1874,7 @@ export interface DailyTranscriptionDeepgramOptions {
   endpointing?: number | boolean;
   punctuate?: boolean;
   extra?: Record<string, any>;
+  includeRawResponse?: boolean;
 }
 
 export type SidebarView =
