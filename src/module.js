@@ -146,7 +146,6 @@ import {
   DAILY_METHOD_SET_ICE_CONFIG,
   DAILY_METHOD_GET_MEETING_SESSION,
   DAILY_METHOD_SET_SESSION_DATA,
-  DAILY_METHOD_REGISTER_INPUT_HANDLER,
   DAILY_METHOD_ROOM,
   DAILY_METHOD_GET_NETWORK_TOPOLOGY,
   DAILY_METHOD_SET_NETWORK_TOPOLOGY,
@@ -1199,7 +1198,6 @@ export default class DailyIframe extends EventEmitter {
     this._participantCounts = EMPTY_PARTICIPANT_COUNTS;
     this._rmpPlayerState = {};
     this._waitingParticipants = {};
-    this._inputEventsOn = {}; // need to cache these until loaded
     this._network = { threshold: 'good', quality: 100 };
     this._activeSpeaker = {};
     this._localAudioLevel = 0;
@@ -1596,10 +1594,24 @@ export default class DailyIframe extends EventEmitter {
     return null;
   }
 
-  setLocalAudio(bool) {
+  setLocalAudio(bool, options = {}) {
+    if ('forceDiscardTrack' in options) {
+      if (isReactNative()) {
+        console.warn(
+          'forceDiscardTrack option not supported in React Native; ignoring'
+        );
+        options = {};
+      } else if (bool) {
+        console.warn(
+          'forceDiscardTrack option only supported when calling setLocalAudio(false); ignoring'
+        );
+        options = {};
+      }
+    }
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_LOCAL_AUDIO,
       state: bool,
+      options,
     });
     return this;
   }
@@ -2622,12 +2634,6 @@ export default class DailyIframe extends EventEmitter {
           if (this.properties.cssFile || this.properties.cssText) {
             this.loadCss(this.properties);
           }
-          for (let eventName in this._inputEventsOn) {
-            this.sendMessageToCallMachine({
-              action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
-              on: eventName,
-            });
-          }
           resolve();
         };
       });
@@ -3210,6 +3216,19 @@ export default class DailyIframe extends EventEmitter {
 
       if (args.codecs) {
         validateAudioCodec(args.codecs.audio);
+      }
+    }
+
+    if (args.displayName) {
+      if (typeof args.displayName !== 'string') {
+        throw new Error(
+          `Error starting dial out: displayName must be a string`
+        );
+      }
+      if (args.displayName.length >= 200) {
+        throw new Error(
+          `Error starting dial out: displayName length must be less than 200`
+        );
       }
     }
 
@@ -4171,11 +4190,6 @@ stopTestPeerToPeerCallQuality() instead`);
   }
 
   on(eventName, k) {
-    this._inputEventsOn[eventName] = {};
-    this.sendMessageToCallMachine({
-      action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
-      on: eventName,
-    });
     return EventEmitter.prototype.on.call(this, eventName, k);
   }
 
@@ -4184,22 +4198,10 @@ stopTestPeerToPeerCallQuality() instead`);
   // overriding on/off/once are optimizations, anyway, we won't worry
   // about it right now.
   once(eventName, k) {
-    this._inputEventsOn[eventName] = {};
-    this.sendMessageToCallMachine({
-      action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
-      on: eventName,
-    });
     return EventEmitter.prototype.once.call(this, eventName, k);
   }
 
   off(eventName, k) {
-    delete this._inputEventsOn[eventName];
-    if (!this.isDestroyed()) {
-      this.sendMessageToCallMachine({
-        action: DAILY_METHOD_REGISTER_INPUT_HANDLER,
-        off: eventName,
-      });
-    }
     return EventEmitter.prototype.off.call(this, eventName, k);
   }
 

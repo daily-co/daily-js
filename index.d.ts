@@ -1322,6 +1322,7 @@ export interface DailyEventObjectTranscriptionMessage {
   participantId: string;
   text: string;
   timestamp: Date;
+  rawResponse: Record<string, any>;
 }
 
 export interface DailyEventObjectLangUpdated {
@@ -1397,6 +1398,7 @@ export interface DailyEventObjectTranscriptionStarted {
   endpointing?: number | boolean;
   punctuate?: boolean;
   extra?: Record<string, any>;
+  includeRawResponse?: boolean;
   startedBy: string;
 }
 
@@ -1872,6 +1874,7 @@ export interface DailyTranscriptionDeepgramOptions {
   endpointing?: number | boolean;
   punctuate?: boolean;
   extra?: Record<string, any>;
+  includeRawResponse?: boolean;
 }
 
 export type SidebarView =
@@ -1897,12 +1900,14 @@ export interface DailyDialOutSession {
 
 export interface DailyStartDialoutSipOptions {
   sipUri?: string;
+  displayName?: string;
   video?: boolean;
   codecs?: DailyDialOutCodecs;
 }
 
 export interface DailyStartDialoutPhoneOptions {
   phoneNumber?: string;
+  displayName?: string;
   codecs?: DailyDialOutCodecs;
 }
 
@@ -1945,7 +1950,10 @@ export interface DailyCall {
   ): Promise<{ access: DailyAccess; granted: boolean }>;
   localAudio(): boolean;
   localVideo(): boolean;
-  setLocalAudio(enabled: boolean): DailyCall;
+  setLocalAudio(
+    enabled: boolean,
+    options?: { forceDiscardTrack: true }
+  ): DailyCall;
   setLocalVideo(enabled: boolean): DailyCall;
   getReceiveSettings(
     id: string,
