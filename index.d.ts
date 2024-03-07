@@ -1909,6 +1909,7 @@ export interface DailyStartDialoutPhoneOptions {
   phoneNumber?: string;
   displayName?: string;
   codecs?: DailyDialOutCodecs;
+  callerId?: string;
 }
 
 export type DailyStartDialoutOptions =
