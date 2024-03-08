@@ -2958,25 +2958,26 @@ export default class DailyIframe extends EventEmitter {
       this._validateEncodingLayerHasValidProperties(layer);
       for (let prop in layer) {
         // check property is valid
-        if (!simulcastEncodingsValidKeys.includes(prop)) {
+        if (simulcastEncodingsValidKeys.includes(prop)) {
+          // property must be number
+          if (typeof layer[prop] !== 'number') {
+            throw new Error(`${prop} must be a number`);
+          }
+
+          if (validEncodingRanges) {
+            // property must be within range
+            let { min, max } = validEncodingRanges[prop];
+            if (!isValueInRange(layer[prop], min, max)) {
+              throw new Error(
+                `${prop} value not in range. valid range: ${min} to ${max}`
+              );
+            }
+          }
+        } else if (!['active', 'scalabilityMode'].includes(prop)) {
           throw new Error(
             `Invalid key ${prop}, valid keys are:` +
               Object.values(simulcastEncodingsValidKeys)
           );
-        }
-        // property must be number
-        if (typeof layer[prop] !== 'number') {
-          throw new Error(`${prop} must be a number`);
-        }
-
-        if (validEncodingRanges) {
-          // property must be within range
-          let { min, max } = validEncodingRanges[prop];
-          if (!isValueInRange(layer[prop], min, max)) {
-            throw new Error(
-              `${prop} value not in range. valid range:\ ${min} to ${max}`
-            );
-          }
         }
       }
       // maxBitrate is sometimes mandatory
