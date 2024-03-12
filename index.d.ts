@@ -2120,15 +2120,15 @@ export interface DailyCall {
   setSidebarView(view: SidebarView): DailyCall;
   on<T extends DailyEvent>(
     event: T,
-    handler: (event?: DailyEventObject<T>) => void
+    handler: (event: DailyEventObject<T>) => void
   ): DailyCall;
   once<T extends DailyEvent>(
     event: T,
-    handler: (event?: DailyEventObject<T>) => void
+    handler: (event: DailyEventObject<T>) => void
   ): DailyCall;
   off<T extends DailyEvent>(
     event: T,
-    handler: (event?: DailyEventObject<T>) => void
+    handler: (event: DailyEventObject<T>) => void
   ): DailyCall;
   properties: {
     dailyConfig?: DailyAdvancedConfig;
