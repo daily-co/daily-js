@@ -1825,8 +1825,8 @@ export default class DailyIframe extends EventEmitter {
       return this._getInputSettings();
     }
 
-    // if we're in callObject mode and not loaded yet, don't do anything
-    if (this._callObjectMode && this.needsLoad()) {
+    // if we're in callObject mode and not initialized yet, don't do anything
+    if (this._callObjectMode && !this._callMachineInitialized) {
       return this._getInputSettings();
     }
 
