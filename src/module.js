@@ -245,6 +245,7 @@ import {
   isVideoProcessingSupported,
   isAudioProcessingSupported,
   isAudioOutputSelectionDisallowed,
+  isAndroidWeb,
 } from './shared-with-pluot-core/Environment.js';
 import WebMessageChannel from './shared-with-pluot-core/script-message-channels/WebMessageChannel';
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
@@ -2932,6 +2933,12 @@ export default class DailyIframe extends EventEmitter {
     if (dailyConfig.screenSimulcastEncodings) {
       console.warn(
         'screenSimulcastEncodings is deprecated. Use sendSettings, found in DailyCallOptions, to provide screen simulcast settings.'
+      );
+    }
+    // warn for use of noAutoDefaultDeviceChange in Android Web
+    if (isAndroidWeb() && dailyConfig.noAutoDefaultDeviceChange) {
+      console.warn(
+        'noAutoDefaultDeviceChange is not supported on Android, and will be ignored.'
       );
     }
   }
