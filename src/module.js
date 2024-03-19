@@ -4967,19 +4967,12 @@ stopTestPeerToPeerCallQuality() instead`);
       this._callState,
       this._isPreparingToJoin
     );
-    // When targeting Android API 34 if we try to start the foreground service
-    // before asking for permissions the app will crash
-    if (
-      this._callState === DAILY_STATE_JOINED ||
-      this._callState === DAILY_STATE_LEFT
-    ) {
-      this.updateShowAndroidOngoingMeetingNotification(curCallPendingOrOngoing);
-    }
     if (oldIsMeetingPendingOrOngoing === curCallPendingOrOngoing) {
       return;
     }
     this.updateKeepDeviceAwake(curCallPendingOrOngoing);
     this.updateDeviceAudioMode(curCallPendingOrOngoing);
+    this.updateShowAndroidOngoingMeetingNotification(curCallPendingOrOngoing);
     this.updateNoOpRecordingEnsuringBackgroundContinuity(
       curCallPendingOrOngoing
     );
