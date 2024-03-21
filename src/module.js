@@ -245,6 +245,7 @@ import {
   isVideoProcessingSupported,
   isAudioProcessingSupported,
   isAudioOutputSelectionDisallowed,
+  isAndroidWeb,
 } from './shared-with-pluot-core/Environment.js';
 import WebMessageChannel from './shared-with-pluot-core/script-message-channels/WebMessageChannel';
 import ReactNativeMessageChannel from './shared-with-pluot-core/script-message-channels/ReactNativeMessageChannel';
@@ -1825,8 +1826,8 @@ export default class DailyIframe extends EventEmitter {
       return this._getInputSettings();
     }
 
-    // if we're in callObject mode and not loaded yet, don't do anything
-    if (this._callObjectMode && this.needsLoad()) {
+    // if we're in callObject mode and not initialized yet, don't do anything
+    if (this._callObjectMode && !this._callMachineInitialized) {
       return this._getInputSettings();
     }
 
@@ -2934,6 +2935,12 @@ export default class DailyIframe extends EventEmitter {
         'screenSimulcastEncodings is deprecated. Use sendSettings, found in DailyCallOptions, to provide screen simulcast settings.'
       );
     }
+    // warn for use of noAutoDefaultDeviceChange in Android Web
+    if (isAndroidWeb() && dailyConfig.noAutoDefaultDeviceChange) {
+      console.warn(
+        'noAutoDefaultDeviceChange is not supported on Android, and will be ignored.'
+      );
+    }
   }
 
   validateSimulcastEncodings(
@@ -2958,25 +2965,26 @@ export default class DailyIframe extends EventEmitter {
       this._validateEncodingLayerHasValidProperties(layer);
       for (let prop in layer) {
         // check property is valid
-        if (!simulcastEncodingsValidKeys.includes(prop)) {
+        if (simulcastEncodingsValidKeys.includes(prop)) {
+          // property must be number
+          if (typeof layer[prop] !== 'number') {
+            throw new Error(`${prop} must be a number`);
+          }
+
+          if (validEncodingRanges) {
+            // property must be within range
+            let { min, max } = validEncodingRanges[prop];
+            if (!isValueInRange(layer[prop], min, max)) {
+              throw new Error(
+                `${prop} value not in range. valid range: ${min} to ${max}`
+              );
+            }
+          }
+        } else if (!['active', 'scalabilityMode'].includes(prop)) {
           throw new Error(
             `Invalid key ${prop}, valid keys are:` +
               Object.values(simulcastEncodingsValidKeys)
           );
-        }
-        // property must be number
-        if (typeof layer[prop] !== 'number') {
-          throw new Error(`${prop} must be a number`);
-        }
-
-        if (validEncodingRanges) {
-          // property must be within range
-          let { min, max } = validEncodingRanges[prop];
-          if (!isValueInRange(layer[prop], min, max)) {
-            throw new Error(
-              `${prop} value not in range. valid range:\ ${min} to ${max}`
-            );
-          }
         }
       }
       // maxBitrate is sometimes mandatory
@@ -3216,6 +3224,16 @@ export default class DailyIframe extends EventEmitter {
 
       if (args.codecs) {
         validateAudioCodec(args.codecs.audio);
+      }
+    }
+    if (args.callerId) {
+      if (typeof args.callerId !== 'string') {
+        throw new Error(`Error starting dial out: callerId must be a string`);
+      }
+      if (args.sipUri) {
+        throw new Error(
+          `Error starting dial out: callerId not allowed with sipUri`
+        );
       }
     }
 
