@@ -3226,6 +3226,16 @@ export default class DailyIframe extends EventEmitter {
         validateAudioCodec(args.codecs.audio);
       }
     }
+    if (args.callerId) {
+      if (typeof args.callerId !== 'string') {
+        throw new Error(`Error starting dial out: callerId must be a string`);
+      }
+      if (args.sipUri) {
+        throw new Error(
+          `Error starting dial out: callerId not allowed with sipUri`
+        );
+      }
+    }
 
     if (args.displayName) {
       if (typeof args.displayName !== 'string') {
