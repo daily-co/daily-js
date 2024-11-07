@@ -2981,6 +2981,16 @@ export default class DailyIframe extends EventEmitter {
   }
 
   startRecording(args = {}) {
+    // validate recordingType if set
+    const recType = args.type;
+    if (
+      recType &&
+      !(recType === 'cloud' || recType === 'raw-tracks' || recType === 'local')
+    ) {
+      throw new Error(
+        `invalid type: ${recType}, allowed values 'cloud' or 'raw-tracks`
+      );
+    }
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_START_RECORDING,
       ...args,
