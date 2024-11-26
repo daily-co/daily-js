@@ -1621,6 +1621,7 @@ export interface DailyEventObjectSidebarViewChanged
 export interface DailyEventObjectDialinConnected extends DailyEventObjectBase {
   action: Extract<DailyEvent, 'dialin-connected'>;
   sipHeaders?: Record<string, any>;
+  sessionId: string;
   sipFrom?: string;
   actionTraceId?: string;
 }
@@ -1628,6 +1629,7 @@ export interface DailyEventObjectDialinConnected extends DailyEventObjectBase {
 export interface DailyEventObjectDialinError extends DailyEventObjectBase {
   action: Extract<DailyEvent, 'dialin-error'>;
   errorMsg: string;
+  sessionId: string;
   actionTraceId?: string;
 }
 
@@ -1635,12 +1637,14 @@ export interface DailyEventObjectDialinStopped extends DailyEventObjectBase {
   action: Extract<DailyEvent, 'dialin-stopped'>;
   sipHeaders?: Record<string, any>;
   sipFrom?: string;
+  sessionId: string;
   actionTraceId?: string;
 }
 
 export interface DailyEventObjectDialinWarning extends DailyEventObjectBase {
   action: Extract<DailyEvent, 'dialin-warning'>;
   errorMsg: string;
+  sessionId: string;
   actionTraceId?: string;
 }
 
