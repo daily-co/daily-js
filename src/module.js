@@ -2988,7 +2988,7 @@ export default class DailyIframe extends EventEmitter {
       !(recType === 'cloud' || recType === 'raw-tracks' || recType === 'local')
     ) {
       throw new Error(
-        `invalid type: ${recType}, allowed values 'cloud' or 'raw-tracks`
+        `invalid type: ${recType}, allowed values 'cloud', 'raw-tracks', or 'local'`
       );
     }
     this.sendMessageToCallMachine({

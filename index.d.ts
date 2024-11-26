@@ -1920,10 +1920,6 @@ export type DailyRemoteMediaPlayerStateBuffering = 'buffering';
 export type DailyRemoteMediaPlayerEOS = 'EOS';
 export type DailyRemoteMediaPlayerPeerStopped = 'stopped-by-peer';
 
-export type DailyRecordingTypeCloud = 'cloud';
-export type DailyRecordingTypeRawTracks = 'raw-tracks';
-export type DailyRecordingTypeLocal = 'local';
-
 export interface DailyStreamingOptions<
   Method extends DailyStartStreamingMethod,
   Type extends DailyStreamingLayoutConfigType = 'start'
@@ -1940,12 +1936,7 @@ export interface DailyStreamingOptions<
   layout?: Method extends 'recording'
     ? DailyStreamingLayoutConfig<Type>
     : DailyLiveStreamingLayoutConfig<Type>;
-  type?: Method extends 'recording'
-    ?
-        | DailyRecordingTypeCloud
-        | DailyRecordingTypeRawTracks
-        | DailyRecordingTypeLocal
-    : never;
+  type?: Method extends 'recording' ? 'cloud' | 'raw-tracks' | 'local' : never;
 }
 
 export interface DailyStreamingEndpoint {
