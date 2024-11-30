@@ -1940,6 +1940,7 @@ export interface DailyStreamingOptions<
   layout?: Method extends 'recording'
     ? DailyStreamingLayoutConfig<Type>
     : DailyLiveStreamingLayoutConfig<Type>;
+  type?: Method extends 'recording' ? 'cloud' | 'raw-tracks' | 'local' : never;
 }
 
 export interface DailyStreamingEndpoint {
