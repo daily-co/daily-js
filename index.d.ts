@@ -1469,6 +1469,7 @@ export interface DailyEventObjectTranscriptionMessage
   extends DailyEventObjectBase {
   action: Extract<DailyEvent, 'transcription-message'>;
   instanceId?: string;
+  trackType?: 'cam-audio' | 'screen-audio' | 'rmpAudio' | string;
   participantId: string;
   text: string;
   timestamp: Date;
