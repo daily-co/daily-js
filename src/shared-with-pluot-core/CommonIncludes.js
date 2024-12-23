@@ -352,6 +352,10 @@ export const DAILY_JS_REMOTE_MEDIA_PLAYER_STATE = {
 
 export const DAILY_PARTICIPANT_TYPE = {
   REMOTE_MEDIA_PLAYER: 'remote-media-player',
+  SIP_DIAL_IN: 'sip-dial-in',
+  SIP_DIAL_OUT: 'sip-dial-out',
+  PSTN_DIAL_IN: 'pstn-dial-in',
+  PSTN_DIAL_OUT: 'pstn-dial-out',
 };
 
 export const DAILY_PRESELECTED_BG_IMAGE_URLS_LENGTH = 10;
