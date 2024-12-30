@@ -1874,6 +1874,10 @@ export interface DailyStreamingAudioOnlyLayoutConfig {
   participants?: DailyStreamingParticipantsConfig;
 }
 
+export interface DailyStreamingRawTracksAudioOnlyLayoutConfig {
+  preset: 'raw-tracks-audio-only';
+}
+
 export type DailyStreamingPortraitLayoutVariant = 'vertical' | 'inset';
 
 export interface DailyStreamingPortraitLayoutConfig {
@@ -1910,6 +1914,7 @@ export type DailyStreamingLayoutConfig<
   | DailyStreamingActiveParticipantLayoutConfig
   | DailyStreamingPortraitLayoutConfig
   | DailyStreamingAudioOnlyLayoutConfig
+  | DailyStreamingRawTracksAudioOnlyLayoutConfig
   | (Type extends 'start'
       ? DailyStartStreamingCustomLayoutConfig
       : DailyUpdateStreamingCustomLayoutConfig);
