@@ -210,8 +210,10 @@ export function isAudioProcessingSupported() {
     case 'Chrome':
     case 'Firefox':
       return true;
-    case 'Safari':
-      return getBrowserVersion().major >= 17 && getBrowserVersion().minor >= 4;
+    case 'Safari': {
+      const v = getBrowserVersion();
+      return v.major > 17 || (v.major === 17 && v.minor >= 4);
+    }
   }
   return false;
 }
