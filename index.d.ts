@@ -488,7 +488,8 @@ export type DailyParticipantTypeValues =
   | 'sip-dial-in'
   | 'sip-dial-out'
   | 'pstn-dial-in'
-  | 'pstn-dial-out';
+  | 'pstn-dial-out'
+  | 'unknown';
 
 export interface DailyParticipantPermissions {
   hasPresence: boolean;
