@@ -483,6 +483,14 @@ export type DailyParticipantPermissionsCanAdminValues =
   | 'streaming'
   | 'transcription';
 
+export type DailyParticipantTypeValues =
+  | 'remote-media-player'
+  | 'sip-dial-in'
+  | 'sip-dial-out'
+  | 'pstn-dial-in'
+  | 'pstn-dial-out'
+  | 'unknown';
+
 export interface DailyParticipantPermissions {
   hasPresence: boolean;
   canSend: Set<DailyParticipantPermissionsCanSendValues> | boolean;
@@ -564,7 +572,7 @@ export interface DailyParticipant {
   owner: boolean;
   permissions: DailyParticipantPermissions;
   record: boolean;
-  participantType?: string;
+  participantType?: DailyParticipantTypeValues;
 
   // video element info (iframe-based calls using standard UI only)
   /**
