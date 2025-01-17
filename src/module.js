@@ -5025,61 +5025,44 @@ testCallQuality() and stopTestCallQuality() instead`);
     }
   }
 
-  _trackPlayable(track) {
-    return !!(track && track.readyState !== 'ended');
+  _trackStatePlayable(track) {
+    return !!(track && track.state === DAILY_TRACK_STATE_PLAYABLE);
   }
   _trackChanged(prevTrack, thisTrack) {
-    return !!(prevTrack?.deviceId !== thisTrack?.deviceId);
+    return !!(prevTrack?.id !== thisTrack?.id);
   }
 
   maybeEventTrackStopped(prevTrack, thisTrack, prevP, thisP, type) {
-    const prevTrackPlayable = this._trackPlayable(prevTrack);
-    const thisTrackPlayable = this._trackPlayable(thisTrack);
-    const thisState = thisP?.tracks[type]?.state;
-    const prevState = prevP?.tracks[type]?.state;
-    let emitEvent = false;
+    const previouslyPlayable = this._trackStatePlayable(prevP?.tracks[type]);
+    const nowPlayable = this._trackStatePlayable(thisP?.tracks[type]);
+    const trackChanged = this._trackChanged(prevTrack, thisTrack);
 
-    if (prevTrackPlayable && !thisTrackPlayable) {
-      emitEvent = true;
-    } else if (this._trackChanged(prevTrack, thisTrack)) {
-      emitEvent = true;
-    } else if (!thisTrackPlayable && prevState !== thisState) {
-      // since the tracks are pulled from the store, it's highly possible that
-      // the track has ended out from under us. To avoid sending a preliminary
-      // track-stopped event where the track.state is still 'playable', we check
-      // for a state change here and expect another update to come in shortly
-      // with the correct state.
-      emitEvent = true;
-    }
-
-    if (emitEvent) {
-      this.emitDailyJSEvent({
-        action: DAILY_EVENT_TRACK_STOPPED,
-        track: prevTrack,
-        participant: thisP,
-        type,
-      });
+    if (previouslyPlayable) {
+      if (!nowPlayable || trackChanged) {
+        this.emitDailyJSEvent({
+          action: DAILY_EVENT_TRACK_STOPPED,
+          track: prevTrack,
+          participant: thisP,
+          type,
+        });
+      }
     }
   }
 
-  maybeEventTrackStarted(prevTrack, thisTrack, thisP, type) {
-    const prevTrackPlayable = this._trackPlayable(prevTrack);
-    const thisTrackPlayable = this._trackPlayable(thisTrack);
-    let emitEvent = false;
+  maybeEventTrackStarted(prevTrack, thisTrack, prevP, thisP, type) {
+    const previouslyPlayable = this._trackStatePlayable(prevP?.tracks[type]);
+    const nowPlayable = this._trackStatePlayable(thisP?.tracks[type]);
+    const trackChanged = this._trackChanged(prevTrack, thisTrack);
 
-    if (thisTrackPlayable && !prevTrackPlayable) {
-      emitEvent = true;
-    } else if (thisTrackPlayable && this._trackChanged(prevTrack, thisTrack)) {
-      emitEvent = true;
-    }
-
-    if (emitEvent) {
-      this.emitDailyJSEvent({
-        action: DAILY_EVENT_TRACK_STARTED,
-        track: thisTrack,
-        participant: thisP,
-        type,
-      });
+    if (nowPlayable) {
+      if (!previouslyPlayable || trackChanged) {
+        this.emitDailyJSEvent({
+          action: DAILY_EVENT_TRACK_STARTED,
+          track: thisTrack,
+          participant: thisP,
+          type,
+        });
+      }
     }
   }
 
@@ -5106,6 +5089,7 @@ testCallQuality() and stopTestCallQuality() instead`);
       this.maybeEventTrackStarted(
         prevP && prevP.tracks[trackKey] ? prevP.tracks[trackKey].track : null,
         thisP.tracks[trackKey].track,
+        prevP,
         thisP,
         trackKey
       );
