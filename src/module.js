@@ -5025,15 +5025,34 @@ testCallQuality() and stopTestCallQuality() instead`);
     }
   }
 
-  maybeEventTrackStopped(prevTrack, thisTrack, thisP, type) {
-    if (!prevTrack) {
-      return;
+  _trackPlayable(track) {
+    return !!(track && track.readyState !== 'ended');
+  }
+  _trackChanged(prevTrack, thisTrack) {
+    return !!(prevTrack?.deviceId !== thisTrack?.deviceId);
+  }
+
+  maybeEventTrackStopped(prevTrack, thisTrack, prevP, thisP, type) {
+    const prevTrackPlayable = this._trackPlayable(prevTrack);
+    const thisTrackPlayable = this._trackPlayable(thisTrack);
+    const thisState = thisP?.tracks[type]?.state;
+    const prevState = prevP?.tracks[type]?.state;
+    let emitEvent = false;
+
+    if (prevTrackPlayable && !thisTrackPlayable) {
+      emitEvent = true;
+    } else if (this._trackChanged(prevTrack, thisTrack)) {
+      emitEvent = true;
+    } else if (!thisTrackPlayable && prevState !== thisState) {
+      // since the tracks are pulled from the store, it's highly possible that
+      // the track has ended out from under us. To avoid sending a preliminary
+      // track-stopped event where the track.state is still 'playable', we check
+      // for a state change here and expect another update to come in shortly
+      // with the correct state.
+      emitEvent = true;
     }
-    if (
-      prevTrack.readyState === 'ended' ||
-      !thisTrack ||
-      prevTrack.id !== thisTrack.id
-    ) {
+
+    if (emitEvent) {
       this.emitDailyJSEvent({
         action: DAILY_EVENT_TRACK_STOPPED,
         track: prevTrack,
@@ -5044,14 +5063,17 @@ testCallQuality() and stopTestCallQuality() instead`);
   }
 
   maybeEventTrackStarted(prevTrack, thisTrack, thisP, type) {
-    if (!thisTrack) {
-      return;
+    const prevTrackPlayable = this._trackPlayable(prevTrack);
+    const thisTrackPlayable = this._trackPlayable(thisTrack);
+    let emitEvent = false;
+
+    if (thisTrackPlayable && !prevTrackPlayable) {
+      emitEvent = true;
+    } else if (thisTrackPlayable && this._trackChanged(prevTrack, thisTrack)) {
+      emitEvent = true;
     }
-    if (
-      !prevTrack ||
-      prevTrack.readyState === 'ended' ||
-      thisTrack.id !== prevTrack.id
-    ) {
+
+    if (emitEvent) {
       this.emitDailyJSEvent({
         action: DAILY_EVENT_TRACK_STARTED,
         track: thisTrack,
@@ -5069,6 +5091,7 @@ testCallQuality() and stopTestCallQuality() instead`);
       this.maybeEventTrackStopped(
         prevP.tracks[trackKey].track,
         thisP && thisP.tracks[trackKey] ? thisP.tracks[trackKey].track : null,
+        prevP,
         thisP,
         trackKey
       );
