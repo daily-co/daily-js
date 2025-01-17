@@ -5042,7 +5042,7 @@ testCallQuality() and stopTestCallQuality() instead`);
         this.emitDailyJSEvent({
           action: DAILY_EVENT_TRACK_STOPPED,
           track: prevTrack,
-          participant: thisP,
+          participant: thisP ?? prevP,
           type,
         });
       }
