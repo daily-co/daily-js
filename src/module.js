@@ -5025,17 +5025,22 @@ testCallQuality() and stopTestCallQuality() instead`);
     }
   }
 
-  _trackStatePlayable(track) {
-    return !!(track && track.state === DAILY_TRACK_STATE_PLAYABLE);
+  _trackStatePlayable(trackInfo) {
+    return !!(trackInfo && trackInfo.state === DAILY_TRACK_STATE_PLAYABLE);
   }
   _trackChanged(prevTrack, thisTrack) {
     return !!(prevTrack?.id !== thisTrack?.id);
   }
 
-  maybeEventTrackStopped(prevTrack, thisTrack, prevP, thisP, type) {
-    const previouslyPlayable = this._trackStatePlayable(prevP?.tracks[type]);
-    const nowPlayable = this._trackStatePlayable(thisP?.tracks[type]);
-    const trackChanged = this._trackChanged(prevTrack, thisTrack);
+  maybeEventTrackStopped(type, prevP, thisP) {
+    const prevTrackInfo = prevP?.tracks[type] ?? null;
+    const thisTrackInfo = thisP?.tracks[type] ?? null;
+    const prevTrack = prevTrackInfo?.track;
+    if (!prevTrack) return;
+
+    const previouslyPlayable = this._trackStatePlayable(prevTrackInfo);
+    const nowPlayable = this._trackStatePlayable(thisTrackInfo);
+    const trackChanged = this._trackChanged(prevTrack, thisTrackInfo?.track);
 
     if (previouslyPlayable) {
       if (!nowPlayable || trackChanged) {
@@ -5049,10 +5054,15 @@ testCallQuality() and stopTestCallQuality() instead`);
     }
   }
 
-  maybeEventTrackStarted(prevTrack, thisTrack, prevP, thisP, type) {
-    const previouslyPlayable = this._trackStatePlayable(prevP?.tracks[type]);
-    const nowPlayable = this._trackStatePlayable(thisP?.tracks[type]);
-    const trackChanged = this._trackChanged(prevTrack, thisTrack);
+  maybeEventTrackStarted(type, prevP, thisP) {
+    const prevTrackInfo = prevP?.tracks[type] ?? null;
+    const thisTrackInfo = thisP?.tracks[type] ?? null;
+    const thisTrack = thisTrackInfo?.track;
+    if (!thisTrack) return;
+
+    const previouslyPlayable = this._trackStatePlayable(prevTrackInfo);
+    const nowPlayable = this._trackStatePlayable(thisTrackInfo);
+    const trackChanged = this._trackChanged(prevTrackInfo?.track, thisTrack);
 
     if (nowPlayable) {
       if (!previouslyPlayable || trackChanged) {
@@ -5071,13 +5081,7 @@ testCallQuality() and stopTestCallQuality() instead`);
       return;
     }
     for (const trackKey in prevP.tracks) {
-      this.maybeEventTrackStopped(
-        prevP.tracks[trackKey].track,
-        thisP && thisP.tracks[trackKey] ? thisP.tracks[trackKey].track : null,
-        prevP,
-        thisP,
-        trackKey
-      );
+      this.maybeEventTrackStopped(trackKey, prevP, thisP);
     }
   }
 
@@ -5086,13 +5090,7 @@ testCallQuality() and stopTestCallQuality() instead`);
       return;
     }
     for (const trackKey in thisP.tracks) {
-      this.maybeEventTrackStarted(
-        prevP && prevP.tracks[trackKey] ? prevP.tracks[trackKey].track : null,
-        thisP.tracks[trackKey].track,
-        prevP,
-        thisP,
-        trackKey
-      );
+      this.maybeEventTrackStarted(trackKey, prevP, thisP);
     }
   }
 
