@@ -6016,36 +6016,42 @@ function validateSendSettings(sendSettings, callObject) {
 
 function validateInputSettings(inputSettings) {
   if (typeof inputSettings !== 'object') return false;
-  const videoSettings = inputSettings.video;
-  const audioSettings = inputSettings.audio;
-  if (videoSettings) {
-    if (typeof videoSettings !== 'object') return false;
-    if (
-      videoSettings.processor &&
-      !validateVideoProcessor(videoSettings.processor)
-    ) {
-      return false;
-    }
-    if (
-      videoSettings.settings &&
-      !validateDeviceSettings(videoSettings.settings)
-    ) {
-      return false;
-    }
-  }
-  if (audioSettings) {
-    if (typeof audioSettings !== 'object') return false;
-    if (
-      audioSettings.processor &&
-      !validateAudioProcessor(audioSettings.processor)
-    ) {
-      return false;
-    }
-    if (
-      audioSettings.settings &&
-      !validateDeviceSettings(audioSettings.settings)
-    ) {
-      return false;
+  for (const [media, settings] of Object.entries(inputSettings)) {
+    switch (media) {
+      case 'video': {
+        if (typeof settings !== 'object') return false;
+        for (const [k, v] of Object.entries(settings)) {
+          switch (k) {
+            case 'processor':
+              if (!validateVideoProcessor(v)) return false;
+              break;
+            case 'settings':
+              if (!validateDeviceSettings(v)) return false;
+              break;
+            default:
+              return false;
+          }
+        }
+        break;
+      }
+      case 'audio': {
+        if (typeof settings !== 'object') return false;
+        for (const [k, v] of Object.entries(settings)) {
+          switch (k) {
+            case 'processor':
+              if (!validateAudioProcessor(v)) return false;
+              break;
+            case 'settings':
+              if (!validateDeviceSettings(v)) return false;
+              break;
+            default:
+              return false;
+          }
+        }
+        break;
+      }
+      default:
+        return false;
     }
   }
   return true;

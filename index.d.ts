@@ -1191,6 +1191,7 @@ export interface DailyCamDeviceNotFoundError extends DailyCameraError {
 export interface DailyCamConstraintsError extends DailyCameraError {
   type: Extract<DailyCameraErrorType, 'constraints'>;
   reason: 'invalid' | 'none-specified';
+  failedMedia: Array<'video' | 'audio'>;
 }
 
 export interface DailyCamInUseError extends DailyCameraError {
