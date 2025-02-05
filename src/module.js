@@ -124,6 +124,8 @@ import {
   DAILY_METHOD_UPDATE_PARTICIPANTS,
   DAILY_METHOD_LOCAL_AUDIO,
   DAILY_METHOD_LOCAL_VIDEO,
+  DAILY_METHOD_SET_ALLOW_LOCAL_AUDIO,
+  DAILY_METHOD_SET_ALLOW_LOCAL_VIDEO,
   DAILY_METHOD_START_SCREENSHARE,
   DAILY_METHOD_STOP_SCREENSHARE,
   DAILY_METHOD_START_RECORDING,
@@ -560,6 +562,8 @@ const FRAME_PROPS = {
   },
   startVideoOff: true,
   startAudioOff: true,
+  allowLocalVideo: true,
+  allowLocalAudio: true,
   activeSpeakerMode: true,
   showLeaveButton: true,
   showLocalVideo: true,
@@ -575,19 +579,57 @@ const FRAME_PROPS = {
   bodyClass: true,
   videoSource: {
     validate: (s, callObject) => {
-      if (s instanceof MediaStreamTrack) {
-        callObject._sharedTracks.videoDeviceId = s;
+      if (typeof s === 'boolean') {
+        callObject._preloadCache.allowLocalVideo = s;
+        return true;
       }
-      callObject._preloadCache.videoDeviceId = s;
+      let settings;
+      if (s instanceof MediaStreamTrack) {
+        callObject._sharedTracks.videoTrack = s;
+        settings = { customTrack: DAILY_CUSTOM_TRACK };
+      } else {
+        delete callObject._sharedTracks.videoTrack;
+        if (typeof s === 'string') {
+          settings = { deviceId: s };
+        } else {
+          console.error(
+            'videoSource must be a MediaStreamTrack, boolean, or a string'
+          );
+          return false;
+        }
+      }
+      callObject._updatePreloadCacheInputSettings(
+        { video: { settings } },
+        false
+      );
       return true;
     },
   },
   audioSource: {
     validate: (s, callObject) => {
-      if (s instanceof MediaStreamTrack) {
-        callObject._sharedTracks.audioDeviceId = s;
+      if (typeof s === 'boolean') {
+        callObject._preloadCache.allowLocalAudio = s;
+        return true;
       }
-      callObject._preloadCache.audioDeviceId = s;
+      let settings;
+      if (s instanceof MediaStreamTrack) {
+        callObject._sharedTracks.audioTrack = s;
+        settings = { customTrack: DAILY_CUSTOM_TRACK };
+      } else {
+        delete callObject._sharedTracks.audioTrack;
+        if (typeof s === 'string') {
+          settings = { deviceId: s };
+        } else {
+          console.error(
+            'audioSource must be a MediaStreamTrack, boolean, or a string'
+          );
+          return false;
+        }
+      }
+      callObject._updatePreloadCacheInputSettings(
+        { audio: { settings } },
+        false
+      );
       return true;
     },
   },
@@ -732,19 +774,15 @@ const FRAME_PROPS = {
   inputSettings: {
     validate: (settings, callObject) => {
       if (validateInputSettings(settings)) {
-        if (!callObject._preloadCache.inputSettings) {
-          callObject._preloadCache.inputSettings = {};
+        if (!callObject._inputSettings) {
+          callObject._inputSettings = {};
         }
-        stripInputSettingsForUnsupportedPlatforms(
+        sanitizeInputSettings(
           settings,
-          callObject.properties?.dailyConfig
+          callObject.properties?.dailyConfig,
+          callObject._sharedTracks
         );
-        if (settings.audio) {
-          callObject._preloadCache.inputSettings.audio = settings.audio;
-        }
-        if (settings.video) {
-          callObject._preloadCache.inputSettings.video = settings.video;
-        }
+        callObject._updatePreloadCacheInputSettings(settings, true);
         return true;
       }
       return false;
@@ -1250,14 +1288,8 @@ export default class DailyIframe extends EventEmitter {
 
     this.validateProperties(properties);
     this.properties = { ...properties };
-    if (!this._preloadCache.inputSettings) {
-      this._preloadCache.inputSettings = {};
-    }
-    if (properties.inputSettings && properties.inputSettings.audio) {
-      this._preloadCache.inputSettings.audio = properties.inputSettings.audio;
-    }
-    if (properties.inputSettings && properties.inputSettings.video) {
-      this._preloadCache.inputSettings.video = properties.inputSettings.video;
+    if (!this._inputSettings) {
+      this._inputSettings = {};
     }
 
     this._callObjectLoader = this._callObjectMode
@@ -1717,6 +1749,28 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
+  _setAllowLocalAudio(bool) {
+    this._preloadCache.allowLocalAudio = bool;
+
+    if (!this._callMachineInitialized) return;
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_SET_ALLOW_LOCAL_AUDIO,
+      state: bool,
+    });
+    return this;
+  }
+
+  _setAllowLocalVideo(bool) {
+    this._preloadCache.allowLocalVideo = bool;
+
+    if (!this._callMachineInitialized) return;
+    this.sendMessageToCallMachine({
+      action: DAILY_METHOD_SET_ALLOW_LOCAL_VIDEO,
+      state: bool,
+    });
+    return this;
+  }
+
   // NOTE: "base" receive settings will not appear until the call machine bundle
   // is initialized (e.g. after a call to join()).
   // Listen for the receive-settings-updated to be notified when those come in.
@@ -1820,35 +1874,67 @@ export default class DailyIframe extends EventEmitter {
   //
   // Returns a new object, being careful not to mess with the one passed in
   // (this is important for handling the `input-settings-updated` event)
-  _prepInputSettingsToPresentToUser(inputSettings) {
+  _prepInputSettingsForSharing(inputSettings, toUser) {
     if (!inputSettings) {
       return;
     }
 
     const strippedInputSettings = {};
 
-    const shouldStripAudio =
-      inputSettings.audio?.processor?.type === 'none' &&
-      inputSettings.audio?.processor?._isDefaultWhenNone;
-    if (inputSettings.audio && !shouldStripAudio) {
-      const audioProcessor = { ...inputSettings.audio.processor };
-      delete audioProcessor._isDefaultWhenNone;
-      strippedInputSettings.audio = {
-        ...inputSettings.audio,
-        processor: audioProcessor,
-      };
+    if (inputSettings.audio) {
+      // don't include settings if there aren't any
+      if (inputSettings.audio.settings) {
+        // {} means something when sending to the call-machine
+        if (Object.keys(inputSettings.audio.settings).length || !toUser) {
+          strippedInputSettings.audio = {
+            settings: { ...inputSettings.audio.settings },
+          };
+        }
+      }
+      if (toUser && strippedInputSettings.audio?.settings?.customTrack) {
+        strippedInputSettings.audio.settings = {
+          customTrack: this._sharedTracks.audioTrack,
+        };
+      }
+      const shouldStripProcessor =
+        inputSettings.audio.processor?.type === 'none' &&
+        inputSettings.audio.processor?._isDefaultWhenNone;
+      if (inputSettings.audio.processor && !shouldStripProcessor) {
+        const audioProcessor = { ...inputSettings.audio.processor };
+        delete audioProcessor._isDefaultWhenNone;
+        strippedInputSettings.audio = {
+          ...strippedInputSettings.audio,
+          processor: audioProcessor,
+        };
+      }
     }
 
-    const shouldStripVideo =
-      inputSettings.video?.processor?.type === 'none' &&
-      inputSettings.video?.processor?._isDefaultWhenNone;
-    if (inputSettings.video && !shouldStripVideo) {
-      const videoProcessor = { ...inputSettings.video.processor };
-      delete videoProcessor._isDefaultWhenNone;
-      strippedInputSettings.video = {
-        ...inputSettings.video,
-        processor: videoProcessor,
-      };
+    if (inputSettings.video) {
+      // don't include settings if there aren't any
+      if (inputSettings.video.settings) {
+        // {} means something when sending to the call-machine
+        if (Object.keys(inputSettings.video.settings).length || !toUser) {
+          strippedInputSettings.video = {
+            settings: { ...inputSettings.video.settings },
+          };
+        }
+      }
+      if (toUser && strippedInputSettings.video?.settings?.customTrack) {
+        strippedInputSettings.video.settings = {
+          customTrack: this._sharedTracks.videoTrack,
+        };
+      }
+      const shouldStripProcessor =
+        inputSettings.video.processor?.type === 'none' &&
+        inputSettings.video.processor?._isDefaultWhenNone;
+      if (inputSettings.video.processor && !shouldStripProcessor) {
+        const videoProcessor = { ...inputSettings.video.processor };
+        delete videoProcessor._isDefaultWhenNone;
+        strippedInputSettings.video = {
+          ...strippedInputSettings.video,
+          processor: videoProcessor,
+        };
+      }
     }
 
     return strippedInputSettings;
@@ -1891,39 +1977,105 @@ export default class DailyIframe extends EventEmitter {
 
     // Return settings
     let inputSettings = { audio: audioSettings, video: videoSettings };
-    return this._prepInputSettingsToPresentToUser(inputSettings);
+    return this._prepInputSettingsForSharing(inputSettings, true);
+  }
+
+  _updatePreloadCacheInputSettings(settingsUpdate, overrideDeviceSettings) {
+    const initialSettings = this._inputSettings || {};
+    let newSettings = {};
+    if (settingsUpdate.video) {
+      newSettings.video = {};
+      if (settingsUpdate.video.settings) {
+        newSettings.video.settings = {};
+        if (
+          overrideDeviceSettings ||
+          settingsUpdate.video.settings.customTrack ||
+          !initialSettings.video?.settings
+        ) {
+          newSettings.video.settings = settingsUpdate.video.settings;
+        } else {
+          newSettings.video.settings = {
+            ...initialSettings.video.settings,
+            ...settingsUpdate.video.settings,
+          };
+        }
+        if (!Object.keys(newSettings.video.settings).length) {
+          delete newSettings.video.settings;
+        }
+      } else if (initialSettings.video?.settings) {
+        newSettings.video.settings = initialSettings.video.settings;
+      }
+      if (settingsUpdate.video.processor) {
+        newSettings.video.processor = settingsUpdate.video.processor;
+      } else if (initialSettings.video?.processor) {
+        newSettings.video.processor = initialSettings.video.processor;
+      }
+    } else if (initialSettings.video) {
+      newSettings.video = initialSettings.video;
+    }
+    if (settingsUpdate.audio) {
+      newSettings.audio = {};
+      if (settingsUpdate.audio.settings) {
+        newSettings.audio.settings = {};
+        if (
+          overrideDeviceSettings ||
+          settingsUpdate.audio.settings.customTrack ||
+          !initialSettings.audio?.settings
+        ) {
+          newSettings.audio.settings = settingsUpdate.audio.settings;
+        } else {
+          newSettings.audio.settings = {
+            ...initialSettings.audio.settings,
+            ...settingsUpdate.audio.settings,
+          };
+        }
+        if (!Object.keys(newSettings.audio.settings).length) {
+          delete newSettings.audio.settings;
+        }
+      } else if (initialSettings.audio?.settings) {
+        newSettings.audio.settings = initialSettings.audio.settings;
+      }
+      if (settingsUpdate.audio.processor) {
+        newSettings.audio.processor = settingsUpdate.audio.processor;
+      } else if (initialSettings.audio?.processor) {
+        newSettings.audio.processor = initialSettings.audio.processor;
+      }
+    } else if (initialSettings.audio) {
+      newSettings.audio = initialSettings.audio;
+    }
+    this._maybeUpdateInputSettings(newSettings);
+  }
+
+  _devicesFromInputSettings(inputSettings) {
+    let camera = inputSettings?.video?.settings?.deviceId || null;
+    let mic = inputSettings?.audio?.settings?.deviceId || null;
+    let speaker = this._preloadCache.outputDeviceId || null;
+    return {
+      camera: camera ? { deviceId: camera } : {},
+      mic: mic ? { deviceId: mic } : {},
+      speaker: speaker ? { deviceId: speaker } : {},
+    };
   }
 
   async updateInputSettings(inputSettings) {
-    methodNotSupportedInReactNative();
     if (!validateInputSettings(inputSettings)) {
       console.error(inputSettingsValidationHelpMsg());
       return Promise.reject(inputSettingsValidationHelpMsg());
     }
-
-    if (inputSettings) {
-      if (!this._preloadCache.inputSettings) {
-        this._preloadCache.inputSettings = {};
-      }
-      stripInputSettingsForUnsupportedPlatforms(
-        inputSettings,
-        this.properties.dailyConfig
-      );
-      if (inputSettings.audio) {
-        this._preloadCache.inputSettings.audio = inputSettings.audio;
-      }
-      if (inputSettings.video) {
-        this._preloadCache.inputSettings.video = inputSettings.video;
-      }
-    }
-
     // if input settings are empty, no-op right away
     if (!(inputSettings.video || inputSettings.audio)) {
       return this._getInputSettings();
     }
 
+    sanitizeInputSettings(
+      inputSettings,
+      this.properties.dailyConfig,
+      this._sharedTracks
+    );
+
     // if we're in callObject mode and not initialized yet, don't do anything
     if (this._callObjectMode && !this._callMachineInitialized) {
+      this._updatePreloadCacheInputSettings(inputSettings, true);
       return this._getInputSettings();
     }
 
@@ -1933,11 +2085,13 @@ export default class DailyIframe extends EventEmitter {
         if (msg.error) {
           reject(msg.error);
         } else {
-          resolve({
-            inputSettings: this._prepInputSettingsToPresentToUser(
-              msg.inputSettings
-            ),
-          });
+          if (msg.returnPreloadCache) {
+            this._updatePreloadCacheInputSettings(inputSettings, true);
+            resolve(this._getInputSettings());
+            return;
+          }
+          this._maybeUpdateInputSettings(msg.inputSettings);
+          resolve(this._prepInputSettingsForSharing(msg.inputSettings, true));
         }
       };
       this.sendMessageToCallMachine(
@@ -2262,10 +2416,12 @@ export default class DailyIframe extends EventEmitter {
 
     return new Promise((resolve) => {
       let k = (msg) => {
-        delete msg.action;
-        delete msg.callbackStamp;
-        resolve(msg);
+        resolve({ camera: msg.camera, mic: msg.mic, speaker: msg.speaker });
       };
+      this._preloadCache.inputSettings = this._prepInputSettingsForSharing(
+        this._inputSettings,
+        false
+      );
       this.sendMessageToCallMachine(
         {
           action: DAILY_METHOD_START_CAMERA,
@@ -2449,30 +2605,45 @@ export default class DailyIframe extends EventEmitter {
       videoDeviceId = videoSource;
     }
 
+    if (typeof audioDeviceId === 'boolean') {
+      this._setAllowLocalAudio(audioDeviceId);
+      audioDeviceId = undefined;
+    }
+    if (typeof videoDeviceId === 'boolean') {
+      this._setAllowLocalVideo(videoDeviceId);
+      videoDeviceId = undefined;
+    }
+    if (!(audioDeviceId || videoDeviceId)) {
+      return await this.getInputDevices();
+    }
+
     // cache these for use in subsequent calls
+    let deviceSettings = {}; // for use when we need to return preload cache
     if (audioDeviceId) {
-      this._preloadCache.audioDeviceId = audioDeviceId;
-      this._sharedTracks.audioDeviceId = audioDeviceId;
+      if (audioDeviceId instanceof MediaStreamTrack) {
+        this._sharedTracks.audioTrack = audioDeviceId;
+        audioDeviceId = DAILY_CUSTOM_TRACK;
+        deviceSettings.audio = { settings: { customTrack: audioDeviceId } };
+      } else {
+        delete this._sharedTracks.audioTrack;
+        deviceSettings.audio = { settings: { deviceId: audioDeviceId } };
+      }
     }
     if (videoDeviceId) {
-      this._preloadCache.videoDeviceId = videoDeviceId;
-      this._sharedTracks.videoDeviceId = videoDeviceId;
+      if (videoDeviceId instanceof MediaStreamTrack) {
+        this._sharedTracks.videoTrack = videoDeviceId;
+        videoDeviceId = DAILY_CUSTOM_TRACK;
+        deviceSettings.video = { settings: { customTrack: videoDeviceId } };
+      } else {
+        delete this._sharedTracks.videoTrack;
+        deviceSettings.video = { settings: { deviceId: videoDeviceId } };
+      }
     }
 
     // if we're in callObject mode and not loaded yet, don't do anything
     if (this._callObjectMode && this.needsLoad()) {
-      return {
-        camera: { deviceId: this._preloadCache.videoDeviceId },
-        mic: { deviceId: this._preloadCache.audioDeviceId },
-        speaker: { deviceId: this._preloadCache.outputDeviceId },
-      };
-    }
-
-    if (audioDeviceId instanceof MediaStreamTrack) {
-      audioDeviceId = DAILY_CUSTOM_TRACK;
-    }
-    if (videoDeviceId instanceof MediaStreamTrack) {
-      videoDeviceId = DAILY_CUSTOM_TRACK;
+      this._updatePreloadCacheInputSettings(deviceSettings, false);
+      return this._devicesFromInputSettings(this._inputSettings);
     }
 
     return new Promise((resolve) => {
@@ -2481,11 +2652,8 @@ export default class DailyIframe extends EventEmitter {
         delete msg.callbackStamp;
 
         if (msg.returnPreloadCache) {
-          resolve({
-            camera: { deviceId: this._preloadCache.videoDeviceId },
-            mic: { deviceId: this._preloadCache.audioDeviceId },
-            speaker: { deviceId: this._preloadCache.outputDeviceId },
-          });
+          this._updatePreloadCacheInputSettings(deviceSettings, false);
+          resolve(this._devicesFromInputSettings(this._inputSettings));
           return;
         }
 
@@ -2511,11 +2679,7 @@ export default class DailyIframe extends EventEmitter {
 
     // if we're in callObject mode and not loaded yet, don't do anything
     if (this._callObjectMode && this.needsLoad()) {
-      return {
-        camera: { deviceId: this._preloadCache.videoDeviceId },
-        mic: { deviceId: this._preloadCache.audioDeviceId },
-        speaker: { deviceId: this._preloadCache.outputDeviceId },
-      };
+      return this._devicesFromInputSettings(this._inputSettings);
     }
 
     return new Promise((resolve) => {
@@ -2524,11 +2688,7 @@ export default class DailyIframe extends EventEmitter {
         delete msg.callbackStamp;
 
         if (msg.returnPreloadCache) {
-          resolve({
-            camera: { deviceId: this._preloadCache.videoDeviceId },
-            mic: { deviceId: this._preloadCache.audioDeviceId },
-            speaker: { deviceId: this._preloadCache.outputDeviceId },
-          });
+          resolve(this._devicesFromInputSettings(this._inputSettings));
           return;
         }
 
@@ -2547,28 +2707,17 @@ export default class DailyIframe extends EventEmitter {
 
   async getInputDevices() {
     if (this._callObjectMode && this.needsLoad()) {
-      return {
-        camera: { deviceId: this._preloadCache.videoDeviceId },
-        mic: { deviceId: this._preloadCache.audioDeviceId },
-        speaker: { deviceId: this._preloadCache.outputDeviceId },
-      };
+      return this._devicesFromInputSettings(this._inputSettings);
     }
 
     return new Promise((resolve) => {
       let k = (msg) => {
-        delete msg.action;
-        delete msg.callbackStamp;
-
         if (msg.returnPreloadCache) {
-          resolve({
-            camera: { deviceId: this._preloadCache.videoDeviceId },
-            mic: { deviceId: this._preloadCache.audioDeviceId },
-            speaker: { deviceId: this._preloadCache.outputDeviceId },
-          });
+          resolve(this._devicesFromInputSettings(this._inputSettings));
           return;
         }
 
-        resolve(msg);
+        resolve({ camera: msg.camera, mic: msg.mic, speaker: msg.speaker });
       };
       this.sendMessageToCallMachine(
         { action: DAILY_METHOD_GET_INPUT_DEVICES },
@@ -2655,6 +2804,10 @@ export default class DailyIframe extends EventEmitter {
 
         resolve({ access: msg.access });
       };
+      this._preloadCache.inputSettings = this._prepInputSettingsForSharing(
+        this._inputSettings,
+        false
+      );
       this.sendMessageToCallMachine(
         {
           action: DAILY_METHOD_PREAUTH,
@@ -2847,15 +3000,10 @@ export default class DailyIframe extends EventEmitter {
     this.emitDailyJSEvent({ action: DAILY_EVENT_JOINING_MEETING });
 
     // set input settings in the preload cache
-    if (!this._preloadCache.inputSettings) {
-      this._preloadCache.inputSettings = {};
-    }
-    if (properties.inputSettings && properties.inputSettings.audio) {
-      this._preloadCache.inputSettings.audio = properties.inputSettings.audio;
-    }
-    if (properties.inputSettings && properties.inputSettings.video) {
-      this._preloadCache.inputSettings.video = properties.inputSettings.video;
-    }
+    this._preloadCache.inputSettings = this._prepInputSettingsForSharing(
+      this._inputSettings || {},
+      false
+    );
 
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_JOIN,
@@ -2865,6 +3013,7 @@ export default class DailyIframe extends EventEmitter {
         this.callClientId
       ),
     });
+
     return new Promise((resolve, reject) => {
       this._joinedCallback = (participants, error) => {
         if (this._callState === DAILY_STATE_ERROR) {
@@ -4490,6 +4639,40 @@ testCallQuality() and stopTestCallQuality() instead`);
   //
 
   validateProperties(properties) {
+    if (properties?.dailyConfig?.userMediaAudioConstraints) {
+      console.warn(
+        'userMediaAudioConstraints is deprecated. You can override ' +
+          'constraints with inputSettings.audio.settings, found in ' +
+          'DailyCallOptions.'
+      );
+      const inputSettings = properties.inputSettings || {};
+      inputSettings.audio = properties.inputSettings?.audio || {};
+      inputSettings.audio.settings =
+        properties.inputSettings?.audio?.settings || {};
+      inputSettings.audio.settings = {
+        ...inputSettings.audio.settings,
+        ...properties.dailyConfig.userMediaAudioConstraints,
+      };
+      properties.inputSettings = inputSettings;
+      delete properties.dailyConfig.userMediaAudioConstraints;
+    }
+    if (properties?.dailyConfig?.userMediaVideoConstraints) {
+      console.warn(
+        'userMediaVideoConstraints is deprecated. You can override ' +
+          'constraints with inputSettings.video.settings, found in ' +
+          'DailyCallOptions.'
+      );
+      const inputSettings = properties.inputSettings || {};
+      inputSettings.video = properties.inputSettings?.video || {};
+      inputSettings.video.settings =
+        properties.inputSettings?.video?.settings || {};
+      inputSettings.video.settings = {
+        ...inputSettings.video.settings,
+        ...properties.dailyConfig.userMediaVideoConstraints,
+      };
+      properties.inputSettings = inputSettings;
+      delete properties.dailyConfig.userMediaVideoConstraints;
+    }
     for (var k in properties) {
       if (!FRAME_PROPS[k]) {
         throw new Error(`unrecognized property '${k}'`);
@@ -4860,17 +5043,7 @@ testCallQuality() and stopTestCallQuality() instead`);
         // NOTE: doing equality check here rather than before sending message in
         // the first place from call machine, to simplify handling initial
         // input settings
-        if (!dequal(this._inputSettings, msg.inputSettings)) {
-          const prevInputSettings = this._getInputSettings();
-          this._inputSettings = msg.inputSettings;
-          this._preloadCache.inputSettings = {}; // clear cache, if any
-          if (!dequal(prevInputSettings, this._getInputSettings())) {
-            this.emitDailyJSEvent({
-              action: msg.action,
-              inputSettings: this._getInputSettings(),
-            });
-          }
-        }
+        this._maybeUpdateInputSettings(msg.inputSettings);
         break;
       case DAILY_EVENT_SEND_SETTINGS_UPDATED:
         {
@@ -5565,13 +5738,25 @@ testCallQuality() and stopTestCallQuality() instead`);
   _callMachine() {
     return window._daily?.instances?.[this.callClientId]?.callMachine;
   }
+
+  _maybeUpdateInputSettings(inputSettings) {
+    if (!dequal(this._inputSettings, inputSettings)) {
+      const prevInputSettings = this._getInputSettings();
+      this._inputSettings = inputSettings;
+      const newInputSettings = this._getInputSettings();
+      if (!dequal(prevInputSettings, newInputSettings)) {
+        this.emitDailyJSEvent({
+          action: DAILY_EVENT_INPUT_SETTINGS_UPDATED,
+          inputSettings: newInputSettings,
+        });
+      }
+    }
+  }
 }
 
 function initializePreloadCache() {
   return {
     subscribeToTracksAutomatically: true,
-    audioDeviceId: null,
-    videoDeviceId: null,
     outputDeviceId: null,
     inputSettings: null,
     sendSettings: null,
@@ -5593,6 +5778,7 @@ function makeSafeForPostMessage(props, callClientId) {
       // on the other side of the postMessage, here, instead of as we
       // currently do in the validate-properties routines, which definitely
       // is a spooky-action-at-a-distance code anti-pattern
+      console.warn('MediaStreamTrack found in props or cache.', p);
       safe[p] = DAILY_CUSTOM_TRACK;
     } else if (p === 'dailyConfig') {
       if (props[p].modifyLocalSdpHook) {
@@ -5828,38 +6014,78 @@ function validateSendSettings(sendSettings, callObject) {
   }
 }
 
-function validateInputSettings(settings) {
-  if (typeof settings !== 'object') return false;
-  if (
-    settings.video &&
-    (typeof settings.video !== 'object' ||
-      !validateVideoProcessor(settings.video.processor))
-  )
-    return false;
-  if (
-    settings.audio &&
-    (typeof settings.audio !== 'object' ||
-      !validateAudioProcessor(settings.audio.processor))
-  )
-    return false;
+function validateInputSettings(inputSettings) {
+  if (typeof inputSettings !== 'object') return false;
+  for (const [media, settings] of Object.entries(inputSettings)) {
+    switch (media) {
+      case 'video': {
+        if (typeof settings !== 'object') return false;
+        for (const [k, v] of Object.entries(settings)) {
+          switch (k) {
+            case 'processor':
+              if (!validateVideoProcessor(v)) return false;
+              break;
+            case 'settings':
+              if (!validateDeviceSettings(v)) return false;
+              break;
+            default:
+              return false;
+          }
+        }
+        break;
+      }
+      case 'audio': {
+        if (typeof settings !== 'object') return false;
+        for (const [k, v] of Object.entries(settings)) {
+          switch (k) {
+            case 'processor':
+              if (!validateAudioProcessor(v)) return false;
+              break;
+            case 'settings':
+              if (!validateDeviceSettings(v)) return false;
+              break;
+            default:
+              return false;
+          }
+        }
+        break;
+      }
+      default:
+        return false;
+    }
+  }
   return true;
 }
 
 // Assumes `settings` is otherwise valid (passes `validateInputSettings()`).
-// Note: currently `processor` is required for `settings` to be valid, so we can
-// strip out the entire `video` or `audio` if processing isn't supported.
-function stripInputSettingsForUnsupportedPlatforms(settings, dailyConfig) {
+function sanitizeInputSettings(settings, dailyConfig, sharedTracks) {
   const unsupportedProcessors = [];
-  if (
-    settings.video &&
-    !isVideoProcessingSupported(dailyConfig?.useLegacyVideoProcessor ?? false)
-  ) {
-    delete settings.video;
-    unsupportedProcessors.push('video');
+  // Strip the video processor from the settings if it's not supported on the
+  // current platform
+  if (settings.video && settings.video.processor) {
+    if (
+      !isVideoProcessingSupported(dailyConfig?.useLegacyVideoProcessor ?? false)
+    ) {
+      if (settings.video.settings) {
+        delete settings.video.processor;
+      } else {
+        // if the processor was the only setting, delete the whole video object
+        delete settings.video;
+      }
+      unsupportedProcessors.push('video');
+    }
   }
-  if (settings.audio && !isAudioProcessingSupported()) {
-    delete settings.audio;
-    unsupportedProcessors.push('audio');
+  // Strip the audio processor from the settings if it's not supported on the
+  // current platform
+  if (settings.audio && settings.audio.processor) {
+    if (!isAudioProcessingSupported()) {
+      if (settings.audio.settings) {
+        delete settings.audio.processor;
+      } else {
+        delete settings.audio;
+      }
+      unsupportedProcessors.push('audio');
+    }
   }
   if (unsupportedProcessors.length > 0) {
     console.error(
@@ -5868,9 +6094,35 @@ function stripInputSettingsForUnsupportedPlatforms(settings, dailyConfig) {
       )}`
     );
   }
+  if (settings.audio && settings.audio.settings) {
+    // If a custom track is specified, store it seperately in the sharedTracks
+    // and if other settings are specified, possibly remove a pre-existing
+    // custom track
+    if (settings.audio.settings.customTrack) {
+      sharedTracks.audioTrack = settings.audio.settings.customTrack;
+      settings.audio.settings = { customTrack: DAILY_CUSTOM_TRACK };
+    } else {
+      delete sharedTracks.audioTrack;
+    }
+  }
+  if (settings.video && settings.video.settings) {
+    // If a custom track is specified, store it seperately in the sharedTracks
+    // and if other settings are specified, possibly remove a pre-existing
+    // custom track
+    if (settings.video.settings.customTrack) {
+      sharedTracks.videoTrack = settings.video.settings.customTrack;
+      settings.video.settings = { customTrack: DAILY_CUSTOM_TRACK };
+    } else {
+      delete sharedTracks.videoTrack;
+    }
+  }
 }
 
 function validateAudioProcessor(p) {
+  if (isReactNative()) {
+    console.warn('Video processing is not yet supported in React Native');
+    return false;
+  }
   const VALID_PROCESSOR_KEYS = ['type'];
   if (!p) return false;
   if (typeof p !== 'object') return false;
@@ -5895,9 +6147,10 @@ function validateAudioProcessorType(type) {
 }
 
 function validateVideoProcessor(p) {
-  // publish has been deprecated. It hasnt been removed from VALID_PROCESSOR_KEYS
-  // so as to not throw an error for any active users; Added a warning about the
-  // deprecation below.
+  if (isReactNative()) {
+    console.warn('Video processing is not yet supported in React Native');
+    return false;
+  }
   const VALID_PROCESSOR_KEYS = ['type', 'config'];
   if (!p) return false;
   if (typeof p !== 'object') return false;
@@ -6022,10 +6275,23 @@ function validateVideoProcessorType(type) {
   return true;
 }
 
+function validateDeviceSettings(deviceSettings) {
+  if (typeof deviceSettings !== 'object') {
+    return false;
+  }
+  if (
+    deviceSettings.customTrack &&
+    !(deviceSettings.customTrack instanceof MediaStreamTrack)
+  ) {
+    return false;
+  }
+  return true;
+}
+
 function inputSettingsValidationHelpMsg() {
   let videoProcessorOpts = Object.values(VIDEO_PROCESSOR_TYPES).join(' | ');
   let audioProcessorOpts = Object.values(AUDIO_PROCESSOR_TYPES).join(' | ');
-  return `inputSettings must be of the form: { video?: { processor: { type: [ ${videoProcessorOpts} ], config?: {} } }, audio?: { processor: {type: [ ${audioProcessorOpts} ] } } }`;
+  return `inputSettings must be of the form: { video?: { processor?: { type: [ ${videoProcessorOpts} ], config?: {} } }, audio?: { processor: {type: [ ${audioProcessorOpts} ] } } }`;
 }
 
 function receiveSettingsValidationHelpMsg({ allowAllParticipantsKey }) {
