@@ -426,7 +426,15 @@ export interface DailyAdvancedConfig {
    */
   screenSimulcastEncodings?: any[];
   useDevicePreferenceCookies?: boolean;
+  /**
+   * @deprecated This property will be removed. Instead, use inputSettings,
+   *             which is found in DailyCallOptions.
+   */
   userMediaAudioConstraints?: MediaTrackConstraints;
+  /**
+   * @deprecated This property will be removed. Instead, use inputSettings,
+   *             which is found in DailyCallOptions.
+   */
   userMediaVideoConstraints?: MediaTrackConstraints;
   avoidEval?: boolean;
   callObjectBundleUrlOverride?: string;
@@ -482,6 +490,14 @@ export type DailyParticipantPermissionsCanAdminValues =
   | 'participants'
   | 'streaming'
   | 'transcription';
+
+export type DailyParticipantTypeValues =
+  | 'remote-media-player'
+  | 'sip-dial-in'
+  | 'sip-dial-out'
+  | 'pstn-dial-in'
+  | 'pstn-dial-out'
+  | 'unknown';
 
 export interface DailyParticipantPermissions {
   hasPresence: boolean;
@@ -564,7 +580,7 @@ export interface DailyParticipant {
   owner: boolean;
   permissions: DailyParticipantPermissions;
   record: boolean;
-  participantType?: string;
+  participantType?: DailyParticipantTypeValues;
 
   // video element info (iframe-based calls using standard UI only)
   /**
@@ -648,6 +664,13 @@ export interface DailyVideoElementInfo {
   video_height: number;
 }
 
+/**
+ * DailyDeviceInfos reports the device information for the camera, mic, and
+ * speaker currently in use or -- if device not accessed yet --  expected.
+ * If the given device has not been specified and has not yet been acquired,
+ * the object will be empty ({}). The object will also be empty if a custom
+ * track has been provided.
+ */
 export interface DailyDeviceInfos {
   camera: {} | DailyMediaDeviceInfo;
   mic: {} | MediaDeviceInfo;
@@ -1083,8 +1106,13 @@ export interface DailyInputSettings {
   video?: DailyInputVideoSettings;
 }
 
+export interface DailyCustomTrackSettings {
+  customTrack: MediaStreamTrack;
+}
+
 export interface DailyInputAudioSettings {
-  processor: DailyInputAudioProcessorSettings;
+  processor?: DailyInputAudioProcessorSettings;
+  settings?: MediaTrackConstraints | DailyCustomTrackSettings;
 }
 
 export interface DailyInputAudioProcessorSettings {
@@ -1122,6 +1150,7 @@ export type DailyInputVideoProcessorSettings =
 
 export interface DailyInputVideoSettings {
   processor?: DailyInputVideoProcessorSettings;
+  settings?: MediaTrackConstraints | DailyCustomTrackSettings;
 }
 
 export type DailyEventObjectBase = {
@@ -1162,6 +1191,7 @@ export interface DailyCamDeviceNotFoundError extends DailyCameraError {
 export interface DailyCamConstraintsError extends DailyCameraError {
   type: Extract<DailyCameraErrorType, 'constraints'>;
   reason: 'invalid' | 'none-specified';
+  failedMedia: Array<'video' | 'audio'>;
 }
 
 export interface DailyCamInUseError extends DailyCameraError {
@@ -1866,6 +1896,10 @@ export interface DailyStreamingAudioOnlyLayoutConfig {
   participants?: DailyStreamingParticipantsConfig;
 }
 
+export interface DailyStreamingRawTracksAudioOnlyLayoutConfig {
+  preset: 'raw-tracks-audio-only';
+}
+
 export type DailyStreamingPortraitLayoutVariant = 'vertical' | 'inset';
 
 export interface DailyStreamingPortraitLayoutConfig {
@@ -1902,6 +1936,7 @@ export type DailyStreamingLayoutConfig<
   | DailyStreamingActiveParticipantLayoutConfig
   | DailyStreamingPortraitLayoutConfig
   | DailyStreamingAudioOnlyLayoutConfig
+  | DailyStreamingRawTracksAudioOnlyLayoutConfig
   | (Type extends 'start'
       ? DailyStartStreamingCustomLayoutConfig
       : DailyUpdateStreamingCustomLayoutConfig);

@@ -19,6 +19,6 @@ export function removeDeviceChangeListener(deviceChangeListener) {
 function _supportsEventBasedDeviceChangeDetection() {
   return (
     isReactNative() ||
-    typeof navigator.mediaDevices.ondevicechange !== 'undefined'
+    typeof navigator.mediaDevices?.ondevicechange !== 'undefined'
   );
 }

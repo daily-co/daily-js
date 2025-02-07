@@ -222,6 +222,8 @@ export const DAILY_METHOD_UPDATE_PARTICIPANT = 'update-participant';
 export const DAILY_METHOD_UPDATE_PARTICIPANTS = 'update-participants';
 export const DAILY_METHOD_LOCAL_AUDIO = 'local-audio';
 export const DAILY_METHOD_LOCAL_VIDEO = 'local-video';
+export const DAILY_METHOD_SET_ALLOW_LOCAL_AUDIO = 'set-allow-local-audio';
+export const DAILY_METHOD_SET_ALLOW_LOCAL_VIDEO = 'set-allow-local-video';
 export const DAILY_METHOD_START_SCREENSHARE = 'local-screen-start';
 export const DAILY_METHOD_STOP_SCREENSHARE = 'local-screen-stop';
 export const DAILY_METHOD_UPDATE_SCREENSHARE = 'local-screen-update';
@@ -352,6 +354,10 @@ export const DAILY_JS_REMOTE_MEDIA_PLAYER_STATE = {
 
 export const DAILY_PARTICIPANT_TYPE = {
   REMOTE_MEDIA_PLAYER: 'remote-media-player',
+  SIP_DIAL_IN: 'sip-dial-in',
+  SIP_DIAL_OUT: 'sip-dial-out',
+  PSTN_DIAL_IN: 'pstn-dial-in',
+  PSTN_DIAL_OUT: 'pstn-dial-out',
 };
 
 export const DAILY_PRESELECTED_BG_IMAGE_URLS_LENGTH = 10;
