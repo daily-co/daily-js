@@ -2058,6 +2058,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async updateInputSettings(inputSettings) {
+    methodNotSupportedInReactNative();
     if (!validateInputSettings(inputSettings)) {
       console.error(inputSettingsValidationHelpMsg());
       return Promise.reject(inputSettingsValidationHelpMsg());
@@ -4640,11 +4641,13 @@ testCallQuality() and stopTestCallQuality() instead`);
 
   validateProperties(properties) {
     if (properties?.dailyConfig?.userMediaAudioConstraints) {
-      console.warn(
-        'userMediaAudioConstraints is deprecated. You can override ' +
-          'constraints with inputSettings.audio.settings, found in ' +
-          'DailyCallOptions.'
-      );
+      if (!isReactNative()) {
+        console.warn(
+          'userMediaAudioConstraints is deprecated. You can override ' +
+            'constraints with inputSettings.audio.settings, found in ' +
+            'DailyCallOptions.'
+        );
+      }
       const inputSettings = properties.inputSettings || {};
       inputSettings.audio = properties.inputSettings?.audio || {};
       inputSettings.audio.settings =
@@ -4657,11 +4660,13 @@ testCallQuality() and stopTestCallQuality() instead`);
       delete properties.dailyConfig.userMediaAudioConstraints;
     }
     if (properties?.dailyConfig?.userMediaVideoConstraints) {
-      console.warn(
-        'userMediaVideoConstraints is deprecated. You can override ' +
-          'constraints with inputSettings.video.settings, found in ' +
-          'DailyCallOptions.'
-      );
+      if (!isReactNative()) {
+        console.warn(
+          'userMediaVideoConstraints is deprecated. You can override ' +
+            'constraints with inputSettings.video.settings, found in ' +
+            'DailyCallOptions.'
+        );
+      }
       const inputSettings = properties.inputSettings || {};
       inputSettings.video = properties.inputSettings?.video || {};
       inputSettings.video.settings =
