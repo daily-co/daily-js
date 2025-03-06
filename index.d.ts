@@ -984,6 +984,7 @@ export interface DailyRoomInfo {
     audio_only?: boolean;
     enable_recording?: string;
     enable_dialin?: boolean;
+    enable_dialout?: boolean;
     /**
      * @deprecated This property will be removed.
      * All calls are treated as autojoin.
