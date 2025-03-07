@@ -23,6 +23,9 @@ function makeConfig({ legacyFileName = false } = {}) {
     devtool:
       mode === 'development' ? (RN ? 'source-map' : 'eval-source-map') : false,
     entry: './src/main.js',
+    resolve: {
+      symlinks: false, // treat symlinks like they're where the symlink files are (for context: https://github.com/daily-co/pluot-core/pull/12608#discussion_r1984112042)
+    },
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: legacyFileName ? 'daily-iframe.js' : 'daily.js',

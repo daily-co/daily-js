@@ -272,7 +272,7 @@ import {
   removeDeviceChangeListener,
 } from './shared-with-pluot-core/DeviceChange.js';
 import { isPlayable } from './shared-with-pluot-core/TrackStateUtil';
-import { CanReceivePermission } from '../../skyliner-express/app/shared-with-pluot-core/Permissions';
+import { CanReceivePermission } from './shared-with-pluot-core/Permissions';
 
 // call states
 export {
