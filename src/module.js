@@ -1329,7 +1329,11 @@ export default class DailyIframe extends EventEmitter {
     this._participantCounts = EMPTY_PARTICIPANT_COUNTS;
     this._rmpPlayerState = {};
     this._waitingParticipants = {};
-    this._network = { threshold: 'good', quality: 100 };
+    this._network = {
+      threshold: 'good',
+      quality: 100,
+      networkState: 'unknown',
+    };
     this._activeSpeaker = {};
     this._localAudioLevel = 0;
     this._isLocalAudioLevelObserverRunning = false;
@@ -4982,11 +4986,19 @@ testCallQuality() and stopTestCallQuality() instead`);
         break;
       case DAILY_EVENT_NETWORK_QUALITY_CHANGE:
         {
-          let { threshold, quality } = msg;
+          const { state, threshold, quality } = msg;
+          const networkState = state.state;
+          const networkStateReasons = state.reasons.length
+            ? state.reasons
+            : undefined;
           if (
+            networkState !== this._network.networkState ||
+            networkStateReasons !== this._network.networkStateReasons ||
             threshold !== this._network.threshold ||
             quality !== this._network.quality
           ) {
+            this._network.networkState = networkState;
+            this._network.networkStateReasons = networkStateReasons;
             this._network.quality = quality;
             this._network.threshold = threshold;
             this.emitDailyJSEvent(msg);
