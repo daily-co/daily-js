@@ -272,6 +272,7 @@ import {
   removeDeviceChangeListener,
 } from './shared-with-pluot-core/DeviceChange.js';
 import { isPlayable } from './shared-with-pluot-core/TrackStateUtil';
+import { CanReceivePermission } from './shared-with-pluot-core/Permissions';
 
 // call states
 export {
@@ -936,6 +937,23 @@ const PARTICIPANT_PROPS = {
               permissionsUpdate['canSend'] = new Set(permission);
             }
             break;
+          case 'canReceive':
+            // Question: why can't we just do Permisison.validateJSONObject() on the whole
+            // permissionsUpdate?
+            // Answer: because for historical reasons we support passing Sets for canSend and
+            // canAdmin; Sets don't appear in JSON objects.
+            // Note: we could have had users pass in CanReceivePermissions objects rather than JSON
+            // objects but that would be wordier/less ergonomic.
+            const [isValid, invalidityReason] =
+              CanReceivePermission.validateJSONObject(permission);
+            if (!isValid) {
+              // canReceive is complicated enough to benefit from a more specific error than can be
+              // provided by the general `help` message shown when updatePermissions is determined
+              // to be invalid
+              console.error(invalidityReason);
+              return false;
+            }
+            break;
           case 'canAdmin':
             if (
               permission instanceof Set ||
@@ -967,9 +985,10 @@ const PARTICIPANT_PROPS = {
       return true;
     },
     help:
-      'updatePermissions can take hasPresence, canSend, and canAdmin permissions. ' +
+      'updatePermissions can take hasPresence, canSend, canReceive, and canAdmin permissions. ' +
       'hasPresence must be a boolean. ' +
       'canSend can be a boolean or an Array or Set of media types (video, audio, screenVideo, screenAudio, customVideo, customAudio). ' +
+      'canReceive must be an object specifying base, byUserId, and/or byParticipantId fields (see documentation for more details). ' +
       'canAdmin can be a boolean or an Array or Set of admin types (participants, streaming, transcription).',
   },
 };

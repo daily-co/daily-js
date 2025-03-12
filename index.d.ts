@@ -499,9 +499,38 @@ export type DailyParticipantTypeValues =
   | 'pstn-dial-out'
   | 'unknown';
 
+export interface DailyParticipantCanReceiveMediaPermissionFull {
+  video: boolean;
+  audio: boolean;
+  screenVideo: boolean;
+  screenAudio: boolean;
+  customVideo: { '*': boolean; [key: string]: boolean };
+  customAudio: { '*': boolean; [key: string]: boolean };
+}
+
+export interface DailyParticipantCanReceiveMediaPermissionPartial {
+  video?: boolean;
+  audio?: boolean;
+  screenVideo?: boolean;
+  screenAudio?: boolean;
+  customVideo?: { [key: string]: boolean };
+  customAudio?: { [key: string]: boolean };
+}
+
+export interface DailyParticipantCanReceivePermission {
+  base: DailyParticipantCanReceiveMediaPermissionFull | boolean;
+  byUserId?: {
+    [key: string]: DailyParticipantCanReceiveMediaPermissionPartial | boolean;
+  };
+  byParticipantId?: {
+    [key: string]: DailyParticipantCanReceiveMediaPermissionPartial | boolean;
+  };
+}
+
 export interface DailyParticipantPermissions {
   hasPresence: boolean;
   canSend: Set<DailyParticipantPermissionsCanSendValues> | boolean;
+  canReceive: DailyParticipantCanReceivePermission;
   canAdmin: Set<DailyParticipantPermissionsCanAdminValues> | boolean;
 }
 
@@ -511,6 +540,7 @@ export type DailyParticipantPermissionsUpdate = {
     | Array<DailyParticipantPermissionsCanSendValues>
     | Set<DailyParticipantPermissionsCanSendValues>
     | boolean;
+  canReceive?: Partial<DailyParticipantCanReceivePermission>;
   canAdmin?:
     | Array<DailyParticipantPermissionsCanAdminValues>
     | Set<DailyParticipantPermissionsCanAdminValues>
