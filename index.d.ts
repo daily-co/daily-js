@@ -606,7 +606,7 @@ export interface DailyParticipant {
   joined_at?: Date;
   networkQualityState?: 'good' | 'warning' | 'bad' | 'unknown';
   /**
-   * @deprecated This property will is being replaced by networkState.
+   * @deprecated This property is being replaced by networkState.
    */
   networkThreshold?: 'good' | 'low' | 'very-low';
   will_eject_at: Date;
@@ -904,11 +904,11 @@ export interface DailyNetworkStats {
   networkStateReasons: networkStateReasons[];
   stats: Record<string, never> | DailyNetworkStatsData;
   /**
-   * @deprecated This property will is being replaced by networkState.
+   * @deprecated This property is being replaced by networkState.
    */
   threshold: 'good' | 'low' | 'very-low';
   /**
-   * @deprecated This property will is being replaced by networkState.
+   * @deprecated This property is being replaced by networkState.
    */
   quality: number;
 }
