@@ -1333,6 +1333,7 @@ export default class DailyIframe extends EventEmitter {
       threshold: 'good',
       quality: 100,
       networkState: 'unknown',
+      stats: {},
     };
     this._activeSpeaker = {};
     this._localAudioLevel = 0;
@@ -3725,7 +3726,7 @@ export default class DailyIframe extends EventEmitter {
   getNetworkStats() {
     if (this._callState !== DAILY_STATE_JOINED) {
       let stats = { latest: {} };
-      return { stats };
+      return new Promise((resolve) => resolve({ stats, ...this._network }));
     }
     return new Promise((resolve) => {
       let k = (msg) => {
@@ -4988,12 +4989,10 @@ testCallQuality() and stopTestCallQuality() instead`);
         {
           const { state, threshold, quality } = msg;
           const networkState = state.state;
-          const networkStateReasons = state.reasons.length
-            ? state.reasons
-            : undefined;
+          const networkStateReasons = state.reasons;
           if (
             networkState !== this._network.networkState ||
-            networkStateReasons !== this._network.networkStateReasons ||
+            !dequal(networkStateReasons, this._network.networkStateReasons) ||
             threshold !== this._network.threshold ||
             quality !== this._network.quality
           ) {
@@ -5001,6 +5000,11 @@ testCallQuality() and stopTestCallQuality() instead`);
             this._network.networkStateReasons = networkStateReasons;
             this._network.quality = quality;
             this._network.threshold = threshold;
+            msg.networkState = networkState;
+            if (networkStateReasons.length) {
+              msg.networkStateReasons = networkStateReasons;
+            }
+            delete msg.state;
             this.emitDailyJSEvent(msg);
           }
         }
