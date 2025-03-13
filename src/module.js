@@ -3726,7 +3726,7 @@ export default class DailyIframe extends EventEmitter {
   getNetworkStats() {
     if (this._callState !== DAILY_STATE_JOINED) {
       let stats = { latest: {} };
-      return new Promise((resolve) => resolve({ stats, ...this._network }));
+      return Promise.resolve({ stats, ...this._network });
     }
     return new Promise((resolve) => {
       let k = (msg) => {
