@@ -604,6 +604,10 @@ export interface DailyParticipant {
   userData?: unknown;
   session_id: string;
   joined_at?: Date;
+  networkQualityState?: 'good' | 'warning' | 'bad' | 'unknown';
+  /**
+   * @deprecated This property is being replaced by networkState.
+   */
   networkThreshold?: 'good' | 'low' | 'very-low';
   will_eject_at: Date;
   local: boolean;
@@ -857,41 +861,56 @@ export interface DailyNetworkConnectivityTestStats {
   result: 'passed' | 'failed' | 'aborted';
 }
 
-export interface DailyNetworkStats {
-  quality: number;
-  stats: {
-    latest: {
-      timestamp: number;
-      recvBitsPerSecond: number | null;
-      sendBitsPerSecond: number | null;
-      availableOutgoingBitrate: number | null;
-      networkRoundTripTime: number | null;
-      videoRecvBitsPerSecond: number | null;
-      videoSendBitsPerSecond: number | null;
-      audioRecvBitsPerSecond: number | null;
-      audioSendBitsPerSecond: number | null;
-      videoRecvPacketLoss: number | null;
-      videoSendPacketLoss: number | null;
-      audioRecvPacketLoss: number | null;
-      audioSendPacketLoss: number | null;
-      totalSendPacketLoss: number | null;
-      totalRecvPacketLoss: number | null;
-      videoRecvJitter: number | null;
-      videoSendJitter: number | null;
-      audioRecvJitter: number | null;
-      audioSendJitter: number | null;
-    };
-    worstVideoRecvPacketLoss: number;
-    worstVideoSendPacketLoss: number;
-    worstAudioRecvPacketLoss: number;
-    worstAudioSendPacketLoss: number;
-    worstVideoRecvJitter: number;
-    worstVideoSendJitter: number;
-    worstAudioRecvJitter: number;
-    worstAudioSendJitter: number;
-    averageNetworkRoundTripTime: number;
+export type networkStateReasons =
+  | 'sendPacketLoss'
+  | 'recvPacketLoss'
+  | 'roundTripTime'
+  | 'availableOutgoingBitrate';
+
+export interface DailyNetworkStatsData {
+  latest: {
+    timestamp: number;
+    recvBitsPerSecond: number | null;
+    sendBitsPerSecond: number | null;
+    availableOutgoingBitrate: number | null;
+    networkRoundTripTime: number | null;
+    videoRecvBitsPerSecond: number | null;
+    videoSendBitsPerSecond: number | null;
+    audioRecvBitsPerSecond: number | null;
+    audioSendBitsPerSecond: number | null;
+    videoRecvPacketLoss: number | null;
+    videoSendPacketLoss: number | null;
+    audioRecvPacketLoss: number | null;
+    audioSendPacketLoss: number | null;
+    totalSendPacketLoss: number | null;
+    totalRecvPacketLoss: number | null;
+    videoRecvJitter: number | null;
+    videoSendJitter: number | null;
+    audioRecvJitter: number | null;
+    audioSendJitter: number | null;
   };
+  worstVideoRecvPacketLoss: number;
+  worstVideoSendPacketLoss: number;
+  worstAudioRecvPacketLoss: number;
+  worstAudioSendPacketLoss: number;
+  worstVideoRecvJitter: number;
+  worstVideoSendJitter: number;
+  worstAudioRecvJitter: number;
+  worstAudioSendJitter: number;
+  averageNetworkRoundTripTime: number;
+}
+export interface DailyNetworkStats {
+  networkState: 'good' | 'warning' | 'bad' | 'unknown';
+  networkStateReasons: networkStateReasons[];
+  stats: Record<string, never> | DailyNetworkStatsData;
+  /**
+   * @deprecated This property is being replaced by networkState.
+   */
   threshold: 'good' | 'low' | 'very-low';
+  /**
+   * @deprecated This property is being replaced by networkState.
+   */
+  quality: number;
 }
 
 export interface DailyCpuLoadStats {
@@ -1463,10 +1482,9 @@ export interface DailyEventObjectTouchEvent extends DailyEventObjectBase {
 }
 
 export interface DailyEventObjectNetworkQualityEvent
-  extends DailyEventObjectBase {
+  extends DailyEventObjectBase,
+    DailyNetworkStats {
   action: Extract<DailyEvent, 'network-quality-change'>;
-  threshold: 'good' | 'low' | 'very-low';
-  quality: number;
 }
 
 export interface DailyEventObjectCpuLoadEvent extends DailyEventObjectBase {

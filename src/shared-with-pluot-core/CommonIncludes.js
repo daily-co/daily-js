@@ -320,6 +320,13 @@ export const DAILY_METHOD_TEST_P2P_CALL_QUALITY = 'test-p2p-call-quality';
 export const DAILY_METHOD_STOP_TEST_P2P_CALL_QUALITY =
   'stop-test-p2p-call-quality';
 
+export const DAILY_JS_NETWORK_QUALITY_STATE = {
+  UNKNOWN: 'unknown',
+  BAD: 'bad',
+  WARNING: 'warning',
+  GOOD: 'good',
+};
+
 export const DAILY_JS_NETWORK_THRESHOLDS = {
   VERY_LOW: 'very-low',
   LOW: 'low',
