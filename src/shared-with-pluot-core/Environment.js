@@ -104,9 +104,19 @@ export function isFullscreenSupported() {
 function _determineWebGLAvailability() {
   try {
     let canvas = document.createElement('canvas');
-    let gl = canvas.getContext('webgl2', {
-      failIfMajorPerformanceCaveat: true,
-    });
+
+    let gl;
+    if (navigator.webdriver) {
+      // This is playwright; we can allow software WebGL
+      gl = canvas.getContext('webgl2');
+    } else {
+      // adding failIfMajorPerformanceCaveat will prevent
+      // trying to use a software WebGL renderer
+      gl = canvas.getContext('webgl2', {
+        failIfMajorPerformanceCaveat: true,
+      });
+    }
+
     let isWebglAvailable = gl != null;
     canvas.remove();
     return isWebglAvailable;
