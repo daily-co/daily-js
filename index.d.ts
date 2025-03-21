@@ -1049,7 +1049,7 @@ export interface DailyRoomInfo {
      */
     signaling_impl?: string;
     geo?: string;
-    recordings_bucket?: DailyRecordingsBucket;
+    recordings_bucket?: DailyRecordingsBucket | boolean;
   };
   domainConfig: {
     hide_daily_branding?: boolean;
@@ -1077,7 +1077,7 @@ export interface DailyRoomInfo {
     enable_prejoin_ui?: boolean;
     enable_transcription?: boolean;
     enable_video_processing_ui?: boolean;
-    recordings_bucket?: DailyRecordingsBucket;
+    recordings_bucket?: DailyRecordingsBucket | boolean;
   };
   tokenConfig: {
     eject_at_token_exp?: boolean;
