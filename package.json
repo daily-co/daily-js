@@ -70,12 +70,6 @@
     "dequal": "^2.0.3",
     "events": "^3.1.0"
   },
-  "overrides": {
-    "body-parser": "1.20.3",
-    "cookie": "0.7.0",
-    "express": "4.21.0",
-    "micromatch": "4.0.8"
-  },
   "jest": {
     "verbose": true,
     "testEnvironment": "jsdom"
