@@ -6542,7 +6542,7 @@ function validateConfigPropType(prop, propType) {
 }
 
 function validateSipCallTransfer(
-  { sessionId, toEndPoint, useSipRefer },
+  { sessionId, toEndPoint, callerId, useSipRefer },
   methodName
 ) {
   if (!(sessionId && toEndPoint)) {
@@ -6561,6 +6561,16 @@ function validateSipCallTransfer(
   if (!(toEndPoint.startsWith('sip:') || toEndPoint.startsWith('+'))) {
     throw new Error(
       `toEndPoint: ${toEndPoint} must starts with either "sip:" or "+"`
+    );
+  }
+
+  if (callerId && typeof callerId !== 'string') {
+    throw new Error(`callerId must be of type string`);
+  }
+
+  if (callerId && !toEndPoint.startsWith('+')) {
+    throw new Error(
+      `callerId is only valid when transferring to a PSTN number`
     );
   }
 }

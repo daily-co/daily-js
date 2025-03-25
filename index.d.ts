@@ -2157,6 +2157,7 @@ export interface DailyMediaDeviceInfo extends MediaDeviceInfo {
 export interface DailySipCallTransferOptions {
   sessionId: string;
   toEndPoint: string;
+  callerId?: string;
 }
 
 export interface DailySipReferOptions {
