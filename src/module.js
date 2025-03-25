@@ -3730,7 +3730,7 @@ export default class DailyIframe extends EventEmitter {
     }
     return new Promise((resolve) => {
       let k = (msg) => {
-        resolve({ stats: msg.stats, ...this._network });
+        resolve({ ...this._network, stats: msg.stats });
       };
       this.sendMessageToCallMachine({ action: DAILY_METHOD_GET_CALC_STATS }, k);
     });
