@@ -272,6 +272,7 @@ import {
   removeDeviceChangeListener,
 } from './shared-with-pluot-core/DeviceChange.js';
 import { isPlayable } from './shared-with-pluot-core/TrackStateUtil';
+import { CanReceivePermission } from './shared-with-pluot-core/Permissions';
 
 // call states
 export {
@@ -936,6 +937,23 @@ const PARTICIPANT_PROPS = {
               permissionsUpdate['canSend'] = new Set(permission);
             }
             break;
+          case 'canReceive':
+            // Question: why can't we just do Permisison.validateJSONObject() on the whole
+            // permissionsUpdate?
+            // Answer: because for historical reasons we support passing Sets for canSend and
+            // canAdmin; Sets don't appear in JSON objects.
+            // Note: we could have had users pass in CanReceivePermissions objects rather than JSON
+            // objects but that would be wordier/less ergonomic.
+            const [isValid, invalidityReason] =
+              CanReceivePermission.validateJSONObject(permission);
+            if (!isValid) {
+              // canReceive is complicated enough to benefit from a more specific error than can be
+              // provided by the general `help` message shown when updatePermissions is determined
+              // to be invalid
+              console.error(invalidityReason);
+              return false;
+            }
+            break;
           case 'canAdmin':
             if (
               permission instanceof Set ||
@@ -967,9 +985,10 @@ const PARTICIPANT_PROPS = {
       return true;
     },
     help:
-      'updatePermissions can take hasPresence, canSend, and canAdmin permissions. ' +
+      'updatePermissions can take hasPresence, canSend, canReceive, and canAdmin permissions. ' +
       'hasPresence must be a boolean. ' +
       'canSend can be a boolean or an Array or Set of media types (video, audio, screenVideo, screenAudio, customVideo, customAudio). ' +
+      'canReceive must be an object specifying base, byUserId, and/or byParticipantId fields (see documentation for more details). ' +
       'canAdmin can be a boolean or an Array or Set of admin types (participants, streaming, transcription).',
   },
 };
@@ -1310,7 +1329,12 @@ export default class DailyIframe extends EventEmitter {
     this._participantCounts = EMPTY_PARTICIPANT_COUNTS;
     this._rmpPlayerState = {};
     this._waitingParticipants = {};
-    this._network = { threshold: 'good', quality: 100 };
+    this._network = {
+      threshold: 'good',
+      quality: 100,
+      networkState: 'unknown',
+      stats: {},
+    };
     this._activeSpeaker = {};
     this._localAudioLevel = 0;
     this._isLocalAudioLevelObserverRunning = false;
@@ -3702,11 +3726,11 @@ export default class DailyIframe extends EventEmitter {
   getNetworkStats() {
     if (this._callState !== DAILY_STATE_JOINED) {
       let stats = { latest: {} };
-      return { stats };
+      return Promise.resolve({ stats, ...this._network });
     }
     return new Promise((resolve) => {
       let k = (msg) => {
-        resolve({ stats: msg.stats, ...this._network });
+        resolve({ ...this._network, stats: msg.stats });
       };
       this.sendMessageToCallMachine({ action: DAILY_METHOD_GET_CALC_STATS }, k);
     });
@@ -4963,13 +4987,24 @@ testCallQuality() and stopTestCallQuality() instead`);
         break;
       case DAILY_EVENT_NETWORK_QUALITY_CHANGE:
         {
-          let { threshold, quality } = msg;
+          const { state, threshold, quality } = msg;
+          const networkState = state.state;
+          const networkStateReasons = state.reasons;
           if (
+            networkState !== this._network.networkState ||
+            !dequal(networkStateReasons, this._network.networkStateReasons) ||
             threshold !== this._network.threshold ||
             quality !== this._network.quality
           ) {
+            this._network.networkState = networkState;
+            this._network.networkStateReasons = networkStateReasons;
             this._network.quality = quality;
             this._network.threshold = threshold;
+            msg.networkState = networkState;
+            if (networkStateReasons.length) {
+              msg.networkStateReasons = networkStateReasons;
+            }
+            delete msg.state;
             this.emitDailyJSEvent(msg);
           }
         }
@@ -6507,7 +6542,7 @@ function validateConfigPropType(prop, propType) {
 }
 
 function validateSipCallTransfer(
-  { sessionId, toEndPoint, useSipRefer },
+  { sessionId, toEndPoint, callerId, useSipRefer },
   methodName
 ) {
   if (!(sessionId && toEndPoint)) {
@@ -6526,6 +6561,16 @@ function validateSipCallTransfer(
   if (!(toEndPoint.startsWith('sip:') || toEndPoint.startsWith('+'))) {
     throw new Error(
       `toEndPoint: ${toEndPoint} must starts with either "sip:" or "+"`
+    );
+  }
+
+  if (callerId && typeof callerId !== 'string') {
+    throw new Error(`callerId must be of type string`);
+  }
+
+  if (callerId && !toEndPoint.startsWith('+')) {
+    throw new Error(
+      `callerId is only valid when transferring to a PSTN number`
     );
   }
 }

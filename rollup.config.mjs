@@ -31,6 +31,7 @@ function makeConfig({ legacyFileName = false } = {}) {
         format: 'es',
       },
     ],
+    preserveSymlinks: true, // treat symlinks like they're where the symlink files are (for context: https://github.com/daily-co/pluot-core/pull/12608#discussion_r1984112042)
     plugins: [
       nodeResolve({
         preferBuiltins: false,

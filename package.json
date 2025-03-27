@@ -2,7 +2,7 @@
   "name": "@daily-co/daily-js",
   "private": true,
   "//": "^ COMMENT OUT 'private: true' BEFORE RUNNING NPM PUBLISH",
-  "version": "0.76.0",
+  "version": "0.77.0-internal.8",
   "license": "BSD-2-Clause",
   "engines": {
     "node": ">=10.0.0"
@@ -69,12 +69,6 @@
     "bowser": "^2.8.1",
     "dequal": "^2.0.3",
     "events": "^3.1.0"
-  },
-  "overrides": {
-    "body-parser": "1.20.3",
-    "cookie": "0.7.0",
-    "express": "4.21.0",
-    "micromatch": "4.0.8"
   },
   "jest": {
     "verbose": true,

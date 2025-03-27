@@ -499,9 +499,38 @@ export type DailyParticipantTypeValues =
   | 'pstn-dial-out'
   | 'unknown';
 
+export interface DailyParticipantCanReceiveMediaPermissionFull {
+  video: boolean;
+  audio: boolean;
+  screenVideo: boolean;
+  screenAudio: boolean;
+  customVideo: { '*': boolean; [key: string]: boolean };
+  customAudio: { '*': boolean; [key: string]: boolean };
+}
+
+export interface DailyParticipantCanReceiveMediaPermissionPartial {
+  video?: boolean;
+  audio?: boolean;
+  screenVideo?: boolean;
+  screenAudio?: boolean;
+  customVideo?: { [key: string]: boolean };
+  customAudio?: { [key: string]: boolean };
+}
+
+export interface DailyParticipantCanReceivePermission {
+  base: DailyParticipantCanReceiveMediaPermissionFull | boolean;
+  byUserId?: {
+    [key: string]: DailyParticipantCanReceiveMediaPermissionPartial | boolean;
+  };
+  byParticipantId?: {
+    [key: string]: DailyParticipantCanReceiveMediaPermissionPartial | boolean;
+  };
+}
+
 export interface DailyParticipantPermissions {
   hasPresence: boolean;
   canSend: Set<DailyParticipantPermissionsCanSendValues> | boolean;
+  canReceive: DailyParticipantCanReceivePermission;
   canAdmin: Set<DailyParticipantPermissionsCanAdminValues> | boolean;
 }
 
@@ -511,6 +540,7 @@ export type DailyParticipantPermissionsUpdate = {
     | Array<DailyParticipantPermissionsCanSendValues>
     | Set<DailyParticipantPermissionsCanSendValues>
     | boolean;
+  canReceive?: Partial<DailyParticipantCanReceivePermission>;
   canAdmin?:
     | Array<DailyParticipantPermissionsCanAdminValues>
     | Set<DailyParticipantPermissionsCanAdminValues>
@@ -574,6 +604,10 @@ export interface DailyParticipant {
   userData?: unknown;
   session_id: string;
   joined_at?: Date;
+  networkQualityState?: 'good' | 'warning' | 'bad' | 'unknown';
+  /**
+   * @deprecated This property is being replaced by networkState.
+   */
   networkThreshold?: 'good' | 'low' | 'very-low';
   will_eject_at: Date;
   local: boolean;
@@ -827,41 +861,56 @@ export interface DailyNetworkConnectivityTestStats {
   result: 'passed' | 'failed' | 'aborted';
 }
 
-export interface DailyNetworkStats {
-  quality: number;
-  stats: {
-    latest: {
-      timestamp: number;
-      recvBitsPerSecond: number | null;
-      sendBitsPerSecond: number | null;
-      availableOutgoingBitrate: number | null;
-      networkRoundTripTime: number | null;
-      videoRecvBitsPerSecond: number | null;
-      videoSendBitsPerSecond: number | null;
-      audioRecvBitsPerSecond: number | null;
-      audioSendBitsPerSecond: number | null;
-      videoRecvPacketLoss: number | null;
-      videoSendPacketLoss: number | null;
-      audioRecvPacketLoss: number | null;
-      audioSendPacketLoss: number | null;
-      totalSendPacketLoss: number | null;
-      totalRecvPacketLoss: number | null;
-      videoRecvJitter: number | null;
-      videoSendJitter: number | null;
-      audioRecvJitter: number | null;
-      audioSendJitter: number | null;
-    };
-    worstVideoRecvPacketLoss: number;
-    worstVideoSendPacketLoss: number;
-    worstAudioRecvPacketLoss: number;
-    worstAudioSendPacketLoss: number;
-    worstVideoRecvJitter: number;
-    worstVideoSendJitter: number;
-    worstAudioRecvJitter: number;
-    worstAudioSendJitter: number;
-    averageNetworkRoundTripTime: number;
+export type networkStateReasons =
+  | 'sendPacketLoss'
+  | 'recvPacketLoss'
+  | 'roundTripTime'
+  | 'availableOutgoingBitrate';
+
+export interface DailyNetworkStatsData {
+  latest: {
+    timestamp: number;
+    recvBitsPerSecond: number | null;
+    sendBitsPerSecond: number | null;
+    availableOutgoingBitrate: number | null;
+    networkRoundTripTime: number | null;
+    videoRecvBitsPerSecond: number | null;
+    videoSendBitsPerSecond: number | null;
+    audioRecvBitsPerSecond: number | null;
+    audioSendBitsPerSecond: number | null;
+    videoRecvPacketLoss: number | null;
+    videoSendPacketLoss: number | null;
+    audioRecvPacketLoss: number | null;
+    audioSendPacketLoss: number | null;
+    totalSendPacketLoss: number | null;
+    totalRecvPacketLoss: number | null;
+    videoRecvJitter: number | null;
+    videoSendJitter: number | null;
+    audioRecvJitter: number | null;
+    audioSendJitter: number | null;
   };
+  worstVideoRecvPacketLoss: number;
+  worstVideoSendPacketLoss: number;
+  worstAudioRecvPacketLoss: number;
+  worstAudioSendPacketLoss: number;
+  worstVideoRecvJitter: number;
+  worstVideoSendJitter: number;
+  worstAudioRecvJitter: number;
+  worstAudioSendJitter: number;
+  averageNetworkRoundTripTime: number;
+}
+export interface DailyNetworkStats {
+  networkState: 'good' | 'warning' | 'bad' | 'unknown';
+  networkStateReasons: networkStateReasons[];
+  stats: Record<string, never> | DailyNetworkStatsData;
+  /**
+   * @deprecated This property is being replaced by networkState.
+   */
   threshold: 'good' | 'low' | 'very-low';
+  /**
+   * @deprecated This property is being replaced by networkState.
+   */
+  quality: number;
 }
 
 export interface DailyCpuLoadStats {
@@ -1000,7 +1049,7 @@ export interface DailyRoomInfo {
      */
     signaling_impl?: string;
     geo?: string;
-    recordings_bucket?: DailyRecordingsBucket;
+    recordings_bucket?: DailyRecordingsBucket | boolean;
   };
   domainConfig: {
     hide_daily_branding?: boolean;
@@ -1028,7 +1077,7 @@ export interface DailyRoomInfo {
     enable_prejoin_ui?: boolean;
     enable_transcription?: boolean;
     enable_video_processing_ui?: boolean;
-    recordings_bucket?: DailyRecordingsBucket;
+    recordings_bucket?: DailyRecordingsBucket | boolean;
   };
   tokenConfig: {
     eject_at_token_exp?: boolean;
@@ -1433,10 +1482,9 @@ export interface DailyEventObjectTouchEvent extends DailyEventObjectBase {
 }
 
 export interface DailyEventObjectNetworkQualityEvent
-  extends DailyEventObjectBase {
+  extends DailyEventObjectBase,
+    DailyNetworkStats {
   action: Extract<DailyEvent, 'network-quality-change'>;
-  threshold: 'good' | 'low' | 'very-low';
-  quality: number;
 }
 
 export interface DailyEventObjectCpuLoadEvent extends DailyEventObjectBase {
@@ -2109,6 +2157,7 @@ export interface DailyMediaDeviceInfo extends MediaDeviceInfo {
 export interface DailySipCallTransferOptions {
   sessionId: string;
   toEndPoint: string;
+  callerId?: string;
 }
 
 export interface DailySipReferOptions {
