@@ -101,32 +101,50 @@ export function isFullscreenSupported() {
   return !!iframe.requestFullscreen || !!iframe.webkitRequestFullscreen;
 }
 
+const WEBGL_AVAILABILITY = {
+  NONE: 'none',
+  SOFTWARE: 'software',
+  HARDWARE: 'hardware',
+};
+
 function _determineWebGLAvailability() {
   try {
     let canvas = document.createElement('canvas');
 
     let gl;
-    if (navigator.webdriver) {
-      // This is playwright; we can allow software WebGL
+    let maybeSoftwareGL = false;
+    // If getContext fails with the failIfMajorPerformanceCaveat flag,
+    // but doesn't without it, then the browser is using software WebGL
+    // rendering. While this works, it will likely lead to wretched
+    // framerates. That said, customers seem to prefer that over no
+    // background processing at all. So log a warning and carry on.
+    gl = canvas.getContext('webgl2', {
+      failIfMajorPerformanceCaveat: true,
+    });
+    if (!gl) {
+      // note: playwright tests use software gl and should succeed
+      // in this next attempt
+      maybeSoftwareGL = true;
       gl = canvas.getContext('webgl2');
-    } else {
-      // adding failIfMajorPerformanceCaveat will prevent
-      // trying to use a software WebGL renderer
-      gl = canvas.getContext('webgl2', {
-        failIfMajorPerformanceCaveat: true,
-      });
     }
 
     let isWebglAvailable = gl != null;
     canvas.remove();
-    return isWebglAvailable;
+    return isWebglAvailable
+      ? maybeSoftwareGL
+        ? WEBGL_AVAILABILITY.SOFTWARE
+        : WEBGL_AVAILABILITY.HARDWARE
+      : WEBGL_AVAILABILITY.NONE;
   } catch (err) {
-    return false;
+    return WEBGL_AVAILABILITY.NONE;
   }
 }
 const _isWebGLAvailable = _determineWebGLAvailability();
 export function isWebGLAvailable() {
-  return _isWebGLAvailable;
+  return _isWebGLAvailable !== WEBGL_AVAILABILITY.NONE;
+}
+export function isUsingSoftwareWebGL() {
+  return _isWebGLAvailable === WEBGL_AVAILABILITY.SOFTWARE;
 }
 
 export function canLoadBanuba() {
