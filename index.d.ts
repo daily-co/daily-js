@@ -155,6 +155,7 @@ export type DailyNonFatalErrorType =
   | 'screen-share-error'
   | 'local-audio-level-observer-error'
   | 'video-processor-error'
+  | 'video-processor-warning'
   | 'audio-processor-error'
   | 'remote-media-player-error'
   | 'live-streaming-warning'

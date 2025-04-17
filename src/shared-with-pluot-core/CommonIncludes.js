@@ -184,6 +184,7 @@ export const DAILY_EVENT_NONFATAL_ERROR = 'nonfatal-error';
 export const DAILY_INPUT_SETTINGS_ERROR_TYPE = 'input-settings-error';
 export const DAILY_SCREEN_SHARE_ERROR_TYPE = 'screen-share-error';
 export const DAILY_VIDEO_PROCESSOR_ERROR_TYPE = 'video-processor-error';
+export const DAILY_VIDEO_PROCESSOR_WARNING_TYPE = 'video-processor-warning';
 export const DAILY_AUDIO_PROCESSOR_ERROR_TYPE = 'audio-processor-error';
 export const DAILY_LOCAL_AUDIO_LEVEL_OBSERVER_ERROR_TYPE =
   'local-audio-level-observer-error';
