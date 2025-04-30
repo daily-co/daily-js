@@ -1699,6 +1699,11 @@ export interface DailyEventObjectSidebarViewChanged
   view: SidebarView;
 }
 
+export interface DailyEventObjectDialinReady extends DailyEventObjectBase {
+  action: Extract<DailyEvent, 'dialin-ready'>;
+  sipEndpoint: string;
+}
+
 export interface DailyEventObjectDialinConnected extends DailyEventObjectBase {
   action: Extract<DailyEvent, 'dialin-connected'>;
   sipHeaders?: Record<string, any>;
@@ -1862,6 +1867,8 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectSelectedDevicesUpdated
     : T extends DailyEventObjectSidebarViewChanged['action']
     ? DailyEventObjectSidebarViewChanged
+    : T extends DailyEventObjectDialinReady['action']
+    ? DailyEventObjectDialinReady
     : T extends DailyEventObjectDialinConnected['action']
     ? DailyEventObjectDialinConnected
     : T extends DailyEventObjectDialinError['action']
