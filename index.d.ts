@@ -2127,12 +2127,17 @@ export interface DailyDialOutSession {
   sessionId: string;
 }
 
+export interface DailySipPstnParticipantPermissions {
+  canReceive: Partial<DailyParticipantCanReceivePermission>;
+}
+
 export interface DailyStartDialoutSipOptions {
   sipUri?: string;
   displayName?: string;
   userId?: string;
   video?: boolean;
   codecs?: DailyDialOutCodecs;
+  permissions?: DailySipPstnParticipantPermissions;
 }
 
 export interface DailyStartDialoutPhoneOptions {
@@ -2141,6 +2146,7 @@ export interface DailyStartDialoutPhoneOptions {
   userId?: string;
   codecs?: DailyDialOutCodecs;
   callerId?: string;
+  permissions?: DailySipPstnParticipantPermissions;
 }
 
 export type DailyStartDialoutOptions =

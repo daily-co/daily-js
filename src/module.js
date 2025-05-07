@@ -3604,6 +3604,15 @@ export default class DailyIframe extends EventEmitter {
       }
     }
 
+    if (args.permissions && args.permissions.canReceive) {
+      const [isValid, invalidityReason] =
+        CanReceivePermission.validateJSONObject(args.permissions.canReceive);
+
+      if (!isValid) {
+        throw new Error(invalidityReason);
+      }
+    }
+
     return new Promise((resolve, reject) => {
       const k = (msg) => {
         if (msg.error) {
