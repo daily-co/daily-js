@@ -374,6 +374,7 @@ export interface StartCustomTrackOptions {
   track: MediaStreamTrack;
   mode?: 'music' | 'speech' | DailyMicAudioModeSettings | undefined;
   trackName?: string;
+  ignoreAudioLevel?: boolean;
 }
 
 export interface DailyLoadOptions extends DailyCallOptions {
