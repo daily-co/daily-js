@@ -1717,7 +1717,8 @@ export interface DailyEventObjectDialinError extends DailyEventObjectBase {
   action: Extract<DailyEvent, 'dialin-error'>;
   errorMsg: string;
   sessionId: string;
-  type?: string;
+  type?: 'start-failed' | null;
+  details?: { sipEndpoint?: string };
   actionTraceId?: string;
 }
 
