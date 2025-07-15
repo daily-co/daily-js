@@ -2503,7 +2503,7 @@ export default class DailyIframe extends EventEmitter {
   }
 
   // eslint-disable-next-line no-undef
-  startCustomTrack(properties = { track, mode, trackName }) {
+  startCustomTrack(properties = { track, mode, trackName, ignoreAudioLevel }) {
     methodNotSupportedInReactNative();
     // Validate meeting state: custom tracks are only available
     // once you have joined the meeting

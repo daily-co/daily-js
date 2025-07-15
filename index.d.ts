@@ -374,6 +374,7 @@ export interface StartCustomTrackOptions {
   track: MediaStreamTrack;
   mode?: 'music' | 'speech' | DailyMicAudioModeSettings | undefined;
   trackName?: string;
+  ignoreAudioLevel?: boolean;
 }
 
 export interface DailyLoadOptions extends DailyCallOptions {
@@ -1716,6 +1717,8 @@ export interface DailyEventObjectDialinError extends DailyEventObjectBase {
   action: Extract<DailyEvent, 'dialin-error'>;
   errorMsg: string;
   sessionId: string;
+  type?: 'start-failed' | null;
+  details?: { sipEndpoint?: string };
   actionTraceId?: string;
 }
 
