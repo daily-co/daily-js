@@ -937,7 +937,7 @@ const PARTICIPANT_PROPS = {
               permissionsUpdate['canSend'] = new Set(permission);
             }
             break;
-          case 'canReceive':
+          case 'canReceive': {
             // Question: why can't we just do Permisison.validateJSONObject() on the whole
             // permissionsUpdate?
             // Answer: because for historical reasons we support passing Sets for canSend and
@@ -954,6 +954,7 @@ const PARTICIPANT_PROPS = {
               return false;
             }
             break;
+          }
           case 'canAdmin':
             if (
               permission instanceof Set ||
@@ -2697,20 +2698,27 @@ export default class DailyIframe extends EventEmitter {
 
   async setOutputDeviceAsync({ outputDeviceId }) {
     methodNotSupportedInReactNative();
-    // cache this for use later
-    if (outputDeviceId) {
-      this._preloadCache.outputDeviceId = outputDeviceId;
+    if (!outputDeviceId || typeof outputDeviceId !== 'string') {
+      throw new Error(
+        'outputDeviceId must be provided and must be a valid device id'
+      );
     }
+    // cache this for use later
+    this._preloadCache.outputDeviceId = outputDeviceId;
 
     // if we're in callObject mode and not loaded yet, don't do anything
     if (this._callObjectMode && this.needsLoad()) {
       return this._devicesFromInputSettings(this._inputSettings);
     }
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       let k = (msg) => {
         delete msg.action;
         delete msg.callbackStamp;
+
+        if (msg.error) {
+          reject(msg.error);
+        }
 
         if (msg.returnPreloadCache) {
           resolve(this._devicesFromInputSettings(this._inputSettings));
