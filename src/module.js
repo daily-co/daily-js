@@ -2717,7 +2717,9 @@ export default class DailyIframe extends EventEmitter {
         delete msg.callbackStamp;
 
         if (msg.error) {
-          reject(msg.error);
+          const e = new Error(msg.error.message);
+          e.type = msg.error.type;
+          reject(e);
           return;
         }
 
