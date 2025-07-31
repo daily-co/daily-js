@@ -49,6 +49,10 @@ export function addDeviceChangeListener(deviceChangeListener) {
       };
 
       // Register our "system listener" as the browser/system event listener
+      // NOTE: On Chrome and Safari, this event will fire both when a new device
+      //       is added or removed as well as when the user changes the default
+      //       device at the system level. On Firefox, it will only fire when a
+      //       new device is added or removed. (7/31/25)
       navigator.mediaDevices.addEventListener('devicechange', systemListener);
     })
     .catch(() => {
