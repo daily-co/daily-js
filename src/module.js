@@ -2718,6 +2718,7 @@ export default class DailyIframe extends EventEmitter {
 
         if (msg.error) {
           reject(msg.error);
+          return;
         }
 
         if (msg.returnPreloadCache) {
