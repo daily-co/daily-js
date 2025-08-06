@@ -2294,7 +2294,7 @@ export interface DailyCall {
     videoSource?: MediaStreamTrack | false;
   }): Promise<DailyDeviceInfos>;
   setOutputDeviceAsync(audioDevice: {
-    outputDeviceId?: string;
+    outputDeviceId: string;
   }): Promise<DailyDeviceInfos>;
   getInputDevices(): Promise<DailyDeviceInfos>;
   preAuth(properties?: DailyCallOptions): Promise<{ access: DailyAccess }>;
