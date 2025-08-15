@@ -45,10 +45,6 @@ export function isReactNative() {
   );
 }
 
-export function isReactNativeUnifiedPlan() {
-  return isReactNative() && typeof RTCRtpTransceiver !== 'undefined';
-}
-
 export function isReactNativeIOS() {
   if (
     typeof DailyNativeUtils === 'undefined' ||
