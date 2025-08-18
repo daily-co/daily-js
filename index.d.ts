@@ -2177,6 +2177,8 @@ export interface DailySipCallTransferOptions {
   sessionId: string;
   toEndPoint: string;
   callerId?: string;
+  extension?: string;
+  waitBeforeExtensionDialSec?: number;
 }
 
 export interface DailySipReferOptions {

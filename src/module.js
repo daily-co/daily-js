@@ -3615,39 +3615,7 @@ export default class DailyIframe extends EventEmitter {
       }
     }
 
-    if (args.extension) {
-      if (typeof args.extension !== 'string') {
-        throw new Error(`Error starting dial out: extension must be a string`);
-      }
-      if (args.extension.length > 20) {
-        throw new Error(
-          `Error starting dial out: extension length must be less than or equal to 20`
-        );
-      }
-      if (!args.phoneNumber) {
-        throw new Error(
-          `Error starting dial out: extension is allowed only with phoneNumber`
-        );
-      }
-    }
-
-    if (args.waitBeforeExtensionDialSec) {
-      if (typeof args.waitBeforeExtensionDialSec !== 'number') {
-        throw new Error(
-          `Error starting dial out: waitBeforeExtensionDialSec must be a number`
-        );
-      }
-      if (args.waitBeforeExtensionDialSec > 60) {
-        throw new Error(
-          `Error starting dial out: waitBeforeExtensionDialSec must be less than or equal to 60`
-        );
-      }
-      if (!(args.extension && args.phoneNumber)) {
-        throw new Error(
-          `Error starting dial out: waitBeforeExtensionDialSec is allowed only with phoneNumber and extension`
-        );
-      }
-    }
+    validateDialoutExtension(args);
 
     if (args.permissions && args.permissions.canReceive) {
       const [isValid, invalidityReason] =
@@ -3706,6 +3674,7 @@ export default class DailyIframe extends EventEmitter {
     }
     args.useSipRefer = false;
     validateSipCallTransfer(args, 'sipCallTransfer');
+    validateDialoutExtension(args);
 
     return new Promise((resolve, reject) => {
       const k = (msg) => {
@@ -5844,6 +5813,37 @@ testCallQuality() and stopTestCallQuality() instead`);
           inputSettings: newInputSettings,
         });
       }
+    }
+  }
+}
+
+function validateDialoutExtension(args) {
+  if (args.extension) {
+    if (typeof args.extension !== 'string') {
+      throw new Error(`Error starting dial out: extension must be a string`);
+    }
+    if (args.extension.length > 20) {
+      throw new Error(
+        `Error starting dial out: extension length must be less than or equal to 20`
+      );
+    }
+  }
+
+  if (args.waitBeforeExtensionDialSec) {
+    if (typeof args.waitBeforeExtensionDialSec !== 'number') {
+      throw new Error(
+        `Error starting dial out: waitBeforeExtensionDialSec must be a number`
+      );
+    }
+    if (args.waitBeforeExtensionDialSec > 60) {
+      throw new Error(
+        `Error starting dial out: waitBeforeExtensionDialSec must be less than or equal to 60`
+      );
+    }
+    if (!args.extension) {
+      throw new Error(
+        `Error starting dial out: waitBeforeExtensionDialSec is allowed only with phoneNumber and extension`
+      );
     }
   }
 }
