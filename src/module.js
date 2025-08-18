@@ -5842,7 +5842,7 @@ function validateDialoutExtension(args) {
     }
     if (!args.extension) {
       throw new Error(
-        `Error starting dial out: waitBeforeExtensionDialSec is allowed only with phoneNumber and extension`
+        `Error starting dial out: waitBeforeExtensionDialSec requires a phoneNumber and extension`
       );
     }
   }
