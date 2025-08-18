@@ -2150,6 +2150,8 @@ export interface DailyStartDialoutPhoneOptions {
   codecs?: DailyDialOutCodecs;
   callerId?: string;
   permissions?: DailySipPstnParticipantPermissions;
+  extension?: string;
+  waitBeforeExtensionDialSec?: number;
 }
 
 export type DailyStartDialoutOptions =
