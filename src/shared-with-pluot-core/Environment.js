@@ -77,6 +77,11 @@ export function isUserMediaAccessible() {
   );
 }
 
+/**
+ * Checks if MediaStreamTrack is supported.
+ * An option to test this is the [WebRTC Control Chrome extension](https://chromewebstore.google.com/detail/webrtc-control/fjkmabmdepjfammlpliljpnbhleegehm).
+ * @returns {boolean} True if MediaStreamTrack is supported, false otherwise.
+ */
 export function isMediaStreamTrackSupported() {
   return typeof MediaStreamTrack !== 'undefined';
 }
