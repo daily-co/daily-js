@@ -1195,7 +1195,7 @@ export default class DailyIframe extends EventEmitter {
   constructor(iframeish, properties = {}) {
     super();
 
-    if (!browserVideoSupported_p()) {
+    if (!browserVideoSupported_p() && !isReactNative()) {
       // WebRTC not supported or suppressed
       throw new Error('WebRTC not supported or suppressed');
     }
