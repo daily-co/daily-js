@@ -243,6 +243,8 @@ import {
   ADAPTIVE_02_LAYERS_VIDEO_SEND_SETTINGS_PRESET_KEY,
   ADAPTIVE_03_LAYERS_VIDEO_SEND_SETTINGS_PRESET_KEY,
   DAILY_METHOD_UPDATE_SCREENSHARE,
+  DAILY_EVENT_PICTURE_IN_PICTURE_STARTED,
+  DAILY_EVENT_PICTURE_IN_PICTURE_STOPPED,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -5173,6 +5175,12 @@ testCallQuality() and stopTestCallQuality() instead`);
         this.emitDailyJSEvent(msg);
         break;
       case DAILY_EVENT_SIDEBAR_VIEW_CHANGED:
+        this.emitDailyJSEvent(msg);
+        break;
+      case DAILY_EVENT_PICTURE_IN_PICTURE_STARTED:
+        this.emitDailyJSEvent(msg);
+        break;
+      case DAILY_EVENT_PICTURE_IN_PICTURE_STOPPED:
         this.emitDailyJSEvent(msg);
         break;
       case DAILY_EVENT_MEETING_SESSION_STATE_UPDATED: {

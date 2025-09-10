@@ -108,6 +108,8 @@ export type DailyEvent =
   | 'selected-devices-updated'
   | 'custom-button-click'
   | 'sidebar-view-changed'
+  | 'picture-in-picture-started'
+  | 'picture-in-picture-stopped'
   | 'dialin-connected'
   | 'dialin-ready'
   | 'dialin-error'
@@ -1700,6 +1702,16 @@ export interface DailyEventObjectSidebarViewChanged
   view: SidebarView;
 }
 
+export interface DailyEventObjectPictureInPictureStarted
+  extends DailyEventObjectBase {
+  action: Extract<DailyEvent, 'picture-in-picture-started'>;
+}
+
+export interface DailyEventObjectPictureInPictureStopped
+  extends DailyEventObjectBase {
+  action: Extract<DailyEvent, 'picture-in-picture-stopped'>;
+}
+
 export interface DailyEventObjectDialinReady extends DailyEventObjectBase {
   action: Extract<DailyEvent, 'dialin-ready'>;
   sipEndpoint: string;
@@ -1870,6 +1882,10 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectSelectedDevicesUpdated
     : T extends DailyEventObjectSidebarViewChanged['action']
     ? DailyEventObjectSidebarViewChanged
+    : T extends DailyEventObjectPictureInPictureStarted['action']
+    ? DailyEventObjectPictureInPictureStarted
+    : T extends DailyEventObjectPictureInPictureStopped['action']
+    ? DailyEventObjectPictureInPictureStopped
     : T extends DailyEventObjectDialinReady['action']
     ? DailyEventObjectDialinReady
     : T extends DailyEventObjectDialinConnected['action']
