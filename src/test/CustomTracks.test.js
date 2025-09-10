@@ -1,9 +1,3 @@
-// We need to mock the MediaStreamTrack claas and the mediaDevices which are provided by the browser
-class MockMediaStreamTrack {}
-global.MediaStreamTrack = MockMediaStreamTrack;
-global.navigator.mediaDevices = { enumerateDevices: async () => [] };
-global.__dailyJsVersion__ = '*';
-
 import Daily from '../module';
 
 describe('Custom tracks', () => {
@@ -93,7 +87,6 @@ describe('Custom tracks', () => {
   test('startCustomTrack is only allowed when joined', () => {
     const track = new MediaStreamTrack();
     const trackName = 'fake track';
-    const mode = undefined;
     expect(() =>
       callObject.startCustomTrack({ track, trackName })
     ).toThrowError('startCustomTrack() only supported after join.');

@@ -1,14 +1,9 @@
-// We need to mock the MediaStreamTrack class and the mediaDevices which are provided by the browser
 import {
   DEFAULT_VIDEO_SEND_SETTINGS_PRESET_KEY,
   HIGH_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
   LOW_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
   MEDIUM_BANDWIDTH_VIDEO_SEND_SETTINGS_PRESET_KEY,
 } from '../shared-with-pluot-core/CommonIncludes';
-
-class MockMediaStreamTrack {}
-global.navigator.mediaDevices = { enumerateDevices: async () => [] };
-global.__dailyJsVersion__ = '*';
 
 import Daily from '../module';
 

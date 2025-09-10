@@ -1,7 +1,3 @@
-class MockMediaStreamTrack {}
-global.navigator.mediaDevices = { enumerateDevices: async () => [] };
-global.__dailyJsVersion__ = '*';
-
 import Daily from '../module';
 
 describe('DailyConfig', () => {
