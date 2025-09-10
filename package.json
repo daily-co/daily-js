@@ -72,7 +72,10 @@
   },
   "jest": {
     "verbose": true,
-    "testEnvironment": "jsdom"
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": [
+      "<rootDir>/jest.setup.js"
+    ]
   },
   "release": {
     "branches": [
