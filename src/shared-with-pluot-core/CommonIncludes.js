@@ -194,8 +194,8 @@ export const DAILY_EVENT_CUSTOM_BUTTON_CLICK = 'custom-button-click';
 
 export const DAILY_EVENT_SIDEBAR_VIEW_CHANGED = 'sidebar-view-changed';
 
-export const DAILY_EVENT_PICTURE_IN_PICTURE_STARTED = 'picture-in-picture-started';
-export const DAILY_EVENT_PICTURE_IN_PICTURE_STOPPED = 'picture-in-picture-stopped';
+export const DAILY_EVENT_PICTURE_IN_PICTURE_STARTED = 'pip-started';
+export const DAILY_EVENT_PICTURE_IN_PICTURE_STOPPED = 'pip-stopped';
 
 //
 // internal
