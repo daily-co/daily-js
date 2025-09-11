@@ -4735,7 +4735,9 @@ testCallQuality() and stopTestCallQuality() instead`);
     }
     for (var k in properties) {
       if (!FRAME_PROPS[k]) {
-        throw new Error(`unrecognized property '${k}'`);
+        console.warn(`Ignoring unrecognized property '${k}'`);
+        delete properties[k];
+        continue;
       }
       if (
         FRAME_PROPS[k].validate &&
