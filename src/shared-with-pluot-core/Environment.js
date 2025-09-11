@@ -77,6 +77,15 @@ export function isUserMediaAccessible() {
   );
 }
 
+/**
+ * Checks if MediaStreamTrack is supported.
+ * An option to test this is the [WebRTC Control Chrome extension](https://chromewebstore.google.com/detail/webrtc-control/fjkmabmdepjfammlpliljpnbhleegehm).
+ * @returns {boolean} True if MediaStreamTrack is supported, false otherwise.
+ */
+export function isMediaStreamTrackSupported() {
+  return typeof MediaStreamTrack !== 'undefined';
+}
+
 // Returns whether we should allow screen sharing from this browser.
 //
 // Note: technically we *could* try to support screen sharing from any browser where
@@ -283,7 +292,11 @@ export function browserCanUnifiedPlan(browserName, browserVersion) {
 }
 
 export function browserVideoSupported_p() {
-  return isUserMediaAccessible() && !browserNeedsUpgrade();
+  return (
+    isUserMediaAccessible() &&
+    isMediaStreamTrackSupported() &&
+    !browserNeedsUpgrade()
+  );
 }
 
 export function isAndroidApp() {

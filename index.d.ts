@@ -108,6 +108,8 @@ export type DailyEvent =
   | 'selected-devices-updated'
   | 'custom-button-click'
   | 'sidebar-view-changed'
+  | 'pip-started'
+  | 'pip-stopped'
   | 'dialin-connected'
   | 'dialin-ready'
   | 'dialin-error'
@@ -1222,6 +1224,8 @@ export interface DailyEventObjectNoPayload extends DailyEventObjectBase {
     | 'recording-upload-completed'
     | 'fullscreen'
     | 'exited-fullscreen'
+    | 'pip-started'
+    | 'pip-stopped'
   >;
 }
 
@@ -2150,6 +2154,8 @@ export interface DailyStartDialoutPhoneOptions {
   codecs?: DailyDialOutCodecs;
   callerId?: string;
   permissions?: DailySipPstnParticipantPermissions;
+  extension?: string;
+  waitBeforeExtensionDialSec?: number;
 }
 
 export type DailyStartDialoutOptions =
@@ -2175,6 +2181,8 @@ export interface DailySipCallTransferOptions {
   sessionId: string;
   toEndPoint: string;
   callerId?: string;
+  extension?: string;
+  waitBeforeExtensionDialSec?: number;
 }
 
 export interface DailySipReferOptions {

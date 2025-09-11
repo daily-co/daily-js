@@ -243,6 +243,8 @@ import {
   ADAPTIVE_02_LAYERS_VIDEO_SEND_SETTINGS_PRESET_KEY,
   ADAPTIVE_03_LAYERS_VIDEO_SEND_SETTINGS_PRESET_KEY,
   DAILY_METHOD_UPDATE_SCREENSHARE,
+  DAILY_EVENT_PICTURE_IN_PICTURE_STARTED,
+  DAILY_EVENT_PICTURE_IN_PICTURE_STOPPED,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -1194,6 +1196,12 @@ export default class DailyIframe extends EventEmitter {
 
   constructor(iframeish, properties = {}) {
     super();
+
+    if (!browserVideoSupported_p() && !isReactNative()) {
+      // WebRTC not supported or suppressed
+      throw new Error('WebRTC not supported or suppressed');
+    }
+
     this.strictMode =
       typeof properties.strictMode !== 'undefined'
         ? properties.strictMode
@@ -3615,6 +3623,8 @@ export default class DailyIframe extends EventEmitter {
       }
     }
 
+    validateDialoutExtension(args);
+
     if (args.permissions && args.permissions.canReceive) {
       const [isValid, invalidityReason] =
         CanReceivePermission.validateJSONObject(args.permissions.canReceive);
@@ -3672,6 +3682,7 @@ export default class DailyIframe extends EventEmitter {
     }
     args.useSipRefer = false;
     validateSipCallTransfer(args, 'sipCallTransfer');
+    validateDialoutExtension(args);
 
     return new Promise((resolve, reject) => {
       const k = (msg) => {
@@ -5166,6 +5177,12 @@ testCallQuality() and stopTestCallQuality() instead`);
       case DAILY_EVENT_SIDEBAR_VIEW_CHANGED:
         this.emitDailyJSEvent(msg);
         break;
+      case DAILY_EVENT_PICTURE_IN_PICTURE_STARTED:
+        this.emitDailyJSEvent(msg);
+        break;
+      case DAILY_EVENT_PICTURE_IN_PICTURE_STOPPED:
+        this.emitDailyJSEvent(msg);
+        break;
       case DAILY_EVENT_MEETING_SESSION_STATE_UPDATED: {
         const topologyChanged =
           this._meetingSessionState.topology !==
@@ -5810,6 +5827,37 @@ testCallQuality() and stopTestCallQuality() instead`);
           inputSettings: newInputSettings,
         });
       }
+    }
+  }
+}
+
+function validateDialoutExtension(args) {
+  if (args.extension) {
+    if (typeof args.extension !== 'string') {
+      throw new Error(`Error starting dial out: extension must be a string`);
+    }
+    if (args.extension.length > 20) {
+      throw new Error(
+        `Error starting dial out: extension length must be less than or equal to 20`
+      );
+    }
+  }
+
+  if (args.waitBeforeExtensionDialSec) {
+    if (typeof args.waitBeforeExtensionDialSec !== 'number') {
+      throw new Error(
+        `Error starting dial out: waitBeforeExtensionDialSec must be a number`
+      );
+    }
+    if (args.waitBeforeExtensionDialSec > 60) {
+      throw new Error(
+        `Error starting dial out: waitBeforeExtensionDialSec must be less than or equal to 60`
+      );
+    }
+    if (!args.extension) {
+      throw new Error(
+        `Error starting dial out: waitBeforeExtensionDialSec requires a phoneNumber and extension`
+      );
     }
   }
 }
