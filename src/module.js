@@ -3644,6 +3644,9 @@ export default class DailyIframe extends EventEmitter {
           `Error starting dial out: provider valid only for sipUri, not phoneNumber`
         );
       }
+      console.warn(
+        '(pre-beta) provider=daily is currently in pre-beta, things might break!'
+      );
     }
 
     return new Promise((resolve, reject) => {
