@@ -3633,6 +3633,21 @@ export default class DailyIframe extends EventEmitter {
         throw new Error(invalidityReason);
       }
     }
+    if (args.provider) {
+      if (args.provider !== 'daily') {
+        throw new Error(
+          `Error: provider can be set only to 'daily', got: ${args.provider}`
+        );
+      }
+      if (args.phoneNumber) {
+        throw new Error(
+          `Error starting dial out: provider valid only for sipUri, not phoneNumber`
+        );
+      }
+      console.warn(
+        '(pre-beta) provider=daily is currently in pre-beta, things might break!'
+      );
+    }
 
     return new Promise((resolve, reject) => {
       const k = (msg) => {
