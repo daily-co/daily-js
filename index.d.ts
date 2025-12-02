@@ -2037,6 +2037,7 @@ export interface DailyStreamingOptions<
   maxDuration?: number;
   backgroundColor?: string;
   instanceId?: string;
+  dataOutputs?: Array<string>;
   layout?: Method extends 'recording'
     ? DailyStreamingLayoutConfig<Type>
     : DailyLiveStreamingLayoutConfig<Type>;
