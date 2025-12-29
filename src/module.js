@@ -6694,7 +6694,7 @@ function validateSipCallTransfer(
   }
 }
 
-function validateSendDTMF({ sessionId, tones }) {
+function validateSendDTMF({ sessionId, tones, method }) {
   if (!(sessionId && tones)) {
     throw new Error(`sessionId and tones are mandatory parameter`);
   }
@@ -6708,6 +6708,14 @@ function validateSendDTMF({ sessionId, tones }) {
   let invalidTone = tones.match(dtmfPattern);
   if (invalidTone && invalidTone[0]) {
     throw new Error(`${invalidTone[0]} is not valid DTMF tone`);
+  }
+  if (method && !['sip-info', 'telephone-event', 'auto'].includes(method)) {
+    throw new Error(
+      `method must be one of 'sip-info', 'telephone-event', or 'auto'`
+    );
+  }
+  if (!method) {
+    method = 'auto';
   }
 }
 
