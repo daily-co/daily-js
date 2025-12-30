@@ -3784,6 +3784,8 @@ export default class DailyIframe extends EventEmitter {
 
     validateSendDTMF(args);
 
+    args.method = args.method || 'auto';
+
     return new Promise((resolve, reject) => {
       const k = (msg) => {
         if (msg.error) {
@@ -6713,9 +6715,6 @@ function validateSendDTMF({ sessionId, tones, method }) {
     throw new Error(
       `method must be one of 'sip-info', 'telephone-event', or 'auto'`
     );
-  }
-  if (!method) {
-    method = 'auto';
   }
 }
 
