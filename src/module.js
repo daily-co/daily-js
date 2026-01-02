@@ -3178,10 +3178,15 @@ export default class DailyIframe extends EventEmitter {
     const recType = args.type;
     if (
       recType &&
-      !(recType === 'cloud' || recType === 'raw-tracks' || recType === 'local')
+      !(
+        recType === 'cloud' ||
+        recType === 'cloud-audio-only' ||
+        recType === 'raw-tracks' ||
+        recType === 'local'
+      )
     ) {
       throw new Error(
-        `invalid type: ${recType}, allowed values 'cloud', 'raw-tracks', or 'local'`
+        `invalid type: ${recType}, allowed values 'cloud', 'cloud-audio-only', 'raw-tracks', or 'local'`
       );
     }
     this.sendMessageToCallMachine({
