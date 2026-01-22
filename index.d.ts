@@ -930,6 +930,7 @@ export interface DailyCpuLoadStats {
       targetScheduleDuration: number;
       cpuUsageBasedOnTargetEncode: number;
       cpuUsageBasedOnGlobalDecode: number;
+      cpuPressureState: 'nominal' | 'fair' | 'serious' | 'critical' | null;
       avgFrameDecodeTimeSec: number;
       avgInterFrameDelayStandardDeviation: number;
       totalReceivedVideoTracks: number;
