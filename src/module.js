@@ -2448,8 +2448,12 @@ export default class DailyIframe extends EventEmitter {
       this.properties = { ...this.properties, ...properties };
     }
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       let k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+          return;
+        }
         resolve({ camera: msg.camera, mic: msg.mic, speaker: msg.speaker });
       };
       this._preloadCache.inputSettings = this._prepInputSettingsForSharing(
@@ -2965,6 +2969,14 @@ export default class DailyIframe extends EventEmitter {
       this.stopTestCallQuality();
     }
 
+    // At this point a room url must have been provided, either now via join()
+    // or previously via load(), startCamera(), or preAuth()
+    if (!properties.url && !this.properties.url) {
+      const msg = 'No room URL has been provided';
+      console.error(msg);
+      return Promise.reject(new Error(msg));
+    }
+
     let newCss = false;
     if (this.needsLoad()) {
       this.updateIsPreparingToJoin(true);
@@ -3049,18 +3061,35 @@ export default class DailyIframe extends EventEmitter {
       false
     );
 
-    this.sendMessageToCallMachine({
-      action: DAILY_METHOD_JOIN,
-      properties: makeSafeForPostMessage(this.properties, this.callClientId),
-      preloadCache: makeSafeForPostMessage(
-        this._preloadCache,
-        this.callClientId
-      ),
-    });
+    let k = (msg) => {
+      // in case we get other callbacks before join completes
+      if (msg.error && this._joinedCallback) {
+        this._joinedCallback(null, msg.error);
+        this._joinedCallback = null;
+      }
+    };
+
+    this.sendMessageToCallMachine(
+      {
+        action: DAILY_METHOD_JOIN,
+        properties: makeSafeForPostMessage(this.properties, this.callClientId),
+        preloadCache: makeSafeForPostMessage(
+          this._preloadCache,
+          this.callClientId
+        ),
+      },
+      k
+    );
 
     return new Promise((resolve, reject) => {
       this._joinedCallback = (participants, error) => {
         if (this._callState === DAILY_STATE_ERROR) {
+          reject(error);
+          return;
+        } else if (error) {
+          // join failed due to non-fatal error. don't reset everything,
+          // just the call state
+          this._updateCallState(DAILY_STATE_LEFT);
           reject(error);
           return;
         }
@@ -3178,10 +3207,15 @@ export default class DailyIframe extends EventEmitter {
     const recType = args.type;
     if (
       recType &&
-      !(recType === 'cloud' || recType === 'raw-tracks' || recType === 'local')
+      !(
+        recType === 'cloud' ||
+        recType === 'cloud-audio-only' ||
+        recType === 'raw-tracks' ||
+        recType === 'local'
+      )
     ) {
       throw new Error(
-        `invalid type: ${recType}, allowed values 'cloud', 'raw-tracks', or 'local'`
+        `invalid type: ${recType}, allowed values 'cloud', 'cloud-audio-only', 'raw-tracks', or 'local'`
       );
     }
     this.sendMessageToCallMachine({

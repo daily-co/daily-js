@@ -930,6 +930,7 @@ export interface DailyCpuLoadStats {
       targetScheduleDuration: number;
       cpuUsageBasedOnTargetEncode: number;
       cpuUsageBasedOnGlobalDecode: number;
+      cpuPressureState: 'nominal' | 'fair' | 'serious' | 'critical' | null;
       avgFrameDecodeTimeSec: number;
       avgInterFrameDelayStandardDeviation: number;
       totalReceivedVideoTracks: number;
@@ -1020,6 +1021,7 @@ export interface DailyRoomInfo {
     enable_breakout_rooms?: boolean;
     enable_emoji_reactions?: boolean;
     enable_chat?: boolean;
+    enable_cpu_warning_notifications?: boolean;
     enable_shared_chat_history?: boolean;
     enable_hand_raising?: boolean;
     enable_knocking?: boolean;
@@ -1067,11 +1069,13 @@ export interface DailyRoomInfo {
     webhook_meeting_end?: any;
     max_live_streams?: number;
     max_streaming_instances_per_room?: number;
+    max_app_message_size?: number;
     enable_advanced_chat?: boolean;
     enable_breakout_rooms?: boolean;
     enable_emoji_reactions?: boolean;
     enable_chat?: boolean;
     enable_shared_chat_history?: boolean;
+    enable_cpu_warning_notifications?: boolean;
     enable_hand_raising?: boolean;
     enable_live_captions_ui?: boolean;
     enable_network_ui?: boolean;
@@ -2037,10 +2041,13 @@ export interface DailyStreamingOptions<
   maxDuration?: number;
   backgroundColor?: string;
   instanceId?: string;
+  dataOutputs?: Array<string>;
   layout?: Method extends 'recording'
     ? DailyStreamingLayoutConfig<Type>
     : DailyLiveStreamingLayoutConfig<Type>;
-  type?: Method extends 'recording' ? 'cloud' | 'raw-tracks' | 'local' : never;
+  type?: Method extends 'recording'
+    ? 'cloud' | 'raw-tracks' | 'local' | 'cloud-audio-only'
+    : never;
 }
 
 export interface DailyStreamingEndpoint {
