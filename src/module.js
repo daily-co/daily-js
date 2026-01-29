@@ -1138,7 +1138,7 @@ export default class DailyIframe extends EventEmitter {
       iframeEl.allow = 'microphone, camera';
     } else {
       iframeEl.allow =
-        'microphone; camera; autoplay; display-capture; screen-wake-lock';
+        'microphone; camera; autoplay; display-capture; screen-wake-lock; compute-pressure;';
     }
     iframeEl.style.visibility = 'hidden';
     parentEl.appendChild(iframeEl);
