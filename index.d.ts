@@ -1781,6 +1781,14 @@ export interface DailyEventObjectDialOutWarning extends DailyEventObjectBase {
   actionTraceId?: string;
 }
 
+export interface DailyEventObjectDtmfEvent extends DailyEventObjectBase {
+  action: Extract<DailyEvent, 'dtmf-event'>;
+  tone: string;
+  volume: number;
+  method: string;
+  sessionId?: string;
+}
+
 export type DailyEventObject<T extends DailyEvent = any> =
   T extends DailyEventObjectAppMessage['action']
     ? DailyEventObjectAppMessage
@@ -1896,6 +1904,8 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectDialOutStopped
     : T extends DailyEventObjectDialOutWarning['action']
     ? DailyEventObjectDialOutWarning
+    : T extends DailyEventObjectDtmfEvent['action']
+    ? DailyEventObjectDtmfEvent
     : T extends DailyEventObjectLocalAudioLevel['action']
     ? DailyEventObjectLocalAudioLevel
     : T extends DailyEventObjectRemoteParticipantsAudioLevel['action']
