@@ -1781,6 +1781,14 @@ export interface DailyEventObjectDialOutWarning extends DailyEventObjectBase {
   actionTraceId?: string;
 }
 
+export interface DailyEventObjectDtmfEvent extends DailyEventObjectBase {
+  action: Extract<DailyEvent, 'dtmf-event'>;
+  tone: string;
+  volume: number;
+  method: string;
+  sessionId?: string;
+}
+
 export type DailyEventObject<T extends DailyEvent = any> =
   T extends DailyEventObjectAppMessage['action']
     ? DailyEventObjectAppMessage
@@ -1896,6 +1904,8 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectDialOutStopped
     : T extends DailyEventObjectDialOutWarning['action']
     ? DailyEventObjectDialOutWarning
+    : T extends DailyEventObjectDtmfEvent['action']
+    ? DailyEventObjectDtmfEvent
     : T extends DailyEventObjectLocalAudioLevel['action']
     ? DailyEventObjectLocalAudioLevel
     : T extends DailyEventObjectRemoteParticipantsAudioLevel['action']
@@ -2193,6 +2203,19 @@ export interface DailySipCallTransferOptions {
   waitBeforeExtensionDialSec?: number;
 }
 
+export type DTMF_METHOD_SIP_INFO = 'sip-info';
+export type DTMF_METHOD_TELEPHONE_EVENT = 'telephone-event';
+export type DTMF_METHOD_AUTO = 'auto';
+
+export interface DailySendDtmfOptions {
+  sessionId: string;
+  tones: string;
+  method?:
+    | DTMF_METHOD_SIP_INFO
+    | DTMF_METHOD_TELEPHONE_EVENT
+    | DTMF_METHOD_AUTO;
+}
+
 export interface DailySipReferOptions {
   sessionId: string;
   toEndPoint: string;
@@ -2428,7 +2451,7 @@ export interface DailyCall {
     options: DailyStartDialoutOptions
   ): Promise<{ session?: DailyDialOutSession }>;
   stopDialOut(options: { sessionId: string }): Promise<void>;
-  sendDTMF(options: { sessionId: string; tones: string }): Promise<void>;
+  sendDTMF(options: DailySendDtmfOptions): Promise<void>;
   sipCallTransfer(options: DailySipCallTransferOptions): Promise<void>;
   sipRefer(options: DailySipReferOptions): Promise<void>;
 }

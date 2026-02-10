@@ -394,3 +394,4 @@ export const DAILY_EVENT_DIALOUT_ANSWERED = 'dialout-answered';
 export const DAILY_EVENT_DIALOUT_ERROR = 'dialout-error';
 export const DAILY_EVENT_DIALOUT_STOPPED = 'dialout-stopped';
 export const DAILY_EVENT_DIALOUT_WARNING = 'dialout-warning';
+export const DAILY_EVENT_DTMF_EVENT = 'dtmf-event';

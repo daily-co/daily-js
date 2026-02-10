@@ -236,6 +236,7 @@ import {
   DAILY_EVENT_DIALIN_STOPPED,
   DAILY_EVENT_DIALIN_WARNING,
   DAILY_EVENT_DIALOUT_CONNECTED,
+  DAILY_EVENT_DTMF_EVENT,
   DAILY_EVENT_DIALOUT_ANSWERED,
   DAILY_EVENT_DIALOUT_ERROR,
   DAILY_EVENT_DIALOUT_STOPPED,
@@ -3784,6 +3785,8 @@ export default class DailyIframe extends EventEmitter {
 
     validateSendDTMF(args);
 
+    args.method = args.method || 'auto';
+
     return new Promise((resolve, reject) => {
       const k = (msg) => {
         if (msg.error) {
@@ -5290,6 +5293,7 @@ testCallQuality() and stopTestCallQuality() instead`);
       case DAILY_EVENT_DIALIN_STOPPED:
       case DAILY_EVENT_DIALIN_WARNING:
       case DAILY_EVENT_DIALOUT_CONNECTED:
+      case DAILY_EVENT_DTMF_EVENT:
       case DAILY_EVENT_DIALOUT_ANSWERED:
       case DAILY_EVENT_DIALOUT_ERROR:
       case DAILY_EVENT_DIALOUT_STOPPED:
@@ -6694,7 +6698,7 @@ function validateSipCallTransfer(
   }
 }
 
-function validateSendDTMF({ sessionId, tones }) {
+function validateSendDTMF({ sessionId, tones, method }) {
   if (!(sessionId && tones)) {
     throw new Error(`sessionId and tones are mandatory parameter`);
   }
@@ -6708,6 +6712,11 @@ function validateSendDTMF({ sessionId, tones }) {
   let invalidTone = tones.match(dtmfPattern);
   if (invalidTone && invalidTone[0]) {
     throw new Error(`${invalidTone[0]} is not valid DTMF tone`);
+  }
+  if (method && !['sip-info', 'telephone-event', 'auto'].includes(method)) {
+    throw new Error(
+      `method must be one of 'sip-info', 'telephone-event', or 'auto'`
+    );
   }
 }
 
