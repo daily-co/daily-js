@@ -65,7 +65,17 @@ export default class CallObjectLoader {
     // Start a new load
     this._currentLoad = new LoadOperation(
       dailyConfig,
-      () => {
+      (url) => {
+        let base_url = url.slice(
+          0,
+          -1 * '/static/call-machine-object-bundle.js'.length
+        );
+
+        if (base_url.length && base_url.slice(-1) !== '/') {
+          base_url += '/';
+        }
+        dailyConfig.publicPath = base_url;
+
         successCallback(false); // false = "this load() wasn't a no-op"
       },
       (error, willRetry) => {
@@ -255,7 +265,7 @@ class LoadAttempt_ReactNative {
   }
 
   async start() {
-    // console.log("[LoadAttempt_ReactNative] starting...");
+    // console.log('[LoadAttempt_ReactNative] starting...');
     const url = callObjectBundleUrl(this._dailyConfig);
     const loadedFromIOSCache = await this._tryLoadFromIOSCache(url);
     !loadedFromIOSCache && this._loadFromNetwork(url);
@@ -316,7 +326,7 @@ class LoadAttempt_ReactNative {
       // console.log("[LoadAttempt_ReactNative] iOS cache hit");
       Function('"use strict";' + cacheResponse.code)();
       this.succeeded = true;
-      this._successCallback();
+      this._successCallback(url);
       return true;
     } catch (e) {
       // Report failure
@@ -366,7 +376,7 @@ class LoadAttempt_ReactNative {
       // console.log("[LoadAttempt_ReactNative] succeeded...");
       this._iosCache && this._iosCache.set(url, code, response.headers);
       this.succeeded = true;
-      this._successCallback();
+      this._successCallback(url);
     } catch (e) {
       clearTimeout(this._networkTimeout);
 
@@ -447,6 +457,7 @@ class LoadAttempt_Web {
   }
 
   start() {
+    // console.log('[LoadAttempt_Web] starting...');
     // Initialize global state tracking active load attempts
     if (!window._dailyCallMachineLoadWaitlist) {
       window._dailyCallMachineLoadWaitlist = new Set();
@@ -497,7 +508,7 @@ class LoadAttempt_Web {
       // console.log('[LoadAttempt_Web] succeeded');
       this._stopLoading();
       this.succeeded = true;
-      this._successCallback();
+      this._successCallback(url);
     };
 
     // On error, consider this attempt a failure
