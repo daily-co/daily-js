@@ -370,6 +370,11 @@ export interface DailyCallOptions {
   userData?: unknown;
   startVideoOff?: boolean;
   startAudioOff?: boolean;
+  /**
+   * Optional key-value map of client info to include in call logs (e.g. SDK name and version).
+   * Max 10 entries; keys max 64 chars (a-z, 0-9, _, -); values max 256 chars.
+   */
+  aboutClient?: Record<string, string>;
 }
 
 export interface StartCustomTrackOptions {
