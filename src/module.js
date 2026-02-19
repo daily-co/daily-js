@@ -482,6 +482,39 @@ const customIntegrationsType = {
   },
 };
 
+// aboutClient: optional key-value map for client info in logs. Validated on set.
+const ABOUT_CLIENT_MAX_ENTRIES = 10;
+const ABOUT_CLIENT_MAX_KEY_LENGTH = 64;
+const ABOUT_CLIENT_MAX_VALUE_LENGTH = 256;
+const ABOUT_CLIENT_KEY_REGEX = /^[a-zA-Z0-9_-]+$/;
+
+function validateAboutClient(value) {
+  if (value === undefined || value === null) return true;
+  if (typeof value !== 'object' || Array.isArray(value)) return false;
+  const entries = Object.entries(value);
+  if (entries.length > ABOUT_CLIENT_MAX_ENTRIES) return false;
+  for (const [k, v] of entries) {
+    if (typeof k !== 'string' || k.length > ABOUT_CLIENT_MAX_KEY_LENGTH) return false;
+    if (!ABOUT_CLIENT_KEY_REGEX.test(k)) return false;
+    if (typeof v !== 'string' || v.length > ABOUT_CLIENT_MAX_VALUE_LENGTH) return false;
+  }
+  return true;
+}
+
+function normalizeAboutClient(value) {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const result = {};
+  const entries = Object.entries(value).slice(0, ABOUT_CLIENT_MAX_ENTRIES);
+  for (const [k, v] of entries) {
+    if (typeof k !== 'string' || k.length > ABOUT_CLIENT_MAX_KEY_LENGTH) continue;
+    if (!ABOUT_CLIENT_KEY_REGEX.test(k)) continue;
+    if (typeof v !== 'string') continue;
+    result[k] = v.slice(0, ABOUT_CLIENT_MAX_VALUE_LENGTH);
+  }
+  return Object.keys(result).length ? result : undefined;
+}
+
 const FRAME_PROPS = {
   customIntegrations: {
     validate: validateCustomIntegrations,
@@ -808,6 +841,10 @@ const FRAME_PROPS = {
   },
   dailyJsVersion: {
     queryString: 'dailyJsVersion',
+  },
+  aboutClient: {
+    validate: validateAboutClient,
+    help: `aboutClient must be an object with up to ${ABOUT_CLIENT_MAX_ENTRIES} entries; keys must be strings made up of characters (a-z, 0-9, _, -) and a max length of ${ABOUT_CLIENT_MAX_KEY_LENGTH}; values must be strings with a max length of ${ABOUT_CLIENT_MAX_VALUE_LENGTH}`,
   },
   proxy: {
     queryString: 'proxy',
@@ -1242,6 +1279,9 @@ export default class DailyIframe extends EventEmitter {
     window._daily.instances[this.callClientId].tracks = this._sharedTracks;
 
     properties.dailyJsVersion = DailyIframe.version();
+    if (properties.aboutClient !== undefined) {
+      properties.aboutClient = normalizeAboutClient(properties.aboutClient);
+    }
     this._iframe = iframeish;
     this._callObjectMode = properties.layout === 'none' && !this._iframe;
     this._preloadCache = initializePreloadCache();
@@ -1317,6 +1357,9 @@ export default class DailyIframe extends EventEmitter {
 
     this.validateProperties(properties);
     this.properties = { ...properties };
+    if (this.properties.aboutClient !== undefined) {
+      this.properties.aboutClient = normalizeAboutClient(this.properties.aboutClient);
+    }
     if (!this._inputSettings) {
       this._inputSettings = {};
     }
