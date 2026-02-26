@@ -55,7 +55,7 @@
     "dotenv": "^16.5.0",
     "jest": "^27.5.1",
     "prettier": "^2.5.1",
-    "rollup": "^3.29.5",
+    "rollup": "^3.30.0",
     "semantic-release": "^22.0.12",
     "ts-jest": "^27.1.5",
     "webpack": "^5.99.9",
