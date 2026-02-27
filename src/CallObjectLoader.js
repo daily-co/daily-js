@@ -44,7 +44,9 @@ export default class CallObjectLoader {
    *      (LoadAttempt_Web) instead of the legacy loading mechanism
    *      (LoadAttempt_ReactNative).
    *    - proxyUrl: Url provided to proxy requests through
-   *    - callObjectBundleUrlOverride: overrides where to pull the bundle from.
+   *    - bundlePathOverride: overrides the folder to find all bundles required
+   *      for Daily's functionality.
+   *
    * @param successCallback Callback function that takes a wasNoOp argument
    *  (true if call object script was ever loaded once before).
    * @param failureCallback Callback function that takes an error message and a
@@ -340,7 +342,10 @@ class LoadAttempt_ReactNative {
    * @param {string} url The url of the call object bundle to load.
    */
   async _loadFromNetwork(url) {
-    // console.log("[LoadAttempt_ReactNative] trying to load from network...");
+    // console.log(
+    //   '[LoadAttempt_ReactNative] trying to load from network...',
+    //   url
+    // );
     this._networkTimeout = setTimeout(() => {
       this._networkTimedOut = true;
       this._failureCallback({
@@ -485,7 +490,7 @@ class LoadAttempt_Web {
   }
 
   _startLoading(url) {
-    // console.log('[LoadAttempt_Web] trying to load...');
+    // console.log('[LoadAttempt_Web] trying to load...', url);
     this._signUpForCallMachineLoadWaitlist();
 
     // Start a timeout, after which we'll consider this attempt a failure

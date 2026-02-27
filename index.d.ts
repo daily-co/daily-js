@@ -385,6 +385,9 @@ export interface StartCustomTrackOptions {
 }
 
 export interface DailyLoadOptions extends DailyCallOptions {
+  /**
+   * @deprecated This property has no effect and will be removed.
+   */
   baseUrl?: string;
 }
 
@@ -446,7 +449,14 @@ export interface DailyAdvancedConfig {
    */
   userMediaVideoConstraints?: MediaTrackConstraints;
   avoidEval?: boolean;
+  /**
+   * @deprecated This property will be removed. Instead, use bundlePathOverride,
+   *             which supports setting the folder to find all bundles required
+   *             for Daily's functionality. This property only overrides the
+   *             URL for the initial call object bundle.
+   */
   callObjectBundleUrlOverride?: string;
+  bundlePathOverride?: string;
   alwaysIncludeMicInPermissionPrompt?: boolean;
   alwaysIncludeCamInPermissionPrompt?: boolean;
   enableIndependentDevicePermissionPrompts?: boolean;

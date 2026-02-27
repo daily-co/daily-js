@@ -494,9 +494,11 @@ function validateAboutClient(value) {
   const entries = Object.entries(value);
   if (entries.length > ABOUT_CLIENT_MAX_ENTRIES) return false;
   for (const [k, v] of entries) {
-    if (typeof k !== 'string' || k.length > ABOUT_CLIENT_MAX_KEY_LENGTH) return false;
+    if (typeof k !== 'string' || k.length > ABOUT_CLIENT_MAX_KEY_LENGTH)
+      return false;
     if (!ABOUT_CLIENT_KEY_REGEX.test(k)) return false;
-    if (typeof v !== 'string' || v.length > ABOUT_CLIENT_MAX_VALUE_LENGTH) return false;
+    if (typeof v !== 'string' || v.length > ABOUT_CLIENT_MAX_VALUE_LENGTH)
+      return false;
   }
   return true;
 }
@@ -507,7 +509,8 @@ function normalizeAboutClient(value) {
   const result = {};
   const entries = Object.entries(value).slice(0, ABOUT_CLIENT_MAX_ENTRIES);
   for (const [k, v] of entries) {
-    if (typeof k !== 'string' || k.length > ABOUT_CLIENT_MAX_KEY_LENGTH) continue;
+    if (typeof k !== 'string' || k.length > ABOUT_CLIENT_MAX_KEY_LENGTH)
+      continue;
     if (!ABOUT_CLIENT_KEY_REGEX.test(k)) continue;
     if (typeof v !== 'string') continue;
     result[k] = v.slice(0, ABOUT_CLIENT_MAX_VALUE_LENGTH);
@@ -531,7 +534,10 @@ const FRAME_PROPS = {
     help: 'url should be a string',
   },
   baseUrl: {
-    validate: (url) => typeof url === 'string',
+    validate: (url) => {
+      console.warn('baseUrl is deprecated and has no effect');
+      return typeof url === 'string';
+    },
     help: 'baseUrl should be a string',
   },
   token: {
@@ -1358,7 +1364,9 @@ export default class DailyIframe extends EventEmitter {
     this.validateProperties(properties);
     this.properties = { ...properties };
     if (this.properties.aboutClient !== undefined) {
-      this.properties.aboutClient = normalizeAboutClient(this.properties.aboutClient);
+      this.properties.aboutClient = normalizeAboutClient(
+        this.properties.aboutClient
+      );
     }
     if (!this._inputSettings) {
       this._inputSettings = {};
@@ -2950,6 +2958,11 @@ export default class DailyIframe extends EventEmitter {
       // non-iframe, callObjectMode
       return new Promise((resolve, reject) => {
         this._callObjectLoader.cancel();
+        if (this.properties.dailyConfig == null) {
+          // initialize dailyConfig so that the call object loader can add
+          // properties to it as needed (e.g. bundle path)
+          this.properties.dailyConfig = {};
+        }
         const startTime = Date.now();
         this._callObjectLoader.load(
           this.properties.dailyConfig,

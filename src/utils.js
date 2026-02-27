@@ -18,24 +18,46 @@ export function maybeProxyHttpsUrl(url, dailyConfig) {
   return url;
 }
 
-export function callObjectBundleUrl(dailyConfig) {
-  // ADVANCED: if a custom bundle URL override is specified, use that.
+export function bundlePath(dailyConfig) {
+  // ADVANCED: if a custom bundle path override is specified, use that.
+  if (dailyConfig?.bundlePathOverride) {
+    return dailyConfig.bundlePathOverride;
+  }
   if (dailyConfig?.callObjectBundleUrlOverride) {
-    return dailyConfig.callObjectBundleUrlOverride;
+    const url = dailyConfig.callObjectBundleUrlOverride;
+    return url.substring(0, url.lastIndexOf('/'));
   }
 
-  // 1. Dev build of daily-js --> load bundle from __devCallMachineUrl__, which
+  // 1. Dev build of daily-js --> load bundle from __devBundlePath__, which
   //    is either:
   //    - DEV_CALL_MACHINE_URL env variable (read at build time)
   //    - default local dev URL
   //    See webpack or rollup config for details.
   // 2. Prod build of daily-js --> load bundle from version-specific prod URL.
-  return process.env.NODE_ENV === 'development'
-    ? __devCallMachineUrl__
-    : maybeProxyHttpsUrl(
-        `https://c.daily.co/call-machine/versioned/${__dailyJsVersion__}/static/call-machine-object-bundle.js`,
-        dailyConfig
-      );
+  let url =
+    process.env.NODE_ENV === 'development'
+      ? __devBundlePath__
+      : maybeProxyHttpsUrl(
+          `https://c.daily.co/call-machine/versioned/${__dailyJsVersion__}/static`,
+          dailyConfig
+        );
+  return url.endsWith('/') ? url.slice(0, -1) : url;
+}
+
+export function callObjectBundleUrl(dailyConfig) {
+  // ADVANCED: if a custom bundle URL override is specified, use that.
+  if (dailyConfig?.callObjectBundleUrlOverride) {
+    console.warn(
+      'The callObjectBundleUrlOverride property is deprecated and will be removed.' +
+        ' Please use bundlePathOverride instead. When providing a bundlePathOverride,' +
+        ' the URL should point to a folder containing all Daily bundles;' +
+        ' call-machine-object-bundle.js and 460-bundle.js.'
+    );
+    return dailyConfig.callObjectBundleUrlOverride;
+  }
+
+  const url = bundlePath(dailyConfig) + '/call-machine-object-bundle.js';
+  return url;
 }
 
 export function validateHttpUrl(string) {
