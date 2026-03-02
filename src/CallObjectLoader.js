@@ -27,6 +27,7 @@ export default class CallObjectLoader {
   constructor(callClientId) {
     this._currentLoad = null;
     this._callClientId = callClientId;
+    this._publicPath = null;
   }
 
   /**
@@ -55,6 +56,7 @@ export default class CallObjectLoader {
   load(dailyConfig = {}, successCallback, failureCallback) {
     if (this.loaded) {
       window._daily.instances[this._callClientId].callMachine.reset();
+      window._daily.instances[this._callClientId].publicPath = this._publicPath;
       successCallback(true); // true = "this load() was a no-op"
       return;
     }
@@ -76,8 +78,8 @@ export default class CallObjectLoader {
         if (base_url.length && base_url.slice(-1) !== '/') {
           base_url += '/';
         }
-        dailyConfig.publicPath = base_url;
-
+        this._publicPath = base_url;
+        window._daily.instances[this._callClientId].publicPath = base_url;
         successCallback(false); // false = "this load() wasn't a no-op"
       },
       (error, willRetry) => {

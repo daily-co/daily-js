@@ -2958,11 +2958,6 @@ export default class DailyIframe extends EventEmitter {
       // non-iframe, callObjectMode
       return new Promise((resolve, reject) => {
         this._callObjectLoader.cancel();
-        if (this.properties.dailyConfig == null) {
-          // initialize dailyConfig so that the call object loader can add
-          // properties to it as needed (e.g. bundle path)
-          this.properties.dailyConfig = {};
-        }
         const startTime = Date.now();
         this._callObjectLoader.load(
           this.properties.dailyConfig,
