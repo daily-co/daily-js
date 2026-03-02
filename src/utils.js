@@ -22,14 +22,16 @@ export function bundlePath(dailyConfig) {
   // ADVANCED: if a custom bundle path override is specified, use that.
   if (dailyConfig?.bundlePathOverride) {
     const override = dailyConfig.bundlePathOverride;
-    const normalized = override.endsWith('/') ? override.slice(0, -1) : override;
+    const normalized = override.endsWith('/')
+      ? override.slice(0, -1)
+      : override;
     if (!normalized.endsWith('/static') && !normalized.endsWith('\\static')) {
       console.warn(
         'Daily: bundlePathOverride must point to a URL ending in "static" ' +
           '(e.g. "https://example.com/v1/static"). The override will be ignored.'
       );
     } else {
-      return override;
+      return normalized;
     }
   }
   if (dailyConfig?.callObjectBundleUrlOverride) {
@@ -39,7 +41,7 @@ export function bundlePath(dailyConfig) {
 
   // 1. Dev build of daily-js --> load bundle from __devBundlePath__, which
   //    is either:
-  //    - DEV_CALL_MACHINE_URL env variable (read at build time)
+  //    - DEV_BUNDLE_PATH env variable (read at build time)
   //    - default local dev URL
   //    See webpack or rollup config for details.
   // 2. Prod build of daily-js --> load bundle from version-specific prod URL.
@@ -59,8 +61,8 @@ export function callObjectBundleUrl(dailyConfig) {
     console.warn(
       'The callObjectBundleUrlOverride property is deprecated and will be removed.' +
         ' Please use bundlePathOverride instead. When providing a bundlePathOverride,' +
-        ' the URL should point to a folder containing all Daily bundles;' +
-        ' call-machine-object-bundle.js and 460-bundle.js.'
+        ' the URL should point to a folder named "static" containing all Daily bundles;' +
+        ' including call-machine-object-bundle.js and audio-processor-bundle.js.'
     );
     return dailyConfig.callObjectBundleUrlOverride;
   }
