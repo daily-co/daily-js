@@ -21,7 +21,16 @@ export function maybeProxyHttpsUrl(url, dailyConfig) {
 export function bundlePath(dailyConfig) {
   // ADVANCED: if a custom bundle path override is specified, use that.
   if (dailyConfig?.bundlePathOverride) {
-    return dailyConfig.bundlePathOverride;
+    const override = dailyConfig.bundlePathOverride;
+    const normalized = override.endsWith('/') ? override.slice(0, -1) : override;
+    if (!normalized.endsWith('/static') && !normalized.endsWith('\\static')) {
+      console.warn(
+        'Daily: bundlePathOverride must point to a URL ending in "static" ' +
+          '(e.g. "https://example.com/v1/static"). The override will be ignored.'
+      );
+    } else {
+      return override;
+    }
   }
   if (dailyConfig?.callObjectBundleUrlOverride) {
     const url = dailyConfig.callObjectBundleUrlOverride;
