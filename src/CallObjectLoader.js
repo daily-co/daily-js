@@ -70,10 +70,7 @@ export default class CallObjectLoader {
     this._currentLoad = new LoadOperation(
       dailyConfig,
       (url) => {
-        let base_url = url.slice(
-          0,
-          -1 * '/static/call-machine-object-bundle.js'.length
-        );
+        let base_url = url.substring(0, url.lastIndexOf('/'));
 
         if (base_url.length && base_url.slice(-1) !== '/') {
           base_url += '/';

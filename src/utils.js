@@ -20,38 +20,16 @@ export function maybeProxyHttpsUrl(url, dailyConfig) {
 
 export function bundlePath(dailyConfig) {
   // ADVANCED: if a custom bundle path override is specified, use that.
-  const normalizeUrl = (url) => {
-    const normalized = url.endsWith('/') ? url.slice(0, -1) : url;
-    if (!normalized.endsWith('/static') && !normalized.endsWith('\\static')) {
-      return null;
-    }
-    return normalized;
-  };
   if (dailyConfig?.bundlePathOverride) {
-    const normalized = normalizeUrl(dailyConfig.bundlePathOverride);
-    if (normalized) {
-      return normalized;
-    }
-    console.warn(
-      'bundlePathOverride must point to a URL ending in "static" ' +
-        '(e.g. "https://example.com/v1/static"). This override will be ignored.'
-    );
+    const url = dailyConfig.bundlePathOverride;
+    return url.endsWith('/') ? url.slice(0, -1) : url;
   }
   if (dailyConfig?.callObjectBundleUrlOverride) {
     // Note: This should never happen since the only thing that calls bundlePath is
     // callObjectBundleUrl, which returns early if callObjectBundleUrlOverride is set.
-    let url = dailyConfig.callObjectBundleUrlOverride;
-    url = url.substring(0, url.lastIndexOf('/'));
-    const normalized = normalizeUrl(url);
-    if (normalized) {
-      return normalized;
-    }
-    console.warn(
-      'callObjectBundleUrlOverride is deprecated. Please use bundlePathOverride instead. ' +
-        'The URL provided must point to a folder named "static" containing all Daily bundles;' +
-        ' including call-machine-object-bundle.js and audio-processor-bundle.js. ' +
-        'This override will be ignored.'
-    );
+    const url = dailyConfig.callObjectBundleUrlOverride;
+    const dir = url.substring(0, url.lastIndexOf('/'));
+    return dir.endsWith('/') ? dir.slice(0, -1) : dir;
   }
 
   // 1. Dev build of daily-js --> load bundle from __devBundlePath__, which
@@ -76,8 +54,8 @@ export function callObjectBundleUrl(dailyConfig) {
     console.warn(
       'The callObjectBundleUrlOverride property is deprecated and will be removed.' +
         ' Please use bundlePathOverride instead. When providing a bundlePathOverride,' +
-        ' the URL should point to a folder named "static" containing all Daily bundles;' +
-        ' including call-machine-object-bundle.js and audio-processor-bundle.js.'
+        ' the URL should point to the directory containing all Daily bundles' +
+        ' (call-machine-object-bundle.js and audio-processor-bundle.js).'
     );
     return dailyConfig.callObjectBundleUrlOverride;
   }
