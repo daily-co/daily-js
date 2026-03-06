@@ -5869,7 +5869,8 @@ testCallQuality() and stopTestCallQuality() instead`);
     scope.setClient(client);
     client.init();
 
-    this.session_id && scope.setExtra('sessionId', this.session_id);
+    this._participants?.local?.session_id &&
+      scope.setExtra('sessionId', this._participants.local.session_id);
     if (this.properties) {
       let properties = { ...this.properties };
 
