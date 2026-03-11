@@ -17,7 +17,7 @@ describe('Custom tracks', () => {
     const mode = undefined;
     expect(() =>
       callObject.validateCustomTrack(track, mode, trackName)
-    ).toThrowError(
+    ).toThrow(
       'Custom track `trackName` must not be more than 50 characters'
     );
   });
@@ -28,7 +28,7 @@ describe('Custom tracks', () => {
     const mode = undefined;
     expect(() =>
       callObject.validateCustomTrack(track, mode, trackName)
-    ).not.toThrowError();
+    ).not.toThrow();
   });
 
   test('Track name must not match a track name already used by daily', () => {
@@ -47,7 +47,7 @@ describe('Custom tracks', () => {
     reservedNames.forEach((trackName) => {
       expect(() =>
         callObject.validateCustomTrack(track, mode, trackName)
-      ).toThrowError(expectedError);
+      ).toThrow(expectedError);
     });
   });
 
@@ -57,7 +57,7 @@ describe('Custom tracks', () => {
     const mode = undefined;
     expect(() =>
       callObject.validateCustomTrack(track, mode, trackName)
-    ).toThrowError(
+    ).toThrow(
       'Custom tracks provided must be instances of MediaStreamTrack'
     );
   });
@@ -67,19 +67,19 @@ describe('Custom tracks', () => {
     const trackName = 'test mode';
     expect(() =>
       callObject.validateCustomTrack(track, undefined, trackName)
-    ).not.toThrowError();
+    ).not.toThrow();
     expect(() =>
       callObject.validateCustomTrack(track, 'music', trackName)
-    ).not.toThrowError();
+    ).not.toThrow();
     expect(() =>
       callObject.validateCustomTrack(track, 'speech', trackName)
-    ).not.toThrowError();
+    ).not.toThrow();
     expect(() =>
       callObject.validateCustomTrack(track, { bitrate: 1000 }, trackName)
-    ).not.toThrowError();
+    ).not.toThrow();
     expect(() =>
       callObject.validateCustomTrack(track, 'invalid', trackName)
-    ).toThrowError(
+    ).toThrow(
       'Custom track `mode` must be either `music` | `speech` | `DailyMicAudioModeSettings` or `undefined`'
     );
   });
@@ -89,6 +89,6 @@ describe('Custom tracks', () => {
     const trackName = 'fake track';
     expect(() =>
       callObject.startCustomTrack({ track, trackName })
-    ).toThrowError('startCustomTrack() only supported after join.');
+    ).toThrow('startCustomTrack() only supported after join.');
   });
 });
