@@ -3837,6 +3837,7 @@ export default class DailyIframe extends EventEmitter {
     validateSendDTMF(args);
 
     args.method = args.method || 'auto';
+    args.digitDurationMs = args.digitDurationMs || 1000;
 
     return new Promise((resolve, reject) => {
       const k = (msg) => {
@@ -6750,7 +6751,7 @@ function validateSipCallTransfer(
   }
 }
 
-function validateSendDTMF({ sessionId, tones, method }) {
+function validateSendDTMF({ sessionId, tones, method, digitDurationMs }) {
   if (!(sessionId && tones)) {
     throw new Error(`sessionId and tones are mandatory parameter`);
   }
@@ -6769,6 +6770,14 @@ function validateSendDTMF({ sessionId, tones, method }) {
     throw new Error(
       `method must be one of 'sip-info', 'telephone-event', or 'auto'`
     );
+  }
+  if (digitDurationMs !== undefined) {
+    if (typeof digitDurationMs !== 'number') {
+      throw new Error(`digitDurationMs must be a number`);
+    }
+    if (digitDurationMs < 50 || digitDurationMs > 2000) {
+      throw new Error(`digitDurationMs must be between 50ms and 2000ms`);
+    }
   }
 }
 

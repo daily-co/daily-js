@@ -2229,6 +2229,7 @@ export interface DailySendDtmfOptions {
     | DTMF_METHOD_SIP_INFO
     | DTMF_METHOD_TELEPHONE_EVENT
     | DTMF_METHOD_AUTO;
+  digitDurationMs?: number;
 }
 
 export interface DailySipReferOptions {
