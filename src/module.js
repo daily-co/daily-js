@@ -6775,6 +6775,12 @@ function validateSendDTMF({ sessionId, tones, method, digitDurationMs }) {
     if (typeof digitDurationMs !== 'number') {
       throw new Error(`digitDurationMs must be a number`);
     }
+    if (
+      !Number.isFinite(digitDurationMs) ||
+      !Number.isInteger(digitDurationMs)
+    ) {
+      throw new Error(`digitDurationMs must be a finite integer number`);
+    }
     if (digitDurationMs < 50 || digitDurationMs > 2000) {
       throw new Error(`digitDurationMs must be between 50ms and 2000ms`);
     }
