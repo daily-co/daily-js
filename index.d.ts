@@ -370,6 +370,11 @@ export interface DailyCallOptions {
   userData?: unknown;
   startVideoOff?: boolean;
   startAudioOff?: boolean;
+  /**
+   * Optional key-value map of client info to include in call logs (e.g. SDK name and version).
+   * Max 10 entries; keys max 64 chars (a-z, 0-9, _, -); values max 256 chars.
+   */
+  aboutClient?: Record<string, string>;
 }
 
 export interface StartCustomTrackOptions {
@@ -380,6 +385,9 @@ export interface StartCustomTrackOptions {
 }
 
 export interface DailyLoadOptions extends DailyCallOptions {
+  /**
+   * @deprecated This property has no effect and will be removed.
+   */
   baseUrl?: string;
 }
 
@@ -441,7 +449,14 @@ export interface DailyAdvancedConfig {
    */
   userMediaVideoConstraints?: MediaTrackConstraints;
   avoidEval?: boolean;
+  /**
+   * @deprecated This property will be removed. Instead, use bundlePathOverride,
+   *             which supports setting the folder to find all bundles required
+   *             for Daily's functionality. This property only overrides the
+   *             URL for the initial call object bundle.
+   */
   callObjectBundleUrlOverride?: string;
+  bundlePathOverride?: string;
   alwaysIncludeMicInPermissionPrompt?: boolean;
   alwaysIncludeCamInPermissionPrompt?: boolean;
   enableIndependentDevicePermissionPrompts?: boolean;
@@ -2214,6 +2229,7 @@ export interface DailySendDtmfOptions {
     | DTMF_METHOD_SIP_INFO
     | DTMF_METHOD_TELEPHONE_EVENT
     | DTMF_METHOD_AUTO;
+  digitDurationMs?: number;
 }
 
 export interface DailySipReferOptions {

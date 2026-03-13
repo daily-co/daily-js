@@ -22,13 +22,13 @@ describe('UpdateSendSettings', () => {
     let updateSendSettings = null;
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
-    ).toThrowError(
+    ).toThrow(
       'Send settings must contain at least information for one track!'
     );
     updateSendSettings = {};
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
-    ).toThrowError(
+    ).toThrow(
       'Send settings must contain at least information for one track!'
     );
   });
@@ -37,7 +37,7 @@ describe('UpdateSendSettings', () => {
     let updateSendSettings = { video: {} };
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
-    ).toThrowError(
+    ).toThrow(
       'Video send settings must contain at least maxQuality, allowAdaptiveLayers or encodings attribute'
     );
   });
@@ -48,7 +48,7 @@ describe('UpdateSendSettings', () => {
     };
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
-    ).toThrowError(
+    ).toThrow(
       'Video send settings should be either an object or one of the supported presets: default-video,bandwidth-optimized,bandwidth-and-quality-balanced,quality-optimized'
     );
     updateSendSettings = {
@@ -83,7 +83,7 @@ describe('UpdateSendSettings', () => {
     };
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
-    ).toThrowError(
+    ).toThrow(
       'Video send settings should be either an object or one of the supported presets: default-video,bandwidth-optimized,bandwidth-and-quality-balanced,quality-optimized'
     );
   });
@@ -96,7 +96,7 @@ describe('UpdateSendSettings', () => {
     };
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
-    ).toThrowError('maxQuality must be either low, medium or high');
+    ).toThrow('maxQuality must be either low, medium or high');
     updateSendSettings = {
       video: {
         maxQuality: 'low',
@@ -133,7 +133,7 @@ describe('UpdateSendSettings', () => {
       'Encodings must be defined as: low, low and medium, or low, medium and high.';
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
-    ).toThrowError(expectedEncodingErrorMsg);
+    ).toThrow(expectedEncodingErrorMsg);
     updateSendSettings = {
       video: {
         encodings: {
@@ -147,7 +147,7 @@ describe('UpdateSendSettings', () => {
     };
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
-    ).toThrowError(expectedEncodingErrorMsg);
+    ).toThrow(expectedEncodingErrorMsg);
     updateSendSettings = {
       video: {
         encodings: {
@@ -166,7 +166,7 @@ describe('UpdateSendSettings', () => {
     };
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
-    ).toThrowError(expectedEncodingErrorMsg);
+    ).toThrow(expectedEncodingErrorMsg);
     updateSendSettings = {
       video: {
         encodings: {
@@ -205,7 +205,7 @@ describe('UpdateSendSettings', () => {
       'Empty encoding is not allowed. At least one of these valid keys should be specified:maxBitrate,maxFramerate,scaleResolutionDownBy';
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
-    ).toThrowError(expectedEncodingErrorMsg);
+    ).toThrow(expectedEncodingErrorMsg);
     updateSendSettings = {
       video: {
         encodings: {
@@ -220,7 +220,7 @@ describe('UpdateSendSettings', () => {
     };
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
-    ).toThrowError(expectedEncodingErrorMsg);
+    ).toThrow(expectedEncodingErrorMsg);
     updateSendSettings = {
       video: {
         encodings: {
@@ -240,6 +240,6 @@ describe('UpdateSendSettings', () => {
     };
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
-    ).toThrowError(expectedEncodingErrorMsg);
+    ).toThrow(expectedEncodingErrorMsg);
   });
 });

@@ -27,6 +27,7 @@ export default class CallObjectLoader {
   constructor(callClientId) {
     this._currentLoad = null;
     this._callClientId = callClientId;
+    this._publicPath = null;
   }
 
   /**
@@ -44,7 +45,9 @@ export default class CallObjectLoader {
    *      (LoadAttempt_Web) instead of the legacy loading mechanism
    *      (LoadAttempt_ReactNative).
    *    - proxyUrl: Url provided to proxy requests through
-   *    - callObjectBundleUrlOverride: overrides where to pull the bundle from.
+   *    - bundlePathOverride: overrides the folder to find all bundles required
+   *      for Daily's functionality.
+   *
    * @param successCallback Callback function that takes a wasNoOp argument
    *  (true if call object script was ever loaded once before).
    * @param failureCallback Callback function that takes an error message and a
@@ -53,6 +56,7 @@ export default class CallObjectLoader {
   load(dailyConfig = {}, successCallback, failureCallback) {
     if (this.loaded) {
       window._daily.instances[this._callClientId].callMachine.reset();
+      window._daily.instances[this._callClientId].publicPath = this._publicPath;
       successCallback(true); // true = "this load() was a no-op"
       return;
     }
@@ -66,16 +70,13 @@ export default class CallObjectLoader {
     this._currentLoad = new LoadOperation(
       dailyConfig,
       (url) => {
-        let base_url = url.slice(
-          0,
-          -1 * '/static/call-machine-object-bundle.js'.length
-        );
+        let base_url = url.substring(0, url.lastIndexOf('/'));
 
         if (base_url.length && base_url.slice(-1) !== '/') {
           base_url += '/';
         }
-        dailyConfig.publicPath = base_url;
-
+        this._publicPath = base_url;
+        window._daily.instances[this._callClientId].publicPath = base_url;
         successCallback(false); // false = "this load() wasn't a no-op"
       },
       (error, willRetry) => {
@@ -340,7 +341,10 @@ class LoadAttempt_ReactNative {
    * @param {string} url The url of the call object bundle to load.
    */
   async _loadFromNetwork(url) {
-    // console.log("[LoadAttempt_ReactNative] trying to load from network...");
+    // console.log(
+    //   '[LoadAttempt_ReactNative] trying to load from network...',
+    //   url
+    // );
     this._networkTimeout = setTimeout(() => {
       this._networkTimedOut = true;
       this._failureCallback({
@@ -485,7 +489,7 @@ class LoadAttempt_Web {
   }
 
   _startLoading(url) {
-    // console.log('[LoadAttempt_Web] trying to load...');
+    // console.log('[LoadAttempt_Web] trying to load...', url);
     this._signUpForCallMachineLoadWaitlist();
 
     // Start a timeout, after which we'll consider this attempt a failure

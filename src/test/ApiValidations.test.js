@@ -27,7 +27,7 @@ it('Track constraints must be Object Type', () => {
     simulcastEncodings: [{}],
   };
 
-  expect(() => validateRMPEncodeFunc(validateTcIsObject)).toThrowError();
+  expect(() => validateRMPEncodeFunc(validateTcIsObject)).toThrow();
 });
 
 const validateSessionDataFunc = Daily.__get__('validateSessionDataUpdate');

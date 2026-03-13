@@ -482,6 +482,42 @@ const customIntegrationsType = {
   },
 };
 
+// aboutClient: optional key-value map for client info in logs. Validated on set.
+const ABOUT_CLIENT_MAX_ENTRIES = 10;
+const ABOUT_CLIENT_MAX_KEY_LENGTH = 64;
+const ABOUT_CLIENT_MAX_VALUE_LENGTH = 256;
+const ABOUT_CLIENT_KEY_REGEX = /^[a-zA-Z0-9_-]+$/;
+
+function validateAboutClient(value) {
+  if (value === undefined || value === null) return true;
+  if (typeof value !== 'object' || Array.isArray(value)) return false;
+  const entries = Object.entries(value);
+  if (entries.length > ABOUT_CLIENT_MAX_ENTRIES) return false;
+  for (const [k, v] of entries) {
+    if (typeof k !== 'string' || k.length > ABOUT_CLIENT_MAX_KEY_LENGTH)
+      return false;
+    if (!ABOUT_CLIENT_KEY_REGEX.test(k)) return false;
+    if (typeof v !== 'string' || v.length > ABOUT_CLIENT_MAX_VALUE_LENGTH)
+      return false;
+  }
+  return true;
+}
+
+function normalizeAboutClient(value) {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const result = {};
+  const entries = Object.entries(value).slice(0, ABOUT_CLIENT_MAX_ENTRIES);
+  for (const [k, v] of entries) {
+    if (typeof k !== 'string' || k.length > ABOUT_CLIENT_MAX_KEY_LENGTH)
+      continue;
+    if (!ABOUT_CLIENT_KEY_REGEX.test(k)) continue;
+    if (typeof v !== 'string') continue;
+    result[k] = v.slice(0, ABOUT_CLIENT_MAX_VALUE_LENGTH);
+  }
+  return Object.keys(result).length ? result : undefined;
+}
+
 const FRAME_PROPS = {
   customIntegrations: {
     validate: validateCustomIntegrations,
@@ -498,7 +534,10 @@ const FRAME_PROPS = {
     help: 'url should be a string',
   },
   baseUrl: {
-    validate: (url) => typeof url === 'string',
+    validate: (url) => {
+      console.warn('baseUrl is deprecated and has no effect');
+      return typeof url === 'string';
+    },
     help: 'baseUrl should be a string',
   },
   token: {
@@ -808,6 +847,10 @@ const FRAME_PROPS = {
   },
   dailyJsVersion: {
     queryString: 'dailyJsVersion',
+  },
+  aboutClient: {
+    validate: validateAboutClient,
+    help: `aboutClient must be an object with up to ${ABOUT_CLIENT_MAX_ENTRIES} entries; keys must be strings made up of characters (a-z, 0-9, _, -) and a max length of ${ABOUT_CLIENT_MAX_KEY_LENGTH}; values must be strings with a max length of ${ABOUT_CLIENT_MAX_VALUE_LENGTH}`,
   },
   proxy: {
     queryString: 'proxy',
@@ -1242,6 +1285,9 @@ export default class DailyIframe extends EventEmitter {
     window._daily.instances[this.callClientId].tracks = this._sharedTracks;
 
     properties.dailyJsVersion = DailyIframe.version();
+    if (properties.aboutClient !== undefined) {
+      properties.aboutClient = normalizeAboutClient(properties.aboutClient);
+    }
     this._iframe = iframeish;
     this._callObjectMode = properties.layout === 'none' && !this._iframe;
     this._preloadCache = initializePreloadCache();
@@ -1317,6 +1363,11 @@ export default class DailyIframe extends EventEmitter {
 
     this.validateProperties(properties);
     this.properties = { ...properties };
+    if (this.properties.aboutClient !== undefined) {
+      this.properties.aboutClient = normalizeAboutClient(
+        this.properties.aboutClient
+      );
+    }
     if (!this._inputSettings) {
       this._inputSettings = {};
     }
@@ -3786,6 +3837,7 @@ export default class DailyIframe extends EventEmitter {
     validateSendDTMF(args);
 
     args.method = args.method || 'auto';
+    args.digitDurationMs = args.digitDurationMs || 500;
 
     return new Promise((resolve, reject) => {
       const k = (msg) => {
@@ -5818,7 +5870,8 @@ testCallQuality() and stopTestCallQuality() instead`);
     scope.setClient(client);
     client.init();
 
-    this.session_id && scope.setExtra('sessionId', this.session_id);
+    this._participants?.local?.session_id &&
+      scope.setExtra('sessionId', this._participants.local.session_id);
     if (this.properties) {
       let properties = { ...this.properties };
 
@@ -6698,7 +6751,7 @@ function validateSipCallTransfer(
   }
 }
 
-function validateSendDTMF({ sessionId, tones, method }) {
+function validateSendDTMF({ sessionId, tones, method, digitDurationMs }) {
   if (!(sessionId && tones)) {
     throw new Error(`sessionId and tones are mandatory parameter`);
   }
@@ -6717,6 +6770,20 @@ function validateSendDTMF({ sessionId, tones, method }) {
     throw new Error(
       `method must be one of 'sip-info', 'telephone-event', or 'auto'`
     );
+  }
+  if (digitDurationMs !== undefined) {
+    if (typeof digitDurationMs !== 'number') {
+      throw new Error(`digitDurationMs must be a number`);
+    }
+    if (
+      !Number.isFinite(digitDurationMs) ||
+      !Number.isInteger(digitDurationMs)
+    ) {
+      throw new Error(`digitDurationMs must be a finite integer number`);
+    }
+    if (digitDurationMs < 50 || digitDurationMs > 2000) {
+      throw new Error(`digitDurationMs must be between 50ms and 2000ms`);
+    }
   }
 }
 
