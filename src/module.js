@@ -3837,7 +3837,7 @@ export default class DailyIframe extends EventEmitter {
     validateSendDTMF(args);
 
     args.method = args.method || 'auto';
-    args.digitDurationMs = args.digitDurationMs || 1000;
+    args.digitDurationMs = args.digitDurationMs || 500;
 
     return new Promise((resolve, reject) => {
       const k = (msg) => {
