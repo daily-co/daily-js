@@ -1726,6 +1726,7 @@ export interface DailyEventObjectSidebarViewChanged
 export interface DailyEventObjectDialinReady extends DailyEventObjectBase {
   action: Extract<DailyEvent, 'dialin-ready'>;
   sipEndpoint: string;
+  provider: string;
 }
 
 export interface DailyEventObjectDialinConnected extends DailyEventObjectBase {
@@ -1734,6 +1735,8 @@ export interface DailyEventObjectDialinConnected extends DailyEventObjectBase {
   sessionId: string;
   sipFrom?: string;
   actionTraceId?: string;
+  provider: string;
+  sipCallId: string;
 }
 
 export interface DailyEventObjectDialinError extends DailyEventObjectBase {
@@ -1743,6 +1746,8 @@ export interface DailyEventObjectDialinError extends DailyEventObjectBase {
   type?: 'start-failed' | null;
   details?: { sipEndpoint?: string };
   actionTraceId?: string;
+  provider: string;
+  sipCallId?: string;
 }
 
 export interface DailyEventObjectDialinStopped extends DailyEventObjectBase {
@@ -1751,6 +1756,8 @@ export interface DailyEventObjectDialinStopped extends DailyEventObjectBase {
   sipFrom?: string;
   sessionId: string;
   actionTraceId?: string;
+  provider: string;
+  sipCallId?: string;
 }
 
 export interface DailyEventObjectDialinWarning extends DailyEventObjectBase {
@@ -1758,6 +1765,8 @@ export interface DailyEventObjectDialinWarning extends DailyEventObjectBase {
   errorMsg: string;
   sessionId: string;
   actionTraceId?: string;
+  provider: string;
+  sipCallId?: string;
 }
 
 export interface DailyEventObjectDialOutConnected extends DailyEventObjectBase {
@@ -1765,6 +1774,8 @@ export interface DailyEventObjectDialOutConnected extends DailyEventObjectBase {
   sessionId?: string;
   userId?: string;
   actionTraceId?: string;
+  provider: string;
+  sipCallId: string;
 }
 
 export interface DailyEventObjectDialOutAnswered extends DailyEventObjectBase {
@@ -1772,6 +1783,8 @@ export interface DailyEventObjectDialOutAnswered extends DailyEventObjectBase {
   sessionId?: string;
   userId?: string;
   actionTraceId?: string;
+  provider: string;
+  sipCallId: string;
 }
 
 export interface DailyEventObjectDialOutError extends DailyEventObjectBase {
@@ -1780,6 +1793,8 @@ export interface DailyEventObjectDialOutError extends DailyEventObjectBase {
   sessionId?: string;
   userId?: string;
   actionTraceId?: string;
+  provider: string;
+  sipCallId?: string;
 }
 
 export interface DailyEventObjectDialOutStopped extends DailyEventObjectBase {
@@ -1787,6 +1802,8 @@ export interface DailyEventObjectDialOutStopped extends DailyEventObjectBase {
   sessionId?: string;
   userId?: string;
   actionTraceId?: string;
+  provider: string;
+  sipCallId?: string;
 }
 
 export interface DailyEventObjectDialOutWarning extends DailyEventObjectBase {
@@ -1794,6 +1811,8 @@ export interface DailyEventObjectDialOutWarning extends DailyEventObjectBase {
   errorMsg: string;
   sessionId?: string;
   actionTraceId?: string;
+  provider: string;
+  sipCallId?: string;
 }
 
 export interface DailyEventObjectDtmfEvent extends DailyEventObjectBase {
