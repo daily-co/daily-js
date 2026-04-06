@@ -1731,9 +1731,9 @@ export interface DailyEventObjectDialinReady extends DailyEventObjectBase {
 
 export interface DailyEventObjectDialinConnected extends DailyEventObjectBase {
   action: Extract<DailyEvent, 'dialin-connected'>;
-  sipHeaders?: Record<string, any>;
   sessionId: string;
   userId?: string;
+  sipHeaders?: Record<string, any>;
   sipFrom?: string;
   actionTraceId?: string;
   provider: string;
