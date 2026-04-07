@@ -1735,6 +1735,7 @@ export interface DailyEventObjectDialinConnected extends DailyEventObjectBase {
   userId?: string;
   sipHeaders?: Record<string, any>;
   sipFrom?: string;
+  sipTo?: string;
   actionTraceId?: string;
   provider: string;
   sipCallId: string;
@@ -1758,6 +1759,7 @@ export interface DailyEventObjectDialinStopped extends DailyEventObjectBase {
   userId?: string;
   sipHeaders?: Record<string, any>;
   sipFrom?: string;
+  sipTo?: string;
   actionTraceId?: string;
   provider: string;
   sipCallId?: string;
@@ -1768,6 +1770,8 @@ export interface DailyEventObjectDialinWarning extends DailyEventObjectBase {
   errorMsg: string;
   sessionId: string;
   userId?: string;
+  sipFrom?: string;
+  sipTo?: string;
   actionTraceId?: string;
   provider: string;
   sipCallId?: string;
@@ -1777,6 +1781,8 @@ export interface DailyEventObjectDialOutConnected extends DailyEventObjectBase {
   action: Extract<DailyEvent, 'dialout-connected'>;
   sessionId: string;
   userId?: string;
+  sipFrom?: string;
+  sipTo?: string;
   actionTraceId?: string;
   provider: string;
   sipCallId: string;
@@ -1786,6 +1792,8 @@ export interface DailyEventObjectDialOutAnswered extends DailyEventObjectBase {
   action: Extract<DailyEvent, 'dialout-answered'>;
   sessionId: string;
   userId?: string;
+  sipFrom?: string;
+  sipTo?: string;
   actionTraceId?: string;
   provider: string;
   sipCallId: string;
@@ -1796,6 +1804,7 @@ export interface DailyEventObjectDialOutError extends DailyEventObjectBase {
   errorMsg: string;
   sessionId?: string;
   userId?: string;
+  details?: { sipUri?: string; phoneNumber?: string };
   actionTraceId?: string;
   provider: string;
   sipCallId?: string;
@@ -1805,6 +1814,8 @@ export interface DailyEventObjectDialOutStopped extends DailyEventObjectBase {
   action: Extract<DailyEvent, 'dialout-stopped'>;
   sessionId: string;
   userId?: string;
+  sipFrom?: string;
+  sipTo?: string;
   actionTraceId?: string;
   provider: string;
   sipCallId?: string;
@@ -1815,6 +1826,8 @@ export interface DailyEventObjectDialOutWarning extends DailyEventObjectBase {
   errorMsg: string;
   sessionId?: string;
   userId?: string;
+  sipFrom?: string;
+  sipTo?: string;
   actionTraceId?: string;
   provider: string;
   sipCallId?: string;
