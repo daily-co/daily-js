@@ -1806,7 +1806,7 @@ export interface DailyEventObjectDialOutError extends DailyEventObjectBase {
   errorMsg: string;
   sessionId?: string;
   userId?: string;
-  details?: { sipUri?: string; phoneNumber?: string };
+  details?: { destination?: string };
   actionTraceId?: string;
   provider: string;
   sipCallId?: string;
