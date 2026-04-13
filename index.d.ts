@@ -2210,7 +2210,7 @@ export interface DailyDialOutSession {
 export interface DailySipPstnParticipantPermissions {
   canReceive: Partial<DailyParticipantCanReceivePermission>;
 }
-// export type DailySipServiceProvider = 'daily' | 'null';
+// export type DailySipServiceProvider = 'daily' | 'signalwire' | 'null';
 export interface DailyStartDialoutSipOptions {
   sipUri?: string;
   displayName?: string;
