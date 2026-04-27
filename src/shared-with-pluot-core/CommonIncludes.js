@@ -371,6 +371,9 @@ export const DAILY_PARTICIPANT_TYPE = {
   PSTN_DIAL_OUT: 'pstn-dial-out',
 };
 
+export const SIP_SERVICE_PROVIDER_DAILY = 'daily';
+export const SIP_SERVICE_PROVIDER_SIGNALWIRE = 'signalwire';
+
 export const DAILY_PRESELECTED_BG_IMAGE_URLS_LENGTH = 10;
 
 export const DAILY_SUPPORTED_BG_IMG_TYPES = ['jpg', 'png', 'jpeg'];

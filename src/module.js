@@ -246,6 +246,8 @@ import {
   DAILY_METHOD_UPDATE_SCREENSHARE,
   DAILY_EVENT_PICTURE_IN_PICTURE_STARTED,
   DAILY_EVENT_PICTURE_IN_PICTURE_STOPPED,
+  SIP_SERVICE_PROVIDER_DAILY,
+  SIP_SERVICE_PROVIDER_SIGNALWIRE,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -3720,9 +3722,12 @@ export default class DailyIframe extends EventEmitter {
       }
     }
     if (args.provider) {
-      if (args.provider !== 'daily') {
+      if (
+        args.provider !== SIP_SERVICE_PROVIDER_DAILY &&
+        args.provider !== SIP_SERVICE_PROVIDER_SIGNALWIRE
+      ) {
         throw new Error(
-          `Error: provider can be set only to 'daily', got: ${args.provider}`
+          `Error: provider can be set only to '${SIP_SERVICE_PROVIDER_DAILY}' or '${SIP_SERVICE_PROVIDER_SIGNALWIRE}', got: ${args.provider}`
         );
       }
       if (args.phoneNumber) {
@@ -3730,9 +3735,14 @@ export default class DailyIframe extends EventEmitter {
           `Error starting dial out: provider valid only for sipUri, not phoneNumber`
         );
       }
-      console.warn(
-        '(pre-beta) provider=daily is currently in pre-beta, things might break!'
-      );
+      if (args.provider === SIP_SERVICE_PROVIDER_DAILY) {
+        console.warn(
+          `(pre-beta) provider=${SIP_SERVICE_PROVIDER_DAILY} is currently in pre-beta, things might break!`
+        );
+      }
+    } else {
+      // signalwire is default to maintain backward compatibility
+      args.provider = SIP_SERVICE_PROVIDER_SIGNALWIRE;
     }
 
     return new Promise((resolve, reject) => {
