@@ -4730,15 +4730,9 @@ testCallQuality() and stopTestCallQuality() instead`);
   }
 
   async geo() {
-    try {
-      let url = 'https://gs.daily.co/_ks_/x-swsl/:';
-      let res = await fetch(url);
-      let data = await res.json();
-      return { current: data.geo };
-    } catch (e) {
-      console.error('geo lookup failed', e);
-      return { current: '' };
-    }
+    throw new Error(
+      'The geo() function is no longer supported. Geographical decisions now depend upon domain and room settings.'
+    );
   }
 
   async setNetworkTopology(opts) {
