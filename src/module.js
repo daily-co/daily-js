@@ -4730,9 +4730,10 @@ testCallQuality() and stopTestCallQuality() instead`);
   }
 
   async geo() {
-    throw new Error(
+    console.error(
       'The geo() function is no longer supported. Geographical decisions now depend upon domain and room settings.'
     );
+    return { current: '' };
   }
 
   async setNetworkTopology(opts) {
