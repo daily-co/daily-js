@@ -67,7 +67,11 @@ export function isReactNativeAndroid() {
 
 export function isIOS() {
   const userAgent = getUserAgent();
-  return !!userAgent.match(/iPad|iPhone|iPod/i);
+  // Require the platform token to be preceded by "(", matching where it
+  // appears in every real iOS UA ("(iPhone;", "(iPad;", "(iPod touch;" in
+  // the platform parens). This rejects spoofed Android UAs containing
+  // substrings like "ResemblesiDevice\iPhone".
+  return !!userAgent.match(/\((iPad|iPhone|iPod)/i);
 }
 
 // Only valid if cam/mic are accessible from browser
