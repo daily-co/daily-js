@@ -2225,6 +2225,7 @@ export interface DailySipVideoSettings {
   /** Video bitrate in kbps. Default: 900. Maximum: 1000. */
   videoBitrate?: number;
 }
+export type DailySipServiceProvider = 'daily' | 'signalwire' | 'null';
 export interface DailyStartDialoutSipOptions {
   sipUri?: string;
   displayName?: string;
@@ -2233,7 +2234,7 @@ export interface DailyStartDialoutSipOptions {
   videoSettings?: DailySipVideoSettings;
   codecs?: DailyDialOutCodecs;
   permissions?: DailySipPstnParticipantPermissions;
-  // provider?: DailySipServiceProvider;
+  provider?: DailySipServiceProvider;
 }
 
 export interface DailyStartDialoutPhoneOptions {
@@ -2250,6 +2251,16 @@ export interface DailyStartDialoutPhoneOptions {
 export type DailyStartDialoutOptions =
   | DailyStartDialoutSipOptions
   | DailyStartDialoutPhoneOptions;
+
+export interface DailyStartDialinOptions {
+  displayName: string;
+  sipEndpoint?: string;
+  userId?: string;
+  video?: boolean;
+  codecs?: DailyDialOutCodecs;
+  permissions?: DailySipPstnParticipantPermissions;
+  provider?: DailySipServiceProvider;
+}
 
 export interface DailyScreenShareUpdateOptions {
   screenVideo: {
@@ -2522,6 +2533,7 @@ export interface DailyCall {
   startDialOut(
     options: DailyStartDialoutOptions
   ): Promise<{ session?: DailyDialOutSession }>;
+  startDialIn(options: DailyStartDialinOptions): Promise<void>;
   stopDialOut(options: { sessionId: string }): Promise<void>;
   sendDTMF(options: DailySendDtmfOptions): Promise<void>;
   sipCallTransfer(options: DailySipCallTransferOptions): Promise<void>;

@@ -227,6 +227,7 @@ import {
   DAILY_METHOD_TEST_P2P_CALL_QUALITY,
   DAILY_EVENT_TEST_COMPLETED,
   DAILY_METHOD_START_DIALOUT,
+  DAILY_METHOD_START_DIALIN,
   DAILY_METHOD_SEND_DTMF,
   DAILY_METHOD_SIP_CALL_TRANSFER,
   DAILY_METHOD_STOP_DIALOUT,
@@ -3828,6 +3829,78 @@ export default class DailyIframe extends EventEmitter {
       this.sendMessageToCallMachine(
         {
           action: DAILY_METHOD_START_DIALOUT,
+          ...args,
+        },
+        k
+      );
+    });
+  }
+
+  async startDialIn(args) {
+    methodOnlySupportedAfterJoin(this._callState, 'startDialIn()');
+
+    if (!args || typeof args !== 'object') {
+      throw new Error(`Error starting dial in: args must be an object`);
+    }
+
+    if (typeof args.displayName !== 'string' || args.displayName.length === 0) {
+      throw new Error(
+        `Error starting dial in: displayName is required and must be a non-empty string`
+      );
+    }
+
+    if (args.userId !== undefined && typeof args.userId !== 'string') {
+      throw new Error(`Error starting dial in: userId must be a string`);
+    }
+
+    if (args.video !== undefined && typeof args.video !== 'boolean') {
+      throw new Error(`Error starting dial in: video must be a boolean`);
+    }
+
+    if (
+      args.sipEndpoint !== undefined &&
+      typeof args.sipEndpoint !== 'string'
+    ) {
+      throw new Error(`Error starting dial in: sipEndpoint must be a string`);
+    }
+
+    if (
+      args.codecs !== undefined &&
+      (typeof args.codecs !== 'object' || args.codecs === null)
+    ) {
+      throw new Error(`Error starting dial in: codecs must be an object`);
+    }
+
+    if (
+      args.permissions !== undefined &&
+      (typeof args.permissions !== 'object' || args.permissions === null)
+    ) {
+      throw new Error(`Error starting dial in: permissions must be an object`);
+    }
+
+    if (
+      args.provider !== undefined &&
+      args.provider !== SIP_SERVICE_PROVIDER_DAILY &&
+      args.provider !== SIP_SERVICE_PROVIDER_SIGNALWIRE
+    ) {
+      throw new Error(
+        `Error starting dial in: provider must be '${SIP_SERVICE_PROVIDER_DAILY}' or '${SIP_SERVICE_PROVIDER_SIGNALWIRE}'`
+      );
+    }
+
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve(msg);
+        }
+      };
+
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_START_DIALIN,
+          sipMode: 'dial-in',
           ...args,
         },
         k
