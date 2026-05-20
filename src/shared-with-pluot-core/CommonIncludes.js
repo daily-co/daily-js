@@ -373,6 +373,7 @@ export const DAILY_PARTICIPANT_TYPE = {
 
 export const SIP_SERVICE_PROVIDER_DAILY = 'daily';
 export const SIP_SERVICE_PROVIDER_SIGNALWIRE = 'signalwire';
+export const SIP_MODE_DIALIN = 'dial-in';
 
 export const DAILY_PRESELECTED_BG_IMAGE_URLS_LENGTH = 10;
 

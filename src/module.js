@@ -249,6 +249,7 @@ import {
   DAILY_EVENT_PICTURE_IN_PICTURE_STOPPED,
   SIP_SERVICE_PROVIDER_DAILY,
   SIP_SERVICE_PROVIDER_SIGNALWIRE,
+  SIP_MODE_DIALIN,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -3900,7 +3901,7 @@ export default class DailyIframe extends EventEmitter {
       this.sendMessageToCallMachine(
         {
           action: DAILY_METHOD_START_DIALIN,
-          sipMode: 'dial-in',
+          sipMode: SIP_MODE_DIALIN,
           ...args,
         },
         k
