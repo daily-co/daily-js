@@ -3850,8 +3850,20 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
+    if (args.displayName.length >= 200) {
+      throw new Error(
+        `Error starting dial in: displayName length must be less than 200`
+      );
+    }
+
     if (args.userId !== undefined && typeof args.userId !== 'string') {
       throw new Error(`Error starting dial in: userId must be a string`);
+    }
+
+    if (args.userId !== undefined && args.userId.length > 36) {
+      throw new Error(
+        `Error starting dial in: userId length must be less than or equal to 36`
+      );
     }
 
     if (args.video !== undefined && typeof args.video !== 'boolean') {
@@ -3879,8 +3891,9 @@ export default class DailyIframe extends EventEmitter {
       throw new Error(`Error starting dial in: permissions must be an object`);
     }
 
-    if (
-      args.provider !== undefined &&
+    if (!args.provider) {
+      args = { ...args, provider: SIP_SERVICE_PROVIDER_SIGNALWIRE };
+    } else if (
       args.provider !== SIP_SERVICE_PROVIDER_DAILY &&
       args.provider !== SIP_SERVICE_PROVIDER_SIGNALWIRE
     ) {
