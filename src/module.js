@@ -2547,8 +2547,12 @@ export default class DailyIframe extends EventEmitter {
     }
     const isUsingReservedTrackName = trackName
       ? [
+          'audio',
+          'video',
           'cam-audio',
           'cam-video',
+          'screenVideo',
+          'screenAudio',
           'screen-video',
           'screen-audio',
           'rmpAudio',
@@ -2559,7 +2563,7 @@ export default class DailyIframe extends EventEmitter {
     if (isUsingReservedTrackName) {
       throw new Error(
         'Custom track `trackName` must not match a track name already used by daily: ' +
-          'cam-audio, cam-video, customVideoDefaults, screen-video, screen-audio, rmpAudio, rmpVideo'
+          'audio, video, cam-audio, cam-video, screenVideo, screenAudio, screen-video, screen-audio, rmpAudio, rmpVideo, customVideoDefaults'
       );
     }
     if (!(track instanceof MediaStreamTrack)) {
