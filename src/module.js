@@ -3658,6 +3658,55 @@ export default class DailyIframe extends EventEmitter {
         }
       }
 
+      if (args.width !== undefined) {
+        if (!Number.isInteger(args.width) || args.width <= 0) {
+          throw new Error(
+            `Error starting dial out: width must be a positive integer`
+          );
+        }
+        if (args.width > 1280) {
+          throw new Error(
+            `Error starting dial out: width must be less than or equal to 1280`
+          );
+        }
+      }
+      if (args.height !== undefined) {
+        if (!Number.isInteger(args.height) || args.height <= 0) {
+          throw new Error(
+            `Error starting dial out: height must be a positive integer`
+          );
+        }
+        if (args.height > 720) {
+          throw new Error(
+            `Error starting dial out: height must be less than or equal to 720`
+          );
+        }
+      }
+      if (args.fps !== undefined) {
+        if (!Number.isInteger(args.fps) || args.fps <= 0) {
+          throw new Error(
+            `Error starting dial out: fps must be a positive integer`
+          );
+        }
+        if (args.fps > 30) {
+          throw new Error(
+            `Error starting dial out: fps must be less than or equal to 30`
+          );
+        }
+      }
+      if (args.videoBitrate !== undefined) {
+        if (!Number.isInteger(args.videoBitrate) || args.videoBitrate <= 0) {
+          throw new Error(
+            `Error starting dial out: videoBitrate must be a positive integer`
+          );
+        }
+        if (args.videoBitrate > 1000) {
+          throw new Error(
+            `Error starting dial out: videoBitrate must be less than or equal to 1000 kbps`
+          );
+        }
+      }
+
       validateAudioVideoCodec(args.codecs);
     }
 

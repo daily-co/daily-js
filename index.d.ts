@@ -2219,6 +2219,14 @@ export interface DailyStartDialoutSipOptions {
   codecs?: DailyDialOutCodecs;
   permissions?: DailySipPstnParticipantPermissions;
   // provider?: DailySipServiceProvider;
+  /** Video width in pixels. Only applicable when video is true. Default: 1280. */
+  width?: number;
+  /** Video height in pixels. Only applicable when video is true. Default: 720. */
+  height?: number;
+  /** Video frame rate. Only applicable when video is true. Default: 15. */
+  fps?: number;
+  /** Video bitrate in kbps. Only applicable when video is true. Default: 900. */
+  videoBitrate?: number;
 }
 
 export interface DailyStartDialoutPhoneOptions {
