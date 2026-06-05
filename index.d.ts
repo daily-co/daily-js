@@ -2176,6 +2176,7 @@ export interface DailyTranscriptionDeepgramOptions {
   includeRawResponse?: boolean;
   instanceId?: string;
   participants?: Array<string>;
+  transcription_geo?: 'global' | 'eu';
 }
 
 export interface DailyTranscriptionUpdateOptions {
