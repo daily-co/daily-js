@@ -4972,7 +4972,12 @@ testCallQuality() and stopTestCallQuality() instead`);
             event: 'bundle load',
             time: this._bundleLoadTime === 'no-op' ? 0 : this._bundleLoadTime,
             preLoaded: this._bundleLoadTime === 'no-op',
-            url: callObjectBundleUrl(this.properties.dailyConfig),
+            // Reflect the base domain the bundle actually loaded from (not
+            // always daily.co) so this matches resolvedBaseDomain below.
+            url: callObjectBundleUrl(
+              this.properties.dailyConfig,
+              resolvedBaseDomain ?? undefined
+            ),
             // Which base domain the bundle actually loaded from, and whether we
             // had to fail off daily.co. Fleet-wide signal for .co TLD DNS
             // outages (ENG-9038/ENG-9040).
