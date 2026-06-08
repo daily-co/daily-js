@@ -1,5 +1,5 @@
 import {
-  DAILY_DOMAINS,
+  DAILY_BASE_DOMAINS,
   callObjectBundleUrl,
   callObjectBundleUrlCandidates,
   baseDomainFromUrl,
@@ -13,8 +13,8 @@ describe('bundle domain failover (utils)', () => {
     setResolvedBaseDomain(null);
   });
 
-  test('DAILY_DOMAINS lists daily.co first, then the .com/.net fallbacks', () => {
-    expect(DAILY_DOMAINS).toEqual([
+  test('DAILY_BASE_DOMAINS lists daily.co first, then the .com/.net fallbacks', () => {
+    expect(DAILY_BASE_DOMAINS).toEqual([
       'daily.co',
       'dailywebrtc.com',
       'dailywebrtc.net',
@@ -32,9 +32,9 @@ describe('bundle domain failover (utils)', () => {
   });
 
   describe('callObjectBundleUrlCandidates', () => {
-    test('returns one URL per domain, in DAILY_DOMAINS order', () => {
+    test('returns one URL per domain, in DAILY_BASE_DOMAINS order', () => {
       const candidates = callObjectBundleUrlCandidates({});
-      expect(candidates).toHaveLength(DAILY_DOMAINS.length);
+      expect(candidates).toHaveLength(DAILY_BASE_DOMAINS.length);
       expect(candidates[0]).toContain('https://c.daily.co/');
       expect(candidates[1]).toContain('https://c.dailywebrtc.com/');
       expect(candidates[2]).toContain('https://c.dailywebrtc.net/');
@@ -64,7 +64,7 @@ describe('bundle domain failover (utils)', () => {
     test('once a fallback domain has resolved, it is tried first (sticky)', () => {
       setResolvedBaseDomain('dailywebrtc.com');
       const candidates = callObjectBundleUrlCandidates({});
-      expect(candidates).toHaveLength(DAILY_DOMAINS.length);
+      expect(candidates).toHaveLength(DAILY_BASE_DOMAINS.length);
       expect(candidates[0]).toContain('https://c.dailywebrtc.com/');
       // the others are still present, just after the sticky one
       expect(candidates.some((u) => u.includes('https://c.daily.co/'))).toBe(
@@ -102,13 +102,15 @@ describe('bundle domain failover (utils)', () => {
     });
   });
 
-  // The room-config kill switch (disable_domain_fallback) is persisted to
+  // The room-config kill switch (disable_base_domain_fallback) is persisted to
   // localStorage by the call machine; the loader honors it on the next load.
-  describe('disable_domain_fallback kill switch', () => {
-    afterEach(() => localStorage.removeItem('daily:disable-domain-fallback'));
+  describe('disable_base_domain_fallback kill switch', () => {
+    afterEach(() =>
+      localStorage.removeItem('daily:disable-base-domain-fallback')
+    );
 
     test('persisted kill switch collapses to a single candidate (no failover)', () => {
-      localStorage.setItem('daily:disable-domain-fallback', '1');
+      localStorage.setItem('daily:disable-base-domain-fallback', '1');
       expect(callObjectBundleUrlCandidates({})).toHaveLength(1);
       expect(callObjectBundleUrlCandidates({})[0]).toContain(
         'https://c.daily.co/'

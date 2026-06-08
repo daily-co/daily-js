@@ -6,13 +6,21 @@ export function notImplementedError() {
   throw new Error('Method must be implemented in subclass');
 }
 
-// Ordered registrable domains for loading Daily's call-machine bundle and
-// reaching Daily's services. daily.co is primary; dailywebrtc.com / .net are
-// fallbacks for when the .co TLD's authoritative nameservers are unreachable (a
-// recurring outage — see ENG-9038). The bundle loader tries these in order;
-// whichever succeeds is remembered for the rest of the page's lifetime and
-// threaded into every downstream URL so the session stays on one domain.
-export const DAILY_DOMAINS = ['daily.co', 'dailywebrtc.com', 'dailywebrtc.net'];
+// "Base domain" = the registrable domain Daily's infrastructure is served under
+// (daily.co / dailywebrtc.com / .net). NOTE: this is NOT the customer's "Daily
+// domain" (the tenant, e.g. "acme" in acme.daily.co) that "domain" usually
+// refers to elsewhere in this codebase — keep the two senses distinct.
+//
+// daily.co is primary; the others are fallbacks for when the .co TLD's
+// authoritative nameservers are unreachable (a recurring outage — see
+// ENG-9038). The bundle loader tries these in order; whichever succeeds is
+// remembered for the page's lifetime and threaded into every downstream URL so
+// the session stays on one base domain.
+export const DAILY_BASE_DOMAINS = [
+  'daily.co',
+  'dailywebrtc.com',
+  'dailywebrtc.net',
+];
 
 // In-memory (per page load) record of the registrable domain the bundle last
 // loaded from. Lets repeated loads skip straight to the known-good domain
@@ -27,18 +35,19 @@ export function getResolvedBaseDomain() {
 export function setResolvedBaseDomain(domain) {
   // null clears it (e.g. a custom/override bundle URL loaded — don't keep a
   // stale resolved domain). Otherwise only accept a known Daily domain.
-  if (domain === null || DAILY_DOMAINS.includes(domain)) {
+  if (domain === null || DAILY_BASE_DOMAINS.includes(domain)) {
     resolvedBaseDomain = domain;
   }
 }
 
-// Returns the registrable Daily domain a URL belongs to (one of DAILY_DOMAINS),
+// Returns the registrable Daily domain a URL belongs to (one of DAILY_BASE_DOMAINS),
 // or null for custom/override URLs.
 export function baseDomainFromUrl(url) {
   try {
     const host = new URL(url).hostname;
     return (
-      DAILY_DOMAINS.find((d) => host === d || host.endsWith(`.${d}`)) || null
+      DAILY_BASE_DOMAINS.find((d) => host === d || host.endsWith(`.${d}`)) ||
+      null
     );
   } catch (_) {
     return null;
@@ -57,7 +66,7 @@ export function maybeProxyHttpsUrl(url, dailyConfig) {
   return url;
 }
 
-export function bundlePath(dailyConfig, domain = DAILY_DOMAINS[0]) {
+export function bundlePath(dailyConfig, domain = DAILY_BASE_DOMAINS[0]) {
   // ADVANCED: if a custom bundle path override is specified, use that.
   if (dailyConfig?.bundlePathOverride) {
     const url = dailyConfig.bundlePathOverride;
@@ -88,7 +97,10 @@ export function bundlePath(dailyConfig, domain = DAILY_DOMAINS[0]) {
   return url.endsWith('/') ? url.slice(0, -1) : url;
 }
 
-export function callObjectBundleUrl(dailyConfig, domain = DAILY_DOMAINS[0]) {
+export function callObjectBundleUrl(
+  dailyConfig,
+  domain = DAILY_BASE_DOMAINS[0]
+) {
   // ADVANCED: if a custom bundle URL override is specified, use that.
   if (dailyConfig?.callObjectBundleUrlOverride) {
     console.warn(
@@ -110,13 +122,13 @@ export function callObjectBundleUrl(dailyConfig, domain = DAILY_DOMAINS[0]) {
 // js/stores/lifecycle/actionCreators.js); the loader reads it here. Persisted
 // (not in dailyConfig) because room config isn't available at bundle-load time,
 // so a flip only takes effect on the next page load.
-const DISABLE_DOMAIN_FALLBACK_KEY = 'daily:disable-domain-fallback';
+const DISABLE_BASE_DOMAIN_FALLBACK_KEY = 'daily:disable-base-domain-fallback';
 
 function domainFallbackKilled() {
   try {
     return (
       typeof localStorage !== 'undefined' &&
-      localStorage.getItem(DISABLE_DOMAIN_FALLBACK_KEY) === '1'
+      localStorage.getItem(DISABLE_BASE_DOMAIN_FALLBACK_KEY) === '1'
     );
   } catch (_) {
     // localStorage may throw (privacy mode / sandboxed iframe); treat as enabled.
@@ -124,7 +136,7 @@ function domainFallbackKilled() {
   }
 }
 
-// Whether bundle-load failover across DAILY_DOMAINS applies. It does not when an
+// Whether bundle-load failover across DAILY_BASE_DOMAINS applies. It does not when an
 // explicit routing directive (override or proxy) is set, in dev builds, or when
 // the server kill switch has been persisted — in those cases there is exactly
 // one bundle URL and we must respect it.
@@ -139,7 +151,7 @@ function bundleFailoverDisabled(dailyConfig) {
 }
 
 // Ordered list of bundle URLs the loader should try. A single URL when failover
-// is disabled; otherwise one per DAILY_DOMAIN, with any already-resolved domain
+// is disabled; otherwise one per DAILY_BASE_DOMAINS, with any resolved base domain
 // moved to the front (sticky) so we don't re-incur a dead primary's timeout.
 export function callObjectBundleUrlCandidates(dailyConfig) {
   if (bundleFailoverDisabled(dailyConfig)) {
@@ -148,9 +160,9 @@ export function callObjectBundleUrlCandidates(dailyConfig) {
   const ordered = resolvedBaseDomain
     ? [
         resolvedBaseDomain,
-        ...DAILY_DOMAINS.filter((d) => d !== resolvedBaseDomain),
+        ...DAILY_BASE_DOMAINS.filter((d) => d !== resolvedBaseDomain),
       ]
-    : DAILY_DOMAINS;
+    : DAILY_BASE_DOMAINS;
   return ordered.map((domain) => callObjectBundleUrl(dailyConfig, domain));
 }
 
