@@ -118,10 +118,10 @@ export function callObjectBundleUrl(
 }
 
 // localStorage key for the server-controlled kill switch. The call machine
-// writes it from the room config's disable_domain_fallback (see
+// writes it from the domain config's disable_base_domain_fallback (see
 // js/stores/lifecycle/actionCreators.js); the loader reads it here. Persisted
-// (not in dailyConfig) because room config isn't available at bundle-load time,
-// so a flip only takes effect on the next page load.
+// (not in dailyConfig) because domain config isn't available at bundle-load
+// time, so a flip only takes effect on the next page load.
 const DISABLE_BASE_DOMAIN_FALLBACK_KEY = 'daily:disable-base-domain-fallback';
 
 function domainFallbackKilled() {

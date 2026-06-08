@@ -6,6 +6,7 @@ import {
   getResolvedBaseDomain,
   setResolvedBaseDomain,
 } from '../utils';
+import Daily from '../module';
 
 describe('bundle domain failover (utils)', () => {
   beforeEach(() => {
@@ -102,7 +103,7 @@ describe('bundle domain failover (utils)', () => {
     });
   });
 
-  // The room-config kill switch (disable_base_domain_fallback) is persisted to
+  // The domain-config kill switch (disable_base_domain_fallback) is persisted to
   // localStorage by the call machine; the loader honors it on the next load.
   describe('disable_base_domain_fallback kill switch', () => {
     afterEach(() =>
@@ -120,5 +121,47 @@ describe('bundle domain failover (utils)', () => {
     test('without the kill switch, failover candidates are present', () => {
       expect(callObjectBundleUrlCandidates({}).length).toBeGreaterThan(1);
     });
+  });
+});
+
+// In call-object mode there is no iframe launch-config handshake, so the bundle
+// loader's resolved base domain must be stamped onto the dailyConfig that flows
+// to the call machine via the join/preAuth/startCamera properties. Otherwise the
+// bundle loads from dailywebrtc.com but the call machine still calls gs.daily.co.
+describe('call-object resolved-domain handoff (module)', () => {
+  let callObject;
+
+  afterEach(() => {
+    setResolvedBaseDomain(null);
+    callObject && callObject.destroy();
+    callObject = null;
+  });
+
+  // Build a call object whose loader resolves the bundle from `resolved`, run
+  // load(), and return the dailyConfig that would be handed to the call machine.
+  async function dailyConfigAfterLoad(resolved) {
+    callObject = Daily.createCallObject();
+    callObject._callObjectLoader.load = (_dailyConfig, success) => {
+      // mimic CallObjectLoader: a successful load records the winning domain
+      setResolvedBaseDomain(resolved);
+      success(false);
+    };
+    await callObject.load();
+    return callObject.properties.dailyConfig;
+  }
+
+  test('stamps resolvedBaseDomain onto dailyConfig after a .co failover', async () => {
+    const cfg = await dailyConfigAfterLoad('dailywebrtc.com');
+    expect(cfg.resolvedBaseDomain).toBe('dailywebrtc.com');
+  });
+
+  test('does not stamp on the primary daily.co path', async () => {
+    const cfg = await dailyConfigAfterLoad('daily.co');
+    expect(cfg && cfg.resolvedBaseDomain).toBeUndefined();
+  });
+
+  test('does not stamp when no failover occurred', async () => {
+    const cfg = await dailyConfigAfterLoad(null);
+    expect(cfg && cfg.resolvedBaseDomain).toBeUndefined();
   });
 });
