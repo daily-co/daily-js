@@ -105,15 +105,36 @@ export function callObjectBundleUrl(dailyConfig, domain = DAILY_DOMAINS[0]) {
   return url;
 }
 
+// localStorage key for the server-controlled kill switch. The call machine
+// writes it from the room config's disable_domain_fallback (see
+// js/stores/lifecycle/actionCreators.js); the loader reads it here. Persisted
+// (not in dailyConfig) because room config isn't available at bundle-load time,
+// so a flip only takes effect on the next page load.
+const DISABLE_DOMAIN_FALLBACK_KEY = 'daily:disable-domain-fallback';
+
+function domainFallbackKilled() {
+  try {
+    return (
+      typeof localStorage !== 'undefined' &&
+      localStorage.getItem(DISABLE_DOMAIN_FALLBACK_KEY) === '1'
+    );
+  } catch (_) {
+    // localStorage may throw (privacy mode / sandboxed iframe); treat as enabled.
+    return false;
+  }
+}
+
 // Whether bundle-load failover across DAILY_DOMAINS applies. It does not when an
-// explicit routing directive (override or proxy) is set, or in dev builds — in
-// those cases there is exactly one bundle URL and we must respect it.
+// explicit routing directive (override or proxy) is set, in dev builds, or when
+// the server kill switch has been persisted — in those cases there is exactly
+// one bundle URL and we must respect it.
 function bundleFailoverDisabled(dailyConfig) {
   return Boolean(
     dailyConfig?.callObjectBundleUrlOverride ||
       dailyConfig?.bundlePathOverride ||
       dailyConfig?.proxyUrl ||
-      process.env.NODE_ENV === 'development'
+      process.env.NODE_ENV === 'development' ||
+      domainFallbackKilled()
   );
 }
 

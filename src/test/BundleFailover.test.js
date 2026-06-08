@@ -101,4 +101,22 @@ describe('bundle domain failover (utils)', () => {
       expect(getResolvedBaseDomain()).toBe(null);
     });
   });
+
+  // The room-config kill switch (disable_domain_fallback) is persisted to
+  // localStorage by the call machine; the loader honors it on the next load.
+  describe('disable_domain_fallback kill switch', () => {
+    afterEach(() => localStorage.removeItem('daily:disable-domain-fallback'));
+
+    test('persisted kill switch collapses to a single candidate (no failover)', () => {
+      localStorage.setItem('daily:disable-domain-fallback', '1');
+      expect(callObjectBundleUrlCandidates({})).toHaveLength(1);
+      expect(callObjectBundleUrlCandidates({})[0]).toContain(
+        'https://c.daily.co/'
+      );
+    });
+
+    test('without the kill switch, failover candidates are present', () => {
+      expect(callObjectBundleUrlCandidates({}).length).toBeGreaterThan(1);
+    });
+  });
 });
