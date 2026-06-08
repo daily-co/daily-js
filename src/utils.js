@@ -6,6 +6,45 @@ export function notImplementedError() {
   throw new Error('Method must be implemented in subclass');
 }
 
+// Ordered registrable domains for loading Daily's call-machine bundle and
+// reaching Daily's services. daily.co is primary; dailywebrtc.com / .net are
+// fallbacks for when the .co TLD's authoritative nameservers are unreachable (a
+// recurring outage — see ENG-9038). The bundle loader tries these in order;
+// whichever succeeds is remembered for the rest of the page's lifetime and
+// threaded into every downstream URL so the session stays on one domain.
+export const DAILY_DOMAINS = ['daily.co', 'dailywebrtc.com', 'dailywebrtc.net'];
+
+// In-memory (per page load) record of the registrable domain the bundle last
+// loaded from. Lets repeated loads skip straight to the known-good domain
+// instead of re-incurring a dead primary's timeout. Intentionally NOT persisted:
+// a fresh page load re-checks the primary (daily.co) first.
+let resolvedBaseDomain = null;
+
+export function getResolvedBaseDomain() {
+  return resolvedBaseDomain;
+}
+
+export function setResolvedBaseDomain(domain) {
+  // null clears it (e.g. a custom/override bundle URL loaded — don't keep a
+  // stale resolved domain). Otherwise only accept a known Daily domain.
+  if (domain === null || DAILY_DOMAINS.includes(domain)) {
+    resolvedBaseDomain = domain;
+  }
+}
+
+// Returns the registrable Daily domain a URL belongs to (one of DAILY_DOMAINS),
+// or null for custom/override URLs.
+export function baseDomainFromUrl(url) {
+  try {
+    const host = new URL(url).hostname;
+    return (
+      DAILY_DOMAINS.find((d) => host === d || host.endsWith(`.${d}`)) || null
+    );
+  } catch (_) {
+    return null;
+  }
+}
+
 // url assumed to start with 'https://'
 export function maybeProxyHttpsUrl(url, dailyConfig) {
   if (dailyConfig?.proxyUrl) {
@@ -18,7 +57,7 @@ export function maybeProxyHttpsUrl(url, dailyConfig) {
   return url;
 }
 
-export function bundlePath(dailyConfig) {
+export function bundlePath(dailyConfig, domain = DAILY_DOMAINS[0]) {
   // ADVANCED: if a custom bundle path override is specified, use that.
   if (dailyConfig?.bundlePathOverride) {
     const url = dailyConfig.bundlePathOverride;
@@ -38,17 +77,18 @@ export function bundlePath(dailyConfig) {
   //    - default local dev URL
   //    See webpack or rollup config for details.
   // 2. Prod build of daily-js --> load bundle from version-specific prod URL.
+  //    `domain` selects the registrable base domain (daily.co or a fallback).
   let url =
     process.env.NODE_ENV === 'development'
       ? __devBundlePath__
       : maybeProxyHttpsUrl(
-          `https://c.daily.co/call-machine/versioned/${__dailyJsVersion__}/static`,
+          `https://c.${domain}/call-machine/versioned/${__dailyJsVersion__}/static`,
           dailyConfig
         );
   return url.endsWith('/') ? url.slice(0, -1) : url;
 }
 
-export function callObjectBundleUrl(dailyConfig) {
+export function callObjectBundleUrl(dailyConfig, domain = DAILY_DOMAINS[0]) {
   // ADVANCED: if a custom bundle URL override is specified, use that.
   if (dailyConfig?.callObjectBundleUrlOverride) {
     console.warn(
@@ -60,8 +100,37 @@ export function callObjectBundleUrl(dailyConfig) {
     return dailyConfig.callObjectBundleUrlOverride;
   }
 
-  const url = bundlePath(dailyConfig) + '/call-machine-object-bundle.js';
+  const url =
+    bundlePath(dailyConfig, domain) + '/call-machine-object-bundle.js';
   return url;
+}
+
+// Whether bundle-load failover across DAILY_DOMAINS applies. It does not when an
+// explicit routing directive (override or proxy) is set, or in dev builds — in
+// those cases there is exactly one bundle URL and we must respect it.
+function bundleFailoverDisabled(dailyConfig) {
+  return Boolean(
+    dailyConfig?.callObjectBundleUrlOverride ||
+      dailyConfig?.bundlePathOverride ||
+      dailyConfig?.proxyUrl ||
+      process.env.NODE_ENV === 'development'
+  );
+}
+
+// Ordered list of bundle URLs the loader should try. A single URL when failover
+// is disabled; otherwise one per DAILY_DOMAIN, with any already-resolved domain
+// moved to the front (sticky) so we don't re-incur a dead primary's timeout.
+export function callObjectBundleUrlCandidates(dailyConfig) {
+  if (bundleFailoverDisabled(dailyConfig)) {
+    return [callObjectBundleUrl(dailyConfig)];
+  }
+  const ordered = resolvedBaseDomain
+    ? [
+        resolvedBaseDomain,
+        ...DAILY_DOMAINS.filter((d) => d !== resolvedBaseDomain),
+      ]
+    : DAILY_DOMAINS;
+  return ordered.map((domain) => callObjectBundleUrl(dailyConfig, domain));
 }
 
 export function validateHttpUrl(string) {
