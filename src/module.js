@@ -268,6 +268,7 @@ import { SessionDataUpdate } from './shared-with-pluot-core/SessionData.js';
 import CallObjectLoader from './CallObjectLoader';
 import {
   callObjectBundleUrl,
+  getResolvedBaseDomain,
   randomStringId,
   validateHttpUrl,
 } from './utils.js';
@@ -4951,6 +4952,13 @@ testCallQuality() and stopTestCallQuality() instead`);
         this.sendMessageToCallMachine({
           action: DAILY_EVENT_IFRAME_LAUNCH_CONFIG,
           ...this.properties,
+          // Tell the call machine which base domain the bundle actually loaded
+          // from, so its downstream URLs (static assets, geo-lookup) follow the
+          // same domain after a .co failover. Null when daily.co was used.
+          dailyConfig: {
+            ...this.properties.dailyConfig,
+            resolvedBaseDomain: getResolvedBaseDomain(),
+          },
         });
         break;
       case DAILY_EVENT_CALL_MACHINE_INITIALIZED: {
