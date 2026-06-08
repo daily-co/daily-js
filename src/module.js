@@ -4963,6 +4963,7 @@ testCallQuality() and stopTestCallQuality() instead`);
         break;
       case DAILY_EVENT_CALL_MACHINE_INITIALIZED: {
         this._callMachineInitialized = true;
+        const resolvedBaseDomain = getResolvedBaseDomain();
         const logMsg = {
           action: DAILY_METHOD_TRANSMIT_LOG,
           level: 'log',
@@ -4972,6 +4973,12 @@ testCallQuality() and stopTestCallQuality() instead`);
             time: this._bundleLoadTime === 'no-op' ? 0 : this._bundleLoadTime,
             preLoaded: this._bundleLoadTime === 'no-op',
             url: callObjectBundleUrl(this.properties.dailyConfig),
+            // Which base domain the bundle actually loaded from, and whether we
+            // had to fail off daily.co. Fleet-wide signal for .co TLD DNS
+            // outages (ENG-9038/ENG-9040).
+            resolvedBaseDomain,
+            failedOver:
+              resolvedBaseDomain != null && resolvedBaseDomain !== 'daily.co',
           },
         };
         this.sendMessageToCallMachine(logMsg);
