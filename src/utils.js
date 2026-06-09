@@ -174,7 +174,7 @@ function domainFallbackKilled() {
 // can still fail over by rewriting its base domain, so it does not disable.
 function bundleFailoverDisabled(dailyConfig) {
   const override =
-    dailyConfig?.callObjectBundleUrlOverride || dailyConfig?.bundlePathOverride;
+    dailyConfig?.bundlePathOverride || dailyConfig?.callObjectBundleUrlOverride;
   if (override && !DAILY_BASE_DOMAINS.some((d) => override.includes(d))) {
     return true;
   }
