@@ -2212,11 +2212,23 @@ export interface DailySipPstnParticipantPermissions {
   canReceive: Partial<DailyParticipantCanReceivePermission>;
 }
 // export type DailySipServiceProvider = 'daily' | 'signalwire' | 'null';
+/** Video encoding settings for SIP dial-out. Only applicable when `video` is `true`. */
+export interface DailySipVideoSettings {
+  /** Video width in pixels. Default: 1280. Maximum: 1280. */
+  width?: number;
+  /** Video height in pixels. Default: 720. Maximum: 720. */
+  height?: number;
+  /** Video frame rate. Default: 15. Maximum: 30. */
+  fps?: number;
+  /** Video bitrate in kbps. Default: 900. Maximum: 1000. */
+  videoBitrate?: number;
+}
 export interface DailyStartDialoutSipOptions {
   sipUri?: string;
   displayName?: string;
   userId?: string;
   video?: boolean;
+  videoSettings?: DailySipVideoSettings;
   codecs?: DailyDialOutCodecs;
   permissions?: DailySipPstnParticipantPermissions;
   // provider?: DailySipServiceProvider;

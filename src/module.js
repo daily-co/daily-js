@@ -3658,6 +3658,72 @@ export default class DailyIframe extends EventEmitter {
         }
       }
 
+      if (args.videoSettings !== undefined) {
+        if (
+          typeof args.videoSettings !== 'object' ||
+          args.videoSettings === null
+        ) {
+          throw new Error(
+            `Error starting dial out: videoSettings must be an object`
+          );
+        }
+        if (!args.video) {
+          throw new Error(
+            `Error starting dial out: videoSettings provided but video is not enabled`
+          );
+        }
+
+        const vs = args.videoSettings;
+        if (vs.width !== undefined) {
+          if (!Number.isInteger(vs.width) || vs.width <= 0) {
+            throw new Error(
+              `Error starting dial out: videoSettings.width must be a positive integer`
+            );
+          }
+          if (vs.width > 1280) {
+            throw new Error(
+              `Error starting dial out: videoSettings.width must be less than or equal to 1280`
+            );
+          }
+        }
+        if (vs.height !== undefined) {
+          if (!Number.isInteger(vs.height) || vs.height <= 0) {
+            throw new Error(
+              `Error starting dial out: videoSettings.height must be a positive integer`
+            );
+          }
+          if (vs.height > 720) {
+            throw new Error(
+              `Error starting dial out: videoSettings.height must be less than or equal to 720`
+            );
+          }
+        }
+        if (vs.fps !== undefined) {
+          if (!Number.isInteger(vs.fps) || vs.fps <= 0) {
+            throw new Error(
+              `Error starting dial out: videoSettings.fps must be a positive integer`
+            );
+          }
+          if (vs.fps > 30) {
+            throw new Error(
+              `Error starting dial out: videoSettings.fps must be less than or equal to 30`
+            );
+          }
+        }
+        if (vs.videoBitrate !== undefined) {
+          if (!Number.isInteger(vs.videoBitrate) || vs.videoBitrate <= 0) {
+            throw new Error(
+              `Error starting dial out: videoSettings.videoBitrate must be a positive integer`
+            );
+          }
+          if (vs.videoBitrate > 1000) {
+            throw new Error(
+              `Error starting dial out: videoSettings.videoBitrate must be less than or equal to 1000 kbps`
+            );
+          }
+        }
+      }
+
       validateAudioVideoCodec(args.codecs);
     }
 
