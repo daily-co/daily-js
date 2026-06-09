@@ -2970,20 +2970,6 @@ export default class DailyIframe extends EventEmitter {
           this.properties.dailyConfig,
           (wasNoOp) => {
             this._bundleLoadTime = wasNoOp ? 'no-op' : Date.now() - startTime;
-            // In call-object mode there's no iframe launch-config handshake, so
-            // hand the call machine the base domain the bundle actually loaded
-            // from the same way the iframe path does (see
-            // DAILY_EVENT_IFRAME_LAUNCH_CONFIG): stamp it onto the dailyConfig
-            // that then flows in via makeSafeForPostMessage(this.properties) on
-            // join/preAuth/startCamera. Only on an actual .co failover, so the
-            // common path is untouched. (ENG-9040)
-            const resolvedBaseDomain = getResolvedBaseDomain();
-            if (resolvedBaseDomain && resolvedBaseDomain !== 'daily.co') {
-              this.properties.dailyConfig = {
-                ...this.properties.dailyConfig,
-                resolvedBaseDomain,
-              };
-            }
             this._updateCallState(DAILY_STATE_LOADED);
             // Only need to emit event if load was a no-op, since the loaded
             // bundle won't be emitting it if it's not executed again
@@ -4966,13 +4952,6 @@ testCallQuality() and stopTestCallQuality() instead`);
         this.sendMessageToCallMachine({
           action: DAILY_EVENT_IFRAME_LAUNCH_CONFIG,
           ...this.properties,
-          // Tell the call machine which base domain the bundle actually loaded
-          // from, so its downstream URLs (static assets, geo-lookup) follow the
-          // same domain after a .co failover. Null when daily.co was used.
-          dailyConfig: {
-            ...this.properties.dailyConfig,
-            resolvedBaseDomain: getResolvedBaseDomain(),
-          },
         });
         break;
       case DAILY_EVENT_CALL_MACHINE_INITIALIZED: {
