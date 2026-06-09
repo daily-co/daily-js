@@ -142,14 +142,12 @@ class LoadOperation {
     // proxy disables failover).
     this._urls = callObjectBundleUrlCandidates(dailyConfig);
 
-    // With somewhere to fail over to, use a shorter per-candidate timeout so a
-    // dead primary (e.g. an unreachable .co TLD) advances to the next domain in
-    // a few seconds instead of blocking the user for the full 20s. With a
-    // single URL there's nowhere to go, so keep the original 20s.
-    this._networkTimeoutMs =
-      this._urls.length > 1
-        ? LOAD_ATTEMPT_FAILOVER_TIMEOUT
-        : LOAD_ATTEMPT_NETWORK_TIMEOUT;
+    // Per-candidate network timeout. We keep the full timeout even with failover
+    // candidates: a dead primary (e.g. an unreachable .co TLD) fails its fetch
+    // quickly on its own and advances to the next candidate, whereas a shortened
+    // timeout risks false failovers on slow-but-healthy networks (a cold bundle
+    // can take >7s on 3G). (ENG-9038 / ENG-9040)
+    this._networkTimeoutMs = LOAD_ATTEMPT_NETWORK_TIMEOUT;
 
     this._passesRemaining = LOAD_ATTEMPTS;
     this._urlIndex = 0;
@@ -225,12 +223,6 @@ class LoadOperation {
 class LoadAttemptAbortedError extends Error {}
 
 const LOAD_ATTEMPT_NETWORK_TIMEOUT = 20 * 1000;
-// Shorter per-candidate timeout used when bundle-load failover is in play (more
-// than one candidate domain), so a dead domain — e.g. during a .co TLD DNS
-// outage — is abandoned quickly and we move to the next fallback domain.
-// Deliberately well under the 20s single-URL timeout, but generous enough not
-// to false-trip on slow-but-healthy networks. (ENG-9038 / ENG-9040)
-const LOAD_ATTEMPT_FAILOVER_TIMEOUT = 6 * 1000;
 
 /**
  * Represents a single call machine bundle load attempt.

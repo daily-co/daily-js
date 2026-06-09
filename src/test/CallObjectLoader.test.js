@@ -66,11 +66,11 @@ describe('CallObjectLoader domain failover', () => {
     expect(getResolvedBaseDomain()).toBe('dailywebrtc.com');
   });
 
-  test('primary timeout (6s) fails over to the next domain', () => {
+  test('primary network timeout fails over to the next domain', () => {
     load();
     expect(scripts[0].src).toContain('https://c.daily.co/');
 
-    jest.advanceTimersByTime(6 * 1000); // per-candidate failover timeout
+    jest.advanceTimersByTime(20 * 1000); // per-candidate network timeout
     expect(scripts).toHaveLength(2);
     expect(scripts[1].src).toContain('https://c.dailywebrtc.com/');
   });

@@ -67,6 +67,11 @@ export function maybeProxyHttpsUrl(url, dailyConfig) {
 }
 
 export function bundlePath(dailyConfig, domain = DAILY_BASE_DOMAINS[0]) {
+  // Fall back to the primary base domain for an empty/blank domain (the default
+  // param only covers undefined, not '' — e.g. a bad resolved value). (Filipi)
+  if (!domain || domain.trim() === '') {
+    domain = DAILY_BASE_DOMAINS[0];
+  }
   // ADVANCED: if a custom bundle path override is specified, use that.
   if (dailyConfig?.bundlePathOverride) {
     const url = dailyConfig.bundlePathOverride;
