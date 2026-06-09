@@ -31,6 +31,13 @@ describe('bundle domain failover (utils)', () => {
     );
   });
 
+  test('callObjectBundleUrl defaults to the resolved base domain when set', () => {
+    setResolvedBaseDomain('dailywebrtc.net');
+    expect(callObjectBundleUrl({})).toContain(
+      'https://c.dailywebrtc.net/call-machine/'
+    );
+  });
+
   describe('callObjectBundleUrlCandidates', () => {
     test('returns one URL per domain, in DAILY_BASE_DOMAINS order', () => {
       const candidates = callObjectBundleUrlCandidates({});
@@ -60,6 +67,21 @@ describe('bundle domain failover (utils)', () => {
         );
       }
     );
+
+    test('an override on one of our base domains still fails over (e.g. prebuilt)', () => {
+      // prebuilt pins bundlePathOverride to its custom bundle, hosted on daily.co
+      const candidates = callObjectBundleUrlCandidates({
+        bundlePathOverride: 'https://c.daily.co/prebuilt/custom/path',
+      });
+      expect(candidates).toHaveLength(DAILY_BASE_DOMAINS.length);
+      // the custom path is preserved; only the base domain is swapped per candidate
+      expect(candidates[0]).toBe(
+        'https://c.daily.co/prebuilt/custom/path/call-machine-object-bundle.js'
+      );
+      expect(candidates[1]).toBe(
+        'https://c.dailywebrtc.com/prebuilt/custom/path/call-machine-object-bundle.js'
+      );
+    });
 
     test('once a fallback domain has resolved, it is tried first (sticky)', () => {
       setResolvedBaseDomain('dailywebrtc.com');
