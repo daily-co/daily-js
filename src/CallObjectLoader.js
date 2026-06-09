@@ -82,8 +82,10 @@ export default class CallObjectLoader {
         }
         this._publicPath = base_url;
         window._daily.instances[this._callClientId].publicPath = base_url;
-        // Remember which fallback domain actually loaded so subsequent loads
-        // this page skip straight to it, and so downstream URLs can follow it.
+        // Record the base domain that actually served the bundle, for the
+        // bundle-load telemetry (resolvedBaseDomain / failedOver — our fleet
+        // signal for .co TLD outages, see module.js). Downstream URLs derive the
+        // domain from publicPath above, not from this.
         setResolvedBaseDomain(baseDomainFromUrl(url));
         successCallback(false); // false = "this load() wasn't a no-op"
       },
