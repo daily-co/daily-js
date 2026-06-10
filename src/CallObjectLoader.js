@@ -1,5 +1,10 @@
 import { isReactNative } from './shared-with-pluot-core/Environment';
-import { callObjectBundleUrl, randomStringId } from './utils';
+import {
+  callObjectBundleUrlCandidates,
+  baseDomainFromUrl,
+  setResolvedBaseDomain,
+  randomStringId,
+} from './utils';
 
 function registerPendingCallInstance(callClientId) {
   window._daily.pendings.push(callClientId);
@@ -77,6 +82,11 @@ export default class CallObjectLoader {
         }
         this._publicPath = base_url;
         window._daily.instances[this._callClientId].publicPath = base_url;
+        // Record the base domain that actually served the bundle, for the
+        // bundle-load telemetry (resolvedBaseDomain / failedOver — our fleet
+        // signal for .co TLD outages, see module.js). Downstream URLs derive the
+        // domain from publicPath above, not from this.
+        setResolvedBaseDomain(baseDomainFromUrl(url));
         successCallback(false); // false = "this load() wasn't a no-op"
       },
       (error, willRetry) => {
@@ -106,27 +116,44 @@ export default class CallObjectLoader {
   }
 }
 
+// Number of full passes over the candidate-domain list before giving up.
 const LOAD_ATTEMPTS = 3;
+// Delay between full passes (transient-error backoff). There is NO delay
+// between candidate domains within a pass — failover should be fast.
 const LOAD_ATTEMPT_DELAY = 3 * 1000;
 
 /**
  * Represents a call machine bundle load.
  *
- * Since a load may fail, it may need to retry a few times. It delegates each
- * attempt to the LoadAttempt class.
+ * A load tries an ordered list of candidate bundle URLs — one per fallback
+ * domain (daily.co, then dailywebrtc.com/.net) so a .co TLD DNS outage doesn't
+ * block loading (ENG-9038). It fails over to the next domain immediately on
+ * error/timeout, and repeats the whole list up to LOAD_ATTEMPTS times to ride
+ * out transient errors. Each attempt is delegated to a LoadAttempt.
  */
 class LoadOperation {
   // Here dailyConfig is the same as the one passed to CallObjectLoader.load,
   // failureCallback takes the same parameters as CallObjectLoader.load,
-  // and successCallback takes no parameters.
+  // and successCallback takes the winning bundle url.
   constructor(dailyConfig = {}, successCallback, failureCallback) {
-    this._attemptsRemaining = LOAD_ATTEMPTS;
-    this._currentAttempt = null;
-
     this._dailyConfig = dailyConfig;
-
     this._successCallback = successCallback;
     this._failureCallback = failureCallback;
+
+    // One bundle URL per candidate domain (or a single URL when an override /
+    // proxy disables failover).
+    this._urls = callObjectBundleUrlCandidates(dailyConfig);
+
+    // Per-candidate network timeout. We keep the full timeout even with failover
+    // candidates: a dead primary (e.g. an unreachable .co TLD) fails its fetch
+    // quickly on its own and advances to the next candidate, whereas a shortened
+    // timeout risks false failovers on slow-but-healthy networks (a cold bundle
+    // can take >7s on 3G). (ENG-9038 / ENG-9040)
+    this._networkTimeoutMs = LOAD_ATTEMPT_NETWORK_TIMEOUT;
+
+    this._passesRemaining = LOAD_ATTEMPTS;
+    this._urlIndex = 0;
+    this._currentAttempt = null;
   }
 
   start() {
@@ -134,43 +161,52 @@ class LoadOperation {
     if (this._currentAttempt) {
       return;
     }
+    this._startAttempt();
+  }
 
-    // console.log("[LoadOperation] starting...");
-
-    const retryOrFailureCallback = (error) => {
-      if (this._currentAttempt.cancelled) {
-        // console.log("[LoadOperation] cancelled");
-        return;
-      }
-
-      this._attemptsRemaining--;
-      this._failureCallback(error, this._attemptsRemaining > 0); // true = "will retry"
-      if (this._attemptsRemaining <= 0) {
-        // Should never be <0, but just being extra careful here
-        // console.log("[LoadOperation] ran out of attempts");
-        return;
-      }
-
-      setTimeout(() => {
-        if (this._currentAttempt.cancelled) {
-          // console.log("[LoadOperation] cancelled");
-          return;
-        }
-        this._currentAttempt = new LoadAttempt(
-          this._dailyConfig,
-          this._successCallback,
-          retryOrFailureCallback
-        );
-        void this._currentAttempt.start();
-      }, LOAD_ATTEMPT_DELAY);
-    };
-
+  _startAttempt() {
     this._currentAttempt = new LoadAttempt(
       this._dailyConfig,
+      this._urls[this._urlIndex],
+      this._networkTimeoutMs,
       this._successCallback,
-      retryOrFailureCallback
+      this._retryOrFailureCallback.bind(this)
     );
     void this._currentAttempt.start();
+  }
+
+  _retryOrFailureCallback(error) {
+    if (this._currentAttempt.cancelled) {
+      return;
+    }
+
+    // Advance to the next candidate domain. Exhausting the list completes a
+    // pass; if passes remain we start over from the top after a delay.
+    this._urlIndex++;
+    const moreCandidatesThisPass = this._urlIndex < this._urls.length;
+    const morePasses = this._passesRemaining > 1;
+    const willRetry = moreCandidatesThisPass || morePasses;
+
+    this._failureCallback(error, willRetry);
+    if (!willRetry) {
+      return;
+    }
+
+    if (moreCandidatesThisPass) {
+      // Fail over to the next domain immediately — no delay.
+      this._startAttempt();
+      return;
+    }
+
+    // Exhausted the candidate list; start a fresh pass after a backoff delay.
+    this._passesRemaining--;
+    this._urlIndex = 0;
+    setTimeout(() => {
+      if (this._currentAttempt.cancelled) {
+        return;
+      }
+      this._startAttempt();
+    }, LOAD_ATTEMPT_DELAY);
   }
 
   cancel() {
@@ -212,15 +248,29 @@ const LOAD_ATTEMPT_NETWORK_TIMEOUT = 20 * 1000;
  * in React Native and also no CSP consideration to contend with.
  */
 class LoadAttempt {
-  constructor(dailyConfig, successCallback, failureCallback) {
+  constructor(
+    dailyConfig,
+    url,
+    networkTimeoutMs,
+    successCallback,
+    failureCallback
+  ) {
     this._loadAttemptImpl =
       isReactNative() || !dailyConfig.avoidEval
         ? new LoadAttempt_ReactNative(
             dailyConfig,
+            url,
+            networkTimeoutMs,
             successCallback,
             failureCallback
           )
-        : new LoadAttempt_Web(dailyConfig, successCallback, failureCallback);
+        : new LoadAttempt_Web(
+            dailyConfig,
+            url,
+            networkTimeoutMs,
+            successCallback,
+            failureCallback
+          );
   }
 
   async start() {
@@ -248,12 +298,19 @@ class LoadAttempt {
 class LoadAttempt_ReactNative {
   // Here successCallback takes no parameters, and failureCallback takes a
   // single error parameter that will be filled with a `msg` and `type`.
-  constructor(dailyConfig, successCallback, failureCallback) {
+  constructor(
+    dailyConfig,
+    url,
+    networkTimeoutMs,
+    successCallback,
+    failureCallback
+  ) {
     this.cancelled = false;
     this.succeeded = false;
 
     this._networkTimedOut = false;
     this._networkTimeout = null;
+    this._networkTimeoutMs = networkTimeoutMs;
 
     this._iosCache =
       typeof iOSCallObjectBundleCache !== 'undefined' &&
@@ -261,13 +318,14 @@ class LoadAttempt_ReactNative {
     this._refetchHeaders = null;
 
     this._dailyConfig = dailyConfig;
+    this._url = url;
     this._successCallback = successCallback;
     this._failureCallback = failureCallback;
   }
 
   async start() {
     // console.log('[LoadAttempt_ReactNative] starting...');
-    const url = callObjectBundleUrl(this._dailyConfig);
+    const url = this._url;
     const loadedFromIOSCache = await this._tryLoadFromIOSCache(url);
     !loadedFromIOSCache && this._loadFromNetwork(url);
   }
@@ -348,10 +406,10 @@ class LoadAttempt_ReactNative {
     this._networkTimeout = setTimeout(() => {
       this._networkTimedOut = true;
       this._failureCallback({
-        msg: `Timed out (>${LOAD_ATTEMPT_NETWORK_TIMEOUT} ms) when loading call object bundle ${url}`,
+        msg: `Timed out (>${this._networkTimeoutMs} ms) when loading call object bundle ${url}`,
         type: 'timeout',
       });
-    }, LOAD_ATTEMPT_NETWORK_TIMEOUT);
+    }, this._networkTimeoutMs);
 
     try {
       const fetchOptions = this._refetchHeaders
@@ -447,11 +505,19 @@ class LoadAttempt_ReactNative {
  * of implementing this synchronization.
  */
 class LoadAttempt_Web {
-  constructor(dailyConfig, successCallback, failureCallback) {
+  constructor(
+    dailyConfig,
+    url,
+    networkTimeoutMs,
+    successCallback,
+    failureCallback
+  ) {
     this.cancelled = false;
     this.succeeded = false;
 
     this._dailyConfig = dailyConfig;
+    this._url = url;
+    this._networkTimeoutMs = networkTimeoutMs;
     this._successCallback = successCallback;
     this._failureCallback = failureCallback;
 
@@ -468,7 +534,7 @@ class LoadAttempt_Web {
     }
 
     // Get call machine bundle URL
-    const url = callObjectBundleUrl(this._dailyConfig);
+    const url = this._url;
 
     // Sanity check that we're running in a DOM/web context
     if (typeof document !== 'object') {
@@ -497,10 +563,10 @@ class LoadAttempt_Web {
       // console.log('[LoadAttempt_Web] timed out');
       this._stopLoading();
       this._failureCallback({
-        msg: `Timed out (>${LOAD_ATTEMPT_NETWORK_TIMEOUT} ms) when loading call object bundle ${url}`,
+        msg: `Timed out (>${this._networkTimeoutMs} ms) when loading call object bundle ${url}`,
         type: 'timeout',
       });
-    }, LOAD_ATTEMPT_NETWORK_TIMEOUT);
+    }, this._networkTimeoutMs);
 
     // Create a script tag to download the call machine bundle
     const head = document.getElementsByTagName('head')[0],

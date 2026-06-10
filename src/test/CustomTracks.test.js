@@ -17,9 +17,7 @@ describe('Custom tracks', () => {
     const mode = undefined;
     expect(() =>
       callObject.validateCustomTrack(track, mode, trackName)
-    ).toThrow(
-      'Custom track `trackName` must not be more than 50 characters'
-    );
+    ).toThrow('Custom track `trackName` must not be more than 50 characters');
   });
 
   test('Any track name up to 50 characters which does not match a track name already used by daily must be valid', () => {
@@ -34,16 +32,21 @@ describe('Custom tracks', () => {
   test('Track name must not match a track name already used by daily', () => {
     const track = new MediaStreamTrack();
     const reservedNames = [
+      'audio',
+      'video',
       'cam-audio',
       'cam-video',
+      'screenVideo',
+      'screenAudio',
       'screen-video',
       'screen-audio',
       'rmpAudio',
       'rmpVideo',
+      'customVideoDefaults',
     ];
     const mode = undefined;
     const expectedError =
-      'Custom track `trackName` must not match a track name already used by daily: cam-audio, cam-video, customVideoDefaults, screen-video, screen-audio, rmpAudio, rmpVideo';
+      'Custom track `trackName` must not match a track name already used by daily: audio, video, cam-audio, cam-video, screenVideo, screenAudio, screen-video, screen-audio, rmpAudio, rmpVideo, customVideoDefaults';
     reservedNames.forEach((trackName) => {
       expect(() =>
         callObject.validateCustomTrack(track, mode, trackName)
@@ -57,9 +60,7 @@ describe('Custom tracks', () => {
     const mode = undefined;
     expect(() =>
       callObject.validateCustomTrack(track, mode, trackName)
-    ).toThrow(
-      'Custom tracks provided must be instances of MediaStreamTrack'
-    );
+    ).toThrow('Custom tracks provided must be instances of MediaStreamTrack');
   });
 
   test('Mode must be must be either `music` | `speech` | `DailyMicAudioModeSettings` or `undefined`', () => {
@@ -87,8 +88,8 @@ describe('Custom tracks', () => {
   test('startCustomTrack is only allowed when joined', () => {
     const track = new MediaStreamTrack();
     const trackName = 'fake track';
-    expect(() =>
-      callObject.startCustomTrack({ track, trackName })
-    ).toThrow('startCustomTrack() only supported after join.');
+    expect(() => callObject.startCustomTrack({ track, trackName })).toThrow(
+      'startCustomTrack() only supported after join.'
+    );
   });
 });

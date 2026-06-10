@@ -268,6 +268,7 @@ import { SessionDataUpdate } from './shared-with-pluot-core/SessionData.js';
 import CallObjectLoader from './CallObjectLoader';
 import {
   callObjectBundleUrl,
+  getResolvedBaseDomain,
   randomStringId,
   validateHttpUrl,
 } from './utils.js';
@@ -2547,8 +2548,12 @@ export default class DailyIframe extends EventEmitter {
     }
     const isUsingReservedTrackName = trackName
       ? [
+          'audio',
+          'video',
           'cam-audio',
           'cam-video',
+          'screenVideo',
+          'screenAudio',
           'screen-video',
           'screen-audio',
           'rmpAudio',
@@ -2559,7 +2564,7 @@ export default class DailyIframe extends EventEmitter {
     if (isUsingReservedTrackName) {
       throw new Error(
         'Custom track `trackName` must not match a track name already used by daily: ' +
-          'cam-audio, cam-video, customVideoDefaults, screen-video, screen-audio, rmpAudio, rmpVideo'
+          'audio, video, cam-audio, cam-video, screenVideo, screenAudio, screen-video, screen-audio, rmpAudio, rmpVideo, customVideoDefaults'
       );
     }
     if (!(track instanceof MediaStreamTrack)) {
@@ -3651,6 +3656,72 @@ export default class DailyIframe extends EventEmitter {
           throw new Error(
             `Error starting dial out: video must be a boolean value`
           );
+        }
+      }
+
+      if (args.videoSettings !== undefined) {
+        if (
+          typeof args.videoSettings !== 'object' ||
+          args.videoSettings === null
+        ) {
+          throw new Error(
+            `Error starting dial out: videoSettings must be an object`
+          );
+        }
+        if (!args.video) {
+          throw new Error(
+            `Error starting dial out: videoSettings provided but video is not enabled`
+          );
+        }
+
+        const vs = args.videoSettings;
+        if (vs.width !== undefined) {
+          if (!Number.isInteger(vs.width) || vs.width <= 0) {
+            throw new Error(
+              `Error starting dial out: videoSettings.width must be a positive integer`
+            );
+          }
+          if (vs.width > 1280) {
+            throw new Error(
+              `Error starting dial out: videoSettings.width must be less than or equal to 1280`
+            );
+          }
+        }
+        if (vs.height !== undefined) {
+          if (!Number.isInteger(vs.height) || vs.height <= 0) {
+            throw new Error(
+              `Error starting dial out: videoSettings.height must be a positive integer`
+            );
+          }
+          if (vs.height > 720) {
+            throw new Error(
+              `Error starting dial out: videoSettings.height must be less than or equal to 720`
+            );
+          }
+        }
+        if (vs.fps !== undefined) {
+          if (!Number.isInteger(vs.fps) || vs.fps <= 0) {
+            throw new Error(
+              `Error starting dial out: videoSettings.fps must be a positive integer`
+            );
+          }
+          if (vs.fps > 30) {
+            throw new Error(
+              `Error starting dial out: videoSettings.fps must be less than or equal to 30`
+            );
+          }
+        }
+        if (vs.videoBitrate !== undefined) {
+          if (!Number.isInteger(vs.videoBitrate) || vs.videoBitrate <= 0) {
+            throw new Error(
+              `Error starting dial out: videoSettings.videoBitrate must be a positive integer`
+            );
+          }
+          if (vs.videoBitrate > 1000) {
+            throw new Error(
+              `Error starting dial out: videoSettings.videoBitrate must be less than or equal to 1000 kbps`
+            );
+          }
         }
       }
 
@@ -4951,6 +5022,7 @@ testCallQuality() and stopTestCallQuality() instead`);
         break;
       case DAILY_EVENT_CALL_MACHINE_INITIALIZED: {
         this._callMachineInitialized = true;
+        const resolvedBaseDomain = getResolvedBaseDomain();
         const logMsg = {
           action: DAILY_METHOD_TRANSMIT_LOG,
           level: 'log',
@@ -4959,7 +5031,16 @@ testCallQuality() and stopTestCallQuality() instead`);
             event: 'bundle load',
             time: this._bundleLoadTime === 'no-op' ? 0 : this._bundleLoadTime,
             preLoaded: this._bundleLoadTime === 'no-op',
+            // Reflect the base domain the bundle actually loaded from (not
+            // always daily.co) so this matches resolvedBaseDomain below.
+            // callObjectBundleUrl defaults to the resolved base domain.
             url: callObjectBundleUrl(this.properties.dailyConfig),
+            // Which base domain the bundle actually loaded from, and whether we
+            // had to fail off daily.co. Fleet-wide signal for .co TLD DNS
+            // outages (ENG-9038/ENG-9040).
+            resolvedBaseDomain,
+            failedOver:
+              resolvedBaseDomain != null && resolvedBaseDomain !== 'daily.co',
           },
         };
         this.sendMessageToCallMachine(logMsg);
