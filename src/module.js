@@ -268,6 +268,7 @@ import { SessionDataUpdate } from './shared-with-pluot-core/SessionData.js';
 import CallObjectLoader from './CallObjectLoader';
 import {
   callObjectBundleUrl,
+  getResolvedBaseDomain,
   randomStringId,
   validateHttpUrl,
 } from './utils.js';
@@ -5021,6 +5022,7 @@ testCallQuality() and stopTestCallQuality() instead`);
         break;
       case DAILY_EVENT_CALL_MACHINE_INITIALIZED: {
         this._callMachineInitialized = true;
+        const resolvedBaseDomain = getResolvedBaseDomain();
         const logMsg = {
           action: DAILY_METHOD_TRANSMIT_LOG,
           level: 'log',
@@ -5029,7 +5031,16 @@ testCallQuality() and stopTestCallQuality() instead`);
             event: 'bundle load',
             time: this._bundleLoadTime === 'no-op' ? 0 : this._bundleLoadTime,
             preLoaded: this._bundleLoadTime === 'no-op',
+            // Reflect the base domain the bundle actually loaded from (not
+            // always daily.co) so this matches resolvedBaseDomain below.
+            // callObjectBundleUrl defaults to the resolved base domain.
             url: callObjectBundleUrl(this.properties.dailyConfig),
+            // Which base domain the bundle actually loaded from, and whether we
+            // had to fail off daily.co. Fleet-wide signal for .co TLD DNS
+            // outages (ENG-9038/ENG-9040).
+            resolvedBaseDomain,
+            failedOver:
+              resolvedBaseDomain != null && resolvedBaseDomain !== 'daily.co',
           },
         };
         this.sendMessageToCallMachine(logMsg);
