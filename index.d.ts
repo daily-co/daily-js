@@ -1954,6 +1954,8 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectDialinWarning
     : T extends DailyEventObjectDialOutConnected['action']
     ? DailyEventObjectDialOutConnected
+    : T extends DailyEventObjectDialOutAnswered['action']
+    ? DailyEventObjectDialOutAnswered
     : T extends DailyEventObjectDialOutError['action']
     ? DailyEventObjectDialOutError
     : T extends DailyEventObjectDialOutStopped['action']
