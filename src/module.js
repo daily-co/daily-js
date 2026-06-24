@@ -3010,7 +3010,30 @@ export default class DailyIframe extends EventEmitter {
         this.properties.dailyConfig
       );
       return new Promise((resolve, reject) => {
+        const loadTimeout = setTimeout(() => {
+          if (this._loadedCallback) {
+            this._loadedCallback = null;
+            const dailyError = {
+              action: DAILY_EVENT_ERROR,
+              errorMsg:
+                'Timed out loading daily.co. The domain may be unreachable.',
+              error: {
+                type: 'connection-error',
+                msg: 'Timed out loading daily.co. The domain may be unreachable.',
+              },
+            };
+            this._maybeSendToSentry(dailyError);
+            this.emitDailyJSEvent(dailyError);
+            this._iframe.srcdoc = buildIframeErrorPage(
+              'Failed to load',
+              'Timed out loading daily.co. The domain may be unreachable.'
+            );
+            this._updateCallState(DAILY_STATE_ERROR);
+            reject(dailyError.errorMsg);
+          }
+        }, 10_000);
         this._loadedCallback = (error) => {
+          clearTimeout(loadTimeout);
           if (this._callState === DAILY_STATE_ERROR) {
             reject(error);
             return;
@@ -7035,6 +7058,42 @@ function validateRemotePlayerEncodingSettings(playerSettings) {
       true
     );
   }
+}
+
+function buildIframeErrorPage(title, message) {
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html { font-size: 12px; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #1f2d3d;
+    color: #fff;
+    font-family: GraphikRegular, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+  .card {
+    background: #121a24;
+    border: 1px solid #2b3f56;
+    border-radius: 4px;
+    padding: 32px 40px;
+    width: 100%;
+    max-width: 65ch;
+    text-align: center;
+  }
+  h1 { color: #f63135; font-size: calc(16 / var(--base-font-size, 12) * 1rem); font-weight: 600; margin-bottom: 12px; }
+  p { font-size: calc(12 / var(--base-font-size, 12) * 1rem); line-height: 1.5; color: rgba(255,255,255,0.9); }
+</style>
+</head>
+<body>
+<div class="card"><h1>${title}</h1><p>${message}</p></div>
+</body>
+</html>`;
 }
 
 function maybeStripDataFromMeetingSessionState(
