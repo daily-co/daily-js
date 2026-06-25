@@ -189,13 +189,12 @@ function bundleFailoverDisabled(dailyConfig) {
 // on one of our domains. Used to start bundle-load candidates from the same
 // domain that served the page (e.g. the prebuilt iframe loaded from
 // dailywebrtc.com after a .co TLD outage) so we skip the dead primary.
-function pageBaseDomain() {
+// Exported and accepts an optional hostname for testing.
+export function pageBaseDomain(hostname) {
   try {
-    const { hostname } = window.location;
+    const h = hostname ?? window.location.hostname;
     return (
-      DAILY_BASE_DOMAINS.find(
-        (d) => hostname === d || hostname.endsWith(`.${d}`)
-      ) ?? null
+      DAILY_BASE_DOMAINS.find((d) => h === d || h.endsWith(`.${d}`)) ?? null
     );
   } catch (_) {
     return null;
