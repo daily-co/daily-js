@@ -243,12 +243,12 @@ export function iframeUrlCandidates(meetingUrl, dailyConfig) {
   if (!fromDomain || bundleFailoverDisabled(dailyConfig)) {
     return [meetingUrl];
   }
-  const ordered = resolvedBaseDomain
-    ? [
-        resolvedBaseDomain,
-        ...DAILY_BASE_DOMAINS.filter((d) => d !== resolvedBaseDomain),
-      ]
-    : DAILY_BASE_DOMAINS;
+  const startDomain =
+    resolvedBaseDomain ?? pageBaseDomain() ?? DAILY_BASE_DOMAINS[0];
+  const ordered =
+    startDomain === DAILY_BASE_DOMAINS[0]
+      ? DAILY_BASE_DOMAINS
+      : [startDomain, ...DAILY_BASE_DOMAINS.filter((d) => d !== startDomain)];
   return ordered.map((domain) =>
     domain === fromDomain
       ? meetingUrl

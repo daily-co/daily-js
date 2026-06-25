@@ -3045,7 +3045,7 @@ export default class DailyIframe extends EventEmitter {
                     msg: `Timed out (>${IFRAME_LOAD_TIMEOUT_MS} ms) when loading call frame`,
                     type: 'timeout',
                   },
-                  candidates,
+                  candidateCount: candidates.length,
                 },
               },
               preserveIframe: true,
@@ -7133,8 +7133,8 @@ function buildIframeErrorPage(title, message) {
     max-width: 65ch;
     text-align: center;
   }
-  h1 { color: #f63135; font-size: calc(16 / var(--base-font-size, 12) * 1rem); font-weight: 600; margin-bottom: 12px; }
-  p { font-size: calc(12 / var(--base-font-size, 12) * 1rem); line-height: 1.5; color: rgba(255,255,255,0.9); }
+  h1 { color: #f63135; font-size: 1.333rem; font-weight: 600; margin-bottom: 12px; }
+  p { font-size: 1rem; line-height: 1.5; color: rgba(255,255,255,0.9); }
 </style>
 </head>
 <body>

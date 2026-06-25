@@ -12,6 +12,8 @@
  * --- DAILY-JS API ---
  */
 
+export declare const DAILY_BASE_DOMAINS: readonly string[];
+
 export type DailyLanguage =
   | 'da'
   | 'de'
