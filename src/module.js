@@ -1,7 +1,12 @@
 import EventEmitter from 'events';
 import { dequal } from 'dequal';
 import Bowser from 'bowser';
-import { maybeProxyHttpsUrl } from './utils';
+import {
+  maybeProxyHttpsUrl,
+  iframeUrlCandidates,
+  baseDomainFromUrl,
+  setResolvedBaseDomain,
+} from './utils';
 import * as Sentry from '@sentry/browser';
 
 import {
@@ -488,6 +493,11 @@ const customIntegrationsType = {
 };
 
 // aboutClient: optional key-value map for client info in logs. Validated on set.
+// Per-domain timeout for iframe load failover. Slightly longer than the bundle
+// loader's per-attempt timeout (20 s) so the bundle has a chance to finish on
+// the first try before we abandon a domain and try the next.
+const IFRAME_LOAD_TIMEOUT_MS = 25 * 1000;
+
 const ABOUT_CLIENT_MAX_ENTRIES = 10;
 const ABOUT_CLIENT_MAX_KEY_LENGTH = 64;
 const ABOUT_CLIENT_MAX_VALUE_LENGTH = 256;
@@ -2981,9 +2991,7 @@ export default class DailyIframe extends EventEmitter {
           (error, willRetry) => {
             this.emitDailyJSEvent({ action: DAILY_EVENT_LOAD_ATTEMPT_FAILED });
             if (!willRetry) {
-              this._updateCallState(DAILY_STATE_ERROR);
-              this.resetMeetingDependentVars();
-              const dailyError = {
+              this._handleFatalError({
                 action: DAILY_EVENT_ERROR,
                 errorMsg: error.msg,
                 error: {
@@ -2995,55 +3003,85 @@ export default class DailyIframe extends EventEmitter {
                     bundleUrl: callObjectBundleUrl(this.properties.dailyConfig),
                   },
                 },
-              };
-              this._maybeSendToSentry(dailyError);
-              this.emitDailyJSEvent(dailyError);
+              });
               reject(error.msg);
             }
           }
         );
       });
     } else {
-      // iframe
-      this._iframe.src = maybeProxyHttpsUrl(
-        this.assembleMeetingUrl(),
+      // iframe — cycle through base-domain candidates (daily.co →
+      // dailywebrtc.com → .net) once each so a .co TLD DNS outage doesn't
+      // block loading (ENG-9038). Per-domain timeout is slightly longer than
+      // the bundle loader's per-attempt timeout so the bundle has a chance to
+      // succeed before we abandon a domain.
+      const meetingUrl = this.assembleMeetingUrl();
+      const candidates = iframeUrlCandidates(
+        meetingUrl,
         this.properties.dailyConfig
       );
+
       return new Promise((resolve, reject) => {
-        const loadTimeout = setTimeout(() => {
-          if (this._loadedCallback) {
-            this._loadedCallback = null;
-            const dailyError = {
-              action: DAILY_EVENT_ERROR,
-              errorMsg:
-                'Timed out loading daily.co. The domain may be unreachable.',
-              error: {
-                type: 'connection-error',
-                msg: 'Timed out loading daily.co. The domain may be unreachable.',
-              },
-            };
-            this._maybeSendToSentry(dailyError);
-            this.emitDailyJSEvent(dailyError);
+        let candidateIndex = 0;
+
+        const tryCandidate = () => {
+          if (candidateIndex >= candidates.length) {
+            const errorMsg =
+              'Failed to load the call frame. The domain may be unreachable.';
             this._iframe.srcdoc = buildIframeErrorPage(
               'Failed to load',
-              'Timed out loading daily.co. The domain may be unreachable.'
+              errorMsg
             );
-            this._updateCallState(DAILY_STATE_ERROR);
-            reject(dailyError.errorMsg);
-          }
-        }, 10_000);
-        this._loadedCallback = (error) => {
-          clearTimeout(loadTimeout);
-          if (this._callState === DAILY_STATE_ERROR) {
-            reject(error);
+            this._handleFatalError({
+              action: DAILY_EVENT_ERROR,
+              errorMsg,
+              error: {
+                type: 'connection-error',
+                msg: errorMsg,
+                details: {
+                  on: 'load',
+                  sourceError: {
+                    msg: `Timed out (>${IFRAME_LOAD_TIMEOUT_MS} ms) when loading call frame`,
+                    type: 'timeout',
+                  },
+                  candidates,
+                },
+              },
+              preserveIframe: true,
+            });
+            reject(errorMsg);
             return;
           }
-          this._updateCallState(DAILY_STATE_LOADED);
-          if (this.properties.cssFile || this.properties.cssText) {
-            this.loadCss(this.properties);
-          }
-          resolve();
+
+          const candidateUrl = candidates[candidateIndex++];
+          this._iframe.src = maybeProxyHttpsUrl(
+            candidateUrl,
+            this.properties.dailyConfig
+          );
+
+          const frameLoadTimeout = setTimeout(() => {
+            if (this._loadedCallback) {
+              this._loadedCallback = null;
+              tryCandidate();
+            }
+          }, IFRAME_LOAD_TIMEOUT_MS);
+
+          this._loadedCallback = (error) => {
+            clearTimeout(frameLoadTimeout);
+            if (this._callState === DAILY_STATE_ERROR) {
+              reject(error);
+              return;
+            }
+            setResolvedBaseDomain(baseDomainFromUrl(candidateUrl));
+            this._updateCallState(DAILY_STATE_LOADED);
+            if (this.properties.cssFile || this.properties.cssText) {
+              this.loadCss(this.properties);
+            }
+            resolve();
+          };
         };
+
+        tryCandidate();
       });
     }
   }
@@ -5276,29 +5314,9 @@ testCallQuality() and stopTestCallQuality() instead`);
           this.emitDailyJSEvent(msg_cp);
         }
         break;
-      case DAILY_EVENT_ERROR: {
-        if (this._iframe && !msg.preserveIframe) {
-          this._iframe.src = '';
-        }
-        this._updateCallState(DAILY_STATE_ERROR);
-        this.resetMeetingDependentVars();
-        if (this._loadedCallback) {
-          this._loadedCallback(msg.errorMsg);
-          this._loadedCallback = null;
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        let { preserveIframe, ...event } = msg;
-        if (event?.error?.details) {
-          event.error.details = JSON.parse(event.error.details);
-        }
-        this._maybeSendToSentry(msg);
-        if (this._joinedCallback) {
-          this._joinedCallback(null, event);
-          this._joinedCallback = null;
-        }
-        this.emitDailyJSEvent(event);
+      case DAILY_EVENT_ERROR:
+        this._handleFatalError(msg);
         break;
-      }
       case DAILY_EVENT_LEFT_MEETING:
         // if we've left due to error, the error msg should have
         // already been handled and we do not want to override
@@ -5751,6 +5769,34 @@ testCallQuality() and stopTestCallQuality() instead`);
   // NOTE (Paul, 2021-01-07): this could probably be expanded to reset *all*
   // meeting-dependent vars, but starting with this targeted small set which
   // were being reset properly on leave() but not when leaving via prebuilt ui.
+  // Shared fatal-error handler. Called both by the DAILY_EVENT_ERROR message
+  // handler (error signalled from inside the iframe/call machine) and by the
+  // iframe load exhaustion path (all domain candidates timed out). The caller
+  // is responsible for showing a fallback UI (e.g. setting srcdoc) when
+  // preserveIframe is true.
+  _handleFatalError(msg) {
+    if (this._iframe && !msg.preserveIframe) {
+      this._iframe.src = '';
+    }
+    this._updateCallState(DAILY_STATE_ERROR);
+    this.resetMeetingDependentVars();
+    if (this._loadedCallback) {
+      this._loadedCallback(msg.errorMsg);
+      this._loadedCallback = null;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let { preserveIframe, ...event } = msg;
+    if (typeof event?.error?.details === 'string') {
+      event.error.details = JSON.parse(event.error.details);
+    }
+    this._maybeSendToSentry(msg);
+    if (this._joinedCallback) {
+      this._joinedCallback(null, event);
+      this._joinedCallback = null;
+    }
+    this.emitDailyJSEvent(event);
+  }
+
   resetMeetingDependentVars() {
     this._participants = {};
     this._participantCounts = EMPTY_PARTICIPANT_COUNTS;
