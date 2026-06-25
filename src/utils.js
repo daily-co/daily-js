@@ -185,19 +185,37 @@ function bundleFailoverDisabled(dailyConfig) {
   );
 }
 
+// Returns the Daily base domain of the current page, or null if the page is not
+// on one of our domains. Used to start bundle-load candidates from the same
+// domain that served the page (e.g. the prebuilt iframe loaded from
+// dailywebrtc.com after a .co TLD outage) so we skip the dead primary.
+function pageBaseDomain() {
+  try {
+    const { hostname } = window.location;
+    return (
+      DAILY_BASE_DOMAINS.find(
+        (d) => hostname === d || hostname.endsWith(`.${d}`)
+      ) ?? null
+    );
+  } catch (_) {
+    return null;
+  }
+}
+
 // Ordered list of bundle URLs the loader should try. A single URL when failover
 // is disabled; otherwise one per DAILY_BASE_DOMAINS, with any resolved base domain
-// moved to the front (sticky) so we don't re-incur a dead primary's timeout.
+// (or, absent that, the page's own base domain) moved to the front so we don't
+// re-incur a dead primary's timeout.
 export function callObjectBundleUrlCandidates(dailyConfig) {
   if (bundleFailoverDisabled(dailyConfig)) {
     return [callObjectBundleUrl(dailyConfig)];
   }
-  const ordered = resolvedBaseDomain
-    ? [
-        resolvedBaseDomain,
-        ...DAILY_BASE_DOMAINS.filter((d) => d !== resolvedBaseDomain),
-      ]
-    : DAILY_BASE_DOMAINS;
+  const startDomain =
+    resolvedBaseDomain ?? pageBaseDomain() ?? DAILY_BASE_DOMAINS[0];
+  const ordered =
+    startDomain === DAILY_BASE_DOMAINS[0]
+      ? DAILY_BASE_DOMAINS
+      : [startDomain, ...DAILY_BASE_DOMAINS.filter((d) => d !== startDomain)];
   return ordered.map((domain) => callObjectBundleUrl(dailyConfig, domain));
 }
 

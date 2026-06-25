@@ -7,6 +7,7 @@ import {
   baseDomainFromUrl,
   setResolvedBaseDomain,
 } from './utils';
+export { DAILY_BASE_DOMAINS } from './utils';
 import * as Sentry from '@sentry/browser';
 
 import {
