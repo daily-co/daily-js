@@ -3028,7 +3028,7 @@ export default class DailyIframe extends EventEmitter {
         const tryCandidate = () => {
           if (candidateIndex >= candidates.length) {
             const errorMsg =
-              'Failed to load the call frame. The domain may be unreachable.';
+              'Timed out attempting to load the call. Please check your network connection and try again.';
             this._iframe.srcdoc = buildIframeErrorPage(
               'Failed to load',
               errorMsg
@@ -5766,10 +5766,6 @@ testCallQuality() and stopTestCallQuality() instead`);
     );
   }
 
-  // To be invoked this when leaving or erroring out of a meeting.
-  // NOTE (Paul, 2021-01-07): this could probably be expanded to reset *all*
-  // meeting-dependent vars, but starting with this targeted small set which
-  // were being reset properly on leave() but not when leaving via prebuilt ui.
   // Shared fatal-error handler. Called both by the DAILY_EVENT_ERROR message
   // handler (error signalled from inside the iframe/call machine) and by the
   // iframe load exhaustion path (all domain candidates timed out). The caller
@@ -5798,6 +5794,10 @@ testCallQuality() and stopTestCallQuality() instead`);
     this.emitDailyJSEvent(event);
   }
 
+  // To be invoked this when leaving or erroring out of a meeting.
+  // NOTE (Paul, 2021-01-07): this could probably be expanded to reset *all*
+  // meeting-dependent vars, but starting with this targeted small set which
+  // were being reset properly on leave() but not when leaving via prebuilt ui.
   resetMeetingDependentVars() {
     this._participants = {};
     this._participantCounts = EMPTY_PARTICIPANT_COUNTS;
