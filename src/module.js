@@ -1,7 +1,13 @@
 import EventEmitter from 'events';
 import { dequal } from 'dequal';
 import Bowser from 'bowser';
-import { maybeProxyHttpsUrl } from './utils';
+import {
+  maybeProxyHttpsUrl,
+  iframeUrlCandidates,
+  baseDomainFromUrl,
+  setResolvedBaseDomain,
+} from './utils';
+export { DAILY_BASE_DOMAINS } from './utils';
 import * as Sentry from '@sentry/browser';
 
 import {
@@ -488,6 +494,11 @@ const customIntegrationsType = {
 };
 
 // aboutClient: optional key-value map for client info in logs. Validated on set.
+// Per-domain timeout for iframe load failover. Slightly longer than the bundle
+// loader's per-attempt timeout (20 s) so the bundle has a chance to finish on
+// the first try before we abandon a domain and try the next.
+const IFRAME_LOAD_TIMEOUT_MS = 25 * 1000;
+
 const ABOUT_CLIENT_MAX_ENTRIES = 10;
 const ABOUT_CLIENT_MAX_KEY_LENGTH = 64;
 const ABOUT_CLIENT_MAX_VALUE_LENGTH = 256;
@@ -2981,9 +2992,7 @@ export default class DailyIframe extends EventEmitter {
           (error, willRetry) => {
             this.emitDailyJSEvent({ action: DAILY_EVENT_LOAD_ATTEMPT_FAILED });
             if (!willRetry) {
-              this._updateCallState(DAILY_STATE_ERROR);
-              this.resetMeetingDependentVars();
-              const dailyError = {
+              this._handleFatalError({
                 action: DAILY_EVENT_ERROR,
                 errorMsg: error.msg,
                 error: {
@@ -2995,32 +3004,85 @@ export default class DailyIframe extends EventEmitter {
                     bundleUrl: callObjectBundleUrl(this.properties.dailyConfig),
                   },
                 },
-              };
-              this._maybeSendToSentry(dailyError);
-              this.emitDailyJSEvent(dailyError);
+              });
               reject(error.msg);
             }
           }
         );
       });
     } else {
-      // iframe
-      this._iframe.src = maybeProxyHttpsUrl(
-        this.assembleMeetingUrl(),
+      // iframe — cycle through base-domain candidates (daily.co →
+      // dailywebrtc.com → .net) once each so a .co TLD DNS outage doesn't
+      // block loading (ENG-9038). Per-domain timeout is slightly longer than
+      // the bundle loader's per-attempt timeout so the bundle has a chance to
+      // succeed before we abandon a domain.
+      const meetingUrl = this.assembleMeetingUrl();
+      const candidates = iframeUrlCandidates(
+        meetingUrl,
         this.properties.dailyConfig
       );
+
       return new Promise((resolve, reject) => {
-        this._loadedCallback = (error) => {
-          if (this._callState === DAILY_STATE_ERROR) {
-            reject(error);
+        let candidateIndex = 0;
+
+        const tryCandidate = () => {
+          if (candidateIndex >= candidates.length) {
+            const errorMsg =
+              'Timed out attempting to load the call. Please check your network connection and try again.';
+            this._iframe.srcdoc = buildIframeErrorPage(
+              'Failed to load',
+              errorMsg
+            );
+            this._handleFatalError({
+              action: DAILY_EVENT_ERROR,
+              errorMsg,
+              error: {
+                type: 'connection-error',
+                msg: errorMsg,
+                details: {
+                  on: 'load',
+                  sourceError: {
+                    msg: `Timed out (>${IFRAME_LOAD_TIMEOUT_MS} ms) when loading call frame`,
+                    type: 'timeout',
+                  },
+                  candidateCount: candidates.length,
+                },
+              },
+              preserveIframe: true,
+            });
+            reject(errorMsg);
             return;
           }
-          this._updateCallState(DAILY_STATE_LOADED);
-          if (this.properties.cssFile || this.properties.cssText) {
-            this.loadCss(this.properties);
-          }
-          resolve();
+
+          const candidateUrl = candidates[candidateIndex++];
+          this._iframe.src = maybeProxyHttpsUrl(
+            candidateUrl,
+            this.properties.dailyConfig
+          );
+
+          const frameLoadTimeout = setTimeout(() => {
+            if (this._loadedCallback) {
+              this._loadedCallback = null;
+              tryCandidate();
+            }
+          }, IFRAME_LOAD_TIMEOUT_MS);
+
+          this._loadedCallback = (error) => {
+            clearTimeout(frameLoadTimeout);
+            if (this._callState === DAILY_STATE_ERROR) {
+              reject(error);
+              return;
+            }
+            setResolvedBaseDomain(baseDomainFromUrl(candidateUrl));
+            this._updateCallState(DAILY_STATE_LOADED);
+            if (this.properties.cssFile || this.properties.cssText) {
+              this.loadCss(this.properties);
+            }
+            resolve();
+          };
         };
+
+        tryCandidate();
       });
     }
   }
@@ -5253,29 +5315,9 @@ testCallQuality() and stopTestCallQuality() instead`);
           this.emitDailyJSEvent(msg_cp);
         }
         break;
-      case DAILY_EVENT_ERROR: {
-        if (this._iframe && !msg.preserveIframe) {
-          this._iframe.src = '';
-        }
-        this._updateCallState(DAILY_STATE_ERROR);
-        this.resetMeetingDependentVars();
-        if (this._loadedCallback) {
-          this._loadedCallback(msg.errorMsg);
-          this._loadedCallback = null;
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        let { preserveIframe, ...event } = msg;
-        if (event?.error?.details) {
-          event.error.details = JSON.parse(event.error.details);
-        }
-        this._maybeSendToSentry(msg);
-        if (this._joinedCallback) {
-          this._joinedCallback(null, event);
-          this._joinedCallback = null;
-        }
-        this.emitDailyJSEvent(event);
+      case DAILY_EVENT_ERROR:
+        this._handleFatalError(msg);
         break;
-      }
       case DAILY_EVENT_LEFT_MEETING:
         // if we've left due to error, the error msg should have
         // already been handled and we do not want to override
@@ -5722,6 +5764,34 @@ testCallQuality() and stopTestCallQuality() instead`);
     this.updateNoOpRecordingEnsuringBackgroundContinuity(
       curCallPendingOrOngoing
     );
+  }
+
+  // Shared fatal-error handler. Called both by the DAILY_EVENT_ERROR message
+  // handler (error signalled from inside the iframe/call machine) and by the
+  // iframe load exhaustion path (all domain candidates timed out). The caller
+  // is responsible for showing a fallback UI (e.g. setting srcdoc) when
+  // preserveIframe is true.
+  _handleFatalError(msg) {
+    if (this._iframe && !msg.preserveIframe) {
+      this._iframe.src = '';
+    }
+    this._updateCallState(DAILY_STATE_ERROR);
+    this.resetMeetingDependentVars();
+    if (this._loadedCallback) {
+      this._loadedCallback(msg.errorMsg);
+      this._loadedCallback = null;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let { preserveIframe, ...event } = msg;
+    if (typeof event?.error?.details === 'string') {
+      event.error.details = JSON.parse(event.error.details);
+    }
+    this._maybeSendToSentry(msg);
+    if (this._joinedCallback) {
+      this._joinedCallback(null, event);
+      this._joinedCallback = null;
+    }
+    this.emitDailyJSEvent(event);
   }
 
   // To be invoked this when leaving or erroring out of a meeting.
@@ -7035,6 +7105,42 @@ function validateRemotePlayerEncodingSettings(playerSettings) {
       true
     );
   }
+}
+
+function buildIframeErrorPage(title, message) {
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html { font-size: 12px; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #1f2d3d;
+    color: #fff;
+    font-family: GraphikRegular, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+  .card {
+    background: #121a24;
+    border: 1px solid #2b3f56;
+    border-radius: 4px;
+    padding: 32px 40px;
+    width: 100%;
+    max-width: 65ch;
+    text-align: center;
+  }
+  h1 { color: #f63135; font-size: 1.333rem; font-weight: 600; margin-bottom: 12px; }
+  p { font-size: 1rem; line-height: 1.5; color: rgba(255,255,255,0.9); }
+</style>
+</head>
+<body>
+<div class="card"><h1>${title}</h1><p>${message}</p></div>
+</body>
+</html>`;
 }
 
 function maybeStripDataFromMeetingSessionState(

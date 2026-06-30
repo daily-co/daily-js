@@ -185,20 +185,75 @@ function bundleFailoverDisabled(dailyConfig) {
   );
 }
 
+// Returns the Daily base domain of the current page, or null if the page is not
+// on one of our domains. Used to start bundle-load candidates from the same
+// domain that served the page (e.g. the prebuilt iframe loaded from
+// dailywebrtc.com after a .co TLD outage) so we skip the dead primary.
+// Exported and accepts an optional hostname for testing.
+export function pageBaseDomain(hostname) {
+  try {
+    const h = hostname ?? window.location.hostname;
+    return (
+      DAILY_BASE_DOMAINS.find((d) => h === d || h.endsWith(`.${d}`)) ?? null
+    );
+  } catch (_) {
+    return null;
+  }
+}
+
 // Ordered list of bundle URLs the loader should try. A single URL when failover
 // is disabled; otherwise one per DAILY_BASE_DOMAINS, with any resolved base domain
-// moved to the front (sticky) so we don't re-incur a dead primary's timeout.
+// (or, absent that, the page's own base domain) moved to the front so we don't
+// re-incur a dead primary's timeout.
 export function callObjectBundleUrlCandidates(dailyConfig) {
   if (bundleFailoverDisabled(dailyConfig)) {
     return [callObjectBundleUrl(dailyConfig)];
   }
-  const ordered = resolvedBaseDomain
-    ? [
-        resolvedBaseDomain,
-        ...DAILY_BASE_DOMAINS.filter((d) => d !== resolvedBaseDomain),
-      ]
-    : DAILY_BASE_DOMAINS;
+  const startDomain =
+    resolvedBaseDomain ?? pageBaseDomain() ?? DAILY_BASE_DOMAINS[0];
+  const ordered =
+    startDomain === DAILY_BASE_DOMAINS[0]
+      ? DAILY_BASE_DOMAINS
+      : [startDomain, ...DAILY_BASE_DOMAINS.filter((d) => d !== startDomain)];
   return ordered.map((domain) => callObjectBundleUrl(dailyConfig, domain));
+}
+
+// Rewrites the Daily base domain in a meeting URL using the URL API (hostname-
+// only, so the room name / query string can't be confused for a domain).
+function rewriteMeetingUrlDomain(url, fromDomain, toDomain) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.endsWith(`.${fromDomain}`)) {
+      parsed.hostname = parsed.hostname.slice(0, -fromDomain.length) + toDomain;
+    } else if (parsed.hostname === fromDomain) {
+      parsed.hostname = toDomain;
+    }
+    return parsed.toString();
+  } catch (_) {
+    return url;
+  }
+}
+
+// Ordered list of meeting URL candidates for iframe load failover — mirrors
+// callObjectBundleUrlCandidates but rewrites the room URL's hostname instead of
+// the bundle URL. Returns a single URL when failover is disabled or when the
+// meeting URL is not on one of our base domains (custom domain — no rewrite).
+export function iframeUrlCandidates(meetingUrl, dailyConfig) {
+  const fromDomain = baseDomainFromUrl(meetingUrl);
+  if (!fromDomain || bundleFailoverDisabled(dailyConfig)) {
+    return [meetingUrl];
+  }
+  const startDomain =
+    resolvedBaseDomain ?? pageBaseDomain() ?? DAILY_BASE_DOMAINS[0];
+  const ordered =
+    startDomain === DAILY_BASE_DOMAINS[0]
+      ? DAILY_BASE_DOMAINS
+      : [startDomain, ...DAILY_BASE_DOMAINS.filter((d) => d !== startDomain)];
+  return ordered.map((domain) =>
+    domain === fromDomain
+      ? meetingUrl
+      : rewriteMeetingUrlDomain(meetingUrl, fromDomain, domain)
+  );
 }
 
 export function validateHttpUrl(string) {
