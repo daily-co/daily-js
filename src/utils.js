@@ -6,6 +6,54 @@ export function notImplementedError() {
   throw new Error('Method must be implemented in subclass');
 }
 
+// "Base domain" = the registrable domain Daily's infrastructure is served under
+// (daily.co / dailywebrtc.com / .net). NOTE: this is NOT the customer's "Daily
+// domain" (the tenant, e.g. "acme" in acme.daily.co) that "domain" usually
+// refers to elsewhere in this codebase — keep the two senses distinct.
+//
+// daily.co is primary; the others are fallbacks for when the .co TLD's
+// authoritative nameservers are unreachable (a recurring outage — see
+// ENG-9038). The bundle loader tries these in order; whichever succeeds is
+// remembered for the page's lifetime and threaded into every downstream URL so
+// the session stays on one base domain.
+export const DAILY_BASE_DOMAINS = [
+  'daily.co',
+  'dailywebrtc.com',
+  'dailywebrtc.net',
+];
+
+// In-memory (per page load) record of the registrable domain the bundle last
+// loaded from. Lets repeated loads skip straight to the known-good domain
+// instead of re-incurring a dead primary's timeout. Intentionally NOT persisted:
+// a fresh page load re-checks the primary (daily.co) first.
+let resolvedBaseDomain = null;
+
+export function getResolvedBaseDomain() {
+  return resolvedBaseDomain;
+}
+
+export function setResolvedBaseDomain(domain) {
+  // null clears it (e.g. a custom/override bundle URL loaded — don't keep a
+  // stale resolved domain). Otherwise only accept a known Daily domain.
+  if (domain === null || DAILY_BASE_DOMAINS.includes(domain)) {
+    resolvedBaseDomain = domain;
+  }
+}
+
+// Returns the registrable Daily domain a URL belongs to (one of DAILY_BASE_DOMAINS),
+// or null for custom/override URLs.
+export function baseDomainFromUrl(url) {
+  try {
+    const host = new URL(url).hostname;
+    return (
+      DAILY_BASE_DOMAINS.find((d) => host === d || host.endsWith(`.${d}`)) ||
+      null
+    );
+  } catch (_) {
+    return null;
+  }
+}
+
 // url assumed to start with 'https://'
 export function maybeProxyHttpsUrl(url, dailyConfig) {
   if (dailyConfig?.proxyUrl) {
@@ -18,24 +66,194 @@ export function maybeProxyHttpsUrl(url, dailyConfig) {
   return url;
 }
 
-export function callObjectBundleUrl(dailyConfig) {
-  // ADVANCED: if a custom bundle URL override is specified, use that.
+// Rewrite whichever of our base domains appears in an override URL/path to the
+// target candidate base domain, so an override that points at one of our domains
+// (e.g. prebuilt's bundlePathOverride on daily.co) can still fail over. No-op for
+// overrides not on one of our domains, and when the target already matches.
+function applyBaseDomainToOverride(url, domain) {
+  const present = DAILY_BASE_DOMAINS.find((d) => url.includes(d));
+  return present ? url.replace(present, domain) : url;
+}
+
+export function bundlePath(
+  dailyConfig,
+  domain = resolvedBaseDomain ?? DAILY_BASE_DOMAINS[0]
+) {
+  // Fall back to the resolved base domain (else the primary) for an empty/blank
+  // domain — the default param only covers undefined, not '' — so the logging
+  // callers in module.js don't have to thread the resolved domain through.
+  if (!domain || domain.trim() === '') {
+    domain = resolvedBaseDomain ?? DAILY_BASE_DOMAINS[0];
+  }
+  // ADVANCED: if a custom bundle path override is specified, use that — but
+  // rewrite its base domain to the target candidate so an override on one of our
+  // domains can still fail over (no-op for non-daily overrides / matching target).
+  if (dailyConfig?.bundlePathOverride) {
+    const url = applyBaseDomainToOverride(
+      dailyConfig.bundlePathOverride,
+      domain
+    );
+    return url.endsWith('/') ? url.slice(0, -1) : url;
+  }
   if (dailyConfig?.callObjectBundleUrlOverride) {
-    return dailyConfig.callObjectBundleUrlOverride;
+    // Note: This should never happen since the only thing that calls bundlePath is
+    // callObjectBundleUrl, which returns early if callObjectBundleUrlOverride is set.
+    const url = applyBaseDomainToOverride(
+      dailyConfig.callObjectBundleUrlOverride,
+      domain
+    );
+    const dir = url.substring(0, url.lastIndexOf('/'));
+    return dir.endsWith('/') ? dir.slice(0, -1) : dir;
   }
 
-  // 1. Dev build of daily-js --> load bundle from __devCallMachineUrl__, which
+  // 1. Dev build of daily-js --> load bundle from __devBundlePath__, which
   //    is either:
-  //    - DEV_CALL_MACHINE_URL env variable (read at build time)
+  //    - DEV_BUNDLE_PATH env variable (read at build time)
   //    - default local dev URL
   //    See webpack or rollup config for details.
   // 2. Prod build of daily-js --> load bundle from version-specific prod URL.
-  return process.env.NODE_ENV === 'development'
-    ? __devCallMachineUrl__
-    : maybeProxyHttpsUrl(
-        `https://c.daily.co/call-machine/versioned/${__dailyJsVersion__}/static/call-machine-object-bundle.js`,
-        dailyConfig
-      );
+  //    `domain` selects the registrable base domain (daily.co or a fallback).
+  let url =
+    process.env.NODE_ENV === 'development'
+      ? __devBundlePath__
+      : maybeProxyHttpsUrl(
+          `https://c.${domain}/call-machine/versioned/${__dailyJsVersion__}/static`,
+          dailyConfig
+        );
+  return url.endsWith('/') ? url.slice(0, -1) : url;
+}
+
+export function callObjectBundleUrl(
+  dailyConfig,
+  domain = resolvedBaseDomain ?? DAILY_BASE_DOMAINS[0]
+) {
+  // ADVANCED: if a custom bundle URL override is specified, use that (rewritten
+  // to the target base domain so it can fail over when it's on one of ours).
+  if (dailyConfig?.callObjectBundleUrlOverride) {
+    console.warn(
+      'The callObjectBundleUrlOverride property is deprecated and will be removed.' +
+        ' Please use bundlePathOverride instead. When providing a bundlePathOverride,' +
+        ' the URL should point to the directory containing all Daily bundles' +
+        ' (call-machine-object-bundle.js and audio-processor-bundle.js).'
+    );
+    return applyBaseDomainToOverride(
+      dailyConfig.callObjectBundleUrlOverride,
+      domain
+    );
+  }
+
+  const url =
+    bundlePath(dailyConfig, domain) + '/call-machine-object-bundle.js';
+  return url;
+}
+
+// localStorage key for the server-controlled kill switch. The call machine
+// writes it from the domain config's disable_base_domain_fallback (see
+// js/stores/lifecycle/actionCreators.js); the loader reads it here. Persisted
+// (not in dailyConfig) because domain config isn't available at bundle-load
+// time, so a flip only takes effect on the next page load.
+const DISABLE_BASE_DOMAIN_FALLBACK_KEY = 'daily:disable-base-domain-fallback';
+
+function domainFallbackKilled() {
+  try {
+    return (
+      typeof localStorage !== 'undefined' &&
+      localStorage.getItem(DISABLE_BASE_DOMAIN_FALLBACK_KEY) === '1'
+    );
+  } catch (_) {
+    // localStorage may throw (privacy mode / sandboxed iframe); treat as enabled.
+    return false;
+  }
+}
+
+// Whether bundle-load failover across DAILY_BASE_DOMAINS applies. It does not in
+// dev builds, when a proxy is set, when the server kill switch has been persisted,
+// or when an override points somewhere that isn't one of our base domains — in
+// those cases there's exactly one bundle URL and we must respect it. An override
+// that IS on one of our domains (e.g. prebuilt's bundlePathOverride on daily.co)
+// can still fail over by rewriting its base domain, so it does not disable.
+function bundleFailoverDisabled(dailyConfig) {
+  const override =
+    dailyConfig?.bundlePathOverride || dailyConfig?.callObjectBundleUrlOverride;
+  if (override && !DAILY_BASE_DOMAINS.some((d) => override.includes(d))) {
+    return true;
+  }
+  return Boolean(
+    dailyConfig?.proxyUrl ||
+      process.env.NODE_ENV === 'development' ||
+      domainFallbackKilled()
+  );
+}
+
+// Returns the Daily base domain of the current page, or null if the page is not
+// on one of our domains. Used to start bundle-load candidates from the same
+// domain that served the page (e.g. the prebuilt iframe loaded from
+// dailywebrtc.com after a .co TLD outage) so we skip the dead primary.
+// Exported and accepts an optional hostname for testing.
+export function pageBaseDomain(hostname) {
+  try {
+    const h = hostname ?? window.location.hostname;
+    return (
+      DAILY_BASE_DOMAINS.find((d) => h === d || h.endsWith(`.${d}`)) ?? null
+    );
+  } catch (_) {
+    return null;
+  }
+}
+
+// Ordered list of bundle URLs the loader should try. A single URL when failover
+// is disabled; otherwise one per DAILY_BASE_DOMAINS, with any resolved base domain
+// (or, absent that, the page's own base domain) moved to the front so we don't
+// re-incur a dead primary's timeout.
+export function callObjectBundleUrlCandidates(dailyConfig) {
+  if (bundleFailoverDisabled(dailyConfig)) {
+    return [callObjectBundleUrl(dailyConfig)];
+  }
+  const startDomain =
+    resolvedBaseDomain ?? pageBaseDomain() ?? DAILY_BASE_DOMAINS[0];
+  const ordered =
+    startDomain === DAILY_BASE_DOMAINS[0]
+      ? DAILY_BASE_DOMAINS
+      : [startDomain, ...DAILY_BASE_DOMAINS.filter((d) => d !== startDomain)];
+  return ordered.map((domain) => callObjectBundleUrl(dailyConfig, domain));
+}
+
+// Rewrites the Daily base domain in a meeting URL using the URL API (hostname-
+// only, so the room name / query string can't be confused for a domain).
+function rewriteMeetingUrlDomain(url, fromDomain, toDomain) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.endsWith(`.${fromDomain}`)) {
+      parsed.hostname = parsed.hostname.slice(0, -fromDomain.length) + toDomain;
+    } else if (parsed.hostname === fromDomain) {
+      parsed.hostname = toDomain;
+    }
+    return parsed.toString();
+  } catch (_) {
+    return url;
+  }
+}
+
+// Ordered list of meeting URL candidates for iframe load failover — mirrors
+// callObjectBundleUrlCandidates but rewrites the room URL's hostname instead of
+// the bundle URL. Returns a single URL when failover is disabled or when the
+// meeting URL is not on one of our base domains (custom domain — no rewrite).
+export function iframeUrlCandidates(meetingUrl, dailyConfig) {
+  const fromDomain = baseDomainFromUrl(meetingUrl);
+  if (!fromDomain || bundleFailoverDisabled(dailyConfig)) {
+    return [meetingUrl];
+  }
+  const startDomain =
+    resolvedBaseDomain ?? pageBaseDomain() ?? DAILY_BASE_DOMAINS[0];
+  const ordered =
+    startDomain === DAILY_BASE_DOMAINS[0]
+      ? DAILY_BASE_DOMAINS
+      : [startDomain, ...DAILY_BASE_DOMAINS.filter((d) => d !== startDomain)];
+  return ordered.map((domain) =>
+    domain === fromDomain
+      ? meetingUrl
+      : rewriteMeetingUrlDomain(meetingUrl, fromDomain, domain)
+  );
 }
 
 export function validateHttpUrl(string) {

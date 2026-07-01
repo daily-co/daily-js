@@ -17,9 +17,7 @@ describe('Custom tracks', () => {
     const mode = undefined;
     expect(() =>
       callObject.validateCustomTrack(track, mode, trackName)
-    ).toThrowError(
-      'Custom track `trackName` must not be more than 50 characters'
-    );
+    ).toThrow('Custom track `trackName` must not be more than 50 characters');
   });
 
   test('Any track name up to 50 characters which does not match a track name already used by daily must be valid', () => {
@@ -28,26 +26,31 @@ describe('Custom tracks', () => {
     const mode = undefined;
     expect(() =>
       callObject.validateCustomTrack(track, mode, trackName)
-    ).not.toThrowError();
+    ).not.toThrow();
   });
 
   test('Track name must not match a track name already used by daily', () => {
     const track = new MediaStreamTrack();
     const reservedNames = [
+      'audio',
+      'video',
       'cam-audio',
       'cam-video',
+      'screenVideo',
+      'screenAudio',
       'screen-video',
       'screen-audio',
       'rmpAudio',
       'rmpVideo',
+      'customVideoDefaults',
     ];
     const mode = undefined;
     const expectedError =
-      'Custom track `trackName` must not match a track name already used by daily: cam-audio, cam-video, customVideoDefaults, screen-video, screen-audio, rmpAudio, rmpVideo';
+      'Custom track `trackName` must not match a track name already used by daily: audio, video, cam-audio, cam-video, screenVideo, screenAudio, screen-video, screen-audio, rmpAudio, rmpVideo, customVideoDefaults';
     reservedNames.forEach((trackName) => {
       expect(() =>
         callObject.validateCustomTrack(track, mode, trackName)
-      ).toThrowError(expectedError);
+      ).toThrow(expectedError);
     });
   });
 
@@ -57,9 +60,7 @@ describe('Custom tracks', () => {
     const mode = undefined;
     expect(() =>
       callObject.validateCustomTrack(track, mode, trackName)
-    ).toThrowError(
-      'Custom tracks provided must be instances of MediaStreamTrack'
-    );
+    ).toThrow('Custom tracks provided must be instances of MediaStreamTrack');
   });
 
   test('Mode must be must be either `music` | `speech` | `DailyMicAudioModeSettings` or `undefined`', () => {
@@ -67,19 +68,19 @@ describe('Custom tracks', () => {
     const trackName = 'test mode';
     expect(() =>
       callObject.validateCustomTrack(track, undefined, trackName)
-    ).not.toThrowError();
+    ).not.toThrow();
     expect(() =>
       callObject.validateCustomTrack(track, 'music', trackName)
-    ).not.toThrowError();
+    ).not.toThrow();
     expect(() =>
       callObject.validateCustomTrack(track, 'speech', trackName)
-    ).not.toThrowError();
+    ).not.toThrow();
     expect(() =>
       callObject.validateCustomTrack(track, { bitrate: 1000 }, trackName)
-    ).not.toThrowError();
+    ).not.toThrow();
     expect(() =>
       callObject.validateCustomTrack(track, 'invalid', trackName)
-    ).toThrowError(
+    ).toThrow(
       'Custom track `mode` must be either `music` | `speech` | `DailyMicAudioModeSettings` or `undefined`'
     );
   });
@@ -87,8 +88,8 @@ describe('Custom tracks', () => {
   test('startCustomTrack is only allowed when joined', () => {
     const track = new MediaStreamTrack();
     const trackName = 'fake track';
-    expect(() =>
-      callObject.startCustomTrack({ track, trackName })
-    ).toThrowError('startCustomTrack() only supported after join.');
+    expect(() => callObject.startCustomTrack({ track, trackName })).toThrow(
+      'startCustomTrack() only supported after join.'
+    );
   });
 });

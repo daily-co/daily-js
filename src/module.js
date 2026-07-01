@@ -1,7 +1,13 @@
 import EventEmitter from 'events';
 import { dequal } from 'dequal';
 import Bowser from 'bowser';
-import { maybeProxyHttpsUrl } from './utils';
+import {
+  maybeProxyHttpsUrl,
+  iframeUrlCandidates,
+  baseDomainFromUrl,
+  setResolvedBaseDomain,
+} from './utils';
+export { DAILY_BASE_DOMAINS } from './utils';
 import * as Sentry from '@sentry/browser';
 
 import {
@@ -227,6 +233,7 @@ import {
   DAILY_METHOD_TEST_P2P_CALL_QUALITY,
   DAILY_EVENT_TEST_COMPLETED,
   DAILY_METHOD_START_DIALOUT,
+  DAILY_METHOD_START_DIALIN,
   DAILY_METHOD_SEND_DTMF,
   DAILY_METHOD_SIP_CALL_TRANSFER,
   DAILY_METHOD_STOP_DIALOUT,
@@ -246,6 +253,9 @@ import {
   DAILY_METHOD_UPDATE_SCREENSHARE,
   DAILY_EVENT_PICTURE_IN_PICTURE_STARTED,
   DAILY_EVENT_PICTURE_IN_PICTURE_STOPPED,
+  SIP_SERVICE_PROVIDER_DAILY,
+  SIP_SERVICE_PROVIDER_SIGNALWIRE,
+  SIP_MODE_DIALIN,
 } from './shared-with-pluot-core/CommonIncludes.js';
 import {
   isReactNative,
@@ -266,6 +276,7 @@ import { SessionDataUpdate } from './shared-with-pluot-core/SessionData.js';
 import CallObjectLoader from './CallObjectLoader';
 import {
   callObjectBundleUrl,
+  getResolvedBaseDomain,
   randomStringId,
   validateHttpUrl,
 } from './utils.js';
@@ -482,6 +493,47 @@ const customIntegrationsType = {
   },
 };
 
+// aboutClient: optional key-value map for client info in logs. Validated on set.
+// Per-domain timeout for iframe load failover. Slightly longer than the bundle
+// loader's per-attempt timeout (20 s) so the bundle has a chance to finish on
+// the first try before we abandon a domain and try the next.
+const IFRAME_LOAD_TIMEOUT_MS = 25 * 1000;
+
+const ABOUT_CLIENT_MAX_ENTRIES = 10;
+const ABOUT_CLIENT_MAX_KEY_LENGTH = 64;
+const ABOUT_CLIENT_MAX_VALUE_LENGTH = 256;
+const ABOUT_CLIENT_KEY_REGEX = /^[a-zA-Z0-9_-]+$/;
+
+function validateAboutClient(value) {
+  if (value === undefined || value === null) return true;
+  if (typeof value !== 'object' || Array.isArray(value)) return false;
+  const entries = Object.entries(value);
+  if (entries.length > ABOUT_CLIENT_MAX_ENTRIES) return false;
+  for (const [k, v] of entries) {
+    if (typeof k !== 'string' || k.length > ABOUT_CLIENT_MAX_KEY_LENGTH)
+      return false;
+    if (!ABOUT_CLIENT_KEY_REGEX.test(k)) return false;
+    if (typeof v !== 'string' || v.length > ABOUT_CLIENT_MAX_VALUE_LENGTH)
+      return false;
+  }
+  return true;
+}
+
+function normalizeAboutClient(value) {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const result = {};
+  const entries = Object.entries(value).slice(0, ABOUT_CLIENT_MAX_ENTRIES);
+  for (const [k, v] of entries) {
+    if (typeof k !== 'string' || k.length > ABOUT_CLIENT_MAX_KEY_LENGTH)
+      continue;
+    if (!ABOUT_CLIENT_KEY_REGEX.test(k)) continue;
+    if (typeof v !== 'string') continue;
+    result[k] = v.slice(0, ABOUT_CLIENT_MAX_VALUE_LENGTH);
+  }
+  return Object.keys(result).length ? result : undefined;
+}
+
 const FRAME_PROPS = {
   customIntegrations: {
     validate: validateCustomIntegrations,
@@ -498,7 +550,10 @@ const FRAME_PROPS = {
     help: 'url should be a string',
   },
   baseUrl: {
-    validate: (url) => typeof url === 'string',
+    validate: (url) => {
+      console.warn('baseUrl is deprecated and has no effect');
+      return typeof url === 'string';
+    },
     help: 'baseUrl should be a string',
   },
   token: {
@@ -808,6 +863,10 @@ const FRAME_PROPS = {
   },
   dailyJsVersion: {
     queryString: 'dailyJsVersion',
+  },
+  aboutClient: {
+    validate: validateAboutClient,
+    help: `aboutClient must be an object with up to ${ABOUT_CLIENT_MAX_ENTRIES} entries; keys must be strings made up of characters (a-z, 0-9, _, -) and a max length of ${ABOUT_CLIENT_MAX_KEY_LENGTH}; values must be strings with a max length of ${ABOUT_CLIENT_MAX_VALUE_LENGTH}`,
   },
   proxy: {
     queryString: 'proxy',
@@ -1242,6 +1301,9 @@ export default class DailyIframe extends EventEmitter {
     window._daily.instances[this.callClientId].tracks = this._sharedTracks;
 
     properties.dailyJsVersion = DailyIframe.version();
+    if (properties.aboutClient !== undefined) {
+      properties.aboutClient = normalizeAboutClient(properties.aboutClient);
+    }
     this._iframe = iframeish;
     this._callObjectMode = properties.layout === 'none' && !this._iframe;
     this._preloadCache = initializePreloadCache();
@@ -1317,6 +1379,11 @@ export default class DailyIframe extends EventEmitter {
 
     this.validateProperties(properties);
     this.properties = { ...properties };
+    if (this.properties.aboutClient !== undefined) {
+      this.properties.aboutClient = normalizeAboutClient(
+        this.properties.aboutClient
+      );
+    }
     if (!this._inputSettings) {
       this._inputSettings = {};
     }
@@ -2494,8 +2561,12 @@ export default class DailyIframe extends EventEmitter {
     }
     const isUsingReservedTrackName = trackName
       ? [
+          'audio',
+          'video',
           'cam-audio',
           'cam-video',
+          'screenVideo',
+          'screenAudio',
           'screen-video',
           'screen-audio',
           'rmpAudio',
@@ -2506,7 +2577,7 @@ export default class DailyIframe extends EventEmitter {
     if (isUsingReservedTrackName) {
       throw new Error(
         'Custom track `trackName` must not match a track name already used by daily: ' +
-          'cam-audio, cam-video, customVideoDefaults, screen-video, screen-audio, rmpAudio, rmpVideo'
+          'audio, video, cam-audio, cam-video, screenVideo, screenAudio, screen-video, screen-audio, rmpAudio, rmpVideo, customVideoDefaults'
       );
     }
     if (!(track instanceof MediaStreamTrack)) {
@@ -2921,9 +2992,7 @@ export default class DailyIframe extends EventEmitter {
           (error, willRetry) => {
             this.emitDailyJSEvent({ action: DAILY_EVENT_LOAD_ATTEMPT_FAILED });
             if (!willRetry) {
-              this._updateCallState(DAILY_STATE_ERROR);
-              this.resetMeetingDependentVars();
-              const dailyError = {
+              this._handleFatalError({
                 action: DAILY_EVENT_ERROR,
                 errorMsg: error.msg,
                 error: {
@@ -2935,32 +3004,85 @@ export default class DailyIframe extends EventEmitter {
                     bundleUrl: callObjectBundleUrl(this.properties.dailyConfig),
                   },
                 },
-              };
-              this._maybeSendToSentry(dailyError);
-              this.emitDailyJSEvent(dailyError);
+              });
               reject(error.msg);
             }
           }
         );
       });
     } else {
-      // iframe
-      this._iframe.src = maybeProxyHttpsUrl(
-        this.assembleMeetingUrl(),
+      // iframe — cycle through base-domain candidates (daily.co →
+      // dailywebrtc.com → .net) once each so a .co TLD DNS outage doesn't
+      // block loading (ENG-9038). Per-domain timeout is slightly longer than
+      // the bundle loader's per-attempt timeout so the bundle has a chance to
+      // succeed before we abandon a domain.
+      const meetingUrl = this.assembleMeetingUrl();
+      const candidates = iframeUrlCandidates(
+        meetingUrl,
         this.properties.dailyConfig
       );
+
       return new Promise((resolve, reject) => {
-        this._loadedCallback = (error) => {
-          if (this._callState === DAILY_STATE_ERROR) {
-            reject(error);
+        let candidateIndex = 0;
+
+        const tryCandidate = () => {
+          if (candidateIndex >= candidates.length) {
+            const errorMsg =
+              'Timed out attempting to load the call. Please check your network connection and try again.';
+            this._iframe.srcdoc = buildIframeErrorPage(
+              'Failed to load',
+              errorMsg
+            );
+            this._handleFatalError({
+              action: DAILY_EVENT_ERROR,
+              errorMsg,
+              error: {
+                type: 'connection-error',
+                msg: errorMsg,
+                details: {
+                  on: 'load',
+                  sourceError: {
+                    msg: `Timed out (>${IFRAME_LOAD_TIMEOUT_MS} ms) when loading call frame`,
+                    type: 'timeout',
+                  },
+                  candidateCount: candidates.length,
+                },
+              },
+              preserveIframe: true,
+            });
+            reject(errorMsg);
             return;
           }
-          this._updateCallState(DAILY_STATE_LOADED);
-          if (this.properties.cssFile || this.properties.cssText) {
-            this.loadCss(this.properties);
-          }
-          resolve();
+
+          const candidateUrl = candidates[candidateIndex++];
+          this._iframe.src = maybeProxyHttpsUrl(
+            candidateUrl,
+            this.properties.dailyConfig
+          );
+
+          const frameLoadTimeout = setTimeout(() => {
+            if (this._loadedCallback) {
+              this._loadedCallback = null;
+              tryCandidate();
+            }
+          }, IFRAME_LOAD_TIMEOUT_MS);
+
+          this._loadedCallback = (error) => {
+            clearTimeout(frameLoadTimeout);
+            if (this._callState === DAILY_STATE_ERROR) {
+              reject(error);
+              return;
+            }
+            setResolvedBaseDomain(baseDomainFromUrl(candidateUrl));
+            this._updateCallState(DAILY_STATE_LOADED);
+            if (this.properties.cssFile || this.properties.cssText) {
+              this.loadCss(this.properties);
+            }
+            resolve();
+          };
         };
+
+        tryCandidate();
       });
     }
   }
@@ -3601,6 +3723,72 @@ export default class DailyIframe extends EventEmitter {
         }
       }
 
+      if (args.videoSettings !== undefined) {
+        if (
+          typeof args.videoSettings !== 'object' ||
+          args.videoSettings === null
+        ) {
+          throw new Error(
+            `Error starting dial out: videoSettings must be an object`
+          );
+        }
+        if (!args.video) {
+          throw new Error(
+            `Error starting dial out: videoSettings provided but video is not enabled`
+          );
+        }
+
+        const vs = args.videoSettings;
+        if (vs.width !== undefined) {
+          if (!Number.isInteger(vs.width) || vs.width <= 0) {
+            throw new Error(
+              `Error starting dial out: videoSettings.width must be a positive integer`
+            );
+          }
+          if (vs.width > 1280) {
+            throw new Error(
+              `Error starting dial out: videoSettings.width must be less than or equal to 1280`
+            );
+          }
+        }
+        if (vs.height !== undefined) {
+          if (!Number.isInteger(vs.height) || vs.height <= 0) {
+            throw new Error(
+              `Error starting dial out: videoSettings.height must be a positive integer`
+            );
+          }
+          if (vs.height > 720) {
+            throw new Error(
+              `Error starting dial out: videoSettings.height must be less than or equal to 720`
+            );
+          }
+        }
+        if (vs.fps !== undefined) {
+          if (!Number.isInteger(vs.fps) || vs.fps <= 0) {
+            throw new Error(
+              `Error starting dial out: videoSettings.fps must be a positive integer`
+            );
+          }
+          if (vs.fps > 30) {
+            throw new Error(
+              `Error starting dial out: videoSettings.fps must be less than or equal to 30`
+            );
+          }
+        }
+        if (vs.videoBitrate !== undefined) {
+          if (!Number.isInteger(vs.videoBitrate) || vs.videoBitrate <= 0) {
+            throw new Error(
+              `Error starting dial out: videoSettings.videoBitrate must be a positive integer`
+            );
+          }
+          if (vs.videoBitrate > 1000) {
+            throw new Error(
+              `Error starting dial out: videoSettings.videoBitrate must be less than or equal to 1000 kbps`
+            );
+          }
+        }
+      }
+
       validateAudioVideoCodec(args.codecs);
     }
 
@@ -3669,9 +3857,12 @@ export default class DailyIframe extends EventEmitter {
       }
     }
     if (args.provider) {
-      if (args.provider !== 'daily') {
+      if (
+        args.provider !== SIP_SERVICE_PROVIDER_DAILY &&
+        args.provider !== SIP_SERVICE_PROVIDER_SIGNALWIRE
+      ) {
         throw new Error(
-          `Error: provider can be set only to 'daily', got: ${args.provider}`
+          `Error: provider can be set only to '${SIP_SERVICE_PROVIDER_DAILY}' or '${SIP_SERVICE_PROVIDER_SIGNALWIRE}', got: ${args.provider}`
         );
       }
       if (args.phoneNumber) {
@@ -3679,9 +3870,14 @@ export default class DailyIframe extends EventEmitter {
           `Error starting dial out: provider valid only for sipUri, not phoneNumber`
         );
       }
-      console.warn(
-        '(pre-beta) provider=daily is currently in pre-beta, things might break!'
-      );
+      if (args.provider === SIP_SERVICE_PROVIDER_DAILY) {
+        console.warn(
+          `(pre-beta) provider=${SIP_SERVICE_PROVIDER_DAILY} is currently in pre-beta, things might break!`
+        );
+      }
+    } else {
+      // signalwire is default to maintain backward compatibility
+      args.provider = SIP_SERVICE_PROVIDER_SIGNALWIRE;
     }
 
     return new Promise((resolve, reject) => {
@@ -3696,6 +3892,91 @@ export default class DailyIframe extends EventEmitter {
       this.sendMessageToCallMachine(
         {
           action: DAILY_METHOD_START_DIALOUT,
+          ...args,
+        },
+        k
+      );
+    });
+  }
+
+  async startDialIn(args) {
+    methodOnlySupportedAfterJoin(this._callState, 'startDialIn()');
+
+    if (!args || typeof args !== 'object') {
+      throw new Error(`Error starting dial in: args must be an object`);
+    }
+
+    if (typeof args.displayName !== 'string' || args.displayName.length === 0) {
+      throw new Error(
+        `Error starting dial in: displayName is required and must be a non-empty string`
+      );
+    }
+
+    if (args.displayName.length >= 200) {
+      throw new Error(
+        `Error starting dial in: displayName length must be less than 200`
+      );
+    }
+
+    if (args.userId !== undefined && typeof args.userId !== 'string') {
+      throw new Error(`Error starting dial in: userId must be a string`);
+    }
+
+    if (args.userId !== undefined && args.userId.length > 36) {
+      throw new Error(
+        `Error starting dial in: userId length must be less than or equal to 36`
+      );
+    }
+
+    if (args.video !== undefined && typeof args.video !== 'boolean') {
+      throw new Error(`Error starting dial in: video must be a boolean`);
+    }
+
+    if (
+      args.sipEndpoint !== undefined &&
+      typeof args.sipEndpoint !== 'string'
+    ) {
+      throw new Error(`Error starting dial in: sipEndpoint must be a string`);
+    }
+
+    if (
+      args.codecs !== undefined &&
+      (typeof args.codecs !== 'object' || args.codecs === null)
+    ) {
+      throw new Error(`Error starting dial in: codecs must be an object`);
+    }
+
+    if (
+      args.permissions !== undefined &&
+      (typeof args.permissions !== 'object' || args.permissions === null)
+    ) {
+      throw new Error(`Error starting dial in: permissions must be an object`);
+    }
+
+    if (!args.provider) {
+      args = { ...args, provider: SIP_SERVICE_PROVIDER_SIGNALWIRE };
+    } else if (
+      args.provider !== SIP_SERVICE_PROVIDER_DAILY &&
+      args.provider !== SIP_SERVICE_PROVIDER_SIGNALWIRE
+    ) {
+      throw new Error(
+        `Error starting dial in: provider must be '${SIP_SERVICE_PROVIDER_DAILY}' or '${SIP_SERVICE_PROVIDER_SIGNALWIRE}'`
+      );
+    }
+
+    return new Promise((resolve, reject) => {
+      const k = (msg) => {
+        if (msg.error) {
+          reject(msg.error);
+        } else {
+          resolve(msg);
+        }
+      };
+
+      this.sendMessageToCallMachine(
+        {
+          action: DAILY_METHOD_START_DIALIN,
+          sipMode: SIP_MODE_DIALIN,
           ...args,
         },
         k
@@ -3786,6 +4067,7 @@ export default class DailyIframe extends EventEmitter {
     validateSendDTMF(args);
 
     args.method = args.method || 'auto';
+    args.digitDurationMs = args.digitDurationMs || 500;
 
     return new Promise((resolve, reject) => {
       const k = (msg) => {
@@ -4668,15 +4950,10 @@ testCallQuality() and stopTestCallQuality() instead`);
   }
 
   async geo() {
-    try {
-      let url = 'https://gs.daily.co/_ks_/x-swsl/:';
-      let res = await fetch(url);
-      let data = await res.json();
-      return { current: data.geo };
-    } catch (e) {
-      console.error('geo lookup failed', e);
-      return { current: '' };
-    }
+    console.error(
+      'The geo() function is no longer supported. Geographical decisions now depend upon domain and room settings.'
+    );
+    return { current: '' };
   }
 
   async setNetworkTopology(opts) {
@@ -4894,6 +5171,7 @@ testCallQuality() and stopTestCallQuality() instead`);
         break;
       case DAILY_EVENT_CALL_MACHINE_INITIALIZED: {
         this._callMachineInitialized = true;
+        const resolvedBaseDomain = getResolvedBaseDomain();
         const logMsg = {
           action: DAILY_METHOD_TRANSMIT_LOG,
           level: 'log',
@@ -4902,7 +5180,16 @@ testCallQuality() and stopTestCallQuality() instead`);
             event: 'bundle load',
             time: this._bundleLoadTime === 'no-op' ? 0 : this._bundleLoadTime,
             preLoaded: this._bundleLoadTime === 'no-op',
+            // Reflect the base domain the bundle actually loaded from (not
+            // always daily.co) so this matches resolvedBaseDomain below.
+            // callObjectBundleUrl defaults to the resolved base domain.
             url: callObjectBundleUrl(this.properties.dailyConfig),
+            // Which base domain the bundle actually loaded from, and whether we
+            // had to fail off daily.co. Fleet-wide signal for .co TLD DNS
+            // outages (ENG-9038/ENG-9040).
+            resolvedBaseDomain,
+            failedOver:
+              resolvedBaseDomain != null && resolvedBaseDomain !== 'daily.co',
           },
         };
         this.sendMessageToCallMachine(logMsg);
@@ -5028,29 +5315,9 @@ testCallQuality() and stopTestCallQuality() instead`);
           this.emitDailyJSEvent(msg_cp);
         }
         break;
-      case DAILY_EVENT_ERROR: {
-        if (this._iframe && !msg.preserveIframe) {
-          this._iframe.src = '';
-        }
-        this._updateCallState(DAILY_STATE_ERROR);
-        this.resetMeetingDependentVars();
-        if (this._loadedCallback) {
-          this._loadedCallback(msg.errorMsg);
-          this._loadedCallback = null;
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        let { preserveIframe, ...event } = msg;
-        if (event?.error?.details) {
-          event.error.details = JSON.parse(event.error.details);
-        }
-        this._maybeSendToSentry(msg);
-        if (this._joinedCallback) {
-          this._joinedCallback(null, event);
-          this._joinedCallback = null;
-        }
-        this.emitDailyJSEvent(event);
+      case DAILY_EVENT_ERROR:
+        this._handleFatalError(msg);
         break;
-      }
       case DAILY_EVENT_LEFT_MEETING:
         // if we've left due to error, the error msg should have
         // already been handled and we do not want to override
@@ -5499,6 +5766,34 @@ testCallQuality() and stopTestCallQuality() instead`);
     );
   }
 
+  // Shared fatal-error handler. Called both by the DAILY_EVENT_ERROR message
+  // handler (error signalled from inside the iframe/call machine) and by the
+  // iframe load exhaustion path (all domain candidates timed out). The caller
+  // is responsible for showing a fallback UI (e.g. setting srcdoc) when
+  // preserveIframe is true.
+  _handleFatalError(msg) {
+    if (this._iframe && !msg.preserveIframe) {
+      this._iframe.src = '';
+    }
+    this._updateCallState(DAILY_STATE_ERROR);
+    this.resetMeetingDependentVars();
+    if (this._loadedCallback) {
+      this._loadedCallback(msg.errorMsg);
+      this._loadedCallback = null;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let { preserveIframe, ...event } = msg;
+    if (typeof event?.error?.details === 'string') {
+      event.error.details = JSON.parse(event.error.details);
+    }
+    this._maybeSendToSentry(msg);
+    if (this._joinedCallback) {
+      this._joinedCallback(null, event);
+      this._joinedCallback = null;
+    }
+    this.emitDailyJSEvent(event);
+  }
+
   // To be invoked this when leaving or erroring out of a meeting.
   // NOTE (Paul, 2021-01-07): this could probably be expanded to reset *all*
   // meeting-dependent vars, but starting with this targeted small set which
@@ -5818,7 +6113,8 @@ testCallQuality() and stopTestCallQuality() instead`);
     scope.setClient(client);
     client.init();
 
-    this.session_id && scope.setExtra('sessionId', this.session_id);
+    this._participants?.local?.session_id &&
+      scope.setExtra('sessionId', this._participants.local.session_id);
     if (this.properties) {
       let properties = { ...this.properties };
 
@@ -6698,7 +6994,7 @@ function validateSipCallTransfer(
   }
 }
 
-function validateSendDTMF({ sessionId, tones, method }) {
+function validateSendDTMF({ sessionId, tones, method, digitDurationMs }) {
   if (!(sessionId && tones)) {
     throw new Error(`sessionId and tones are mandatory parameter`);
   }
@@ -6717,6 +7013,20 @@ function validateSendDTMF({ sessionId, tones, method }) {
     throw new Error(
       `method must be one of 'sip-info', 'telephone-event', or 'auto'`
     );
+  }
+  if (digitDurationMs !== undefined) {
+    if (typeof digitDurationMs !== 'number') {
+      throw new Error(`digitDurationMs must be a number`);
+    }
+    if (
+      !Number.isFinite(digitDurationMs) ||
+      !Number.isInteger(digitDurationMs)
+    ) {
+      throw new Error(`digitDurationMs must be a finite integer number`);
+    }
+    if (digitDurationMs < 50 || digitDurationMs > 2000) {
+      throw new Error(`digitDurationMs must be between 50ms and 2000ms`);
+    }
   }
 }
 
@@ -6795,6 +7105,42 @@ function validateRemotePlayerEncodingSettings(playerSettings) {
       true
     );
   }
+}
+
+function buildIframeErrorPage(title, message) {
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html { font-size: 12px; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #1f2d3d;
+    color: #fff;
+    font-family: GraphikRegular, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+  .card {
+    background: #121a24;
+    border: 1px solid #2b3f56;
+    border-radius: 4px;
+    padding: 32px 40px;
+    width: 100%;
+    max-width: 65ch;
+    text-align: center;
+  }
+  h1 { color: #f63135; font-size: 1.333rem; font-weight: 600; margin-bottom: 12px; }
+  p { font-size: 1rem; line-height: 1.5; color: rgba(255,255,255,0.9); }
+</style>
+</head>
+<body>
+<div class="card"><h1>${title}</h1><p>${message}</p></div>
+</body>
+</html>`;
 }
 
 function maybeStripDataFromMeetingSessionState(

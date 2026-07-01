@@ -33,7 +33,7 @@ describe('DailyConfig', () => {
     const dailyConfig = {
       camSimulcastEncodings: CAM_ENCODINGS,
     };
-    expect(() => callObject.validateDailyConfig(dailyConfig)).toThrowError(
+    expect(() => callObject.validateDailyConfig(dailyConfig)).toThrow(
       'encodings must be an Array with between 1 to 3 layers'
     );
   });
@@ -45,7 +45,7 @@ describe('DailyConfig', () => {
     const dailyConfig = {
       camSimulcastEncodings: CAM_ENCODINGS,
     };
-    expect(() => callObject.validateDailyConfig(dailyConfig)).toThrowError(
+    expect(() => callObject.validateDailyConfig(dailyConfig)).toThrow(
       'Invalid key invalidKey, valid keys are:maxBitrate,maxFramerate,scaleResolutionDownBy'
     );
   });
@@ -57,7 +57,7 @@ describe('DailyConfig', () => {
     const dailyConfig = {
       camSimulcastEncodings: CAM_ENCODINGS,
     };
-    expect(() => callObject.validateDailyConfig(dailyConfig)).toThrowError(
+    expect(() => callObject.validateDailyConfig(dailyConfig)).toThrow(
       'maxBitrate must be a number'
     );
   });
@@ -71,7 +71,7 @@ describe('DailyConfig', () => {
     const dailyConfig = {
       camSimulcastEncodings: CAM_ENCODINGS,
     };
-    expect(() => callObject.validateDailyConfig(dailyConfig)).toThrowError(
+    expect(() => callObject.validateDailyConfig(dailyConfig)).toThrow(
       'Empty encoding is not allowed. At least one of these valid keys should be specified:maxBitrate,maxFramerate,scaleResolutionDownBy'
     );
   });
