@@ -15,6 +15,7 @@
 export declare const DAILY_BASE_DOMAINS: readonly string[];
 
 export type DailyLanguage =
+  | 'cs'
   | 'da'
   | 'de'
   | 'en'
@@ -30,6 +31,7 @@ export type DailyLanguage =
   | 'pt'
   | 'pt-BR'
   | 'ru'
+  | 'sk'
   | 'sv'
   | 'tr';
 
