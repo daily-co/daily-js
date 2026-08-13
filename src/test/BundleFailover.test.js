@@ -2,6 +2,8 @@ import {
   DAILY_BASE_DOMAINS,
   callObjectBundleUrl,
   callObjectBundleUrlCandidates,
+  iframeUrlCandidates,
+  pageBaseDomain,
   baseDomainFromUrl,
   getResolvedBaseDomain,
   setResolvedBaseDomain,
@@ -111,6 +113,62 @@ describe('bundle domain failover (utils)', () => {
     });
   });
 
+  describe('iframeUrlCandidates', () => {
+    const ROOM_URL = 'https://acme.daily.co/my-room?emb=123&embHref=https%3A%2F%2Fexample.com';
+
+    beforeEach(() => {
+      setResolvedBaseDomain(null);
+    });
+
+    test('returns one candidate per domain for a daily.co room URL', () => {
+      const candidates = iframeUrlCandidates(ROOM_URL, {});
+      expect(candidates).toHaveLength(DAILY_BASE_DOMAINS.length);
+      expect(candidates[0]).toContain('acme.daily.co');
+      expect(candidates[1]).toContain('acme.dailywebrtc.com');
+      expect(candidates[2]).toContain('acme.dailywebrtc.net');
+    });
+
+    test('preserves path and query string across all candidates', () => {
+      const candidates = iframeUrlCandidates(ROOM_URL, {});
+      for (const c of candidates) {
+        expect(c).toContain('/my-room');
+        expect(c).toContain('emb=123');
+      }
+    });
+
+    test('returns single URL for a custom (non-Daily) domain', () => {
+      const customUrl = 'https://video.mycompany.com/my-room?emb=123';
+      expect(iframeUrlCandidates(customUrl, {})).toEqual([customUrl]);
+    });
+
+    test('puts resolvedBaseDomain first', () => {
+      setResolvedBaseDomain('dailywebrtc.net');
+      const candidates = iframeUrlCandidates(ROOM_URL, {});
+      expect(candidates[0]).toContain('acme.dailywebrtc.net');
+      expect(candidates[1]).toContain('acme.daily.co');
+    });
+
+    test('collapses to single URL when proxy is set (failover disabled)', () => {
+      const candidates = iframeUrlCandidates(ROOM_URL, {
+        proxyUrl: 'https://proxy.example.com',
+      });
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toBe(ROOM_URL);
+    });
+
+    test('room name containing a base domain string is not mangled', () => {
+      // rewriteMeetingUrlDomain uses the URL API (hostname only), so a room
+      // name that happens to contain "daily.co" is left untouched.
+      const tricky =
+        'https://acme.daily.co/daily.co-themed-room?emb=1';
+      const candidates = iframeUrlCandidates(tricky, {});
+      expect(candidates[0]).toBe(tricky);
+      expect(candidates[1]).toBe(
+        'https://acme.dailywebrtc.com/daily.co-themed-room?emb=1'
+      );
+    });
+  });
+
   describe('setResolvedBaseDomain', () => {
     test('accepts a known domain, ignores unknown, and clears on null', () => {
       setResolvedBaseDomain('dailywebrtc.net');
@@ -121,6 +179,18 @@ describe('bundle domain failover (utils)', () => {
 
       setResolvedBaseDomain(null);
       expect(getResolvedBaseDomain()).toBe(null);
+    });
+  });
+
+  describe('pageBaseDomain (page-domain seeding for prebuilt iframe scenario)', () => {
+    test.each([
+      ['acme.daily.co', 'daily.co'],
+      ['acme.dailywebrtc.com', 'dailywebrtc.com'],
+      ['gs.staging.dailywebrtc.net', 'dailywebrtc.net'],
+      ['myapp.example.com', null],
+      ['localhost', null],
+    ])('hostname %s -> %s', (hostname, expected) => {
+      expect(pageBaseDomain(hostname)).toBe(expected);
     });
   });
 

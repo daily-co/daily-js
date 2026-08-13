@@ -12,7 +12,10 @@
  * --- DAILY-JS API ---
  */
 
+export declare const DAILY_BASE_DOMAINS: readonly string[];
+
 export type DailyLanguage =
+  | 'cs'
   | 'da'
   | 'de'
   | 'en'
@@ -28,6 +31,7 @@ export type DailyLanguage =
   | 'pt'
   | 'pt-BR'
   | 'ru'
+  | 'sk'
   | 'sv'
   | 'tr';
 
@@ -1806,7 +1810,7 @@ export interface DailyEventObjectDialOutError extends DailyEventObjectBase {
   errorMsg: string;
   sessionId?: string;
   userId?: string;
-  details?: { destination?: string };
+  details?: { destination?: string; sipHeaders?: { [key: string]: string } };
   actionTraceId?: string;
   provider: string;
   sipCallId?: string;
@@ -1888,6 +1892,8 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectAccessState
     : T extends DailyEventObjectMeetingSessionUpdated['action']
     ? DailyEventObjectMeetingSessionUpdated
+    : T extends DailyEventObjectMeetingSessionSummaryUpdated['action']
+    ? DailyEventObjectMeetingSessionSummaryUpdated
     : T extends DailyEventObjectMeetingSessionStateUpdated['action']
     ? DailyEventObjectMeetingSessionStateUpdated
     : T extends DailyEventObjectTrack['action']
@@ -1954,6 +1960,8 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectDialinWarning
     : T extends DailyEventObjectDialOutConnected['action']
     ? DailyEventObjectDialOutConnected
+    : T extends DailyEventObjectDialOutAnswered['action']
+    ? DailyEventObjectDialOutAnswered
     : T extends DailyEventObjectDialOutError['action']
     ? DailyEventObjectDialOutError
     : T extends DailyEventObjectDialOutStopped['action']
@@ -2211,7 +2219,7 @@ export interface DailyDialOutSession {
 export interface DailySipPstnParticipantPermissions {
   canReceive: Partial<DailyParticipantCanReceivePermission>;
 }
-// export type DailySipServiceProvider = 'daily' | 'signalwire' | 'null';
+
 /** Video encoding settings for SIP dial-out. Only applicable when `video` is `true`. */
 export interface DailySipVideoSettings {
   /** Video width in pixels. Default: 1280. Maximum: 1280. */
@@ -2223,6 +2231,7 @@ export interface DailySipVideoSettings {
   /** Video bitrate in kbps. Default: 900. Maximum: 1000. */
   videoBitrate?: number;
 }
+export type DailySipServiceProvider = 'daily' | 'signalwire';
 export interface DailyStartDialoutSipOptions {
   sipUri?: string;
   displayName?: string;
@@ -2231,7 +2240,7 @@ export interface DailyStartDialoutSipOptions {
   videoSettings?: DailySipVideoSettings;
   codecs?: DailyDialOutCodecs;
   permissions?: DailySipPstnParticipantPermissions;
-  // provider?: DailySipServiceProvider;
+  provider?: DailySipServiceProvider;
 }
 
 export interface DailyStartDialoutPhoneOptions {
@@ -2248,6 +2257,16 @@ export interface DailyStartDialoutPhoneOptions {
 export type DailyStartDialoutOptions =
   | DailyStartDialoutSipOptions
   | DailyStartDialoutPhoneOptions;
+
+export interface DailyStartDialinOptions {
+  displayName: string;
+  sipEndpoint?: string;
+  userId?: string;
+  video?: boolean;
+  codecs?: DailyDialOutCodecs;
+  permissions?: DailySipPstnParticipantPermissions;
+  provider?: DailySipServiceProvider;
+}
 
 export interface DailyScreenShareUpdateOptions {
   screenVideo: {
@@ -2520,6 +2539,7 @@ export interface DailyCall {
   startDialOut(
     options: DailyStartDialoutOptions
   ): Promise<{ session?: DailyDialOutSession }>;
+  startDialIn(options: DailyStartDialinOptions): Promise<void>;
   stopDialOut(options: { sessionId: string }): Promise<void>;
   sendDTMF(options: DailySendDtmfOptions): Promise<void>;
   sipCallTransfer(options: DailySipCallTransferOptions): Promise<void>;

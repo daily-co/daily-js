@@ -2,7 +2,7 @@
   "name": "@daily-co/daily-js",
   "private": true,
   "//": "^ COMMENT OUT 'private: true' BEFORE RUNNING NPM PUBLISH",
-  "version": "0.91.0",
+  "version": "0.92.0-internal.15",
   "license": "BSD-2-Clause",
   "engines": {
     "node": ">=22.14.0"
@@ -60,7 +60,10 @@
     "webpack": "^5.99.9",
     "webpack-bundle-analyzer": "^4.10.2",
     "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "5.2.3"
+    "webpack-dev-server": "^5.2.5"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
   },
   "dependencies": {
     "@babel/runtime": "^7.12.5",
