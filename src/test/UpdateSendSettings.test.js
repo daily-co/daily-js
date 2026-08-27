@@ -22,15 +22,11 @@ describe('UpdateSendSettings', () => {
     let updateSendSettings = null;
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
-    ).toThrow(
-      'Send settings must contain at least information for one track!'
-    );
+    ).toThrow('Send settings must contain at least information for one track!');
     updateSendSettings = {};
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
-    ).toThrow(
-      'Send settings must contain at least information for one track!'
-    );
+    ).toThrow('Send settings must contain at least information for one track!');
   });
 
   test('DailyVideoSendSettings object must not be empty', () => {
@@ -38,8 +34,38 @@ describe('UpdateSendSettings', () => {
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
     ).toThrow(
-      'Video send settings must contain at least maxQuality, allowAdaptiveLayers or encodings attribute'
+      'Video send settings must contain at least maxQuality, allowAdaptiveLayers, adaptiveLayerMaxBitrate or encodings attribute'
     );
+  });
+
+  test('adaptiveLayerMaxBitrate is enough on its own', () => {
+    let updateSendSettings = { video: { adaptiveLayerMaxBitrate: 1500000 } };
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).not.toThrow();
+  });
+
+  test('adaptiveLayerMaxBitrate accepts null, to remove the cap', () => {
+    let updateSendSettings = { video: { adaptiveLayerMaxBitrate: null } };
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).not.toThrow();
+  });
+
+  test('adaptiveLayerMaxBitrate must be a positive number', () => {
+    const expectedErrorMsg =
+      'adaptiveLayerMaxBitrate must be a positive number, or null to remove the cap';
+    for (const invalidValue of [0, -1000, '1500000', {}, NaN, Infinity]) {
+      const updateSendSettings = {
+        video: {
+          allowAdaptiveLayers: true,
+          adaptiveLayerMaxBitrate: invalidValue,
+        },
+      };
+      expect(() =>
+        callObject.validateUpdateSendSettings(updateSendSettings)
+      ).toThrow(expectedErrorMsg);
+    }
   });
 
   test('DailyVideoSendSettingsPreset must contain only the allowed values', () => {

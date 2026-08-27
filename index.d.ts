@@ -1008,6 +1008,9 @@ export interface DailyVideoSendSettings {
 
 export interface DailyCamVideoSendSettings extends DailyVideoSendSettings {
   allowAdaptiveLayers?: boolean;
+  // Caps the bitrate the adaptive layer is allowed to ramp up to, in bits per
+  // second. Pass null to remove a cap that has been set before.
+  adaptiveLayerMaxBitrate?: number | null;
 }
 
 export type DailyScreenVideoSendSettingsPreset =

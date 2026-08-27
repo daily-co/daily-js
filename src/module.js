@@ -4433,11 +4433,28 @@ testCallQuality() and stopTestCallQuality() instead`);
       if (
         !videoSendSettings.maxQuality &&
         !videoSendSettings.encodings &&
-        videoSendSettings.allowAdaptiveLayers === undefined
+        videoSendSettings.allowAdaptiveLayers === undefined &&
+        videoSendSettings.adaptiveLayerMaxBitrate === undefined
       ) {
         throw new Error(
-          `Video send settings must contain at least maxQuality, allowAdaptiveLayers or encodings attribute`
+          `Video send settings must contain at least maxQuality, allowAdaptiveLayers, adaptiveLayerMaxBitrate or encodings attribute`
         );
+      }
+      if (
+        videoSendSettings.adaptiveLayerMaxBitrate !== undefined &&
+        videoSendSettings.adaptiveLayerMaxBitrate !== null
+      ) {
+        const adaptiveLayerMaxBitrate =
+          videoSendSettings.adaptiveLayerMaxBitrate;
+        if (
+          typeof adaptiveLayerMaxBitrate !== 'number' ||
+          !Number.isFinite(adaptiveLayerMaxBitrate) ||
+          adaptiveLayerMaxBitrate <= 0
+        ) {
+          throw new Error(
+            `adaptiveLayerMaxBitrate must be a positive number, or null to remove the cap`
+          );
+        }
       }
       if (
         videoSendSettings.maxQuality &&
