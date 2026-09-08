@@ -116,6 +116,7 @@ import {
   DAILY_EVENT_INPUT_SETTINGS_UPDATED,
   DAILY_EVENT_NONFATAL_ERROR,
   DAILY_EVENT_SIDEBAR_VIEW_CHANGED,
+  DAILY_EVENT_BREAKOUT_SESSION_UPDATED,
 
   // internals
   //
@@ -5515,6 +5516,9 @@ testCallQuality() and stopTestCallQuality() instead`);
         this.emitDailyJSEvent(msg);
         break;
       case DAILY_EVENT_SIDEBAR_VIEW_CHANGED:
+        this.emitDailyJSEvent(msg);
+        break;
+      case DAILY_EVENT_BREAKOUT_SESSION_UPDATED:
         this.emitDailyJSEvent(msg);
         break;
       case DAILY_EVENT_PICTURE_IN_PICTURE_STARTED:
