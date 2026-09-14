@@ -2592,6 +2592,9 @@ export default class DailyIframe extends EventEmitter {
   // eslint-disable-next-line no-undef
   startCustomTrack(properties = { track, mode, trackName, ignoreAudioLevel }) {
     methodNotSupportedInReactNative();
+    // The track is handed to the call machine through a same-window lookup,
+    // which misses inside the Prebuilt iframe
+    methodOnlySupportedInCallObject(this._callObjectMode, 'startCustomTrack()');
     // Validate meeting state: custom tracks are only available
     // once you have joined the meeting
     methodOnlySupportedAfterJoin(this._callState, 'startCustomTrack()');
@@ -3273,6 +3276,14 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async startScreenShare(captureOptions = {}) {
+    if (captureOptions.mediaStream) {
+      // The stream is handed to the call machine through a same-window lookup,
+      // which misses inside the Prebuilt iframe
+      methodOnlySupportedInCallObject(
+        this._callObjectMode,
+        'startScreenShare() with `mediaStream`'
+      );
+    }
     methodRequiresInitializedCallMachine(
       this._callMachineInitialized,
       'startScreenShare()'

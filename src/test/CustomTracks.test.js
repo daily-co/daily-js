@@ -93,3 +93,34 @@ describe('Custom tracks', () => {
     );
   });
 });
+
+describe('Custom media on Prebuilt instances', () => {
+  let callFrame;
+
+  beforeAll(() => {
+    callFrame = Daily.createFrame();
+  });
+
+  afterAll(() => {
+    // Not awaited: the frame's call machine never loads in tests, so leave()
+    // (called by destroy()) waits on a response that never arrives. The frame
+    // therefore stays registered as a call instance, so keep this block last
+    // in the file or later tests will hit the duplicate instance check.
+    callFrame.destroy();
+  });
+
+  test('startCustomTrack is only allowed on call object instances', () => {
+    const track = new MediaStreamTrack();
+    const trackName = 'fake track';
+    expect(() => callFrame.startCustomTrack({ track, trackName })).toThrow(
+      'startCustomTrack() is only supported on custom callObject instances'
+    );
+  });
+
+  test('startScreenShare with a mediaStream is only allowed on call object instances', async () => {
+    const mediaStream = new MediaStream();
+    await expect(callFrame.startScreenShare({ mediaStream })).rejects.toThrow(
+      'startScreenShare() with `mediaStream` is only supported on custom callObject instances'
+    );
+  });
+});
