@@ -112,7 +112,8 @@ export type DailyEvent =
   | 'selected-devices-updated'
   | 'custom-button-click'
   | 'sidebar-view-changed'
-  | 'breakout-session-updated'
+  | 'breakout-session-started'
+  | 'breakout-session-ended'
   | 'pip-started'
   | 'pip-stopped'
   | 'dialin-connected'
@@ -1253,6 +1254,8 @@ export interface DailyEventObjectNoPayload extends DailyEventObjectBase {
     | 'exited-fullscreen'
     | 'pip-started'
     | 'pip-stopped'
+    | 'breakout-session-started'
+    | 'breakout-session-ended'
   >;
 }
 
@@ -1731,12 +1734,6 @@ export interface DailyEventObjectSidebarViewChanged
   view: SidebarView;
 }
 
-export interface DailyEventObjectBreakoutSessionUpdated
-  extends DailyEventObjectBase {
-  action: Extract<DailyEvent, 'breakout-session-updated'>;
-  status: 'ongoing' | 'ended';
-}
-
 export interface DailyEventObjectDialinReady extends DailyEventObjectBase {
   action: Extract<DailyEvent, 'dialin-ready'>;
   sipEndpoint: string;
@@ -1958,8 +1955,6 @@ export type DailyEventObject<T extends DailyEvent = any> =
     ? DailyEventObjectSelectedDevicesUpdated
     : T extends DailyEventObjectSidebarViewChanged['action']
     ? DailyEventObjectSidebarViewChanged
-    : T extends DailyEventObjectBreakoutSessionUpdated['action']
-    ? DailyEventObjectBreakoutSessionUpdated
     : T extends DailyEventObjectDialinReady['action']
     ? DailyEventObjectDialinReady
     : T extends DailyEventObjectDialinConnected['action']
