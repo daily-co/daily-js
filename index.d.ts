@@ -412,6 +412,14 @@ export interface DailyIceConfig {
   iceTransportPolicy?: RTCIceTransportPolicy;
 }
 
+// callObjectBundleUrlOverride and bundlePathOverride decide where
+// daily-js loads the call-machine bundle from (bundlePath / callObjectBundleUrl
+// in src/utils.js). Prebuilt strips them from untrusted iframe-driver
+// `join-meeting` messages — see
+// north-star/packages/call-ui/hooks/iframe/useIframeMeetingLifecycleHandlers.ts.
+// Any new field that changes where code is loaded from, or otherwise lets an
+// embedder execute arbitrary code in the signed-in origin, must be added to
+// that denylist too.
 export interface DailyAdvancedConfig {
   /**
    * @deprecated This property will be removed. Instead, use sendSettings, which is found in DailyCallOptions.
@@ -458,8 +466,13 @@ export interface DailyAdvancedConfig {
    *             which supports setting the folder to find all bundles required
    *             for Daily's functionality. This property only overrides the
    *             URL for the initial call object bundle.
+   *
+   * Not honored in Prebuilt (iframe) mode.
    */
   callObjectBundleUrlOverride?: string;
+  /**
+   * Not honored in Prebuilt (iframe) mode.
+   */
   bundlePathOverride?: string;
   alwaysIncludeMicInPermissionPrompt?: boolean;
   alwaysIncludeCamInPermissionPrompt?: boolean;
