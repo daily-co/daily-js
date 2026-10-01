@@ -412,10 +412,10 @@ export interface DailyIceConfig {
   iceTransportPolicy?: RTCIceTransportPolicy;
 }
 
-// callObjectBundleUrlOverride and bundlePathOverride decide where
+// callObjectBundleUrlOverride, bundlePathOverride, and proxyUrl decide where
 // daily-js loads the call-machine bundle from (bundlePath / callObjectBundleUrl
-// in src/utils.js). Prebuilt strips them from untrusted iframe-driver
-// `join-meeting` messages — see
+// / maybeProxyHttpsUrl in src/utils.js). Prebuilt strips them from untrusted
+// iframe-driver `join-meeting` messages — see
 // north-star/packages/call-ui/hooks/iframe/useIframeMeetingLifecycleHandlers.ts.
 // Any new field that changes where code is loaded from, or otherwise lets an
 // embedder execute arbitrary code in the signed-in origin, must be added to
@@ -477,6 +477,9 @@ export interface DailyAdvancedConfig {
   alwaysIncludeMicInPermissionPrompt?: boolean;
   alwaysIncludeCamInPermissionPrompt?: boolean;
   enableIndependentDevicePermissionPrompts?: boolean;
+  /**
+   * Not honored in Prebuilt (iframe) mode.
+   */
   proxyUrl?: string;
   iceConfig?: DailyIceConfig;
   useLegacyVideoProcessor?: boolean;
