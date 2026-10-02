@@ -2592,6 +2592,9 @@ export default class DailyIframe extends EventEmitter {
   // eslint-disable-next-line no-undef
   startCustomTrack(properties = { track, mode, trackName, ignoreAudioLevel }) {
     methodNotSupportedInReactNative();
+    // The track is handed to the call machine through a same-window lookup,
+    // which misses inside the Prebuilt iframe
+    methodOnlySupportedInCallObject(this._callObjectMode, 'startCustomTrack()');
     // Validate meeting state: custom tracks are only available
     // once you have joined the meeting
     methodOnlySupportedAfterJoin(this._callState, 'startCustomTrack()');
@@ -3273,6 +3276,14 @@ export default class DailyIframe extends EventEmitter {
   }
 
   async startScreenShare(captureOptions = {}) {
+    if (captureOptions.mediaStream) {
+      // The stream is handed to the call machine through a same-window lookup,
+      // which misses inside the Prebuilt iframe
+      methodOnlySupportedInCallObject(
+        this._callObjectMode,
+        'startScreenShare() with `mediaStream`'
+      );
+    }
     methodRequiresInitializedCallMachine(
       this._callMachineInitialized,
       'startScreenShare()'
@@ -4433,11 +4444,28 @@ testCallQuality() and stopTestCallQuality() instead`);
       if (
         !videoSendSettings.maxQuality &&
         !videoSendSettings.encodings &&
-        videoSendSettings.allowAdaptiveLayers === undefined
+        videoSendSettings.allowAdaptiveLayers === undefined &&
+        videoSendSettings.adaptiveLayerMaxBitrate === undefined
       ) {
         throw new Error(
-          `Video send settings must contain at least maxQuality, allowAdaptiveLayers or encodings attribute`
+          `Video send settings must contain at least maxQuality, allowAdaptiveLayers, adaptiveLayerMaxBitrate or encodings attribute`
         );
+      }
+      if (
+        videoSendSettings.adaptiveLayerMaxBitrate !== undefined &&
+        videoSendSettings.adaptiveLayerMaxBitrate !== null
+      ) {
+        const adaptiveLayerMaxBitrate =
+          videoSendSettings.adaptiveLayerMaxBitrate;
+        if (
+          typeof adaptiveLayerMaxBitrate !== 'number' ||
+          !Number.isFinite(adaptiveLayerMaxBitrate) ||
+          adaptiveLayerMaxBitrate <= 0
+        ) {
+          throw new Error(
+            `adaptiveLayerMaxBitrate must be a positive number, or null to remove the cap`
+          );
+        }
       }
       if (
         videoSendSettings.maxQuality &&

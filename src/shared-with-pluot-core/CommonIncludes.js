@@ -204,6 +204,13 @@ export const DAILY_EVENT_PICTURE_IN_PICTURE_STOPPED = 'pip-stopped';
 export const MAX_APP_MSG_SIZE = 1024 * 4;
 export const MAX_SESSION_DATA_SIZE = 1024 * 4 * 25;
 export const MAX_USER_DATA_SIZE = 1024 * 4;
+// update-permissions payloads grow with the number of participants being
+// updated, and quadratically when canReceive.byUserId/byParticipantId are set.
+// Matches MAX_SESSION_DATA_SIZE, and like it must leave room for the envelope
+// the bridge wraps around `data` before the SFU's body parser (soup-server.js)
+// sees it: `{"mtgStr":"<domain>/<room>","data":...}` adds at most ~532 bytes,
+// since both names are VARCHAR(255).
+export const MAX_PERMISSIONS_SIZE = 1024 * 100;
 
 export const IFRAME_MESSAGE_MARKER = 'iframe-call-message';
 

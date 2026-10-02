@@ -412,6 +412,14 @@ export interface DailyIceConfig {
   iceTransportPolicy?: RTCIceTransportPolicy;
 }
 
+// callObjectBundleUrlOverride, bundlePathOverride, and proxyUrl decide where
+// daily-js loads the call-machine bundle from (bundlePath / callObjectBundleUrl
+// / maybeProxyHttpsUrl in src/utils.js). Prebuilt strips them from untrusted
+// iframe-driver `join-meeting` messages — see
+// north-star/packages/call-ui/hooks/iframe/useIframeMeetingLifecycleHandlers.ts.
+// Any new field that changes where code is loaded from, or otherwise lets an
+// embedder execute arbitrary code in the signed-in origin, must be added to
+// that denylist too.
 export interface DailyAdvancedConfig {
   /**
    * @deprecated This property will be removed. Instead, use sendSettings, which is found in DailyCallOptions.
@@ -458,12 +466,20 @@ export interface DailyAdvancedConfig {
    *             which supports setting the folder to find all bundles required
    *             for Daily's functionality. This property only overrides the
    *             URL for the initial call object bundle.
+   *
+   * Not honored in Prebuilt (iframe) mode.
    */
   callObjectBundleUrlOverride?: string;
+  /**
+   * Not honored in Prebuilt (iframe) mode.
+   */
   bundlePathOverride?: string;
   alwaysIncludeMicInPermissionPrompt?: boolean;
   alwaysIncludeCamInPermissionPrompt?: boolean;
   enableIndependentDevicePermissionPrompts?: boolean;
+  /**
+   * Not honored in Prebuilt (iframe) mode.
+   */
   proxyUrl?: string;
   iceConfig?: DailyIceConfig;
   useLegacyVideoProcessor?: boolean;
@@ -1008,6 +1024,9 @@ export interface DailyVideoSendSettings {
 
 export interface DailyCamVideoSendSettings extends DailyVideoSendSettings {
   allowAdaptiveLayers?: boolean;
+  // Caps the bitrate the adaptive layer is allowed to ramp up to, in bits per
+  // second. Pass null to remove a cap that has been set before.
+  adaptiveLayerMaxBitrate?: number | null;
 }
 
 export type DailyScreenVideoSendSettingsPreset =
@@ -1751,7 +1770,11 @@ export interface DailyEventObjectDialinError extends DailyEventObjectBase {
   sessionId: string;
   userId?: string;
   type?: 'start-failed' | null;
-  details?: { sipEndpoint?: string };
+  details?: {
+    sipEndpoint?: string;
+    sipStatusCode?: number;
+    sipReasonPhrase?: string;
+  };
   actionTraceId?: string;
   provider: string;
   sipCallId?: string;
@@ -1810,7 +1833,12 @@ export interface DailyEventObjectDialOutError extends DailyEventObjectBase {
   errorMsg: string;
   sessionId?: string;
   userId?: string;
-  details?: { destination?: string; sipHeaders?: { [key: string]: string } };
+  details?: {
+    destination?: string;
+    sipHeaders?: { [key: string]: string };
+    sipStatusCode?: number;
+    sipReasonPhrase?: string;
+  };
   actionTraceId?: string;
   provider: string;
   sipCallId?: string;
