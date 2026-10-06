@@ -117,7 +117,7 @@ import {
   DAILY_EVENT_NONFATAL_ERROR,
   DAILY_EVENT_SIDEBAR_VIEW_CHANGED,
   DAILY_EVENT_BREAKOUT_SESSION_STARTED,
-  DAILY_EVENT_BREAKOUT_SESSION_ENDED,
+  DAILY_EVENT_BREAKOUT_SESSION_STOPPED,
 
   // internals
   //
@@ -5520,7 +5520,7 @@ testCallQuality() and stopTestCallQuality() instead`);
         this.emitDailyJSEvent(msg);
         break;
       case DAILY_EVENT_BREAKOUT_SESSION_STARTED:
-      case DAILY_EVENT_BREAKOUT_SESSION_ENDED:
+      case DAILY_EVENT_BREAKOUT_SESSION_STOPPED:
         this.emitDailyJSEvent(msg);
         break;
       case DAILY_EVENT_PICTURE_IN_PICTURE_STARTED:

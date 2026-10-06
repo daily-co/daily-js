@@ -194,7 +194,7 @@ export const DAILY_EVENT_CUSTOM_BUTTON_CLICK = 'custom-button-click';
 
 export const DAILY_EVENT_SIDEBAR_VIEW_CHANGED = 'sidebar-view-changed';
 export const DAILY_EVENT_BREAKOUT_SESSION_STARTED = 'breakout-session-started';
-export const DAILY_EVENT_BREAKOUT_SESSION_ENDED = 'breakout-session-ended';
+export const DAILY_EVENT_BREAKOUT_SESSION_STOPPED = 'breakout-session-stopped';
 
 export const DAILY_EVENT_PICTURE_IN_PICTURE_STARTED = 'pip-started';
 export const DAILY_EVENT_PICTURE_IN_PICTURE_STOPPED = 'pip-stopped';

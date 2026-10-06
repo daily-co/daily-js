@@ -113,7 +113,7 @@ export type DailyEvent =
   | 'custom-button-click'
   | 'sidebar-view-changed'
   | 'breakout-session-started'
-  | 'breakout-session-ended'
+  | 'breakout-session-stopped'
   | 'pip-started'
   | 'pip-stopped'
   | 'dialin-connected'
@@ -1255,7 +1255,7 @@ export interface DailyEventObjectNoPayload extends DailyEventObjectBase {
     | 'pip-started'
     | 'pip-stopped'
     | 'breakout-session-started'
-    | 'breakout-session-ended'
+    | 'breakout-session-stopped'
   >;
 }
 
