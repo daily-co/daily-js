@@ -1020,6 +1020,11 @@ export interface DailyVideoSendSettings {
     medium?: RTCRtpEncodingParameters;
     high?: RTCRtpEncodingParameters;
   };
+  // The bitrate, in bits per second, the video encoder starts sending at
+  // before bandwidth estimation adapts it. At least 1000; defaults to 1000000.
+  // Used by camera and custom video tracks when they start sending; screen
+  // video ignores it.
+  startBitrate?: number;
 }
 
 export interface DailyCamVideoSendSettings extends DailyVideoSendSettings {

@@ -34,8 +34,38 @@ describe('UpdateSendSettings', () => {
     expect(() =>
       callObject.validateUpdateSendSettings(updateSendSettings)
     ).toThrow(
-      'Video send settings must contain at least maxQuality, allowAdaptiveLayers, adaptiveLayerMaxBitrate or encodings attribute'
+      'Video send settings must contain at least maxQuality, allowAdaptiveLayers, adaptiveLayerMaxBitrate, startBitrate or encodings attribute'
     );
+  });
+
+  test('startBitrate is enough on its own', () => {
+    let updateSendSettings = { video: { startBitrate: 2000000 } };
+    expect(() =>
+      callObject.validateUpdateSendSettings(updateSendSettings)
+    ).not.toThrow();
+  });
+
+  test('startBitrate must be a whole number of at least 1000 bits per second', () => {
+    const expectedErrorMsg =
+      'startBitrate must be a whole number of bits per second, between 1000 and 4294967295';
+    for (const invalidValue of [
+      999,
+      -1000,
+      1500.5,
+      '2000000',
+      null,
+      {},
+      NaN,
+      Infinity,
+      4294967296,
+    ]) {
+      const updateSendSettings = {
+        video: { startBitrate: invalidValue },
+      };
+      expect(() =>
+        callObject.validateUpdateSendSettings(updateSendSettings)
+      ).toThrow(expectedErrorMsg);
+    }
   });
 
   test('adaptiveLayerMaxBitrate is enough on its own', () => {
