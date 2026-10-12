@@ -164,6 +164,10 @@ export type DailyNonFatalErrorType =
   | 'video-processor-warning'
   | 'audio-processor-error'
   | 'remote-media-player-error'
+  // `details` carries `instanceId`, `actionTraceId` and, when the warning is
+  // about specific endpoints, `endpoints` (see
+  // DailyEventObjectLiveStreamingError). Any RTMP URL inside `warningMsg` is
+  // reduced to `scheme://host[:port]`.
   | 'live-streaming-warning'
   | 'meeting-session-data-error';
 
@@ -1404,6 +1408,18 @@ export interface DailyEventObjectLiveStreamingError
   errorMsg: string;
   instanceId?: string;
   actionTraceId?: string;
+  /**
+   * Present when the error is tied to specific live-streaming endpoints. Same
+   * shape as the `details` of the `live-streaming-warning` nonfatal error.
+   */
+  details?: {
+    /**
+     * The endpoints the error is about: a `streaming_endpoints` name for a
+     * named endpoint, otherwise the `scheme://host[:port]` of the `rtmpUrl`
+     * (never the full URL, which carries the stream key).
+     */
+    endpoints?: string[];
+  };
 }
 
 export interface DailyEventObjectParticipants extends DailyEventObjectBase {
