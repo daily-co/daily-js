@@ -4445,11 +4445,25 @@ testCallQuality() and stopTestCallQuality() instead`);
         !videoSendSettings.maxQuality &&
         !videoSendSettings.encodings &&
         videoSendSettings.allowAdaptiveLayers === undefined &&
-        videoSendSettings.adaptiveLayerMaxBitrate === undefined
+        videoSendSettings.adaptiveLayerMaxBitrate === undefined &&
+        videoSendSettings.startBitrate === undefined
       ) {
         throw new Error(
-          `Video send settings must contain at least maxQuality, allowAdaptiveLayers, adaptiveLayerMaxBitrate or encodings attribute`
+          `Video send settings must contain at least maxQuality, allowAdaptiveLayers, adaptiveLayerMaxBitrate, startBitrate or encodings attribute`
         );
+      }
+      if (videoSendSettings.startBitrate !== undefined) {
+        const startBitrate = videoSendSettings.startBitrate;
+        // The codec option takes kilobits per second, hence the minimum
+        if (
+          !Number.isInteger(startBitrate) ||
+          startBitrate < 1000 ||
+          startBitrate > 4294967295
+        ) {
+          throw new Error(
+            `startBitrate must be a whole number of bits per second, between 1000 and 4294967295`
+          );
+        }
       }
       if (
         videoSendSettings.adaptiveLayerMaxBitrate !== undefined &&
