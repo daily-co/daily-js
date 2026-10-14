@@ -367,7 +367,7 @@ export interface DailyCallOptions {
   audioSource?: string | MediaStreamTrack | boolean;
   theme?: DailyThemeConfig;
   layoutConfig?: DailyLayoutConfig;
-  receiveSettings?: DailyReceiveSettings;
+  receiveSettings?: DailyConfigReceiveSettings;
   sendSettings?: DailySendSettings;
   inputSettings?: DailyInputSettings;
   userName?: string;
@@ -1184,6 +1184,32 @@ export interface DailySingleParticipantReceiveSettings {
 
 export interface DailyReceiveSettings {
   [participantIdOrBase: string]: DailySingleParticipantReceiveSettings;
+}
+
+// The receiveSettings call config property: DailyReceiveSettings plus settings
+// that only apply when joining.
+//
+// This can't reuse DailyReceiveSettings. A named property must match the index
+// signature, so adding initialReceiveBitrate there would mean widening it to
+// `| number`. But DailyReceiveSettings is also what getReceiveSettings() and
+// the receive-settings-updated event return, so every reader would then have
+// to narrow out `number` (e.g. `settings.base.video` would stop compiling).
+// Since this type is only ever written by users, widening it here is harmless.
+// It doesn't extend DailyReceiveSettings for the same reason: an interface
+// can't widen the index signature it inherits.
+export interface DailyConfigReceiveSettings {
+  // Your expected download bandwidth, in bits per second. The SFU starts its
+  // estimate of what it can send you from this value, and the first
+  // targetBitrate other participants get depends on it. Between 30000 and
+  // 4294967295; the SFU defaults to 1000000. Applied when joining and when
+  // reconnecting. If testCallQuality() ran before joining, its measured
+  // bandwidth is used instead. Only available in call object mode, and it
+  // can't be changed with updateReceiveSettings().
+  initialReceiveBitrate?: number;
+  [participantIdOrBase: string]:
+    | DailySingleParticipantReceiveSettings
+    | number
+    | undefined;
 }
 
 export interface DailyVideoReceiveSettingsUpdates {

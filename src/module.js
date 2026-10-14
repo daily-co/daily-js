@@ -423,6 +423,9 @@ const MAX_RMP_FPS = 30;
 const MIN_RMP_FPS = 1;
 const MAX_SIMULCAST_LAYERS = 3;
 const MAX_SCALE_RESOLUTION_BY = 8;
+// The range the SFU accepts for the initial receive bitrate
+const MIN_INITIAL_RECEIVE_BITRATE = 30000;
+const MAX_INITIAL_RECEIVE_BITRATE = 4294967295;
 const MAX_LAYER_BITRATE = 2500000;
 const MIN_LAYER_BITRATE = 100000;
 
@@ -814,10 +817,19 @@ const FRAME_PROPS = {
     // participants()), which is necessarily empty at join time. Allowing this
     // key might only sow confusion: it might lead people to think it's a
     // shorthand for participants currently connected *to the room*.
-    validate: (receiveSettings) =>
-      validateReceiveSettings(receiveSettings, {
+    validate: (receiveSettings, callObject) => {
+      const { initialReceiveBitrate, ...participantReceiveSettings } =
+        receiveSettings;
+      if (initialReceiveBitrate !== undefined && !callObject._callObjectMode) {
+        throw new Error(
+          'initialReceiveBitrate is only available in call object mode'
+        );
+      }
+      validateInitialReceiveBitrate(initialReceiveBitrate);
+      return validateReceiveSettings(participantReceiveSettings, {
         allowAllParticipantsKey: false,
-      }),
+      });
+    },
     help: receiveSettingsValidationHelpMsg({
       allowAllParticipantsKey: false,
     }),
@@ -1366,7 +1378,12 @@ export default class DailyIframe extends EventEmitter {
 
     if (properties.receiveSettings) {
       if (this._callObjectMode) {
-        this._receiveSettings = properties.receiveSettings;
+        // initialReceiveBitrate only applies when joining, it isn't part of
+        // the receive settings getReceiveSettings() returns
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { initialReceiveBitrate, ...receiveSettings } =
+          properties.receiveSettings;
+        this._receiveSettings = receiveSettings;
       } else {
         console.error('receiveSettings is only available in call object mode');
       }
@@ -1927,6 +1944,11 @@ export default class DailyIframe extends EventEmitter {
     );
 
     // Validate receive settings.
+    if (receiveSettings?.initialReceiveBitrate !== undefined) {
+      throw new Error(
+        'initialReceiveBitrate can only be set in the receiveSettings config property, when joining'
+      );
+    }
     if (
       !validateReceiveSettings(receiveSettings, {
         allowAllParticipantsKey: true,
@@ -6505,6 +6527,19 @@ function validateReceiveSettings(
     }
   }
   return true;
+}
+
+function validateInitialReceiveBitrate(initialReceiveBitrate) {
+  if (
+    initialReceiveBitrate !== undefined &&
+    (!Number.isInteger(initialReceiveBitrate) ||
+      initialReceiveBitrate < MIN_INITIAL_RECEIVE_BITRATE ||
+      initialReceiveBitrate > MAX_INITIAL_RECEIVE_BITRATE)
+  ) {
+    throw new Error(
+      `initialReceiveBitrate must be a whole number of bits per second, between ${MIN_INITIAL_RECEIVE_BITRATE} and ${MAX_INITIAL_RECEIVE_BITRATE}`
+    );
+  }
 }
 
 function validateSendSettings(sendSettings, callObject) {
