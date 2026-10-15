@@ -1188,15 +1188,6 @@ export interface DailyReceiveSettings {
 
 // The receiveSettings call config property: DailyReceiveSettings plus settings
 // that only apply when joining.
-//
-// This can't reuse DailyReceiveSettings. A named property must match the index
-// signature, so adding initialReceiveBitrate there would mean widening it to
-// `| number`. But DailyReceiveSettings is also what getReceiveSettings() and
-// the receive-settings-updated event return, so every reader would then have
-// to narrow out `number` (e.g. `settings.base.video` would stop compiling).
-// Since this type is only ever written by users, widening it here is harmless.
-// It doesn't extend DailyReceiveSettings for the same reason: an interface
-// can't widen the index signature it inherits.
 export interface DailyConfigReceiveSettings {
   // Your expected download bandwidth, in bits per second. The SFU starts its
   // estimate of what it can send you from this value, and the first
