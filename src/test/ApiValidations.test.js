@@ -92,3 +92,156 @@ it('User data should not exceed max character limit', () => {
   data += '0';
   expect(() => validateUserDataFunc(data)).toThrow(/too large/);
 });
+
+const validateSipVideoSettingsFunc = Daily.__get__('validateSipVideoSettings');
+
+describe('validateSipVideoSettings', () => {
+  const dialOut =
+    (videoSettings, video = true) =>
+    () =>
+      validateSipVideoSettingsFunc(
+        videoSettings,
+        video,
+        'Error starting dial out'
+      );
+
+  it('accepts no settings, and the encoding fields within their limits', () => {
+    expect(dialOut(undefined, false)).not.toThrow();
+    expect(
+      dialOut({ width: 1280, height: 720, fps: 30, videoBitrate: 1000 })
+    ).not.toThrow();
+  });
+
+  it('keeps the checks that used to be inline in startDialOut', () => {
+    expect(dialOut('x')).toThrow(
+      'Error starting dial out: videoSettings must be an object'
+    );
+    expect(dialOut({}, false)).toThrow(
+      'videoSettings provided but video is not enabled'
+    );
+    expect(dialOut({ width: 0 })).toThrow(
+      'videoSettings.width must be a positive integer'
+    );
+    expect(dialOut({ height: 721 })).toThrow(
+      'videoSettings.height must be less than or equal to 720'
+    );
+    expect(dialOut({ fps: 1.5 })).toThrow(
+      'videoSettings.fps must be a positive integer'
+    );
+    expect(dialOut({ videoBitrate: 1001 })).toThrow(
+      'videoSettings.videoBitrate must be less than or equal to 1000 kbps'
+    );
+  });
+
+  it('prefixes errors for the caller', () => {
+    expect(() =>
+      validateSipVideoSettingsFunc({}, false, 'Error starting dial in')
+    ).toThrow(
+      'Error starting dial in: videoSettings provided but video is not enabled'
+    );
+  });
+
+  it.each([
+    [{ preset: 'sip-active' }],
+    [
+      {
+        preset: 'sip-active',
+        maxCamStreams: 4,
+        participants: { video: ['owners', '*'], audio: ['*'] },
+      },
+    ],
+    [
+      {
+        preset: 'sip-grid',
+        maxCamStreams: 1,
+        participants: { video: ['self', '*'] },
+      },
+    ],
+    [
+      {
+        preset: 'sip-portrait',
+        variant: 'inset',
+        maxCamStreams: 2,
+        participants: { video: ['self'] },
+      },
+    ],
+    [{ preset: 'sip-single', videoSessionId: 'a' }],
+    [{ preset: 'sip-single', videoSessionId: 'a', audioSessionId: 'b' }],
+  ])('accepts layout %j', (layout) => {
+    expect(dialOut({ layout })).not.toThrow();
+  });
+
+  it.each([
+    ['x', 'videoSettings.layout must be an object'],
+    [
+      { preset: 'active-participant' },
+      'videoSettings.layout.preset must be one of sip-active, sip-grid, sip-single, sip-portrait',
+    ],
+    [
+      { preset: 'sip-grid', maxCamStreams: 5 },
+      'videoSettings.layout.maxCamStreams must be an integer between 1 and 4',
+    ],
+    [
+      { preset: 'sip-portrait', maxCamStreams: 3 },
+      'videoSettings.layout.maxCamStreams must be an integer between 1 and 2',
+    ],
+    [
+      { preset: 'sip-single', videoSessionId: 'a', maxCamStreams: 1 },
+      'videoSettings.layout.maxCamStreams is not allowed with preset sip-single',
+    ],
+    [
+      { preset: 'sip-grid', variant: 'inset' },
+      'videoSettings.layout.variant is not allowed with preset sip-grid',
+    ],
+    [
+      { preset: 'sip-portrait', variant: 'pip' },
+      "videoSettings.layout.variant must be 'vertical' or 'inset'",
+    ],
+    [
+      { preset: 'sip-single' },
+      'videoSettings.layout.videoSessionId must be a participant session id',
+    ],
+    [
+      { preset: 'sip-single', videoSessionId: 'self' },
+      'videoSettings.layout.videoSessionId must be a participant session id',
+    ],
+    [
+      { preset: 'sip-single', videoSessionId: 'a', audioSessionId: '' },
+      'videoSettings.layout.audioSessionId must be a participant session id',
+    ],
+    [
+      { preset: 'sip-grid', videoSessionId: 'a' },
+      'videoSettings.layout.videoSessionId is not allowed with preset sip-grid',
+    ],
+    [
+      { preset: 'sip-single', videoSessionId: 'a', participants: {} },
+      'videoSettings.layout.participants is not allowed with preset sip-single',
+    ],
+    [
+      { preset: 'sip-grid', participants: { video: [] } },
+      'videoSettings.layout.participants.video must be a non-empty array of unique strings',
+    ],
+    [
+      { preset: 'sip-grid', participants: { audio: ['*', '*'] } },
+      'videoSettings.layout.participants.audio must be a non-empty array of unique strings',
+    ],
+    [
+      { preset: 'sip-grid', participants: { screen: ['*'] } },
+      'videoSettings.layout.participants.screen is not allowed',
+    ],
+    [
+      { preset: 'sip-grid', participants: { audio: ['self'] } },
+      "videoSettings.layout.participants.audio must not contain 'self'",
+    ],
+    [
+      { preset: 'sip-active', participants: { video: ['self'] } },
+      "videoSettings.layout.participants.video must not contain 'self' with preset sip-active",
+    ],
+    [
+      { preset: 'sip-grid', nope: 1 },
+      'videoSettings.layout.nope is not allowed with preset sip-grid',
+    ],
+  ])('rejects layout %j', (layout, message) => {
+    expect(dialOut({ layout })).toThrow(`Error starting dial out: ${message}`);
+  });
+});

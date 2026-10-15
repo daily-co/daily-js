@@ -2289,7 +2289,58 @@ export interface DailySipPstnParticipantPermissions {
   canReceive: Partial<DailyParticipantCanReceivePermission>;
 }
 
-/** Video encoding settings for SIP dial-out. Only applicable when `video` is `true`. */
+/**
+ * Participant filters for a SIP video layout. Entries are '*' (everyone),
+ * 'owners', or a participant session id. `video` may also contain 'self',
+ * the SIP participant's own camera as a tile (sip-grid and sip-portrait only).
+ * Audio defaults to everyone; the SIP participant's own audio is never sent
+ * back to them.
+ */
+export interface DailySipVideoLayoutParticipantsConfig {
+  video?: string[];
+  audio?: string[];
+}
+
+/** The most recently active cameras, current speaker dominant. */
+export interface DailySipActiveLayoutConfig {
+  preset: 'sip-active';
+  /** 1 to 4. Default: 4. */
+  maxCamStreams?: number;
+  participants?: DailySipVideoLayoutParticipantsConfig;
+}
+
+/** Cameras in `participants.video` order, in a grid. */
+export interface DailySipGridLayoutConfig {
+  preset: 'sip-grid';
+  /** 1 to 4. Default: 4. */
+  maxCamStreams?: number;
+  participants?: DailySipVideoLayoutParticipantsConfig;
+}
+
+/** One participant's video and audio. */
+export interface DailySipSingleLayoutConfig {
+  preset: 'sip-single';
+  /** Session id of the video source; also the audio source unless `audioSessionId` is set. */
+  videoSessionId: string;
+  audioSessionId?: string;
+}
+
+/** Portrait composition; 720x1280 unless `width` and `height` are given. */
+export interface DailySipPortraitLayoutConfig {
+  preset: 'sip-portrait';
+  variant?: DailyStreamingPortraitLayoutVariant;
+  /** 1 to 2. Default: 2. */
+  maxCamStreams?: number;
+  participants?: DailySipVideoLayoutParticipantsConfig;
+}
+
+export type DailySipVideoLayoutConfig =
+  | DailySipActiveLayoutConfig
+  | DailySipGridLayoutConfig
+  | DailySipSingleLayoutConfig
+  | DailySipPortraitLayoutConfig;
+
+/** Video settings for SIP dial-out and dial-in. Only applicable when `video` is `true`. */
 export interface DailySipVideoSettings {
   /** Video width in pixels. Default: 1280. Maximum: 1280. */
   width?: number;
@@ -2299,6 +2350,8 @@ export interface DailySipVideoSettings {
   fps?: number;
   /** Video bitrate in kbps. Default: 900. Maximum: 1000. */
   videoBitrate?: number;
+  /** What the SIP participant sees and hears. Default: `sip-active` with 1 camera. */
+  layout?: DailySipVideoLayoutConfig;
 }
 export type DailySipServiceProvider = 'daily' | 'signalwire';
 export interface DailyStartDialoutSipOptions {
@@ -2332,6 +2385,7 @@ export interface DailyStartDialinOptions {
   sipEndpoint?: string;
   userId?: string;
   video?: boolean;
+  videoSettings?: DailySipVideoSettings;
   codecs?: DailyDialOutCodecs;
   permissions?: DailySipPstnParticipantPermissions;
   provider?: DailySipServiceProvider;

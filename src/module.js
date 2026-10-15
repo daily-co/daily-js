@@ -3758,71 +3758,11 @@ export default class DailyIframe extends EventEmitter {
         }
       }
 
-      if (args.videoSettings !== undefined) {
-        if (
-          typeof args.videoSettings !== 'object' ||
-          args.videoSettings === null
-        ) {
-          throw new Error(
-            `Error starting dial out: videoSettings must be an object`
-          );
-        }
-        if (!args.video) {
-          throw new Error(
-            `Error starting dial out: videoSettings provided but video is not enabled`
-          );
-        }
-
-        const vs = args.videoSettings;
-        if (vs.width !== undefined) {
-          if (!Number.isInteger(vs.width) || vs.width <= 0) {
-            throw new Error(
-              `Error starting dial out: videoSettings.width must be a positive integer`
-            );
-          }
-          if (vs.width > 1280) {
-            throw new Error(
-              `Error starting dial out: videoSettings.width must be less than or equal to 1280`
-            );
-          }
-        }
-        if (vs.height !== undefined) {
-          if (!Number.isInteger(vs.height) || vs.height <= 0) {
-            throw new Error(
-              `Error starting dial out: videoSettings.height must be a positive integer`
-            );
-          }
-          if (vs.height > 720) {
-            throw new Error(
-              `Error starting dial out: videoSettings.height must be less than or equal to 720`
-            );
-          }
-        }
-        if (vs.fps !== undefined) {
-          if (!Number.isInteger(vs.fps) || vs.fps <= 0) {
-            throw new Error(
-              `Error starting dial out: videoSettings.fps must be a positive integer`
-            );
-          }
-          if (vs.fps > 30) {
-            throw new Error(
-              `Error starting dial out: videoSettings.fps must be less than or equal to 30`
-            );
-          }
-        }
-        if (vs.videoBitrate !== undefined) {
-          if (!Number.isInteger(vs.videoBitrate) || vs.videoBitrate <= 0) {
-            throw new Error(
-              `Error starting dial out: videoSettings.videoBitrate must be a positive integer`
-            );
-          }
-          if (vs.videoBitrate > 1000) {
-            throw new Error(
-              `Error starting dial out: videoSettings.videoBitrate must be less than or equal to 1000 kbps`
-            );
-          }
-        }
-      }
+      validateSipVideoSettings(
+        args.videoSettings,
+        args.video,
+        'Error starting dial out'
+      );
 
       validateAudioVideoCodec(args.codecs);
     }
@@ -3966,6 +3906,12 @@ export default class DailyIframe extends EventEmitter {
     if (args.video !== undefined && typeof args.video !== 'boolean') {
       throw new Error(`Error starting dial in: video must be a boolean`);
     }
+
+    validateSipVideoSettings(
+      args.videoSettings,
+      args.video,
+      'Error starting dial in'
+    );
 
     if (
       args.sipEndpoint !== undefined &&
@@ -6243,6 +6189,136 @@ testCallQuality() and stopTestCallQuality() instead`);
           action: DAILY_EVENT_INPUT_SETTINGS_UPDATED,
           inputSettings: newInputSettings,
         });
+      }
+    }
+  }
+}
+
+// SIP videoSettings, shared by startDialOut (sipUri) and startDialIn. Mirrors the
+// server's sipVideoSettingsSchema so bad input fails here, not on the SFU.
+const SIP_VIDEO_SETTINGS_LIMITS = [
+  ['width', 1280, ''],
+  ['height', 720, ''],
+  ['fps', 30, ''],
+  ['videoBitrate', 1000, ' kbps'],
+];
+const SIP_VIDEO_LAYOUT_KEYS = {
+  'sip-active': ['maxCamStreams', 'participants'],
+  'sip-grid': ['maxCamStreams', 'participants'],
+  'sip-single': ['videoSessionId', 'audioSessionId'],
+  'sip-portrait': ['variant', 'maxCamStreams', 'participants'],
+};
+const SIP_SELF_FILTER = 'self';
+
+function validateSipVideoSettings(videoSettings, videoEnabled, errPrefix) {
+  if (videoSettings === undefined) {
+    return;
+  }
+  if (typeof videoSettings !== 'object' || videoSettings === null) {
+    throw new Error(`${errPrefix}: videoSettings must be an object`);
+  }
+  if (!videoEnabled) {
+    throw new Error(
+      `${errPrefix}: videoSettings provided but video is not enabled`
+    );
+  }
+  for (const [key, max, unit] of SIP_VIDEO_SETTINGS_LIMITS) {
+    const value = videoSettings[key];
+    if (value === undefined) {
+      continue;
+    }
+    if (!Number.isInteger(value) || value <= 0) {
+      throw new Error(
+        `${errPrefix}: videoSettings.${key} must be a positive integer`
+      );
+    }
+    if (value > max) {
+      throw new Error(
+        `${errPrefix}: videoSettings.${key} must be less than or equal to ${max}${unit}`
+      );
+    }
+  }
+  if (videoSettings.layout !== undefined) {
+    validateSipVideoLayout(videoSettings.layout, errPrefix);
+  }
+}
+
+function validateSipVideoLayout(layout, errPrefix) {
+  const fail = (what) => {
+    throw new Error(`${errPrefix}: videoSettings.layout${what}`);
+  };
+  if (typeof layout !== 'object' || layout === null) {
+    fail(' must be an object');
+  }
+  const preset = layout.preset;
+  const allowedKeys = SIP_VIDEO_LAYOUT_KEYS[preset];
+  if (!allowedKeys) {
+    fail(
+      `.preset must be one of ${Object.keys(SIP_VIDEO_LAYOUT_KEYS).join(', ')}`
+    );
+  }
+  for (const key of Object.keys(layout)) {
+    if (key !== 'preset' && !allowedKeys.includes(key)) {
+      fail(`.${key} is not allowed with preset ${preset}`);
+    }
+  }
+  if (layout.maxCamStreams !== undefined) {
+    const max = preset === 'sip-portrait' ? 2 : 4;
+    const n = layout.maxCamStreams;
+    if (!Number.isInteger(n) || n < 1 || n > max) {
+      fail(`.maxCamStreams must be an integer between 1 and ${max}`);
+    }
+  }
+  if (
+    layout.variant !== undefined &&
+    !['vertical', 'inset'].includes(layout.variant)
+  ) {
+    fail(`.variant must be 'vertical' or 'inset'`);
+  }
+  // 'self' stands for the SIP leg, whose session id the caller cannot know
+  const isSessionId = (v) =>
+    typeof v === 'string' && v.length > 0 && v !== SIP_SELF_FILTER;
+  if (preset === 'sip-single') {
+    if (!isSessionId(layout.videoSessionId)) {
+      fail('.videoSessionId must be a participant session id');
+    }
+    if (
+      layout.audioSessionId !== undefined &&
+      !isSessionId(layout.audioSessionId)
+    ) {
+      fail('.audioSessionId must be a participant session id');
+    }
+  }
+  if (layout.participants !== undefined) {
+    const participants = layout.participants;
+    if (typeof participants !== 'object' || participants === null) {
+      fail('.participants must be an object');
+    }
+    for (const key of Object.keys(participants)) {
+      if (key !== 'video' && key !== 'audio') {
+        fail(`.participants.${key} is not allowed`);
+      }
+      const filters = participants[key];
+      if (
+        !Array.isArray(filters) ||
+        filters.length === 0 ||
+        filters.some((f) => typeof f !== 'string' || f.length === 0) ||
+        new Set(filters).size !== filters.length
+      ) {
+        fail(
+          `.participants.${key} must be a non-empty array of unique strings`
+        );
+      }
+      if (filters.includes(SIP_SELF_FILTER)) {
+        if (key === 'audio') {
+          fail(`.participants.audio must not contain '${SIP_SELF_FILTER}'`);
+        }
+        // the SIP user's own tile only makes sense in a grid
+        if (preset === 'sip-active') {
+          fail(
+            `.participants.video must not contain '${SIP_SELF_FILTER}' with preset sip-active`
+          );
+        }
       }
     }
   }
