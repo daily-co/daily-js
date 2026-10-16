@@ -6205,10 +6205,15 @@ const SIP_VIDEO_SETTINGS_LIMITS = [
 const SIP_VIDEO_LAYOUT_KEYS = {
   'sip-active': ['maxCamStreams', 'participants'],
   'sip-grid': ['maxCamStreams', 'participants'],
-  'sip-single': ['videoSessionId', 'audioSessionId'],
-  'sip-portrait': ['variant', 'maxCamStreams', 'participants'],
+  'sip-single': ['videoParticipant', 'audioParticipant'],
+  'sip-portrait': [
+    'variant',
+    'maxCamStreams',
+    'participants',
+    'mainParticipant',
+    'insetParticipant',
+  ],
 };
-const SIP_SELF_FILTER = 'self';
 
 function validateSipVideoSettings(videoSettings, videoEnabled, errPrefix) {
   if (videoSettings === undefined) {
@@ -6275,18 +6280,38 @@ function validateSipVideoLayout(layout, errPrefix) {
   ) {
     fail(`.variant must be 'vertical' or 'inset'`);
   }
-  // 'self' stands for the SIP leg, whose session id the caller cannot know
-  const isSessionId = (v) =>
-    typeof v === 'string' && v.length > 0 && v !== SIP_SELF_FILTER;
+  // a participant reference: a user id or a session id
+  const isParticipant = (v) => typeof v === 'string' && v.length > 0;
   if (preset === 'sip-single') {
-    if (!isSessionId(layout.videoSessionId)) {
-      fail('.videoSessionId must be a participant session id');
+    if (!isParticipant(layout.videoParticipant)) {
+      fail('.videoParticipant must be a participant user id or session id');
     }
     if (
-      layout.audioSessionId !== undefined &&
-      !isSessionId(layout.audioSessionId)
+      layout.audioParticipant !== undefined &&
+      !isParticipant(layout.audioParticipant)
     ) {
-      fail('.audioSessionId must be a participant session id');
+      fail('.audioParticipant must be a participant user id or session id');
+    }
+  }
+  if (preset === 'sip-portrait') {
+    for (const key of ['mainParticipant', 'insetParticipant']) {
+      if (layout[key] === undefined) {
+        continue;
+      }
+      if (layout.variant !== 'inset') {
+        fail(`.${key} is only allowed with variant 'inset'`);
+      }
+      if (!isParticipant(layout[key])) {
+        fail(`.${key} must be a participant user id or session id`);
+      }
+    }
+    if (layout.insetParticipant !== undefined) {
+      if (layout.insetParticipant === layout.mainParticipant) {
+        fail('.insetParticipant must differ from mainParticipant');
+      }
+      if (layout.maxCamStreams === 1) {
+        fail('.insetParticipant needs maxCamStreams 2');
+      }
     }
   }
   if (layout.participants !== undefined) {
@@ -6308,17 +6333,6 @@ function validateSipVideoLayout(layout, errPrefix) {
         fail(
           `.participants.${key} must be a non-empty array of unique strings`
         );
-      }
-      if (filters.includes(SIP_SELF_FILTER)) {
-        if (key === 'audio') {
-          fail(`.participants.audio must not contain '${SIP_SELF_FILTER}'`);
-        }
-        // the SIP user's own tile only makes sense in a grid
-        if (preset === 'sip-active') {
-          fail(
-            `.participants.video must not contain '${SIP_SELF_FILTER}' with preset sip-active`
-          );
-        }
       }
     }
   }

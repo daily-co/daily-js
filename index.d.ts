@@ -2291,12 +2291,12 @@ export interface DailySipPstnParticipantPermissions {
 
 /**
  * Participant filters for a SIP video layout. Entries are '*' (everyone),
- * 'owners', or a participant session id. `video` may also contain 'self',
- * the SIP participant's own camera as a tile (sip-grid and sip-portrait only).
- * Audio defaults to everyone; the SIP participant's own audio is never sent
- * back to them. The layout is fixed for the call and session ids are matched
- * exactly, so a participant who leaves and rejoins (new session id) no longer
- * matches.
+ * 'owners', or a participant reference: a `user_id` or a session id. A user id
+ * is matched first, so it survives a rejoin and may name a participant who has
+ * not joined yet; the SIP participant is named by the dial's `userId`. The SIP
+ * participant's own camera is sent only when named, never through '*'. Audio
+ * defaults to everyone; the SIP participant's own audio is never sent back to
+ * them.
  */
 export interface DailySipVideoLayoutParticipantsConfig {
   video?: string[];
@@ -2319,25 +2319,31 @@ export interface DailySipGridLayoutConfig {
   participants?: DailySipVideoLayoutParticipantsConfig;
 }
 
-/**
- * One participant's video and audio. The layout is fixed for the call: if that
- * participant leaves and rejoins they get a new session id, and the SIP
- * participant sees and hears nothing until the call is dialed again.
- */
+/** One participant's video and audio. */
 export interface DailySipSingleLayoutConfig {
   preset: 'sip-single';
-  /** Session id of the video source; also the audio source unless `audioSessionId` is set. */
-  videoSessionId: string;
-  audioSessionId?: string;
+  /** `user_id` or session id of the video source; also the audio source unless `audioParticipant` is set. */
+  videoParticipant: string;
+  audioParticipant?: string;
 }
 
-/** Portrait composition; 720x1280 unless `width` and `height` are given. */
+/**
+ * Portrait composition; 720x1280 unless `width` and `height` are given. With
+ * `variant: 'inset'` there are two slots: `mainParticipant` fills the frame and
+ * `insetParticipant` is the small tile. Unpinned, the main slot follows the most
+ * recent speaker and the inset shows the first participant `participants.video`
+ * selects.
+ */
 export interface DailySipPortraitLayoutConfig {
   preset: 'sip-portrait';
   variant?: DailyStreamingPortraitLayoutVariant;
-  /** 1 to 2. Default: 2. */
+  /** 1 to 2. Default: 2. Must be 2 with `insetParticipant`. */
   maxCamStreams?: number;
   participants?: DailySipVideoLayoutParticipantsConfig;
+  /** `variant: 'inset'` only: `user_id` or session id pinned full-frame. */
+  mainParticipant?: string;
+  /** `variant: 'inset'` only: `user_id` or session id pinned to the small tile. */
+  insetParticipant?: string;
 }
 
 export type DailySipVideoLayoutConfig =

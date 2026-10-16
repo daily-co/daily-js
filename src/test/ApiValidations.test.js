@@ -154,7 +154,7 @@ describe('validateSipVideoSettings', () => {
       {
         preset: 'sip-grid',
         maxCamStreams: 1,
-        participants: { video: ['self', '*'] },
+        participants: { video: ['caller', '*'] },
       },
     ],
     [
@@ -162,11 +162,20 @@ describe('validateSipVideoSettings', () => {
         preset: 'sip-portrait',
         variant: 'inset',
         maxCamStreams: 2,
-        participants: { video: ['self'] },
+        mainParticipant: 'patient',
+        insetParticipant: 'doctor',
       },
     ],
-    [{ preset: 'sip-single', videoSessionId: 'a' }],
-    [{ preset: 'sip-single', videoSessionId: 'a', audioSessionId: 'b' }],
+    [
+      {
+        preset: 'sip-portrait',
+        variant: 'inset',
+        mainParticipant: 'patient',
+        maxCamStreams: 1,
+      },
+    ],
+    [{ preset: 'sip-single', videoParticipant: 'a' }],
+    [{ preset: 'sip-single', videoParticipant: 'a', audioParticipant: 'b' }],
   ])('accepts layout %j', (layout) => {
     expect(dialOut({ layout })).not.toThrow();
   });
@@ -190,7 +199,7 @@ describe('validateSipVideoSettings', () => {
       'videoSettings.layout.maxCamStreams must be an integer between 1 and 2',
     ],
     [
-      { preset: 'sip-single', videoSessionId: 'a', maxCamStreams: 1 },
+      { preset: 'sip-single', videoParticipant: 'a', maxCamStreams: 1 },
       'videoSettings.layout.maxCamStreams is not allowed with preset sip-single',
     ],
     [
@@ -203,23 +212,57 @@ describe('validateSipVideoSettings', () => {
     ],
     [
       { preset: 'sip-single' },
-      'videoSettings.layout.videoSessionId must be a participant session id',
+      'videoSettings.layout.videoParticipant must be a participant user id or session id',
     ],
     [
-      { preset: 'sip-single', videoSessionId: 'self' },
-      'videoSettings.layout.videoSessionId must be a participant session id',
+      { preset: 'sip-single', videoParticipant: '' },
+      'videoSettings.layout.videoParticipant must be a participant user id or session id',
     ],
     [
-      { preset: 'sip-single', videoSessionId: 'a', audioSessionId: '' },
-      'videoSettings.layout.audioSessionId must be a participant session id',
+      { preset: 'sip-single', videoParticipant: 'a', audioParticipant: 7 },
+      'videoSettings.layout.audioParticipant must be a participant user id or session id',
     ],
     [
-      { preset: 'sip-grid', videoSessionId: 'a' },
-      'videoSettings.layout.videoSessionId is not allowed with preset sip-grid',
+      { preset: 'sip-grid', videoParticipant: 'a' },
+      'videoSettings.layout.videoParticipant is not allowed with preset sip-grid',
     ],
     [
-      { preset: 'sip-single', videoSessionId: 'a', participants: {} },
+      { preset: 'sip-single', videoParticipant: 'a', participants: {} },
       'videoSettings.layout.participants is not allowed with preset sip-single',
+    ],
+    [
+      { preset: 'sip-portrait', mainParticipant: 'a' },
+      "videoSettings.layout.mainParticipant is only allowed with variant 'inset'",
+    ],
+    [
+      { preset: 'sip-portrait', variant: 'vertical', insetParticipant: 'a' },
+      "videoSettings.layout.insetParticipant is only allowed with variant 'inset'",
+    ],
+    [
+      { preset: 'sip-grid', insetParticipant: 'a' },
+      'videoSettings.layout.insetParticipant is not allowed with preset sip-grid',
+    ],
+    [
+      { preset: 'sip-portrait', variant: 'inset', mainParticipant: '' },
+      'videoSettings.layout.mainParticipant must be a participant user id or session id',
+    ],
+    [
+      {
+        preset: 'sip-portrait',
+        variant: 'inset',
+        mainParticipant: 'a',
+        insetParticipant: 'a',
+      },
+      'videoSettings.layout.insetParticipant must differ from mainParticipant',
+    ],
+    [
+      {
+        preset: 'sip-portrait',
+        variant: 'inset',
+        insetParticipant: 'a',
+        maxCamStreams: 1,
+      },
+      'videoSettings.layout.insetParticipant needs maxCamStreams 2',
     ],
     [
       { preset: 'sip-grid', participants: { video: [] } },
@@ -232,14 +275,6 @@ describe('validateSipVideoSettings', () => {
     [
       { preset: 'sip-grid', participants: { screen: ['*'] } },
       'videoSettings.layout.participants.screen is not allowed',
-    ],
-    [
-      { preset: 'sip-grid', participants: { audio: ['self'] } },
-      "videoSettings.layout.participants.audio must not contain 'self'",
-    ],
-    [
-      { preset: 'sip-active', participants: { video: ['self'] } },
-      "videoSettings.layout.participants.video must not contain 'self' with preset sip-active",
     ],
     [
       { preset: 'sip-grid', nope: 1 },
