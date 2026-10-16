@@ -2692,6 +2692,26 @@ export default class DailyIframe extends EventEmitter {
     return { deviceId: currentAudioDevice };
   }
 
+  async setCameraTorch(enabled) {
+    methodOnlySupportedInReactNative();
+    return this.nativeUtils().setCameraTorch(enabled);
+  }
+
+  async isCameraTorchAvailable() {
+    methodOnlySupportedInReactNative();
+    return this.nativeUtils().isCameraTorchAvailable();
+  }
+
+  async setCameraZoom(ratio) {
+    methodOnlySupportedInReactNative();
+    return this.nativeUtils().setCameraZoom(ratio);
+  }
+
+  async getCameraZoom() {
+    methodOnlySupportedInReactNative();
+    return this.nativeUtils().getCameraZoom();
+  }
+
   cycleCamera(properties = {}) {
     return new Promise((resolve) => {
       let k = (msg) => {
