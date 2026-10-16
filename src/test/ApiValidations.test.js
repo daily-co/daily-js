@@ -178,6 +178,10 @@ describe('validateSipVideoSettings', () => {
       'videoSettings.layout.preset must be one of sip-active, sip-grid, sip-single, sip-portrait',
     ],
     [
+      { preset: 'constructor' },
+      'videoSettings.layout.preset must be one of sip-active, sip-grid, sip-single, sip-portrait',
+    ],
+    [
       { preset: 'sip-grid', maxCamStreams: 5 },
       'videoSettings.layout.maxCamStreams must be an integer between 1 and 4',
     ],

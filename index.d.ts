@@ -2294,7 +2294,9 @@ export interface DailySipPstnParticipantPermissions {
  * 'owners', or a participant session id. `video` may also contain 'self',
  * the SIP participant's own camera as a tile (sip-grid and sip-portrait only).
  * Audio defaults to everyone; the SIP participant's own audio is never sent
- * back to them.
+ * back to them. The layout is fixed for the call and session ids are matched
+ * exactly, so a participant who leaves and rejoins (new session id) no longer
+ * matches.
  */
 export interface DailySipVideoLayoutParticipantsConfig {
   video?: string[];
@@ -2317,7 +2319,11 @@ export interface DailySipGridLayoutConfig {
   participants?: DailySipVideoLayoutParticipantsConfig;
 }
 
-/** One participant's video and audio. */
+/**
+ * One participant's video and audio. The layout is fixed for the call: if that
+ * participant leaves and rejoins they get a new session id, and the SIP
+ * participant sees and hears nothing until the call is dialed again.
+ */
 export interface DailySipSingleLayoutConfig {
   preset: 'sip-single';
   /** Session id of the video source; also the audio source unless `audioSessionId` is set. */

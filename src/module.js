@@ -6251,12 +6251,12 @@ function validateSipVideoLayout(layout, errPrefix) {
     fail(' must be an object');
   }
   const preset = layout.preset;
-  const allowedKeys = SIP_VIDEO_LAYOUT_KEYS[preset];
-  if (!allowedKeys) {
+  if (!Object.prototype.hasOwnProperty.call(SIP_VIDEO_LAYOUT_KEYS, preset)) {
     fail(
       `.preset must be one of ${Object.keys(SIP_VIDEO_LAYOUT_KEYS).join(', ')}`
     );
   }
+  const allowedKeys = SIP_VIDEO_LAYOUT_KEYS[preset];
   for (const key of Object.keys(layout)) {
     if (key !== 'preset' && !allowedKeys.includes(key)) {
       fail(`.${key} is not allowed with preset ${preset}`);
