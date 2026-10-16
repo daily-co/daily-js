@@ -751,16 +751,6 @@ export interface DailyDeviceInfos {
 }
 
 /**
- * Current camera zoom and the range the active device supports.
- * `ratio` defaults to 1.0. Present only while the local camera is capturing on iOS.
- */
-export interface DailyCameraZoom {
-  ratio: number;
-  min: number;
-  max: number;
-}
-
-/**
  * @deprecated
  * Almost all the properties in this type were just used by Electron.
  * And the mediaStream can be replaced to use custom tracks.
@@ -2450,40 +2440,6 @@ export interface DailyCall {
   cycleCamera(properties?: {
     preferDifferentFacingMode?: boolean;
   }): Promise<{ device?: MediaDeviceInfo | null }>;
-  /**
-   * React Native only. Enables or disables the camera torch while local video
-   * capture is running. Matches native `CallClient.setCameraTorch`.
-   *
-   * Android is unsupported: `org.jitsi:webrtc:124.+` `CameraVideoCapturer`
-   * declares `switchCamera` and media-recorder hooks only. It does not declare
-   * torch. `Camera2Session` declares `create` and `stop` only.
-   */
-  setCameraTorch(enabled: boolean): Promise<void>;
-  /**
-   * React Native only. Whether the active camera can turn the torch on.
-   * False when capture is stopped, the camera has no torch, or on Android.
-   *
-   * Android is unsupported because `org.jitsi:webrtc:124.+`
-   * `CameraVideoCapturer` does not declare torch.
-   */
-  isCameraTorchAvailable(): Promise<boolean>;
-  /**
-   * React Native only. Sets the camera zoom ratio. `1.0` is the default.
-   * Matches native `CallClient.setCameraZoom`. Rejects when `ratio` is outside
-   * the active device range.
-   *
-   * Android is unsupported: `org.jitsi:webrtc:124.+` `CameraVideoCapturer`
-   * does not declare zoom.
-   */
-  setCameraZoom(ratio: number): Promise<void>;
-  /**
-   * React Native only. Current zoom ratio and the active device minimum and
-   * maximum. Null when the camera is off, and null on Android.
-   *
-   * Android is unsupported because `org.jitsi:webrtc:124.+`
-   * `CameraVideoCapturer` does not declare zoom.
-   */
-  getCameraZoom(): Promise<DailyCameraZoom | null>;
   cycleMic(): Promise<{ device?: MediaDeviceInfo | null }>;
   startCustomTrack(properties: StartCustomTrackOptions): Promise<string>;
   stopCustomTrack(trackName: string): Promise<string>;

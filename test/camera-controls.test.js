@@ -29,19 +29,19 @@ describe('camera torch and zoom', () => {
     delete global.DailyNativeUtils;
   });
 
-  test('web callers are rejected', () => {
+  test('web callers are rejected', async () => {
     useReactNative(false);
     const call = Object.create(DailyIframe.prototype);
-    expect(() => call.setCameraTorch(true)).toThrow(
+    await expect(call.setCameraTorch(true)).rejects.toThrow(
       'only supported in React Native'
     );
-    expect(() => call.isCameraTorchAvailable()).toThrow(
+    await expect(call.isCameraTorchAvailable()).rejects.toThrow(
       'only supported in React Native'
     );
-    expect(() => call.setCameraZoom(2)).toThrow(
+    await expect(call.setCameraZoom(2)).rejects.toThrow(
       'only supported in React Native'
     );
-    expect(() => call.getCameraZoom()).toThrow(
+    await expect(call.getCameraZoom()).rejects.toThrow(
       'only supported in React Native'
     );
   });
@@ -75,9 +75,13 @@ describe('camera torch and zoom', () => {
   test('native rejections pass through', async () => {
     const call = callWithNativeUtils({
       setCameraTorch: () =>
-        Promise.reject(new Error('org.jitsi:webrtc:124.+ does not declare torch')),
+        Promise.reject(
+          new Error('org.jitsi:webrtc:124.+ does not declare torch')
+        ),
       setCameraZoom: () =>
-        Promise.reject(new Error('org.jitsi:webrtc:124.+ does not declare zoom')),
+        Promise.reject(
+          new Error('org.jitsi:webrtc:124.+ does not declare zoom')
+        ),
       isCameraTorchAvailable: () => Promise.resolve(false),
       getCameraZoom: () => Promise.resolve(null),
     });
