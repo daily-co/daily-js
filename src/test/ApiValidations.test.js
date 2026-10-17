@@ -110,6 +110,22 @@ describe('validateSipVideoSettings', () => {
     expect(
       dialOut({ width: 1280, height: 720, fps: 30, videoBitrate: 1000 })
     ).not.toThrow();
+    expect(
+      dialOut({ width: 720, height: 1280, layout: { preset: 'sip-portrait' } })
+    ).not.toThrow();
+  });
+
+  it('turns the dims caps 9:16 for sip-portrait', () => {
+    const layout = { preset: 'sip-portrait' };
+    expect(dialOut({ width: 1280, layout })).toThrow(
+      'videoSettings.width must be less than or equal to 720'
+    );
+    expect(dialOut({ height: 1281, layout })).toThrow(
+      'videoSettings.height must be less than or equal to 1280'
+    );
+    expect(dialOut({ height: 1280, layout: { preset: 'sip-grid' } })).toThrow(
+      'videoSettings.height must be less than or equal to 720'
+    );
   });
 
   it('keeps the checks that used to be inline in startDialOut', () => {
@@ -271,6 +287,13 @@ describe('validateSipVideoSettings', () => {
     [
       { preset: 'sip-grid', participants: { audio: ['*', '*'] } },
       'videoSettings.layout.participants.audio must be a non-empty array of unique strings',
+    ],
+    [
+      {
+        preset: 'sip-grid',
+        participants: { video: Array.from({ length: 51 }, (_, i) => `p${i}`) },
+      },
+      'videoSettings.layout.participants.video must have at most 50 entries',
     ],
     [
       { preset: 'sip-grid', participants: { screen: ['*'] } },

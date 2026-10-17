@@ -2290,13 +2290,13 @@ export interface DailySipPstnParticipantPermissions {
 }
 
 /**
- * Participant filters for a SIP video layout. Entries are '*' (everyone),
- * 'owners', or a participant reference: a `user_id` or a session id. A user id
- * is matched first, so it survives a rejoin and may name a participant who has
- * not joined yet; the SIP participant is named by the dial's `userId`. The SIP
- * participant's own camera is sent only when named, never through '*'. Audio
- * defaults to everyone; the SIP participant's own audio is never sent back to
- * them.
+ * Participant filters for a SIP video layout, up to 50 entries each. Entries are
+ * '*' (everyone), 'owners', or a participant reference: a `user_id` or a session
+ * id. A user id is matched first, so it survives a rejoin and may name a
+ * participant who has not joined yet; the SIP participant is named by the dial's
+ * `userId`. The SIP participant's own camera is sent only when named, never
+ * through '*'. Audio defaults to everyone; the SIP participant's own audio is
+ * never sent back to them.
  */
 export interface DailySipVideoLayoutParticipantsConfig {
   video?: string[];
@@ -2328,11 +2328,11 @@ export interface DailySipSingleLayoutConfig {
 }
 
 /**
- * Portrait composition; 720x1280 unless `width` and `height` are given. With
- * `variant: 'inset'` there are two slots: `mainParticipant` fills the frame and
- * `insetParticipant` is the small tile. Unpinned, the main slot follows the most
- * recent speaker and the inset shows the first participant `participants.video`
- * selects.
+ * Portrait composition: 720x1280 unless `width` (up to 720) or `height` (up to
+ * 1280) is given. With `variant: 'inset'` there are two slots: `mainParticipant`
+ * fills the frame and `insetParticipant` is the small tile. Unpinned, the main
+ * slot follows the most recent speaker and the inset shows the first participant
+ * `participants.video` selects.
  */
 export interface DailySipPortraitLayoutConfig {
   preset: 'sip-portrait';
@@ -2354,9 +2354,9 @@ export type DailySipVideoLayoutConfig =
 
 /** Video settings for SIP dial-out and dial-in. Only applicable when `video` is `true`. */
 export interface DailySipVideoSettings {
-  /** Video width in pixels. Default: 1280. Maximum: 1280. */
+  /** Video width in pixels. Default and maximum: 1280, or 720 with `sip-portrait`. */
   width?: number;
-  /** Video height in pixels. Default: 720. Maximum: 720. */
+  /** Video height in pixels. Default and maximum: 720, or 1280 with `sip-portrait`. */
   height?: number;
   /** Video frame rate. Default: 15. Maximum: 30. */
   fps?: number;

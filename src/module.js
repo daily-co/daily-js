@@ -6197,11 +6197,13 @@ testCallQuality() and stopTestCallQuality() instead`);
 // SIP videoSettings, shared by startDialOut (sipUri) and startDialIn. Mirrors the
 // server's sipVideoSettingsSchema so bad input fails here, not on the SFU.
 const SIP_VIDEO_SETTINGS_LIMITS = [
-  ['width', 1280, ''],
-  ['height', 720, ''],
   ['fps', 30, ''],
   ['videoBitrate', 1000, ' kbps'],
 ];
+// Output caps: landscape, or 9:16 for sip-portrait
+const SIP_VIDEO_MAX_DIMS = { width: 1280, height: 720 };
+const SIP_PORTRAIT_MAX_DIMS = { width: 720, height: 1280 };
+const SIP_LAYOUT_MAX_PARTICIPANT_REFS = 50;
 const SIP_VIDEO_LAYOUT_KEYS = {
   'sip-active': ['maxCamStreams', 'participants'],
   'sip-grid': ['maxCamStreams', 'participants'],
@@ -6227,7 +6229,17 @@ function validateSipVideoSettings(videoSettings, videoEnabled, errPrefix) {
       `${errPrefix}: videoSettings provided but video is not enabled`
     );
   }
-  for (const [key, max, unit] of SIP_VIDEO_SETTINGS_LIMITS) {
+  const layout = videoSettings.layout;
+  const dims =
+    layout && layout.preset === 'sip-portrait'
+      ? SIP_PORTRAIT_MAX_DIMS
+      : SIP_VIDEO_MAX_DIMS;
+  const limits = [
+    ['width', dims.width, ''],
+    ['height', dims.height, ''],
+    ...SIP_VIDEO_SETTINGS_LIMITS,
+  ];
+  for (const [key, max, unit] of limits) {
     const value = videoSettings[key];
     if (value === undefined) {
       continue;
@@ -6332,6 +6344,11 @@ function validateSipVideoLayout(layout, errPrefix) {
       ) {
         fail(
           `.participants.${key} must be a non-empty array of unique strings`
+        );
+      }
+      if (filters.length > SIP_LAYOUT_MAX_PARTICIPANT_REFS) {
+        fail(
+          `.participants.${key} must have at most ${SIP_LAYOUT_MAX_PARTICIPANT_REFS} entries`
         );
       }
     }
