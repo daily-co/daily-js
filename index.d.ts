@@ -2289,16 +2289,81 @@ export interface DailySipPstnParticipantPermissions {
   canReceive: Partial<DailyParticipantCanReceivePermission>;
 }
 
-/** Video encoding settings for SIP dial-out. Only applicable when `video` is `true`. */
+/**
+ * Participant filters for a SIP video layout, up to 50 entries each. Entries are
+ * '*' (everyone), 'owners', or a participant reference: a `user_id` or a session
+ * id. A user id is matched first, so it survives a rejoin and may name a
+ * participant who has not joined yet; the SIP participant is named by the dial's
+ * `userId`. The SIP participant's own camera is sent only when named, never
+ * through '*'. Audio defaults to everyone; the SIP participant's own audio is
+ * never sent back to them.
+ */
+export interface DailySipVideoLayoutParticipantsConfig {
+  video?: string[];
+  audio?: string[];
+}
+
+/** The most recently active cameras, current speaker dominant. */
+export interface DailySipActiveLayoutConfig {
+  preset: 'sip-active';
+  /** 1 to 4. Default: 4. */
+  maxCamStreams?: number;
+  participants?: DailySipVideoLayoutParticipantsConfig;
+}
+
+/** Cameras in `participants.video` order, in a grid. */
+export interface DailySipGridLayoutConfig {
+  preset: 'sip-grid';
+  /** 1 to 4. Default: 4. */
+  maxCamStreams?: number;
+  participants?: DailySipVideoLayoutParticipantsConfig;
+}
+
+/** One participant's video and audio. */
+export interface DailySipSingleLayoutConfig {
+  preset: 'sip-single';
+  /** `user_id` or session id of the video source; also the audio source unless `audioParticipant` is set. */
+  videoParticipant: string;
+  audioParticipant?: string;
+}
+
+/**
+ * Portrait composition: 720x1280 unless `width` (up to 720) or `height` (up to
+ * 1280) is given. With `variant: 'inset'` there are two slots: `mainParticipant`
+ * fills the frame and `insetParticipant` is the small tile. Unpinned, the main
+ * slot follows the most recent speaker and the inset shows the first participant
+ * `participants.video` selects.
+ */
+export interface DailySipPortraitLayoutConfig {
+  preset: 'sip-portrait';
+  variant?: DailyStreamingPortraitLayoutVariant;
+  /** 1 to 2. Default: 2. Must be 2 with `insetParticipant`. */
+  maxCamStreams?: number;
+  participants?: DailySipVideoLayoutParticipantsConfig;
+  /** `variant: 'inset'` only: `user_id` or session id pinned full-frame. */
+  mainParticipant?: string;
+  /** `variant: 'inset'` only: `user_id` or session id pinned to the small tile. */
+  insetParticipant?: string;
+}
+
+export type DailySipVideoLayoutConfig =
+  | DailySipActiveLayoutConfig
+  | DailySipGridLayoutConfig
+  | DailySipSingleLayoutConfig
+  | DailySipPortraitLayoutConfig;
+
+/** Video settings for SIP dial-out and dial-in. Only applicable when `video` is `true`. */
 export interface DailySipVideoSettings {
-  /** Video width in pixels. Default: 1280. Maximum: 1280. */
+  /** Video width in pixels. Default and maximum: 1280, or 720 with `sip-portrait`. */
   width?: number;
-  /** Video height in pixels. Default: 720. Maximum: 720. */
+  /** Video height in pixels. Default and maximum: 720, or 1280 with `sip-portrait`. */
   height?: number;
   /** Video frame rate. Default: 15. Maximum: 30. */
   fps?: number;
   /** Video bitrate in kbps. Default: 900. Maximum: 1000. */
   videoBitrate?: number;
+  /** What the SIP participant sees and hears. Default: `sip-active` with 1 camera. */
+  layout?: DailySipVideoLayoutConfig;
 }
 export type DailySipServiceProvider = 'daily' | 'signalwire';
 export interface DailyStartDialoutSipOptions {
@@ -2332,6 +2397,7 @@ export interface DailyStartDialinOptions {
   sipEndpoint?: string;
   userId?: string;
   video?: boolean;
+  videoSettings?: DailySipVideoSettings;
   codecs?: DailyDialOutCodecs;
   permissions?: DailySipPstnParticipantPermissions;
   provider?: DailySipServiceProvider;
