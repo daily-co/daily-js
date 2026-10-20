@@ -1862,15 +1862,15 @@ export default class DailyIframe extends EventEmitter {
   }
 
   setLocalVideo(bool, options = {}) {
-    if ('forceDiscardTrack' in options) {
+    if ('discardTrack' in options) {
       if (isReactNative()) {
         console.warn(
-          'forceDiscardTrack option not supported in React Native; ignoring'
+          'discardTrack option not supported in React Native; ignoring'
         );
         options = {};
       } else if (bool) {
         console.warn(
-          'forceDiscardTrack option only supported when calling setLocalVideo(false); ignoring'
+          'discardTrack option only supported when calling setLocalVideo(false); ignoring'
         );
         options = {};
       }
