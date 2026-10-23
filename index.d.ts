@@ -2394,6 +2394,7 @@ export interface DailyStartDialoutPhoneOptions {
   permissions?: DailySipPstnParticipantPermissions;
   extension?: string;
   waitBeforeExtensionDialSec?: number;
+  provider?: 'signalwire';
 }
 
 export type DailyStartDialoutOptions =

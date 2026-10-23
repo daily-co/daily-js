@@ -3856,9 +3856,9 @@ export default class DailyIframe extends EventEmitter {
           `Error: provider can be set only to '${SIP_SERVICE_PROVIDER_DAILY}' or '${SIP_SERVICE_PROVIDER_SIGNALWIRE}', got: ${args.provider}`
         );
       }
-      if (args.phoneNumber) {
+      if (args.phoneNumber && args.provider === SIP_SERVICE_PROVIDER_DAILY) {
         throw new Error(
-          `Error starting dial out: provider valid only for sipUri, not phoneNumber`
+          `Error starting dial out: "${SIP_SERVICE_PROVIDER_DAILY}" provider is not supported for phone number dial-out`
         );
       }
     } else {
