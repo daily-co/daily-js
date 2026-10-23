@@ -1794,7 +1794,7 @@ export interface DailyEventObjectSidebarViewChanged
 export interface DailyEventObjectDialinReady extends DailyEventObjectBase {
   action: Extract<DailyEvent, 'dialin-ready'>;
   sipEndpoint: string;
-  provider: string;
+  provider: DailySipServiceProvider;
 }
 
 export interface DailyEventObjectDialinConnected extends DailyEventObjectBase {
@@ -1805,7 +1805,7 @@ export interface DailyEventObjectDialinConnected extends DailyEventObjectBase {
   sipFrom?: string;
   sipEndpoint?: string;
   actionTraceId?: string;
-  provider: string;
+  provider: DailySipServiceProvider;
   sipCallId: string;
 }
 
@@ -1821,7 +1821,8 @@ export interface DailyEventObjectDialinError extends DailyEventObjectBase {
     sipReasonPhrase?: string;
   };
   actionTraceId?: string;
-  provider: string;
+  // absent when the request is rejected before a provider is chosen
+  provider?: DailySipServiceProvider;
   sipCallId?: string;
 }
 
@@ -1833,7 +1834,7 @@ export interface DailyEventObjectDialinStopped extends DailyEventObjectBase {
   sipFrom?: string;
   sipEndpoint?: string;
   actionTraceId?: string;
-  provider: string;
+  provider: DailySipServiceProvider;
   sipCallId?: string;
 }
 
@@ -1845,7 +1846,7 @@ export interface DailyEventObjectDialinWarning extends DailyEventObjectBase {
   sipFrom?: string;
   sipEndpoint?: string;
   actionTraceId?: string;
-  provider: string;
+  provider: DailySipServiceProvider;
   sipCallId?: string;
 }
 
@@ -1857,7 +1858,7 @@ export interface DailyEventObjectDialOutConnected extends DailyEventObjectBase {
   destination?: string;
   callerId?: string;
   actionTraceId?: string;
-  provider: string;
+  provider: DailySipServiceProvider;
   sipCallId: string;
 }
 
@@ -1869,7 +1870,7 @@ export interface DailyEventObjectDialOutAnswered extends DailyEventObjectBase {
   destination?: string;
   callerId?: string;
   actionTraceId?: string;
-  provider: string;
+  provider: DailySipServiceProvider;
   sipCallId: string;
 }
 
@@ -1885,7 +1886,8 @@ export interface DailyEventObjectDialOutError extends DailyEventObjectBase {
     sipReasonPhrase?: string;
   };
   actionTraceId?: string;
-  provider: string;
+  // absent when the request is rejected before a provider is chosen
+  provider?: DailySipServiceProvider;
   sipCallId?: string;
 }
 
@@ -1897,7 +1899,7 @@ export interface DailyEventObjectDialOutStopped extends DailyEventObjectBase {
   destination?: string;
   callerId?: string;
   actionTraceId?: string;
-  provider: string;
+  provider: DailySipServiceProvider;
   sipCallId?: string;
   // SignalWire only: SIP result of the callee leg when the call ended unanswered.
   // Top level like the event's other fields; dialout-error keeps the pair in details.
@@ -1914,7 +1916,7 @@ export interface DailyEventObjectDialOutWarning extends DailyEventObjectBase {
   destination?: string;
   callerId?: string;
   actionTraceId?: string;
-  provider: string;
+  provider: DailySipServiceProvider;
   sipCallId?: string;
 }
 
