@@ -311,6 +311,7 @@ class LoadAttempt_ReactNative {
     this._networkTimedOut = false;
     this._networkTimeout = null;
     this._networkTimeoutMs = networkTimeoutMs;
+    this._abortController = null;
 
     this._iosCache =
       typeof iOSCallObjectBundleCache !== 'undefined' &&
@@ -333,6 +334,7 @@ class LoadAttempt_ReactNative {
   cancel() {
     clearTimeout(this._networkTimeout);
     this.cancelled = true;
+    this._abortFetch();
   }
 
   /**
@@ -403,8 +405,13 @@ class LoadAttempt_ReactNative {
     //   '[LoadAttempt_ReactNative] trying to load from network...',
     //   url
     // );
+    // The timeout covers the whole download - headers *and* body - so that
+    // a response whose body stalls after the headers arrive still fails over
+    // (daily-js#321). This matches LoadAttempt_Web, where the script tag's
+    // onload only fires once the full bundle has downloaded.
     this._networkTimeout = setTimeout(() => {
       this._networkTimedOut = true;
+      this._abortFetch();
       this._failureCallback({
         msg: `Timed out (>${this._networkTimeoutMs} ms) when loading call object bundle ${url}`,
         type: 'timeout',
@@ -415,8 +422,15 @@ class LoadAttempt_ReactNative {
       const fetchOptions = this._refetchHeaders
         ? { headers: this._refetchHeaders }
         : {};
+      if (typeof AbortController !== 'undefined') {
+        this._abortController = new AbortController();
+        fetchOptions.signal = this._abortController.signal;
+      }
+
+      // NOTE: fetch() resolves as soon as the response *headers* arrive; the
+      // body may still be in flight, so the timeout stays armed until the body
+      // has been fully read below.
       const response = await fetch(url, fetchOptions);
-      clearTimeout(this._networkTimeout);
 
       // Check that load wasn't cancelled or timed out during fetch
       if (this.cancelled || this._networkTimedOut) {
@@ -424,9 +438,12 @@ class LoadAttempt_ReactNative {
       }
 
       const code = await this._getBundleCodeFromResponse(url, response);
+      clearTimeout(this._networkTimeout);
 
-      // Check again that load wasn't cancelled during reading response
-      if (this.cancelled) {
+      // Check again that load wasn't cancelled or timed out while reading the
+      // response. (A timed-out attempt has already reported failure and the
+      // next attempt may be underway, so its bundle must not run.)
+      if (this.cancelled || this._networkTimedOut) {
         throw new LoadAttemptAbortedError();
       }
 
@@ -458,6 +475,18 @@ class LoadAttempt_ReactNative {
         msg: `Failed to load call object bundle ${url}: ${e}`,
         type: e.message,
       });
+    }
+  }
+
+  /**
+   * Abort the in-flight fetch (if any), so a timed-out or cancelled attempt
+   * doesn't leave a dangling request holding the connection open.
+   */
+  _abortFetch() {
+    try {
+      this._abortController && this._abortController.abort();
+    } catch (e) {
+      // ignore
     }
   }
 
