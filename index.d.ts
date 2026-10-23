@@ -2295,6 +2295,11 @@ export interface DailyDialOutSession {
   sessionId: string;
 }
 
+export interface DailyDialInSession {
+  sessionId: string;
+  sipEndpoint?: string;
+}
+
 export interface DailySipPstnParticipantPermissions {
   canReceive: Partial<DailyParticipantCanReceivePermission>;
 }
@@ -2688,7 +2693,9 @@ export interface DailyCall {
   startDialOut(
     options: DailyStartDialoutOptions
   ): Promise<{ session?: DailyDialOutSession }>;
-  startDialIn(options: DailyStartDialinOptions): Promise<void>;
+  startDialIn(
+    options: DailyStartDialinOptions
+  ): Promise<{ session?: DailyDialInSession }>;
   stopDialOut(options: { sessionId: string }): Promise<void>;
   sendDTMF(options: DailySendDtmfOptions): Promise<void>;
   sipCallTransfer(options: DailySipCallTransferOptions): Promise<void>;
