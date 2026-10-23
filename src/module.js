@@ -3819,9 +3819,9 @@ export default class DailyIframe extends EventEmitter {
           `Error starting dial out: displayName must be a string`
         );
       }
-      if (args.displayName.length >= 200) {
+      if (args.displayName.length > 200) {
         throw new Error(
-          `Error starting dial out: displayName length must be less than 200`
+          `Error starting dial out: displayName length must be at most 200`
         );
       }
     }
@@ -3898,9 +3898,9 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
-    if (args.displayName.length >= 200) {
+    if (args.displayName.length > 200) {
       throw new Error(
-        `Error starting dial in: displayName length must be less than 200`
+        `Error starting dial in: displayName length must be at most 200`
       );
     }
 
