@@ -3861,11 +3861,6 @@ export default class DailyIframe extends EventEmitter {
           `Error starting dial out: provider valid only for sipUri, not phoneNumber`
         );
       }
-      if (args.provider === SIP_SERVICE_PROVIDER_DAILY) {
-        console.warn(
-          `(pre-beta) provider=${SIP_SERVICE_PROVIDER_DAILY} is currently in pre-beta, things might break!`
-        );
-      }
     } else {
       // signalwire is default to maintain backward compatibility
       args.provider = SIP_SERVICE_PROVIDER_SIGNALWIRE;
