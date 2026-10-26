@@ -112,6 +112,8 @@ export type DailyEvent =
   | 'selected-devices-updated'
   | 'custom-button-click'
   | 'sidebar-view-changed'
+  | 'breakout-session-started'
+  | 'breakout-session-stopped'
   | 'pip-started'
   | 'pip-stopped'
   | 'dialin-connected'
@@ -1290,6 +1292,8 @@ export interface DailyEventObjectNoPayload extends DailyEventObjectBase {
     | 'exited-fullscreen'
     | 'pip-started'
     | 'pip-stopped'
+    | 'breakout-session-started'
+    | 'breakout-session-stopped'
   >;
 }
 
