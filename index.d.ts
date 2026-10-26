@@ -1812,9 +1812,10 @@ export interface DailyEventObjectDialinConnected extends DailyEventObjectBase {
 export interface DailyEventObjectDialinError extends DailyEventObjectBase {
   action: Extract<DailyEvent, 'dialin-error'>;
   errorMsg: string;
-  sessionId: string;
+  // absent when type is 'start-failed': no session was created
+  sessionId?: string;
   userId?: string;
-  type?: 'start-failed' | null;
+  type?: 'start-failed';
   details?: {
     sipEndpoint?: string;
     sipStatusCode?: number;
