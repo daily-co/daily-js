@@ -1899,6 +1899,10 @@ export interface DailyEventObjectDialOutStopped extends DailyEventObjectBase {
   actionTraceId?: string;
   provider: string;
   sipCallId?: string;
+  // SignalWire only: SIP result of the callee leg when the call ended unanswered.
+  // Top level like the event's other fields; dialout-error keeps the pair in details.
+  sipStatusCode?: number;
+  sipReasonPhrase?: string;
 }
 
 export interface DailyEventObjectDialOutWarning extends DailyEventObjectBase {
