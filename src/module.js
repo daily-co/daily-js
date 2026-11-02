@@ -7191,7 +7191,7 @@ function validateConfigPropType(prop, propType) {
 }
 
 function validateSipCallTransfer(
-  { sessionId, toEndPoint, callerId, useSipRefer },
+  { sessionId, toEndPoint, callerId, callerName, useSipRefer },
   methodName
 ) {
   if (!(sessionId && toEndPoint)) {
@@ -7221,6 +7221,18 @@ function validateSipCallTransfer(
     throw new Error(
       `callerId is only valid when transferring to a PSTN number`
     );
+  }
+
+  if (callerName) {
+    validateDialoutCallerName(callerName, `${methodName}()`);
+    if (!toEndPoint.startsWith('sip:')) {
+      throw new Error(
+        `callerName is only valid when transferring to a SIP endpoint`
+      );
+    }
+    if (useSipRefer) {
+      throw new Error(`callerName is not supported with sipRefer`);
+    }
   }
 }
 

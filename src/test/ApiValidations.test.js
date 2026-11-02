@@ -337,3 +337,28 @@ describe('validateDialoutCallerName', () => {
     }
   });
 });
+
+describe('validateSipCallTransfer callerName', () => {
+  const validate = Daily.__get__('validateSipCallTransfer');
+  const transfer = (args) => () =>
+    validate(
+      { sessionId: 's', toEndPoint: 'sip:agent@example.com', ...args },
+      'sipCallTransfer'
+    );
+
+  it('accepts callerName for a SIP target', () => {
+    expect(transfer({ callerName: 'Acme Support' })).not.toThrow();
+  });
+
+  it('rejects callerName with a PSTN target, with sipRefer, and when malformed', () => {
+    expect(
+      transfer({ toEndPoint: '+15555550100', callerName: 'Acme Support' })
+    ).toThrow('callerName is only valid when transferring to a SIP endpoint');
+    expect(transfer({ useSipRefer: true, callerName: 'Acme Support' })).toThrow(
+      'callerName is not supported with sipRefer'
+    );
+    expect(transfer({ callerName: 'x'.repeat(71) })).toThrow(
+      'sipCallTransfer(): callerName length must be at most 70'
+    );
+  });
+});

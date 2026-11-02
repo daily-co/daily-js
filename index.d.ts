@@ -2445,6 +2445,8 @@ export interface DailySipCallTransferOptions {
   sessionId: string;
   toEndPoint: string;
   callerId?: string;
+  /** SIP From display name shown on the transfer target. SIP targets only, not with sipRefer. */
+  callerName?: string;
   extension?: string;
   waitBeforeExtensionDialSec?: number;
 }
