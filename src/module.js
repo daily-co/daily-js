@@ -3819,9 +3819,9 @@ export default class DailyIframe extends EventEmitter {
           `Error starting dial out: displayName must be a string`
         );
       }
-      if (args.displayName.length >= 200) {
+      if (args.displayName.length > 200) {
         throw new Error(
-          `Error starting dial out: displayName length must be less than 200`
+          `Error starting dial out: displayName length must be at most 200`
         );
       }
     }
@@ -3856,14 +3856,9 @@ export default class DailyIframe extends EventEmitter {
           `Error: provider can be set only to '${SIP_SERVICE_PROVIDER_DAILY}' or '${SIP_SERVICE_PROVIDER_SIGNALWIRE}', got: ${args.provider}`
         );
       }
-      if (args.phoneNumber) {
+      if (args.phoneNumber && args.provider === SIP_SERVICE_PROVIDER_DAILY) {
         throw new Error(
-          `Error starting dial out: provider valid only for sipUri, not phoneNumber`
-        );
-      }
-      if (args.provider === SIP_SERVICE_PROVIDER_DAILY) {
-        console.warn(
-          `(pre-beta) provider=${SIP_SERVICE_PROVIDER_DAILY} is currently in pre-beta, things might break!`
+          `Error starting dial out: "${SIP_SERVICE_PROVIDER_DAILY}" provider is not supported for phone number dial-out`
         );
       }
     } else {
@@ -3903,9 +3898,9 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
-    if (args.displayName.length >= 200) {
+    if (args.displayName.length > 200) {
       throw new Error(
-        `Error starting dial in: displayName length must be less than 200`
+        `Error starting dial in: displayName length must be at most 200`
       );
     }
 
