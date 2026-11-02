@@ -307,3 +307,33 @@ describe('validateSipVideoSettings', () => {
     expect(dialOut({ layout })).toThrow(`Error starting dial out: ${message}`);
   });
 });
+
+describe('validateDialoutCallerName', () => {
+  const validate = Daily.__get__('validateDialoutCallerName');
+  const check = (name) => () => validate(name, 'Error starting dial out');
+
+  it('accepts names up to 70 characters, spaces and UTF-8 included', () => {
+    expect(check('Acme Support')).not.toThrow();
+    expect(check('Ünïcode Nämé ✓')).not.toThrow();
+    expect(check('x'.repeat(70))).not.toThrow();
+  });
+
+  it('rejects non-strings, over-long names and From-breaking characters', () => {
+    expect(check(42)).toThrow(
+      'Error starting dial out: callerName must be a string'
+    );
+    expect(check('x'.repeat(71))).toThrow(
+      'callerName length must be at most 70'
+    );
+    for (const bad of [
+      'Acme "Support"',
+      'Acme\\Support',
+      'Acme\r\nX-Injected: 1',
+      'Acme\x00',
+    ]) {
+      expect(check(bad)).toThrow(
+        'callerName must not contain quotes, backslashes or control characters'
+      );
+    }
+  });
+});

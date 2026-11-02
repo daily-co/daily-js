@@ -3826,6 +3826,15 @@ export default class DailyIframe extends EventEmitter {
       }
     }
 
+    if (args.callerName) {
+      validateDialoutCallerName(args.callerName, 'Error starting dial out');
+      if (args.phoneNumber) {
+        throw new Error(
+          `Error starting dial out: callerName not allowed with phoneNumber`
+        );
+      }
+    }
+
     if (args.userId) {
       if (typeof args.userId !== 'string') {
         throw new Error(`Error starting dial out: userId must be a string`);
@@ -6398,6 +6407,26 @@ function validateDialoutExtension(args) {
         `Error starting dial out: waitBeforeExtensionDialSec requires a phoneNumber and extension`
       );
     }
+  }
+}
+
+const DIALOUT_CALLER_NAME_MAX_LENGTH = 70;
+// " and \ break the quoted From display-name; control chars are header injection
+const DIALOUT_CALLER_NAME_INVALID_CHARS = /["\\\x00-\x1f\x7f]/;
+
+function validateDialoutCallerName(callerName, errorPrefix) {
+  if (typeof callerName !== 'string') {
+    throw new Error(`${errorPrefix}: callerName must be a string`);
+  }
+  if (callerName.length > DIALOUT_CALLER_NAME_MAX_LENGTH) {
+    throw new Error(
+      `${errorPrefix}: callerName length must be at most ${DIALOUT_CALLER_NAME_MAX_LENGTH}`
+    );
+  }
+  if (DIALOUT_CALLER_NAME_INVALID_CHARS.test(callerName)) {
+    throw new Error(
+      `${errorPrefix}: callerName must not contain quotes, backslashes or control characters`
+    );
   }
 }
 
