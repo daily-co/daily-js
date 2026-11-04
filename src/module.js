@@ -3826,7 +3826,7 @@ export default class DailyIframe extends EventEmitter {
       }
     }
 
-    if (args.callerName) {
+    if (args.callerName !== undefined) {
       validateDialoutCallerName(args.callerName, 'Error starting dial out');
       if (args.phoneNumber) {
         throw new Error(
@@ -6412,11 +6412,17 @@ function validateDialoutExtension(args) {
 
 const DIALOUT_CALLER_NAME_MAX_LENGTH = 70;
 // " and \ break the quoted From display-name; control chars are header injection
+// eslint-disable-next-line no-control-regex
 const DIALOUT_CALLER_NAME_INVALID_CHARS = /["\\\x00-\x1f\x7f]/;
+// half an emoji (e.g. sliced at 70 UTF-16 units) has no UTF-8 encoding
+const DIALOUT_CALLER_NAME_UNPAIRED_SURROGATE = /\p{Surrogate}/u;
 
 function validateDialoutCallerName(callerName, errorPrefix) {
   if (typeof callerName !== 'string') {
     throw new Error(`${errorPrefix}: callerName must be a string`);
+  }
+  if (!callerName) {
+    throw new Error(`${errorPrefix}: callerName must not be empty`);
   }
   if (callerName.length > DIALOUT_CALLER_NAME_MAX_LENGTH) {
     throw new Error(
@@ -6426,6 +6432,11 @@ function validateDialoutCallerName(callerName, errorPrefix) {
   if (DIALOUT_CALLER_NAME_INVALID_CHARS.test(callerName)) {
     throw new Error(
       `${errorPrefix}: callerName must not contain quotes, backslashes or control characters`
+    );
+  }
+  if (DIALOUT_CALLER_NAME_UNPAIRED_SURROGATE.test(callerName)) {
+    throw new Error(
+      `${errorPrefix}: callerName must not contain unpaired surrogate characters`
     );
   }
 }
@@ -7223,7 +7234,7 @@ function validateSipCallTransfer(
     );
   }
 
-  if (callerName) {
+  if (callerName !== undefined) {
     validateDialoutCallerName(callerName, `${methodName}()`);
     if (!toEndPoint.startsWith('sip:')) {
       throw new Error(

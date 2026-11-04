@@ -315,16 +315,25 @@ describe('validateDialoutCallerName', () => {
   it('accepts names up to 70 characters, spaces and UTF-8 included', () => {
     expect(check('Acme Support')).not.toThrow();
     expect(check('Ünïcode Nämé ✓')).not.toThrow();
+    expect(check('Acme 😀')).not.toThrow();
     expect(check('x'.repeat(70))).not.toThrow();
   });
 
-  it('rejects non-strings, over-long names and From-breaking characters', () => {
+  it('rejects non-strings, empty or over-long names, From-breaking characters and unpaired surrogates', () => {
     expect(check(42)).toThrow(
       'Error starting dial out: callerName must be a string'
+    );
+    expect(check('')).toThrow(
+      'Error starting dial out: callerName must not be empty'
     );
     expect(check('x'.repeat(71))).toThrow(
       'callerName length must be at most 70'
     );
+    for (const bad of ['Acme \ud83d', '\udc00 Acme']) {
+      expect(check(bad)).toThrow(
+        'callerName must not contain unpaired surrogate characters'
+      );
+    }
     for (const bad of [
       'Acme "Support"',
       'Acme\\Support',
@@ -359,6 +368,9 @@ describe('validateSipCallTransfer callerName', () => {
     );
     expect(transfer({ callerName: 'x'.repeat(71) })).toThrow(
       'sipCallTransfer(): callerName length must be at most 70'
+    );
+    expect(transfer({ callerName: '' })).toThrow(
+      'sipCallTransfer(): callerName must not be empty'
     );
   });
 });
