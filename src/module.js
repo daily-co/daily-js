@@ -116,6 +116,8 @@ import {
   DAILY_EVENT_INPUT_SETTINGS_UPDATED,
   DAILY_EVENT_NONFATAL_ERROR,
   DAILY_EVENT_SIDEBAR_VIEW_CHANGED,
+  DAILY_EVENT_BREAKOUT_SESSION_STARTED,
+  DAILY_EVENT_BREAKOUT_SESSION_STOPPED,
 
   // internals
   //
@@ -1861,10 +1863,24 @@ export default class DailyIframe extends EventEmitter {
     return this;
   }
 
-  setLocalVideo(bool) {
+  setLocalVideo(bool, options = {}) {
+    if ('discardTrack' in options) {
+      if (isReactNative()) {
+        console.warn(
+          'discardTrack option not supported in React Native; ignoring'
+        );
+        options = {};
+      } else if (bool) {
+        console.warn(
+          'discardTrack option only supported when calling setLocalVideo(false); ignoring'
+        );
+        options = {};
+      }
+    }
     this.sendMessageToCallMachine({
       action: DAILY_METHOD_LOCAL_VIDEO,
       state: bool,
+      options,
     });
     return this;
   }
@@ -3758,71 +3774,11 @@ export default class DailyIframe extends EventEmitter {
         }
       }
 
-      if (args.videoSettings !== undefined) {
-        if (
-          typeof args.videoSettings !== 'object' ||
-          args.videoSettings === null
-        ) {
-          throw new Error(
-            `Error starting dial out: videoSettings must be an object`
-          );
-        }
-        if (!args.video) {
-          throw new Error(
-            `Error starting dial out: videoSettings provided but video is not enabled`
-          );
-        }
-
-        const vs = args.videoSettings;
-        if (vs.width !== undefined) {
-          if (!Number.isInteger(vs.width) || vs.width <= 0) {
-            throw new Error(
-              `Error starting dial out: videoSettings.width must be a positive integer`
-            );
-          }
-          if (vs.width > 1280) {
-            throw new Error(
-              `Error starting dial out: videoSettings.width must be less than or equal to 1280`
-            );
-          }
-        }
-        if (vs.height !== undefined) {
-          if (!Number.isInteger(vs.height) || vs.height <= 0) {
-            throw new Error(
-              `Error starting dial out: videoSettings.height must be a positive integer`
-            );
-          }
-          if (vs.height > 720) {
-            throw new Error(
-              `Error starting dial out: videoSettings.height must be less than or equal to 720`
-            );
-          }
-        }
-        if (vs.fps !== undefined) {
-          if (!Number.isInteger(vs.fps) || vs.fps <= 0) {
-            throw new Error(
-              `Error starting dial out: videoSettings.fps must be a positive integer`
-            );
-          }
-          if (vs.fps > 30) {
-            throw new Error(
-              `Error starting dial out: videoSettings.fps must be less than or equal to 30`
-            );
-          }
-        }
-        if (vs.videoBitrate !== undefined) {
-          if (!Number.isInteger(vs.videoBitrate) || vs.videoBitrate <= 0) {
-            throw new Error(
-              `Error starting dial out: videoSettings.videoBitrate must be a positive integer`
-            );
-          }
-          if (vs.videoBitrate > 1000) {
-            throw new Error(
-              `Error starting dial out: videoSettings.videoBitrate must be less than or equal to 1000 kbps`
-            );
-          }
-        }
-      }
+      validateSipVideoSettings(
+        args.videoSettings,
+        args.video,
+        'Error starting dial out'
+      );
 
       validateAudioVideoCodec(args.codecs);
     }
@@ -3863,9 +3819,18 @@ export default class DailyIframe extends EventEmitter {
           `Error starting dial out: displayName must be a string`
         );
       }
-      if (args.displayName.length >= 200) {
+      if (args.displayName.length > 200) {
         throw new Error(
-          `Error starting dial out: displayName length must be less than 200`
+          `Error starting dial out: displayName length must be at most 200`
+        );
+      }
+    }
+
+    if (args.callerName !== undefined) {
+      validateDialoutCallerName(args.callerName, 'Error starting dial out');
+      if (args.phoneNumber) {
+        throw new Error(
+          `Error starting dial out: callerName not allowed with phoneNumber`
         );
       }
     }
@@ -3900,14 +3865,9 @@ export default class DailyIframe extends EventEmitter {
           `Error: provider can be set only to '${SIP_SERVICE_PROVIDER_DAILY}' or '${SIP_SERVICE_PROVIDER_SIGNALWIRE}', got: ${args.provider}`
         );
       }
-      if (args.phoneNumber) {
+      if (args.phoneNumber && args.provider === SIP_SERVICE_PROVIDER_DAILY) {
         throw new Error(
-          `Error starting dial out: provider valid only for sipUri, not phoneNumber`
-        );
-      }
-      if (args.provider === SIP_SERVICE_PROVIDER_DAILY) {
-        console.warn(
-          `(pre-beta) provider=${SIP_SERVICE_PROVIDER_DAILY} is currently in pre-beta, things might break!`
+          `Error starting dial out: "${SIP_SERVICE_PROVIDER_DAILY}" provider is not supported for phone number dial-out`
         );
       }
     } else {
@@ -3947,9 +3907,9 @@ export default class DailyIframe extends EventEmitter {
       );
     }
 
-    if (args.displayName.length >= 200) {
+    if (args.displayName.length > 200) {
       throw new Error(
-        `Error starting dial in: displayName length must be less than 200`
+        `Error starting dial in: displayName length must be at most 200`
       );
     }
 
@@ -3966,6 +3926,12 @@ export default class DailyIframe extends EventEmitter {
     if (args.video !== undefined && typeof args.video !== 'boolean') {
       throw new Error(`Error starting dial in: video must be a boolean`);
     }
+
+    validateSipVideoSettings(
+      args.videoSettings,
+      args.video,
+      'Error starting dial in'
+    );
 
     if (
       args.sipEndpoint !== undefined &&
@@ -5564,6 +5530,10 @@ testCallQuality() and stopTestCallQuality() instead`);
       case DAILY_EVENT_SIDEBAR_VIEW_CHANGED:
         this.emitDailyJSEvent(msg);
         break;
+      case DAILY_EVENT_BREAKOUT_SESSION_STARTED:
+      case DAILY_EVENT_BREAKOUT_SESSION_STOPPED:
+        this.emitDailyJSEvent(msg);
+        break;
       case DAILY_EVENT_PICTURE_IN_PICTURE_STARTED:
         this.emitDailyJSEvent(msg);
         break;
@@ -6248,6 +6218,167 @@ testCallQuality() and stopTestCallQuality() instead`);
   }
 }
 
+// SIP videoSettings, shared by startDialOut (sipUri) and startDialIn. Mirrors the
+// server's sipVideoSettingsSchema so bad input fails here, not on the SFU.
+const SIP_VIDEO_SETTINGS_LIMITS = [
+  ['fps', 30, ''],
+  ['videoBitrate', 1000, ' kbps'],
+];
+// Output caps: landscape, or 9:16 for sip-portrait
+const SIP_VIDEO_MAX_DIMS = { width: 1280, height: 720 };
+const SIP_PORTRAIT_MAX_DIMS = { width: 720, height: 1280 };
+const SIP_LAYOUT_MAX_PARTICIPANT_REFS = 50;
+const SIP_VIDEO_LAYOUT_KEYS = {
+  'sip-active': ['maxCamStreams', 'participants'],
+  'sip-grid': ['maxCamStreams', 'participants'],
+  'sip-single': ['videoParticipant', 'audioParticipant'],
+  'sip-portrait': [
+    'variant',
+    'maxCamStreams',
+    'participants',
+    'mainParticipant',
+    'insetParticipant',
+  ],
+};
+
+function validateSipVideoSettings(videoSettings, videoEnabled, errPrefix) {
+  if (videoSettings === undefined) {
+    return;
+  }
+  if (typeof videoSettings !== 'object' || videoSettings === null) {
+    throw new Error(`${errPrefix}: videoSettings must be an object`);
+  }
+  if (!videoEnabled) {
+    throw new Error(
+      `${errPrefix}: videoSettings provided but video is not enabled`
+    );
+  }
+  const layout = videoSettings.layout;
+  const dims =
+    layout && layout.preset === 'sip-portrait'
+      ? SIP_PORTRAIT_MAX_DIMS
+      : SIP_VIDEO_MAX_DIMS;
+  const limits = [
+    ['width', dims.width, ''],
+    ['height', dims.height, ''],
+    ...SIP_VIDEO_SETTINGS_LIMITS,
+  ];
+  for (const [key, max, unit] of limits) {
+    const value = videoSettings[key];
+    if (value === undefined) {
+      continue;
+    }
+    if (!Number.isInteger(value) || value <= 0) {
+      throw new Error(
+        `${errPrefix}: videoSettings.${key} must be a positive integer`
+      );
+    }
+    if (value > max) {
+      throw new Error(
+        `${errPrefix}: videoSettings.${key} must be less than or equal to ${max}${unit}`
+      );
+    }
+  }
+  if (videoSettings.layout !== undefined) {
+    validateSipVideoLayout(videoSettings.layout, errPrefix);
+  }
+}
+
+function validateSipVideoLayout(layout, errPrefix) {
+  const fail = (what) => {
+    throw new Error(`${errPrefix}: videoSettings.layout${what}`);
+  };
+  if (typeof layout !== 'object' || layout === null) {
+    fail(' must be an object');
+  }
+  const preset = layout.preset;
+  if (!Object.prototype.hasOwnProperty.call(SIP_VIDEO_LAYOUT_KEYS, preset)) {
+    fail(
+      `.preset must be one of ${Object.keys(SIP_VIDEO_LAYOUT_KEYS).join(', ')}`
+    );
+  }
+  const allowedKeys = SIP_VIDEO_LAYOUT_KEYS[preset];
+  for (const key of Object.keys(layout)) {
+    if (key !== 'preset' && !allowedKeys.includes(key)) {
+      fail(`.${key} is not allowed with preset ${preset}`);
+    }
+  }
+  if (layout.maxCamStreams !== undefined) {
+    const max = preset === 'sip-portrait' ? 2 : 4;
+    const n = layout.maxCamStreams;
+    if (!Number.isInteger(n) || n < 1 || n > max) {
+      fail(`.maxCamStreams must be an integer between 1 and ${max}`);
+    }
+  }
+  if (
+    layout.variant !== undefined &&
+    !['vertical', 'inset'].includes(layout.variant)
+  ) {
+    fail(`.variant must be 'vertical' or 'inset'`);
+  }
+  // a participant reference: a user id or a session id
+  const isParticipant = (v) => typeof v === 'string' && v.length > 0;
+  if (preset === 'sip-single') {
+    if (!isParticipant(layout.videoParticipant)) {
+      fail('.videoParticipant must be a participant user id or session id');
+    }
+    if (
+      layout.audioParticipant !== undefined &&
+      !isParticipant(layout.audioParticipant)
+    ) {
+      fail('.audioParticipant must be a participant user id or session id');
+    }
+  }
+  if (preset === 'sip-portrait') {
+    for (const key of ['mainParticipant', 'insetParticipant']) {
+      if (layout[key] === undefined) {
+        continue;
+      }
+      if (layout.variant !== 'inset') {
+        fail(`.${key} is only allowed with variant 'inset'`);
+      }
+      if (!isParticipant(layout[key])) {
+        fail(`.${key} must be a participant user id or session id`);
+      }
+    }
+    if (layout.insetParticipant !== undefined) {
+      if (layout.insetParticipant === layout.mainParticipant) {
+        fail('.insetParticipant must differ from mainParticipant');
+      }
+      if (layout.maxCamStreams === 1) {
+        fail('.insetParticipant needs maxCamStreams 2');
+      }
+    }
+  }
+  if (layout.participants !== undefined) {
+    const participants = layout.participants;
+    if (typeof participants !== 'object' || participants === null) {
+      fail('.participants must be an object');
+    }
+    for (const key of Object.keys(participants)) {
+      if (key !== 'video' && key !== 'audio') {
+        fail(`.participants.${key} is not allowed`);
+      }
+      const filters = participants[key];
+      if (
+        !Array.isArray(filters) ||
+        filters.length === 0 ||
+        filters.some((f) => typeof f !== 'string' || f.length === 0) ||
+        new Set(filters).size !== filters.length
+      ) {
+        fail(
+          `.participants.${key} must be a non-empty array of unique strings`
+        );
+      }
+      if (filters.length > SIP_LAYOUT_MAX_PARTICIPANT_REFS) {
+        fail(
+          `.participants.${key} must have at most ${SIP_LAYOUT_MAX_PARTICIPANT_REFS} entries`
+        );
+      }
+    }
+  }
+}
+
 function validateDialoutExtension(args) {
   if (args.extension) {
     if (typeof args.extension !== 'string') {
@@ -6276,6 +6407,37 @@ function validateDialoutExtension(args) {
         `Error starting dial out: waitBeforeExtensionDialSec requires a phoneNumber and extension`
       );
     }
+  }
+}
+
+const DIALOUT_CALLER_NAME_MAX_LENGTH = 70;
+// " and \ break the quoted From display-name; control chars are header injection
+// eslint-disable-next-line no-control-regex
+const DIALOUT_CALLER_NAME_INVALID_CHARS = /["\\\x00-\x1f\x7f]/;
+// half an emoji (e.g. sliced at 70 UTF-16 units) has no UTF-8 encoding
+const DIALOUT_CALLER_NAME_UNPAIRED_SURROGATE = /\p{Surrogate}/u;
+
+function validateDialoutCallerName(callerName, errorPrefix) {
+  if (typeof callerName !== 'string') {
+    throw new Error(`${errorPrefix}: callerName must be a string`);
+  }
+  if (!callerName) {
+    throw new Error(`${errorPrefix}: callerName must not be empty`);
+  }
+  if (callerName.length > DIALOUT_CALLER_NAME_MAX_LENGTH) {
+    throw new Error(
+      `${errorPrefix}: callerName length must be at most ${DIALOUT_CALLER_NAME_MAX_LENGTH}`
+    );
+  }
+  if (DIALOUT_CALLER_NAME_INVALID_CHARS.test(callerName)) {
+    throw new Error(
+      `${errorPrefix}: callerName must not contain quotes, backslashes or control characters`
+    );
+  }
+  if (DIALOUT_CALLER_NAME_UNPAIRED_SURROGATE.test(callerName)) {
+    throw new Error(
+      `${errorPrefix}: callerName must not contain unpaired surrogate characters`
+    );
   }
 }
 
@@ -7040,7 +7202,7 @@ function validateConfigPropType(prop, propType) {
 }
 
 function validateSipCallTransfer(
-  { sessionId, toEndPoint, callerId, useSipRefer },
+  { sessionId, toEndPoint, callerId, callerName, useSipRefer },
   methodName
 ) {
   if (!(sessionId && toEndPoint)) {
@@ -7070,6 +7232,18 @@ function validateSipCallTransfer(
     throw new Error(
       `callerId is only valid when transferring to a PSTN number`
     );
+  }
+
+  if (callerName !== undefined) {
+    validateDialoutCallerName(callerName, `${methodName}()`);
+    if (!toEndPoint.startsWith('sip:')) {
+      throw new Error(
+        `callerName is only valid when transferring to a SIP endpoint`
+      );
+    }
+    if (useSipRefer) {
+      throw new Error(`callerName is not supported with sipRefer`);
+    }
   }
 }
 
