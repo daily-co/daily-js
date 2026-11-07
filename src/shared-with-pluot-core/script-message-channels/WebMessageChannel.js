@@ -9,7 +9,7 @@ import { randomStringId } from '../../utils';
 export default class WebMessageChannel extends ScriptMessageChannel {
   constructor() {
     super();
-    this._wrappedListeners = {}; // Mapping between listeners and wrapped listeners
+    this._wrappedListeners = new Map(); // Key listeners by function identity
     this._messageCallbacks = {};
   }
 
@@ -44,7 +44,7 @@ export default class WebMessageChannel extends ScriptMessageChannel {
         listener.call(thisValue, msg);
       }
     };
-    this._wrappedListeners[listener] = wrappedListener;
+    this._wrappedListeners.set(listener, wrappedListener);
     window.addEventListener('message', wrappedListener);
   }
 
@@ -81,7 +81,7 @@ export default class WebMessageChannel extends ScriptMessageChannel {
       // console.log('[WebMessageChannel] received daily-js message', msg);
       listener.call(thisValue, msg);
     };
-    this._wrappedListeners[listener] = wrappedListener;
+    this._wrappedListeners.set(listener, wrappedListener);
     window.addEventListener('message', wrappedListener);
   }
 
@@ -128,10 +128,10 @@ export default class WebMessageChannel extends ScriptMessageChannel {
   }
 
   removeListener(listener) {
-    const wrappedListener = this._wrappedListeners[listener];
+    const wrappedListener = this._wrappedListeners.get(listener);
     if (wrappedListener) {
       window.removeEventListener('message', wrappedListener);
-      delete this._wrappedListeners[listener];
+      this._wrappedListeners.delete(listener);
     }
   }
 
@@ -178,19 +178,17 @@ export default class WebMessageChannel extends ScriptMessageChannel {
         listener(msg);
       }
     };
-    // For now we're still using the listener itself as the key, like in the
-    // other addListener* methods. We should probably change this everywhere to
-    // use a proper unique id.
-    this._wrappedListeners[listener] = wrappedListener;
+    // Return the original listener as the handle used for removal.
+    this._wrappedListeners.set(listener, wrappedListener);
     window.addEventListener('message', wrappedListener);
     return listener;
   }
 
   removeListenerForPackagedMessagesFromCallMachine(listenerId) {
-    const wrappedListener = this._wrappedListeners[listenerId];
+    const wrappedListener = this._wrappedListeners.get(listenerId);
     if (wrappedListener) {
       window.removeEventListener('message', wrappedListener);
-      delete this._wrappedListeners[listenerId];
+      this._wrappedListeners.delete(listenerId);
     }
   }
 
